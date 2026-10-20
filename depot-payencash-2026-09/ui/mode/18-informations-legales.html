@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PayEnCash MODE — Informations légales</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-mode-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-mode-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-panier-badge.js"></script><!-- (19/09) la pastille « commande en cours / pièces au sac » sur l'onglet Commandes -->
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<!-- INFORMATIONS LÉGALES — MODE (fondatrice 31/08). Structure calquée sur le hub légal
+     FLY (ecrans/18) mais RÉÉCRITE pour la vente de biens d'occasion. Décision arbitrée :
+     PayEnCash MODE est VENDEUR PROFESSIONNEL de biens d'occasion (achat ferme au
+     fournisseur puis revente authentifiée). Conséquences juridiques posées ici :
+       · vente B2C → DROIT DE RÉTRACTATION 14 j (art. L221-18) — volet dédié ;
+       · GARANTIE LÉGALE DE CONFORMITÉ (L217-3 s.) et VICES CACHÉS (art. 1641 C. civ.) ;
+       · TVA sur la marge bénéficiaire (art. 297 A CGI) — biens d'occasion ;
+       · médiateur de la CONSOMMATION (e-commerce), pas du tourisme.
+     ⚠ CONTENU À FAIRE VALIDER PAR UN JURISTE avant mise en ligne réelle.
+     (18/09, soir — l'agent de caisse mobile est abandonné, puis pivot de positionnement) L'ART. 4 A PERDU
+     son troisième moyen — « en espèces, remises à un agent salarié d'AJEK qui se déplace, contre reçu » —, le
+     plafond légal du paiement d'une dette en espèces (L112-6 / D112-3 CMF) et le complément carte obligatoire
+     sur le terminal de l'agent. La promesse contractuelle est : paiement avec un bon d’achat ; les plafonds qui valent sont ceux du Bon d’achat ([data-bon] ← bonsRef).
+     (18/09 — Bon d’achat PayEnCash) Le BON D’ACHAT PAYENCASH — bon d'achat prépayé vendu par des commerçants partenaires (qui
+     vendent le bon d’achat et n'encaissent aucune commande), accepté par AJEK seule : clause à l'art. 4, volet « Conditions du Bon d’achat
+     PayEnCash » (#bon) — mentions, fondement (L521-3 CMF, 256 ter CGI), avertissement — plafonds ([data-bon]) : tout vient
+     de bonsRef(), rien n'est recopié. Document complet : ESPACE-COMMERCANT/documents/conditions-bon-payencash.html. -->
+<style>
+  .lg-card{background:var(--color-surface);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:4px 15px;margin-bottom:10px}
+  /* (19/09, soir) le titre le plus long (« Mentions légales — qui nous sommes ») poussait le chevron hors du
+     résumé : sans `min-width:0`, un enfant flex refuse de rétrécir sous la largeur de son texte. */
+  .lg-card summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;padding:10px 0;min-width:0}
+  .lg-card summary > *{min-width:0}
+  .lg-card summary::-webkit-details-marker{display:none}
+  .lg-card .ic{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:11px;background:var(--color-mint);color:var(--color-primary-dark)}
+  .lg-card summary b{min-width:0;flex:1;font-size:13px;color:var(--color-ink)}
+  .lg-card summary .ch{flex:none;font-size:13px;color:var(--color-muted);transition:transform .15s}
+  .lg-card[open] summary .ch{transform:rotate(90deg)}
+  .lg-body{padding:0 0 12px}
+  .lg-art{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--color-primary-dark);margin:10px 0 3px}
+  .lg-art:first-child{margin-top:2px}
+  .lg-li{display:flex;gap:8px;font-size:11.5px;line-height:1.6;color:var(--color-muted);margin-top:5px}
+  .lg-li b{color:var(--color-ink)}
+  .lg-li .p{flex:none;color:var(--color-primary-dark);font-weight:800}
+  .lg-mint{border-radius:11px;background:var(--color-mint);padding:9px 11px;margin-top:9px;font-size:11px;line-height:1.55;color:var(--color-mint-ink)}
+  .lg-mint b{color:var(--color-primary-dark)}
+  .lg-warn{border-radius:11px;background:var(--color-amber-well);padding:9px 11px;margin:8px 0 2px;font-size:10.5px;line-height:1.55;color:var(--color-amber-text)}
+  .lg-warn b{color:var(--color-amber-text)}
+</style>
+</head>
+<body>
+
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:0 16px 12px">
+
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 2px 4px">
+      <a href="08-compte.html" class="tap" aria-label="Retour au compte" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-chevron-left"/></svg></a>
+      <div style="min-width:0">
+        <div style="font-size:17px;font-weight:800;letter-spacing:-0.02em;color:var(--color-ink)">Informations légales</div>
+        <div style="font-size:10.5px;font-weight:600;color:var(--color-muted)">Qui nous sommes, ce qui t'engage, ce qui te protège — PayEnCash Mode.</div>
+      </div>
+    </div>
+
+    <!-- ① MENTIONS LÉGALES (LCEN art. 6) -->
+    <details class="lg-card" id="editeur" style="margin-top:8px">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-info"/></svg></span><b>Mentions légales — qui nous sommes</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-li"><span class="p">·</span><span><b>Éditeur et vendeur :</b> <b id="lg-soc-nom">AJEK</b>, <span id="lg-soc-forme">société par actions simplifiée</span> au capital de <span id="lg-soc-capital">1 000 €</span>, immatriculée au <b>RCS d'Aix-en-Provence</b> sous le n° <b>107 398 448</b> — TVA intracommunautaire FR59107398448 — siège social : <b id="lg-soc-siege">16 route de la Plage, 13700 Marignane</b>. <b>PayEnCash Mode</b> est sa marque. Présidente et directrice de la publication : <b id="lg-soc-presidente">Emilie Ruiz</b>.</span></div>
+        <div class="lg-li"><span class="p">·</span><span><b>Activité :</b> <b>vente en ligne de vêtements, chaussures et accessoires d'occasion</b>, sélectionnés, contrôlés et authentifiés par nos soins, payables <b>avec un bon d’achat</b> (<span class="pec-moyens">—</span>). AJEK agit comme <b>vendeur professionnel</b> : elle <b>achète ferme</b> les pièces auprès de ses fournisseurs partenaires, les contrôle en atelier, puis <b>te les revend</b>. Le contrat de vente est conclu <b>entre toi et AJEK</b>.</span></div>
+        <div class="lg-li"><span class="p">·</span><span><b>Hébergement du site &amp; de l'app :</b> prestataire technique dans l'Union européenne. <b>Médiation :</b> voir « Litiges &amp; médiation » ci-dessous.</span></div>
+        <div class="lg-li"><span class="p">·</span><span><b>Nous joindre :</b> <b id="lg-tel">—</b> (appel gratuit) · <b>assistance@payencash.fr</b>.</span></div>
+      </div>
+    </details>
+
+    <!-- ② CGV — VENTE DE BIENS D'OCCASION PAR UN PROFESSIONNEL -->
+    <details class="lg-card" id="cgv">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-receipt"/></svg></span><b>Conditions générales de vente</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div style="font-size:10.5px;color:var(--color-muted-2);margin:2px 0 4px">Version des CGV : <b id="lg-cgv-version" style="color:var(--color-ink)">—</b> — celle que tu acceptes à l'inscription et à chaque commande.</div>
+        <div class="lg-art">Art. 1 — Objet et qualité de PayEnCash Mode</div>
+        <div class="lg-li"><span class="p">·</span><span>AJEK (marque <b>PayEnCash Mode</b>) <b>vend</b>, en tant que <b>professionnel</b>, des <b>vêtements, chaussures et accessoires d'occasion</b> qu'elle a acquis auprès de ses fournisseurs, contrôlés et authentifiés en atelier. La vente est conclue <b>entre le client (consommateur) et AJEK</b> : les présentes CGV régissent cette vente à distance.</span></div>
+        <div class="lg-art">Art. 2 — Les pièces — occasion, uniques, contrôlées</div>
+        <div class="lg-li"><span class="p">·</span><span>Chaque pièce est un <b>bien d'occasion</b>, le plus souvent <b>unique</b> (un seul exemplaire). L'<b>état réel</b> (neuf, très bon état, bon état…) est indiqué sur la fiche, avec des <b>photos non retouchées</b>. Les pièces authentifiables font l'objet d'un <b>contrôle d'authenticité en atelier</b> ; un <b>certificat</b> peut être délivré. La couleur peut légèrement varier selon les écrans.</span></div>
+        <div class="lg-art">Art. 3 — Prix et TVA</div>
+        <div class="lg-li"><span class="p">·</span><span>Les prix sont indiqués en euros, <b>toutes taxes comprises</b>. Les biens d'occasion relèvent du régime de la <b>TVA sur la marge bénéficiaire</b> (art. 297 A du CGI) : la TVA n'est pas détaillée sur la facture. Le prix affiché est <b>total, frais de livraison inclus</b> ; rien ne s'ajoute après.</span></div>
+        <!-- (18/09, soir) LA CLAUSE NE PORTE PLUS AUCUN CHIFFRE : les plafonds du Bon d’achat viennent de bonsRef()
+             ([data-bon]), les moyens de moyensPaiementLabel(). Ce que le client règle chez son commerçant ne
+             relève pas du contrat qui nous lie : le contrat dit ce que NOUS ne demandons jamais. -->
+        <div class="lg-art">Art. 4 — Commande et paiement</div>
+        <div class="lg-li"><span class="p">·</span><span>La commande se réserve dans l'app : la pièce est <b>bloquée à ton nom</b> le temps de régler (minuteur). Le paiement se fait <b>avec un bon d’achat</b> : <b>un bon d’achat suffit</b> du client — ni numéro de carte, ni mandat de prélèvement. Au choix : par un <b>Bon d’achat PayEnCash</b> — bon d'achat prépayé émis par AJEK, acquis auprès d'un commerçant partenaire (ou reçu en cadeau), d'au plus <b><span data-bon="plafondBon">—</span></b> par bon d’achat, utilisable en une ou plusieurs fois dans la limite de <b><span data-bon="plafondClientJour">—</span></b> de bons d’achat par jour et par client et de <b><span data-bon="plafondClientMois">—</span></b> sur <b><span data-bon="fenetrePlafondJours">—</span> jours</b> glissants (au-delà, l'utilisation est subordonnée à la vérification de l'identité du titulaire — obligation de vigilance LCB-FT), valable <b><span data-bon="validiteMois">—</span> mois</b>, ni échangeable ni remboursable en espèces (le remboursement d'une commande réglée par bon d’achat est re-crédité sur le bon d’achat — volet « Conditions du Bon d’achat PayEnCash ») — ; le code du bon se saisit dans l’app (page de paiement hébergée par le prestataire ; la commande est réglée à réception de sa confirmation). Sans paiement dans le délai, la réservation <b>expire sans frais</b>.</span></div>
+        <div class="lg-art">Art. 5 — Achat ferme et transfert de propriété</div>
+        <div class="lg-li"><span class="p">·</span><span>La vente est <b>ferme au paiement intégral</b> : une <b>facture</b> t'est remise, et la pièce t'est <b>expédiée</b> (voir Art. 6). La propriété et les risques sont transférés à la <b>remise du bien</b>. Rappel : la pièce étant unique, l'<b>échange n'existe pas</b> — en cas de souci, c'est le <b>retour</b> (Art. 8) qui s'applique.</span></div>
+        <div class="lg-art">Art. 6 — Livraison</div>
+        <div class="lg-li"><span class="p">·</span><span>Livraison en <b>point relais Mondial Relay</b> (relais de ton choix), sous le délai indiqué avant l'achat — une <b>estimation</b>, jamais une promesse. À défaut de livraison dans <b>30 jours</b>, tu peux résoudre la vente et être remboursé (art. L216-1 s.). La pièce est gardée <b><span data-liv="gardeJours">8</span> jours</b> (conditions Mondial Relay) au relais.</span></div>
+        <div class="lg-art">Art. 7 — Garanties légales</div>
+        <div class="lg-li"><span class="p">·</span><span>En tant que vendeur professionnel, AJEK est tenue de la <b>garantie légale de conformité</b> (art. L217-3 et suivants du code de la consommation) et de la <b>garantie des vices cachés</b> (art. 1641 et suivants du code civil). Pour un bien d'occasion, tu disposes d'un délai pour agir en conformité — le défaut est présumé exister au jour de la remise pendant <b>12 mois</b> pour l'occasion. Ces garanties <b>s'ajoutent</b> au droit de rétractation et sont <b>gratuites</b> ; l'<b>usure normale</b> et l'état décrit à l'achat n'en relèvent pas.</span></div>
+        <div class="lg-art">Art. 8 — Droit de rétractation et retour</div>
+        <div class="lg-li"><span class="p">·</span><span>Tu disposes de <b><span class="lg-j">14</span> jours</b> après réception pour <b>te rétracter</b>, sans justification (art. L221-18 s.). Les conditions, frais et modes de remboursement figurent au volet dédié « <b>Droit de rétractation &amp; retour</b> » ci-dessous et sur <a href="17-politiques.html" style="font-weight:800;color:var(--color-primary-dark)">Nos politiques</a>.</span></div>
+        <div class="lg-art">Art. 9 — Preuve, droit applicable, langue</div>
+        <div class="lg-li"><span class="p">·</span><span>Les registres informatiques d'AJEK font <b>preuve</b> des commandes et paiements. Les présentes relèvent du <b>droit français</b>, sont rédigées en <b>français</b>, et ne valent que <b>pour les commandes futures</b> : ta commande reste régie par la version en vigueur au jour de l'achat, remise avec ta facture.</span></div>
+      </div>
+    </details>
+
+    <!-- (18/09 — Bon d’achat PayEnCash) ②ter CONDITIONS DU BON D’ACHAT PAYENCASH — mentions consommateur (ref.bons.mentions), fondement (ref.bons.fondement :
+         exemption L521-3, TVA 256 ter) et avertissement « à valider par l'avocat » : tout vient de bonsRef(), rien n'est recopié. -->
+    <details class="lg-card" id="bon">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-ticket"/></svg></span><b>Conditions du Bon d’achat PayEnCash</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-art">Ce qu'est le Bon d’achat</div>
+        <div class="lg-li"><span class="p">·</span><span>Un <b>bon d'achat prépayé</b> à montant libre (de <b><span data-bon="minimum">5 €</span></b> à <b><span data-bon="plafondBon">250 €</span></b>), émis par AJEK, vendu au comptoir d'un <b>commerçant partenaire</b> (ticket imprimé portant un code à 12 caractères) ou remis en cadeau. Le commerçant partenaire <b>vend le bon d’achat</b> ; il n'encaisse <b>aucune commande</b> pour le compte d'AJEK. Le bon d’achat n'est accepté que par AJEK, sur payencash.fr (Mode et Fly) ; il ne peut servir <b>que dans la limite de <span data-bon="plafondClientJour">1 000 €</span></b> de bons d’achat par jour et par client.</span></div>
+        <div class="lg-art">Mentions du ticket</div>
+        <div id="lg-bon-mentions"></div>
+        <div class="lg-art">Fondement</div>
+        <div class="lg-li"><span class="p">·</span><span id="lg-bon-exemption">—</span></div>
+        <div class="lg-li"><span class="p">·</span><span id="lg-bon-tva">—</span></div>
+        <div class="lg-mint" id="lg-bon-avert">—</div>
+        <div class="lg-li" style="margin-top:8px"><span class="p">·</span><span><a href="../../ESPACE-COMMERCANT/documents/conditions-bon-payencash.html" style="font-weight:800;color:var(--color-primary-dark)">Les conditions complètes du Bon d’achat PayEnCash</a> (document de référence, versionné) · <a href="../ecrans/25-ou-acheter-un-bon.html" style="font-weight:800;color:var(--color-primary-dark)">Où acheter un Bon d’achat</a>.</span></div>
+      </div>
+    </details>
+
+    <!-- ②bis CE QUE TU ACHÈTES — pièce d'occasion authentifiée -->
+    <details class="lg-card" id="droits">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-shield"/></svg></span><b>Ce que tu achètes — une pièce d'occasion, contrôlée et authentifiée</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-li"><span class="p">·</span><span>Tu achètes une <b>pièce de seconde main</b> sélectionnée par AJEK. Le <b>niveau de vérification atteint</b> est indiqué <b>sur la fiche de la pièce</b> : photos et fiche vérifiées avant publication, contrôle de la pièce en atelier, ou <b>authentification</b> avec délivrance d'un <b>certificat</b> — selon le cas. Nous te vendons cette pièce en tant que <b>professionnel</b> — tu bénéficies donc de toutes les protections du consommateur.</span></div>
+        <div class="lg-li"><span class="p">·</span><span>Une pièce d'occasion <b>a vécu</b> : de légères traces d'usage, décrites et photographiées, font partie du produit et ne constituent pas un défaut. Ce qui n'est <b>pas conforme à la fiche</b>, en revanche, ouvre droit au <b>retour aux frais d'AJEK</b> (volet retour) et, le cas échéant, à la <b>garantie légale de conformité</b>.</span></div>
+      </div>
+    </details>
+
+    <!-- ③ DROIT DE RÉTRACTATION & RETOUR — LE VOLET CLÉ -->
+    <details class="lg-card" id="retour">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-arrow-left"/></svg></span><b>Droit de rétractation &amp; retour — <span class="lg-j">14</span> jours</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-art">Un droit, pas un geste commercial</div>
+        <div class="lg-li"><span class="p">·</span><span>Parce qu'AJEK te vend en tant que <b>professionnel</b> et à distance, tu disposes d'un <b>droit de rétractation de <span class="lg-j">14</span> jours</b> à compter de la <b>réception</b> de la pièce (art. <b>L221-18</b> du code de la consommation), <b>sans avoir à te justifier</b>. Les biens d'occasion vestimentaires <b>ne sont pas exclus</b> de ce droit.</span></div>
+        <div class="lg-art">Comment l'exercer</div>
+        <div class="lg-li"><span class="p">·</span><span>Depuis <b>Compte → Mes commandes → Retourner</b>, ou par un courrier/e-mail non équivoque à <b>assistance@payencash.fr</b>. Tu renvoies la pièce <b>dans son état</b> (non portée au-delà d'un essayage, étiquettes et certificat joints) sous <b><span class="lg-j">14</span> jours</b> après nous avoir informés, via l'<b>étiquette Mondial Relay</b> fournie.</span></div>
+        <div class="lg-art">Frais de retour</div>
+        <div class="lg-li"><span class="p">·</span><span><b>Offerts</b> si la pièce n'est <b>pas conforme</b> à sa fiche ou est défectueuse (notre erreur). <b>À ta charge</b> (art. L221-23) en cas de <b>simple changement d'avis</b> ou de taille — le coût de l'étiquette est alors déduit du remboursement.</span></div>
+        <div class="lg-art">Remboursement</div>
+        <div class="lg-li"><span class="p">·</span><span>Pour des raisons de <b>traçabilité (LCB-FT)</b>, un remboursement repart <b>par le chemin d'où l'argent est venu</b>. Tu choisis : <b>avoir immédiat</b> (valable Fly et Mode) ou <b>virement bancaire</b> (IBAN à ton nom). Un règlement par <b>Bon d’achat PayEnCash</b> est <b>re-crédité sur le bon d’achat</b> (le solde redevient utilisable, sa validité est prolongée si elle était passée). Un règlement par bon d’achat revient sur le bon (le solde redevient utilisable ; un bon ne se rembourse pas en espèces, ni sur une carte : c’est un ticket). Le remboursement intervient <b>au plus tard 14 jours</b> après réception de la pièce retournée et de son contrôle, ou dès que tu prouves l'expédition du retour.</span></div>
+        <div class="lg-mint"><b>Exceptions d'hygiène :</b> certaines pièces scellées pour raison d'hygiène (ex. sous-vêtements, boucles d'oreilles percées) ne peuvent être reprises une fois <b>descellées</b> (art. L221-28) — c'est signalé sur la fiche.</div>
+      </div>
+    </details>
+
+    <!-- ④ CGU — L'APPLICATION -->
+    <details class="lg-card" id="cgu">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-phone"/></svg></span><b>Conditions d'utilisation de l'app</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-art">Art. 1 — Accès et compte</div>
+        <div class="lg-li"><span class="p">·</span><span>L'app est <b>gratuite</b>. Parcourir la boutique est libre ; un compte (inscription par code SMS et code e-mail, sans mot de passe — ton téléphone est ton identifiant) est requis pour commander. Le compte est <b>personnel</b> : tu réponds des actions menées avec lui et nous signales sans délai tout usage non autorisé.</span></div>
+        <div class="lg-art">Art. 2 — Disponibilité et pièces uniques</div>
+        <div class="lg-li"><span class="p">·</span><span>Les pièces étant le plus souvent <b>uniques</b>, une pièce affichée peut être <b>réservée par un autre client</b> avant ta commande. En cas d'erreur de prix manifeste, la commande peut être annulée avant expédition et remboursée intégralement.</span></div>
+        <div class="lg-art">Art. 3 — Usage licite</div>
+        <div class="lg-li"><span class="p">·</span><span>L'app s'utilise pour des <b>achats personnels</b> — pas d'extraction automatisée, pas d'usage frauduleux. La marque, les textes, photos et le code restent la propriété d'AJEK ou de ses partenaires.</span></div>
+        <div class="lg-art">Art. 4 — Fin du compte</div>
+        <div class="lg-li"><span class="p">·</span><span>Tu peux <b>supprimer ton compte</b> à tout moment (Compte → confirmation par code SMS) : tes données personnelles sont effacées ; les factures de tes achats sont conservées la durée que la loi impose. AJEK peut suspendre un compte en cas de fraude, après information.</span></div>
+      </div>
+    </details>
+
+    <!-- ⑤ CONFIDENTIALITÉ (RGPD) -->
+    <details class="lg-card" id="confidentialite">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-shield"/></svg></span><b>Politique de confidentialité</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-art">Responsable et finalités</div>
+        <div class="lg-li"><span class="p">·</span><span><b>Responsable de traitement :</b> AJEK (coordonnées au volet Mentions légales). <b>Finalités et bases légales :</b> traiter ta commande et te livrer (<b>exécution du contrat</b>) ; facturation, comptabilité et lutte anti-blanchiment, dont le plafond espèces (<b>obligation légale</b>) ; assistance, retours et qualité (<b>intérêt légitime</b>) ; offres et bons plans (<b>consentement</b> — l'interrupteur « Communications » du Compte).</span></div>
+        <div class="lg-art">Données et destinataires</div>
+        <div class="lg-li"><span class="p">·</span><span><b>Encaissées :</b> identité (vérification à la 1ʳᵉ commande), coordonnées, adresse de relais, commandes et règlements. <b>Aucun fonds chez nous</b> — aucun numéro de carte ni RIB ne nous est demandé pour commander (ce que tu saisis est un code déjà prépayé, sécurisée : il reçoit les données nécessaires au paiement, nous ne recevons que sa confirmation. Aucun numéro de carte, aucun mandat de prélèvement ne t'est jamais demandé. Ton adresse de relais est <b>transmise au transporteur</b> (Mondial Relay) pour la livraison. Nous ne <b>revendons jamais</b> tes données.</span></div>
+        <div class="lg-art">Sécurité, durées, tes droits</div>
+        <div class="lg-li"><span class="p">·</span><span>Données <b>chiffrées (<span id="lg-chiffrement">AES-256</span>)</b>, aucune décision entièrement automatisée à effet juridique. <b>Durées :</b> le temps de ton compte ; les <b>factures <span id="lg-factures-ans">10</span> ans</b> (obligation comptable). Tu disposes des droits d'<b>accès, rectification, effacement, portabilité, limitation, opposition</b> : <b>assistance@payencash.fr</b> (réponse sous <span id="lg-rgpd-jours">30</span> jours) ; l'export de tes données se demande depuis le Compte (délai <span id="lg-export-h">48</span> h). Recours : la <b>CNIL</b> (cnil.fr).</span></div>
+      </div>
+    </details>
+
+    <!-- ⑥ COOKIES -->
+    <details class="lg-card" id="cookies">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-lock"/></svg></span><b>Cookies &amp; préférences</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-li"><span class="p">·</span><span>L'app n'utilise que le <b>strict nécessaire</b> au fonctionnement : ta session et tes préférences gardées <b>sur ton appareil</b> (favoris, panier, affichage). Ces traceurs strictement nécessaires sont <b>exemptés de consentement</b> (art. 82 loi Informatique et libertés) — d'où l'absence de bandeau à chaque ouverture.</span></div>
+        <div class="lg-li"><span class="p">·</span><span><b>Aucun cookie publicitaire, aucun traceur de tiers.</b> Si cela changeait, ton consentement serait recueilli avant tout dépôt.</span></div>
+      </div>
+    </details>
+
+    <!-- ⑦ MÉDIATION — CONSOMMATION (e-commerce), pas tourisme -->
+    <details class="lg-card" id="mediation">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-headset"/></svg></span><b>Litiges &amp; médiation</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-li"><span class="p">1</span><span>D'abord l'<b>Assistance</b> : une vraie personne répond au <b id="lg-tel2">—</b> (gratuit, <span id="lg-horaires">—</span>) — <span data-info="assistanceDelai">réponse sous 2 h ouvrées</span> ; toute réclamation écrite est enregistrée avec un numéro de suivi.</span></div>
+        <div class="lg-li"><span class="p">2</span><span>Non résolu → <b>le manager reprend le dossier</b>, réponse motivée sous <span data-info="managerDelai">48 h</span>, avec le cas échéant un geste commercial.</span></div>
+        <div class="lg-li"><span class="p">3</span><span>Réponse insatisfaisante ou <b><span data-info="mediateurDelai">60 jours</span></b> sans solution → tu peux saisir <b>gratuitement</b> un <b>médiateur de la consommation</b> (art. L612-1 du code de la consommation), dans les <b>12 mois</b> suivant ta réclamation écrite. Le médiateur compétent d'AJEK et ses coordonnées figurent sur la facture et sur payencash.fr.</span></div>
+        <div class="lg-li"><span class="p">·</span><span>La plateforme européenne de <b>règlement en ligne des litiges</b> (ODR) a été <b>fermée le 20 juillet 2025</b> (règlement (UE) 2024/3228) : la médiation ci-dessus est la voie amiable. Elle reste une faculté : tu restes libre de saisir les tribunaux.</span></div>
+        <div class="lg-mint">Le chemin complet d'une réclamation (délais, étapes, suivi) est détaillé sur <a href="17-politiques.html" style="font-weight:800;color:var(--color-primary-dark)">Nos politiques</a>.</div>
+      </div>
+    </details>
+
+    <div class="lg-warn"><b>⚠ Version de travail.</b> Ces textes sont rédigés à partir du droit applicable et des pratiques des meilleurs acteurs de la seconde main — ils doivent être <b>validés par un juriste</b> avant toute mise en ligne réelle.</div>
+
+    <a class="pec-btn-secondary tap" href="17-politiques.html" style="display:flex;align-items:center;justify-content:center;gap:7px;margin:10px 0 4px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-shield"/></svg> Nos politiques — commander, retourner, être remboursé</a>
+
+    <div style="height:10px"></div>
+  </div>
+
+    <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="10-tendances.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-flame"/></svg>Tendances</a>
+    <a class="pec-tab" href="22-livraisons.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-package"/></svg>Suivi</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Mode</a>
+    <a class="pec-tab" href="03-panier.html" style="position:relative"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-basket"/></svg>Commandes</a>
+    <a class="pec-tab" aria-current="page" href="08-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+  (function () {
+    var D = window.PEC_DATA; if (!D) return;
+    ['lg-tel', 'lg-tel2'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el && D.serviceClient) el.textContent = D.serviceClient.tel;
+    });
+    var set = function (id, v) { var el = document.getElementById(id); if (el && v !== undefined && v !== null && v !== '') el.textContent = String(v); };
+    // ── SOCIÉTÉ (ref.societe), RGPD (ref.rgpd), rétractation (mode.retour), CGV (CGV_VERSION), horaires (serviceClient) — jamais écrits ici
+    var S = (D.ref && D.ref.societe) || {}, G = (D.ref && D.ref.rgpd) || {}, R = (D.mode && D.mode.retour) || {};
+    var FORMES = { SAS: 'société par actions simplifiée', SASU: 'société par actions simplifiée unipersonnelle', SARL: 'société à responsabilité limitée', EURL: 'entreprise unipersonnelle à responsabilité limitée' };
+    set('lg-soc-nom', S.nom); set('lg-soc-capital', S.capital); /* (03/09) capital = D.ref.societe.capital, plus en dur */ set('lg-soc-forme', S.forme ? (FORMES[S.forme] || S.forme) : null); set('lg-soc-siege', S.siege); set('lg-soc-presidente', S.presidente);
+    set('lg-chiffrement', G.chiffrement); set('lg-factures-ans', G.facturesAns); set('lg-rgpd-jours', G.reponseJours); set('lg-export-h', G.exportDelaiH);
+    if (R.jours) [].forEach.call(document.querySelectorAll('.lg-j'), function (el) { el.textContent = R.jours; });
+    set('lg-cgv-version', D.CGV_VERSION); set('lg-horaires', D.serviceClient && D.serviceClient.horaires);
+    // garde au relais, délais manager/médiateur/assistance : infosPubliques() (audit 03/09 — l'appel manquait, les [data-info] restaient figés)
+    if (D.livraisonAppliquer) D.livraisonAppliquer(document);
+    /* (18/09 — Bon d’achat PayEnCash) LE BON D’ACHAT : plafonds et validité ([data-bon]), mentions du ticket, fondement et avertissement — bonsRef()
+       (valeurs vives : le manager règle bons d’achat.* en configuration). La page ÉCOUTE : un plafond modifié se relit sans recharger. */
+    function peindreBon() {
+      if (!D.bonsRef) return;
+      var R = D.bonsRef(), F = R.fondement || {}, e = function (t) { return D.esc ? D.esc(t) : String(t == null ? '' : t); };
+      // (18/09, soir) la fenêtre glissante et son plafond entrent au contrat : ils déclenchent la vérification d'identité
+      var vals = { plafondBon: D.eur(R.plafondBon), plafondClientJour: D.eur(R.plafondClientJour), plafondClientMois: D.eur(R.plafondClientMois), fenetrePlafondJours: String(R.fenetrePlafondJours), minimum: D.eur(R.minimum), validiteMois: String(R.validiteMois) };
+      [].forEach.call(document.querySelectorAll('[data-bon]'), function (el) { var v = vals[el.getAttribute('data-bon')]; if (v != null) el.textContent = v; });
+      var m = document.getElementById('lg-bon-mentions');
+      if (m) m.innerHTML = (R.mentions || []).map(function (t) { return '<div class="lg-li"><span class="p">·</span><span>' + e(t) + '</span></div>'; }).join('') || '<div class="lg-li"><span class="p">·</span><span>Mentions non renseignées.</span></div>';
+      var ex = document.getElementById('lg-bon-exemption'); if (ex) ex.innerHTML = '<b>Titre à usage limité :</b> ' + e(F.exemption || '—') + (F.horsMonnaieElectronique ? ' · ' + e(F.horsMonnaieElectronique) : '') + (F.declarationAcpr ? ' · ' + e(F.declarationAcpr) : '');
+      var tv = document.getElementById('lg-bon-tva'); if (tv) tv.innerHTML = '<b>TVA :</b> ' + e(F.tva || '—');
+      var av = document.getElementById('lg-bon-avert'); if (av) av.innerHTML = '<b>À valider par un avocat.</b> ' + e(F.avertissement || '');
+    }
+    peindreBon();
+    window.addEventListener('pec-bus', peindreBon);
+    window.addEventListener('storage', function (ev) { if (!ev.key || /^pec-param|^pec_bus_/.test(ev.key)) peindreBon(); });
+    var cible = (location.hash || '').replace('#', '');
+    if (cible) {
+      var d = document.getElementById(cible);
+      if (d && d.tagName === 'DETAILS') { d.open = true; setTimeout(function () { d.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60); }
+    } else {
+      var prem = document.getElementById('editeur');
+      if (prem) prem.open = true;
+    }
+  })();
+</script>
+<script>
+  // (17/09 — pivot ; 20/09 — « enlève la logique Neosurf ») les moyens de paiement se LISENT dans le référentiel
+  // (PEC_DATA.moyensPaiement) — le span .pec-moyens ne porte qu'un texte de repli. Le nom d'un prestataire en
+  // ligne (.pec-moyens-psp / .pec-psp-nom) n'a plus rien à remplir : ce rail est supprimé.
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.moyensPaiement) return;
+    if (D.moyensPaiementLabel) [].forEach.call(document.querySelectorAll('.pec-moyens'), function (e) { e.textContent = D.moyensPaiementLabel(); });
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conditions du bon d’achat PayEnCash (consommateur) · AJEK / PayEnCash</title>
+<style>
+  :root{
+    --ajek:#10A06A; --ajek-d:#0C7F54; --ink:#1a1f1c; --muted:#5b675f;
+    --line:#d9e5dd; --bg:#f4f7f5; --card:#ffffff; --chip:#e8f3ec;
+    --amber:#E39A2E; --amberink:#8a5a00; --amberbg:#FDF1E7;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --ink:#e8efe9; --muted:#9fb0a6; --line:#254034; --bg:#0d1512; --card:#121d18; --chip:#173026; --amberink:#e8c37a; --amberbg:#2a2410; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .sheet{max-width:860px;margin:28px auto;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,.06)}
+  header{background:linear-gradient(115deg,#0F2A24 0%,var(--ajek-d) 55%,var(--ajek) 100%);color:#fff;padding:26px 44px}
+  .brand{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.9}
+  header h1{margin:6px 0 2px;font-size:22px;line-height:1.25}
+  .doc-id{display:inline-block;margin-top:10px;background:rgba(255,255,255,.18);
+    padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.04em}
+  .body{padding:26px 44px 44px}
+  .note{background:var(--chip);border:1px solid var(--line);border-left:3px solid var(--ajek);
+    border-radius:8px;padding:12px 14px;font-size:13.5px;color:var(--muted);margin:0 0 16px}
+  .warn{background:var(--amberbg);border:1px solid var(--amber);border-left:4px solid var(--amber);
+    border-radius:8px;padding:12px 14px;font-size:13px;color:var(--amberink);margin:0 0 20px}
+  h2{font-size:15.5px;margin:26px 0 8px;color:var(--ajek-d);border-bottom:2px solid var(--line);padding-bottom:6px}
+  @media (prefers-color-scheme: dark){ h2{color:#5fd39a} }
+  table{width:100%;border-collapse:collapse;margin:6px 0;font-size:13.5px}
+  th,td{text-align:left;padding:7px 10px;border:1px solid var(--line);vertical-align:top}
+  th{background:var(--chip);font-weight:600;color:var(--ink)}
+  .kv th{width:30%}
+  ul,ol{margin:6px 0 6px 2px;padding-left:20px} li{margin:5px 0} p{margin:7px 0}
+  .cl{margin:6px 0}
+  .cl b{color:var(--ajek-d)} @media (prefers-color-scheme: dark){ .cl b{color:#5fd39a} }
+  .src{font-size:12px;color:var(--muted);background:var(--chip);border-radius:6px;padding:6px 10px;margin:4px 0 10px}
+  .src a{color:inherit}
+  .ticket{border:1.5px dashed var(--ajek-d);border-radius:10px;padding:14px 16px;margin:10px 0 16px;font-size:13.5px;background:var(--card)}
+  .ticket .t{font-weight:700;color:var(--ajek-d);margin-bottom:6px}
+  .ticket ol{margin:4px 0 0}
+  .toc{columns:2;column-gap:26px;font-size:13px;margin:6px 0 4px;padding:12px 16px;background:var(--chip);border:1px solid var(--line);border-radius:8px}
+  .toc a{display:block;color:var(--ink);text-decoration:none;margin:3px 0;break-inside:avoid}
+  .toc a:hover{color:var(--ajek);text-decoration:underline}
+  .foot{margin-top:26px;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;color:var(--muted)}
+  .toolbar{max-width:860px;margin:16px auto 0;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:0 8px}
+  .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;text-decoration:none}
+  .btn.p{background:var(--ajek);color:#fff;border-color:var(--ajek)}
+  code{background:var(--chip);padding:1px 5px;border-radius:4px;font-size:12px}
+  @media print{ body{background:#fff} .toolbar{display:none} .sheet{box-shadow:none;border:none;margin:0} h2{break-after:avoid} .cl{break-inside:avoid} .src{display:none} }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <a class="btn" href="diagramme-principal.html">🧭 Fil rouge</a>
+  <a class="btn" href="partie-5-docs-flux.html">← Étape 5 · Docs des flux</a>
+  <a class="btn" href="contrat-distribution-bons.html">Contrat de distribution</a>
+  <a class="btn" href="cgu-espace-partenaire.html">CGU espace partenaire</a>
+  <a class="btn" href="cgv-mode.html">CGV MODE</a>
+  <a class="btn p" href="#" onclick="window.print();return false">Imprimer / PDF</a>
+</div>
+
+<div class="sheet">
+  <header>
+    <div class="brand">AJEK · marque PayEnCash</div>
+    <!-- (18/09, soir) LE SOUS-TITRE PROMETTAIT UN MOYEN DE PAIEMENT AU NOM DU COMMERÇANT. Nous ne savons pas, et
+         nous n'avons pas à dire, comment le client règle au comptoir : c'est la vente du commerçant, avec les moyens
+         qu'il accepte. Ce que nous promettons, c'est de pouvoir payer AVEC UN BON D’ACHAT sur payencash.fr. -->
+    <h1>Conditions du bon d’achat PayEnCash<br><span style="font-size:15px;font-weight:400;opacity:.92">Bon d’achat prépayé, acheté au comptoir d'un commerçant partenaire, utilisable sur payencash.fr (Mode et Fly) — payer avec un bon d’achat</span></h1>
+    <span class="doc-id">Flux F4 · Conditions consommateur — version 2026-09-18 · annexe 1 du contrat de distribution · reprises sur chaque ticket</span>
+  </header>
+
+  <div class="body">
+    <p class="warn"><strong>Rédaction de maquette — v1 du 18/09/2026, révisée le soir même — à faire relire par un avocat avant publication.</strong> Ce texte s'adresse au client (tutoiement de la marque). Les cinq mentions du ticket sont celles du référentiel <code>ref.bons.mentions</code> de <code>PEC_DATA</code>, reprises telles quelles ; l'émetteur et le service client viennent de <code>ref.societe</code> et <code>ref.serviceClient</code>. Les valeurs chiffrées (5 €, 250 €, 1 000 € par jour, 1 000 € sur 30 jours glissants, 12 mois) sont celles de <code>ref.bons</code> — ajustables par le manager, le ticket imprimé fait foi de la validité de CE bon d’achat.</p>
+
+    <div class="ticket">
+      <div class="t">Les mentions imprimées sur chaque ticket (référentiel <code>ref.bons.mentions</code>)</div>
+      <ol>
+        <li>Bon d’achat prépayé, utilisable uniquement sur payencash.fr (Mode et Fly), en une ou plusieurs fois, jusqu'à épuisement du solde.</li>
+        <li>Valable 12 mois à compter de la date d'émission ; passé ce délai, le solde restant est perdu.</li>
+        <li>Ni échangeable, ni remboursable en espèces, ne donne lieu à aucun rendu de monnaie ; en cas de remboursement d'une commande, le montant est re-crédité sur le bon d’achat.</li>
+        <li>Le code du ticket vaut titre : conservez-le, il ne sera pas remplacé en cas de perte ou de vol.</li>
+        <li>Solde consultable dans le compte client après la première utilisation.</li>
+      </ol>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">+ sur le ticket : enseigne et adresse du commerçant, date et heure, montant, code en grand + QR, n° de ticket <code>BV-…</code>, « valable jusqu'au », émetteur AJEK SAS · SIREN 107 398 448 · 16 route de la Plage, 13700 Marignane, service client. Source unique : <code>bonTicketHTML</code> (partenaire/03 et manager/41).</div>
+    </div>
+
+    <h2>Sommaire</h2>
+    <nav class="toc">
+      <a href="#a1">1 — Ce qu'est le Bon d’achat PayEnCash</a>
+      <a href="#a2">2 — Montant et achat</a>
+      <a href="#a3">3 — Validité</a>
+      <a href="#a4">4 — Utilisation, en une ou plusieurs fois</a>
+      <a href="#a5">5 — Ni échange, ni remboursement en espèces</a>
+      <a href="#a6">6 — Remboursement d'une commande : le re-crédit</a>
+      <a href="#a7">7 — Perte, vol, blocage</a>
+      <a href="#a8">8 — Consulter ton solde</a>
+      <a href="#a9">9 — Réclamation et médiateur</a>
+      <a href="#a10">10 — L'émetteur</a>
+    </nav>
+
+    <h2 id="a1">1 — Ce qu'est le Bon d’achat PayEnCash</h2>
+    <p class="cl">Le Bon d’achat PayEnCash est un <strong>bon d’achat prépayé à montant libre</strong>, émis par <strong>AJEK SAS</strong> (marque PayEnCash). Tu l'achètes <strong>au comptoir</strong> d'un commerçant partenaire — tu le règles comme tu veux, avec les moyens que <em>ce</em> commerçant accepte —, tu repars avec un <strong>ticket imprimé</strong> qui porte un <strong>code unique</strong>, et tu l'utilises pour régler tes commandes <strong>sur payencash.fr uniquement</strong> — la boutique Mode et les voyages Fly. Il n'est accepté nulle part ailleurs : ni chez le commerçant qui l'a vendu, ni dans un autre commerce.</p>
+    <p class="cl">Le même bon d’achat existe en <strong>version cadeau</strong> : émis par PayEnCash (pas par un commerçant), il s'offre et s'utilise exactement de la même façon.</p>
+    <p class="cl"><strong>Un bon d’achat suffit</strong> pour l'acheter ni pour l'utiliser : c'est tout l'objet du Bon d’achat PayEnCash.</p>
+    <p class="src">Fondement : moyen de paiement accepté uniquement « dans les locaux de cette entreprise » — la boutique en ligne d'AJEK — au sens de l'art. L521-3, I, 1° du code monétaire et financier (<a href="https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000035430673" target="_blank" rel="noopener">Légifrance</a>) ; ce n'est pas de la monnaie électronique (art. L315-1 CMF, <a href="https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000027007558" target="_blank" rel="noopener">Légifrance</a>). Détail : <a href="partie-2-juridique-socle.html#bon">Étape 3 §2b</a>.</p>
+
+    <h2 id="a2">2 — Montant et achat</h2>
+    <!-- (18/09, soir) LE CODE NAÎT DU PAIEMENT, ET LE PAIEMENT NE SE QUALIFIE PAS. On ne dit plus « le commerçant
+         encaisse les espèces » : on dit qu'il encaisse le montant, ce qui est vrai quel que soit le moyen employé. -->
+    <p class="cl">Tu choisis le montant, entre <strong>5 €</strong> et <strong>250 €</strong> par bon d’achat (référentiel <code>ref.bons.minimum</code> / <code>plafondBon</code>). Le commerçant encaisse le montant, puis l'application génère le code : <strong>aucun bon d’achat n'est émis avant que tu aies payé</strong>. Le prix du bon d’achat est son montant — <strong>pas de frais</strong> à l'achat. Si tu as besoin de plus de 250 €, demande <strong>plusieurs bons d’achat</strong> : tu les saisiras l'un après l'autre.</p>
+    <p class="cl">L'achat se fait en personne, au comptoir : il n'y a pas de droit de rétractation sur cet achat (il ne s'agit pas d'une vente à distance). Le commerçant peut annuler un bon d’achat émis par erreur dans les <strong>30 minutes</strong>, s'il n'a pas été utilisé — sinon, adresse-toi au service client.</p>
+    <p class="src">Sources : art. L112-6 CMF — le règlement au comptoir relève du commerçant et des moyens qu'il accepte ; le plafond de 250 € par bon d’achat est une <strong>règle interne</strong> de PayEnCash (<code>ref.bons</code>). Contrat à distance défini à l'art. L221-1 du code de la consommation — l'achat au comptoir en présence physique n'en est pas un. <strong>À valider par l'avocat.</strong></p>
+
+    <h2 id="a3">3 — Validité</h2>
+    <p class="cl">Le bon d’achat est valable <strong>12 mois</strong> à compter de sa date d'émission (référentiel <code>ref.bons.validiteMois</code>) ; la date limite est imprimée sur le ticket (« valable jusqu'au ») et visible dans ton compte. <strong>Passé ce délai, le solde restant est perdu</strong> : il n'est ni prolongé, ni remboursé.</p>
+    <p class="src">Sort des soldes expirés (produit d'AJEK après 12 mois) — <strong>à valider par l'avocat</strong> (Étape 3 §2b).</p>
+
+    <h2 id="a4">4 — Utilisation, en une ou plusieurs fois</h2>
+    <p class="cl">Au moment de payer une commande (« Comment payer »), choisis <strong>Bon d’achat PayEnCash</strong>, saisis le code du ticket, vérifie le solde affiché, puis :</p>
+    <ul>
+      <li>si le bon d’achat couvre toute la commande, <strong>elle est réglée immédiatement</strong> ;</li>
+      <li>sinon, la part du bon d’achat est déduite et tu <strong>règles le reste</strong> avec l'autre moyen avec un bon d’achat : un <strong>Bon d’achat PayEnCash</strong>, acheté dans un commerce du réseau de distribution et saisi en ligne ; en Mode, le bon d’achat s'applique aussi depuis le panier.</li>
+    </ul>
+    <p class="cl">Le solde non utilisé <strong>reste sur le même code</strong> pour tes achats suivants, jusqu'à épuisement ou expiration. Un compte client vérifié (SMS + e-mail) est nécessaire pour commander ; le bon d’achat est rattaché à ton compte à sa première utilisation. Tu ne peux pas utiliser plus de <strong>1 000 € de bons d’achat par jour</strong>, ni plus de <strong>1 000 € sur 30 jours glissants</strong> (référentiel <code>ref.bons.plafondClientJour</code>, <code>plafondClientMois</code>, <code>fenetrePlafondJours</code>) — l'application te dit ce qu'il te reste avant de refuser.</p>
+    <p class="src">Dans l'app : <code>bonValider</code> (motifs de refus affichés : inconnu, annulé, bloqué, expiré, épuisé, plafond du jour), <code>bonAppliquer</code> (bus) ou <code>panierBonAppliquer</code> (Mode), règlement <code>payer(..., par:'bon')</code> quand le bon d’achat couvre tout. Écrans <code>fly/01</code>, <code>mode/05</code>, <code>mode/03</code>.</p>
+
+    <h2 id="a5">5 — Ni échange, ni remboursement en espèces</h2>
+    <!-- (18/09, soir) « NI PAR UN AGENT » N'A PLUS DE SENS : l'agent de caisse qui se déplaçait chez le client est
+         supprimé le 18/09 au soir. Il ne reste que deux moyens achetés au comptoir d'un commerce, le Bon d’achat
+         PayEnCash et le Bon d’achat PayEnCash. -->
+    <p class="cl">Le bon d’achat n'est <strong>ni échangeable, ni revendable, ni remboursable en espèces</strong>, même partiellement, et ne donne lieu à <strong>aucun rendu de monnaie</strong> — ni par le commerçant qui te l'a vendu, ni par PayEnCash. Il ne peut pas servir à acheter un autre bon d’achat.</p>
+
+    <h2 id="a6">6 — Remboursement d'une commande : le re-crédit</h2>
+    <p class="cl">Si une commande réglée (en tout ou partie) avec un bon d’achat est annulée ou remboursée — annulation, rétractation sur la ligne Mode, réclamation acceptée — le montant remboursé est <strong>re-crédité sur le bon d’achat</strong>, dans la limite de ce qui avait été débité par cette commande. Le solde re-crédité reste utilisable jusqu'à la date de validité du bon d’achat. Le reste de la commande, réglé par un autre moyen, suit les règles de ce moyen : pour un règlement soldé par un avoir, <strong>virement</strong> sur le RIB que tu communiques — le prestataire ne rembourse pas un ticket.</p>
+    <p class="src">Dans l'app : <code>rembourser(ref, {mode:'bon'})</code> → <code>bonRecrediter</code>, journal <code>bon_recredite</code> ; manager <code>12-commande-detail</code>. Circuit F10 (<a href="partie-4-flux.html">Étape 4</a>).</p>
+
+    <h2 id="a7">7 — Perte, vol, blocage</h2>
+    <p class="cl"><strong>Le code du ticket vaut titre</strong> : conserve-le comme des espèces. Un ticket perdu ou volé <strong>n'est pas remplacé</strong> et son solde n'est pas restitué. Si le bon d’achat a déjà été utilisé une fois sur ton compte, tu peux demander au service client de le <strong>bloquer</strong> : PayEnCash peut bloquer un bon d’achat en cas de perte, de vol ou de fraude, et le débloquer après vérification.</p>
+    <p class="src">Dans l'app : <code>bonBloquer</code> / <code>bonDebloquer</code> (manager, motif obligatoire), <code>ui/manager/41-cartes-cadeaux.html</code>.</p>
+
+    <h2 id="a8">8 — Consulter ton solde</h2>
+    <p class="cl">Après la première utilisation, le bon d’achat apparaît dans ton compte (« Mes Bons d’achat PayEnCash ») avec son solde et sa date d'expiration, code masqué. Avant la première utilisation, le solde se vérifie en saisissant le code sur « Comment payer » (bouton « Vérifier »), sans rien débiter.</p>
+
+    <h2 id="a9">9 — Réclamation et médiateur</h2>
+    <p class="cl">Pour toute question ou réclamation : service client PayEnCash, <strong>assistance@payencash.fr</strong> · <strong>0 805 626 626</strong> (appel gratuit, 8 h–20 h en semaine · 8 h–22 h le week-end). Réponse sous 15 jours. Si la réponse ne te satisfait pas, tu peux saisir gratuitement <strong>un médiateur de la consommation</strong> dont les coordonnées figurent aux conditions générales de vente en vigueur (voyages : Médiateur du Tourisme et du Voyage, mtv.travel ; ligne Mode : médiateur désigné aux CGV Mode).</p>
+    <p class="src">Sources : art. L612-1 du code de la consommation (accès gratuit à un médiateur) ; coordonnées : <code>ref.serviceClient</code>, <code>ref.juridique.mediationConso</code>, <a href="partie-5-docs-flux.html">Étape 5 §2 (clause MTV)</a>, <a href="cgv-mode.html">CGV MODE</a>.</p>
+
+    <h2 id="a10">10 — L'émetteur</h2>
+    <table class="kv">
+      <tr><th>Émetteur du Bon d’achat PayEnCash</th><td><strong>AJEK SAS</strong> — marque PayEnCash · SIREN 107 398 448 · RCS Aix-en-Provence · 16 route de la Plage, 13700 Marignane · TVA intracommunautaire FR59107398448 (référentiel <code>ref.societe</code>)</td></tr>
+      <tr><th>Le commerçant qui vend le bon d’achat</th><td>Un commerce partenaire lié à AJEK par un <a href="contrat-distribution-bons.html">contrat de distribution</a> : il vend le bon d’achat au nom et pour le compte d'AJEK, il n'encaisse pas tes commandes et ne peut ni les rembourser, ni reprendre un bon d’achat. AJEK est réglée <strong>à l'instant même de la vente</strong> : le commerçant ne détient jamais son argent.</td></tr>
+      <tr><th>Où acheter un bon d’achat</th><td>La liste des commerces partenaires est dans l'app (« Où acheter un bon d’achat PayEnCash »). <i>(20/09 : il n'y a plus d'autre réseau à distinguer.)</i> (réseau de distribution et n'ont <strong>aucun lien contractuel</strong> avec AJEK : le Bon d’achat PayEnCash est l'autre moyen de payer avec un bon d’achat, il se saisit en ligne.</td></tr>
+      <tr><th>Version</th><td>2026-09-18 — une nouvelle version s'applique aux bons d’achat émis après sa date ; le ticket porte les conditions en vigueur à l'émission.</td></tr>
+    </table>
+
+    <p class="note"><b>Ce document est référencé par l'application</b> (<code>PEC_DATA.ref.documents.partenaire</code>, clé <code>conditions-bon</code>, version 2026-09-18) : annexe 1 du contrat de distribution, lié depuis les informations légales des apps (<code>ui/ecrans/18-informations-legales.html</code>, <code>ui/mode/18-informations-legales.html</code>, section « Conditions du bon d’achat PayEnCash »).</p>
+
+    <p class="foot"><strong>AJEK · marque PayEnCash</strong> — conditions du bon d’achat PayEnCash (flux F4), version 2026-09-18 révisée le soir du 18/09. Documents liés : <a href="contrat-distribution-bons.html">contrat de distribution</a> · <a href="cgu-espace-partenaire.html">CGU espace partenaire</a> · <a href="cgv-mode.html">CGV ligne MODE</a> · <a href="partie-2-juridique-socle.html#bon">Étape 3 §2b</a> · source commerciale recoupée : <a href="sources/README.md">sources/guide_conformite_cartes_cadeaux.pdf</a>. Modèle non figé — à faire relire par un avocat avant publication.</p>
+  </div>
+</div>
+</body>
+</html>

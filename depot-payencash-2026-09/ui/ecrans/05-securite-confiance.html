@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Sécurité & confiance</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<!-- Page info « Sécurité & confiance » — calquée sur app/(info)/securite/page.tsx.
+     (17/09 — pivot) « Paiement 100 % en espèces » était faux depuis que le paiement en ligne existe :
+     la promesse tenue, c'est « un bon d’achat suffit ». La borne et le commerce qui encaissait ont disparu
+     (un commerçant tiers qui encaisse pour AJEK est illégal).
+     (18/09, soir — l'agent de caisse mobile est abandonné) DEUX GARANTIES SONT TOMBÉES AVEC LUI : la carte
+     « Agent identifié & suivi en direct » (position en temps réel, code de sécurité, photo de preuve, notation
+     1-5★) et le partenaire « Agents PayEnCash » qui encaissait à domicile. Le plafond légal du paiement d'une
+     dette en espèces et son complément carte partent aussi : ils ne visaient que les billets comptés par
+     l'agent.
+     (18/09, soir — pivot de positionnement) LA PROMESSE TENUE EST « UN BON D’ACHAT SUFFIT ».
+     Elle est plus simple à garantir que « payer en espèces », et elle est vérifiable à l'écran : il n'existe
+     aucun champ de carte, de RIB ou de compte dans l'app. Comment le client règle son code chez son
+     commerçant ne nous regarde pas et n'est plus écrit ici. Les libellés sont DÉRIVÉS (moyensPaiementLabel). -->
+<style>
+  .h1{font-size:23px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;color:var(--color-ink);margin:14px 0 6px}
+  .h1 em{font-style:normal;color:var(--color-primary)}
+  .lead{font-size:14.5px;font-weight:500;line-height:1.5;color:var(--color-muted);margin:0 0 4px}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;background:var(--color-surface)">
+
+<div style="padding:18px 20px 0">
+  <a href="01-accueil.html" class="tap" aria-label="Retour" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)">
+    <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-chevron-left"/></svg>
+  </a>
+  <h1 class="h1">Voyagez<br><em>l'esprit libre.</em></h1>
+  <p class="lead">Pas de carte. Pas de compte bancaire. Pas de prise de tête. Voici ce qu'on te garantit.</p>
+</div>
+
+    <div class="pec-info-body">
+      <div style="display:flex;flex-direction:column;gap:12px">
+
+        <div class="pec-info-card">
+          <div style="margin-bottom:8px;display:flex;align-items:center;gap:12px">
+            <span style="display:flex;height:36px;width:36px;flex-shrink:0;align-items:center;justify-content:center;border-radius:11px;background:color-mix(in srgb,var(--color-primary) 10%,transparent);color:var(--color-primary)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-banknote"/></svg></span>
+            <span style="font-size:14.5px;font-weight:700;color:var(--color-ink)">Un bon d’achat, vraiment</span>
+          </div>
+          <p style="font-size:13px;line-height:1.6;color:var(--color-muted)">On ne te demande jamais ton numéro de carte. Pas à l'inscription, pas à la réservation, jamais — il n'y a pas de champ pour ça. Tu règles avec un bon d’achat, acheté au choix : <strong class="js-moyens">—</strong> — deux <strong>codes prépayés</strong> achetés chez un commerçant, qu'il te suffit ensuite de saisir. <strong>Un bon d’achat suffit</strong> : pas de carte, pas de RIB à nous confier, pas de compte à prouver.</p>
+          <p style="margin-top:10px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--color-ink)"><svg class="pec-ico" viewBox="0 0 24 24" style="flex-shrink:0"><use href="#i-check"/></svg> Aucune donnée de paiement stockée chez nous — le paiement en ligne se passe chez le prestataire, nous n'en recevons que la confirmation.</p>
+        </div>
+
+        <div class="pec-info-card">
+          <div style="margin-bottom:8px;display:flex;align-items:center;gap:12px">
+            <span style="display:flex;height:36px;width:36px;flex-shrink:0;align-items:center;justify-content:center;border-radius:11px;background:color-mix(in srgb,var(--color-primary) 10%,transparent);color:var(--color-primary)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-clock"/></svg></span>
+            <span style="font-size:14.5px;font-weight:700;color:var(--color-ink)">Pas encaissé = pas débité</span>
+          </div>
+          <p style="font-size:13px;line-height:1.6;color:var(--color-muted)">Ta commande bloque le prix, rien de plus. Tant que ton règlement n'a pas été confirmé — code du bon d’achat accepté, ou notification du prestataire — tu ne dois absolument rien. Si tu ne paies pas, la réservation s'annule toute seule, sans frais.</p>
+          <p style="margin-top:10px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--color-ink)"><svg class="pec-ico" viewBox="0 0 24 24" style="flex-shrink:0"><use href="#i-check"/></svg> Zéro engagement avant le règlement.</p>
+        </div>
+
+        <!-- (18/09, soir — l'agent de caisse mobile est abandonné) ICI SE TROUVAIT « Agent identifié & suivi en
+             direct » : position en temps réel jusqu'à la porte, code de sécurité, photo de preuve, notation 1-5★.
+             Toutes ces garanties protégeaient un face-à-face qui n'a plus lieu. Ce qui les remplace dit la même
+             chose en plus fort : il n'y a RIEN à protéger chez le client, parce que rien ne s'y passe. -->
+        <div class="pec-info-card">
+          <div style="margin-bottom:8px;display:flex;align-items:center;gap:12px">
+            <span style="display:flex;height:36px;width:36px;flex-shrink:0;align-items:center;justify-content:center;border-radius:11px;background:color-mix(in srgb,var(--color-primary) 10%,transparent);color:var(--color-primary)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-store"/></svg></span>
+            <span style="font-size:14.5px;font-weight:700;color:var(--color-ink)">Personne ne vient chez toi</span>
+          </div>
+          <p style="font-size:13px;line-height:1.6;color:var(--color-muted)">Aucun rendez-vous, aucune adresse à donner, personne à attendre. Tu achètes ton code <strong>chez un commerçant</strong>, au montant que tu veux, et tu le saisis quand ça t'arrange. Un code non utilisé garde sa valeur.</p>
+          <p style="margin-top:10px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--color-ink)"><svg class="pec-ico" viewBox="0 0 24 24" style="flex-shrink:0"><use href="#i-check"/></svg> Aucun déplacement · aucune adresse à donner · un bon d’achat suffit.</p>
+        </div>
+
+        <div class="pec-info-card">
+          <div style="margin-bottom:8px;display:flex;align-items:center;gap:12px">
+            <span style="display:flex;height:36px;width:36px;flex-shrink:0;align-items:center;justify-content:center;border-radius:11px;background:color-mix(in srgb,var(--color-primary) 10%,transparent);color:var(--color-primary)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-user"/></svg></span>
+            <span style="font-size:14.5px;font-weight:700;color:var(--color-ink)">Vérification d'identité progressive (KYC)</span>
+          </div>
+          <p style="font-size:13px;line-height:1.6;color:var(--color-muted)">Parce que nous encaissons des titres prépayés et anonymes, la loi nous demande de savoir qui paie au-delà d'un certain montant : ton identité est vérifiée de façon progressive. Une vérification standard suffit pour commencer. Au-delà de <strong data-kyc="achats">3 achats</strong> ou de <strong><span data-kyc="cumul">1 000 € cumulés</span> sur <span data-kyc="jours">7 jours glissants</span></strong>, une vérification renforcée t'est demandée, réalisée par un prestataire certifié PVID. Ce mécanisme prévient aussi les tentatives de fractionnement d'une même transaction.</p>
+          <p style="margin-top:10px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--color-ink)"><svg class="pec-ico" viewBox="0 0 24 24" style="flex-shrink:0"><use href="#i-check"/></svg> Vérification proportionnée · anti-fractionnement · prestataire certifié PVID.</p>
+        </div>
+
+        <div class="pec-info-card">
+          <div style="margin-bottom:8px;display:flex;align-items:center;gap:12px">
+            <span style="display:flex;height:36px;width:36px;flex-shrink:0;align-items:center;justify-content:center;border-radius:11px;background:color-mix(in srgb,var(--color-primary) 10%,transparent);color:var(--color-primary)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-lock"/></svg></span>
+            <span style="font-size:14.5px;font-weight:700;color:var(--color-ink)">Confidentialité de tes données</span>
+          </div>
+          <p style="font-size:13px;line-height:1.6;color:var(--color-muted)">Tes données personnelles servent uniquement à émettre ton billet et à sécuriser ton règlement. (18/09) Nous ne collectons plus ni position ni photo d'encaissement : il n'y a plus de rendez-vous à documenter. Ce qui reste est chiffré, à rétention limitée, et n'est jamais revendu.</p>
+          <p style="margin-top:10px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--color-ink)"><svg class="pec-ico" viewBox="0 0 24 24" style="flex-shrink:0"><use href="#i-check"/></svg> Conforme au RGPD. Aucune revente de données.</p>
+        </div>
+
+        <div class="pec-info-card">
+          <div style="margin-bottom:8px;display:flex;align-items:center;gap:12px">
+            <span style="display:flex;height:36px;width:36px;flex-shrink:0;align-items:center;justify-content:center;border-radius:11px;background:color-mix(in srgb,var(--color-primary) 10%,transparent);color:var(--color-primary)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-shield"/></svg></span>
+            <span style="font-size:14.5px;font-weight:700;color:var(--color-ink)">Intermédiaire — tu choisis, on facilite le paiement</span>
+          </div>
+          <p style="font-size:13px;line-height:1.6;color:var(--color-muted)">PayEnCash (AJEK) est un <strong>intermédiaire</strong> : tu sélectionnes <strong>toi-même ton vol et ton hôtel</strong>, et nous <strong>rendons le paiement possible avec un bon d’achat</strong>. Ce ne sont pas des offres fermes : chaque prestation est celle que tu choisis, réservée auprès de la compagnie et de l'hôtel — PayEnCash <strong>n'est pas une agence de voyage</strong> et ne vend pas de forfait.</p>
+          <p style="margin-top:10px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--color-ink)"><svg class="pec-ico" viewBox="0 0 24 24" style="flex-shrink:0"><use href="#i-check"/></svg> Activité d'intermédiation de services de voyage et de tourisme (NAF 7990Z).</p>
+        </div>
+      </div>
+
+      <h2 class="pec-h2" style="margin:32px 0 12px">Avec qui nous travaillons</h2>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="pec-info-card" style="padding:12px 16px"><p style="font-size:13.5px;font-weight:700;color:var(--color-ink)">Billetterie aérienne agréée IATA</p><p style="margin-top:2px;font-size:12.5px;line-height:1.5;color:var(--color-muted)">Tes billets sont émis par une plateforme de billetterie agréée IATA — plus de 200 compagnies aériennes, les mêmes billets que partout ailleurs.</p></div>
+        <div class="pec-info-card" style="padding:12px 16px"><p style="font-size:13.5px;font-weight:700;color:var(--color-ink)">Centrale hôtelière mondiale</p><p style="margin-top:2px;font-size:12.5px;line-height:1.5;color:var(--color-muted)">Tes nuits sont réservées auprès d'une centrale de réservation hôtelière de rang mondial — 180 000 hôtels dans 185 pays.</p></div>
+        <div class="pec-info-card" style="padding:12px 16px"><p style="font-size:13.5px;font-weight:700;color:var(--color-ink)">Prestataire de paiement en ligne</p><p style="margin-top:2px;font-size:12.5px;line-height:1.5;color:var(--color-muted)">Ce que tu saisis pour payer est le code d’un bon déjà prépayé : nous ne voyons ni ne conservons aucune donnée de paiement, et ta commande ne passe en réglée que lorsqu'il nous confirme l'encaissement, de serveur à serveur.</p></div>
+        <!-- (18/09, soir) « Agents PayEnCash » a quitté cette liste : le réseau avec qui nous travaillons désormais
+             est celui des COMMERÇANTS qui vendent le Bon d’achat — sous contrat de distribution, pas d'encaissement. -->
+        <div class="pec-info-card" style="padding:12px 16px"><p style="font-size:13.5px;font-weight:700;color:var(--color-ink)">Commerçants partenaires</p><p style="margin-top:2px;font-size:12.5px;line-height:1.5;color:var(--color-muted)">Des commerces sous <b>contrat de distribution</b> qui vendent le Bon d’achat PayEnCash à leur comptoir. Ils vendent pour leur propre compte — ils n'encaissent jamais une commande pour le nôtre. <a href="25-ou-acheter-un-bon.html" style="color:var(--color-primary-dark);font-weight:700">Le réseau</a>.</p></div>
+        <div class="pec-info-card" style="padding:12px 16px"><p style="font-size:13.5px;font-weight:700;color:var(--color-ink)">Opérateur SMS &amp; email européen</p><p style="margin-top:2px;font-size:12.5px;line-height:1.5;color:var(--color-muted)">Envoi des SMS de confirmation et des codes de connexion par un opérateur européen conforme au RGPD — la liste de nos sous-traitants figure dans la politique de confidentialité.</p></div>
+      </div>
+
+      <div class="pec-info-cta" style="margin-top:28px">
+        <p class="t">Prêt à voyager en toute confiance ?</p>
+        <p class="s">Glisse ton budget. On s'occupe du reste.</p>
+        <a href="01-accueil.html" class="tap">Trouver mon voyage <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-arrow-right"/></svg></a>
+      </div>
+    </div>
+
+    <nav class="pec-tabbar" aria-label="Navigation principale">
+      <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+      <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+      <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+      <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+      <a class="pec-tab" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+    </nav>
+  </div>
+<!-- remplissage commun (07/09) : PEC_DATA.formulairesAppliquer, au chargement -->
+<script>
+// (17/09 — pivot) les moyens proposés dans le pays du client : dérivés, jamais écrits dans la page
+// (18/09, soir) la page les ÉCOUTE : c'est la seule phrase de garantie qui nomme des moyens, elle ne doit
+// jamais promettre un moyen retiré du référentiel.
+(function () {
+  var D = window.PEC_DATA; if (!D || !D.moyensPaiementLabel) return;
+  function peindre() { var t = D.moyensPaiementLabel(); if (!t) return; [].forEach.call(document.querySelectorAll('.js-moyens'), function (e) { e.textContent = t; }); }
+  peindre();
+  window.addEventListener('pec-bus', peindre);
+  window.addEventListener('storage', function (e) { if (!e.key || /^pec/.test(e.key)) peindre(); });
+})();
+</script>
+</div>
+</div>
+</body>
+</html>

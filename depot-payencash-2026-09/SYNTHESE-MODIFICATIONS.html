@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>AJEK — Synthèse des modifications</title>
+<script src="https://unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
+<script>window.addEventListener('load',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,theme:'neutral'});}});</script>
+<style>
+  :root{--forest:#0A4A3A;--green:#0F6E56;--moss:#6FBFA0;--ink:#1a2420;--muted:#5b6b64;--line:#dfe7e3;}
+  *{box-sizing:border-box;}
+  body{font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--ink);line-height:1.5;margin:0;font-size:13px;}
+  .page{max-width:800px;margin:0 auto;padding:28px 34px;}
+  h1{color:var(--forest);font-size:23px;margin:0 0 2px;}
+  h2{color:var(--green);font-size:16px;border-bottom:2px solid var(--moss);padding-bottom:4px;margin:22px 0 10px;}
+  h3{color:var(--forest);font-size:13.5px;margin:14px 0 4px;}
+  .sub{color:var(--muted);font-size:12px;margin:0 0 6px;}
+  table{border-collapse:collapse;width:100%;font-size:11.5px;margin:8px 0;}
+  th,td{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top;}
+  th{background:#f2f7f5;color:var(--forest);}
+  .mermaid{margin:10px 0;text-align:center;}
+  .box{background:#f6faf8;border:1px solid var(--line);border-left:3px solid var(--green);padding:8px 12px;margin:8px 0;font-size:12px;border-radius:4px;}
+  b{color:var(--forest);}
+  ul{margin:6px 0;padding-left:18px;}li{margin:2px 0;}
+  .foot{color:var(--muted);font-size:10.5px;border-top:1px solid var(--line);margin-top:16px;padding-top:6px;}
+  @media print{.page{padding:14mm;max-width:none;}.pb{page-break-before:always;}h2{page-break-after:avoid;}table,.mermaid,.box{page-break-inside:avoid;}}
+</style>
+</head>
+<body>
+<!-- (18/09, soir) CE BANDEAU EST LA PREMIÈRE CHOSE QU'ON LIT : tant qu'il annonçait un agent salarié et un
+     reversement mensuel, tout le reste de la note se lisait à l'envers, même corrigé. Il porte désormais les
+     deux décisions du soir — l'agent supprimé, le prélèvement à la vente — avant tout autre paragraphe. -->
+<div style="background:#E6F4EC;border:2px dashed #0C7F54;border-radius:10px;padding:10px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#0F2A24"><b>⚠️ À lire d'abord — cette note d'août a été dépassée deux fois :</b> elle décrit un modèle avec un point d'encaissement (commerçant partenaire, borne, <code>pickup_point</code>, <code>cash_at_pickup</code>). <b>17/09</b> : plus ni point ni borne — le client <b>paie sans carte bancaire</b>. <b>18/09</b> : le commerçant partenaire <b>revient, autrement</b> — il <b>vend le Bon d’achat PayEnCash</b> (titre prépayé émis par AJEK, 5–250 €, ticket imprimé — moyen de paiement à usage limité, art. L521-3 CMF) et n'encaisse jamais une commande. <b>18/09 au soir</b>, deux décisions qui périment encore une partie de ce qui suit : ① <b>l'agent de caisse mobile est supprimé</b> — plus de courses, de zones, de flotte, de planning, de paie d'agents, de tournées, de dépôts d'espèces, de rendu de monnaie, ni de plafond découpé en « espèces + complément carte » ; il reste <b>deux moyens, achetés au comptoir d'un commerce</b> : le Bon d’achat PayEnCash (notre réseau, sous contrat) et le Bon d’achat PayEnCash (réseau de distribution, hors contrat, réglé en ligne par notre couche de données — tables <code>psp_transactions</code>, <code>psp_delivery_confirmations</code>). ② <b>le reversement mensuel est abandonné</b> : à chaque vente, la carte bancaire enregistrée du commerce est <b>prélevée</b> du montant du bon d’achat moins sa commission (prestataire Stripe) — plus de créance, plus d'échéance, plus de relance ; il reste un <b>relevé mensuel</b> et l'autofacture de commission (art. 289 CGI). Tables : <code>partners</code>, <code>partner_cards</code>, <code>partner_charges</code>, <code>gift_cards</code>, <code>gift_card_movements</code>, vue <code>v_partner_monthly_statements</code>. Références à jour : <a href="ESPACE-COMMERCANT/documents/partie-4-flux.html">Étape 4 — flux</a>, <a href="ESPACE-COMMERCANT/documents/partie-6-donnees.html">Étape 6 — données</a>, <a href="ESPACE-COMMERCANT/documents/partie-2-juridique-socle.html#bon">Étape 3 §2b</a>, <a href="ESPACE-COMMERCANT/documents/contrat-distribution-bons.html">contrat de distribution</a>.</div>
+
+<div class="page">
+
+  <h1>AJEK SASU — Synthèse des modifications</h1>
+  <p class="sub">Documentation de l'agence de voyage · août 2026 · pour le développeur (& son assistant IA)</p>
+
+  <h2>0. Entrée du 18/09/2026 (complétée le soir) — le Bon d’achat PayEnCash, le commerçant vendeur, et le prélèvement à la vente</h2>
+  <table>
+    <tr><th>Domaine</th><th>Décision du 18/09</th></tr>
+    <tr><td>Moyens</td><td><b>Deux moyens sans carte bancaire, achetés au comptoir d'un commerce</b> : le <b>Bon d’achat PayEnCash</b> (notre réseau, en première position) et le <b>Bon d’achat PayEnCash</b> (notre réseau de distribution, sous contrat). <code>MOYENS_PAIEMENT</code> porte <code>k:'bon'</code> ; <code>orders.pay_method</code> n'accepte que <code>bon</code> <i>(20/09)</i>. <i>(18/09, soir : le canal <code>agent</code> est supprimé.)</i></td></tr>
+    <tr><td>Le Bon d’achat</td><td>Titre prépayé à montant libre (5–250 €), acheté au comptoir d'un commerçant partenaire, ticket imprimé (code 12 caractères + QR), valable 12 mois sur Mode et Fly, usage fractionné, 1 000 € de bons d’achat par client et par jour, ni échange ni remboursement en espèces — un remboursement <b>re-crédite le bon d’achat</b>. Fondement : art. L521-3, I, 1° CMF (usage limité, hors agrément), L315-1 a contrario, déclaration ACPR au-delà d'1 M€/12 mois, TVA 256 ter (bon d’achat à usages multiples).</td></tr>
+    <tr><td>Le partenaire</td><td>Mandataire pour la vente et l'encaissement du prix du bon d’achat — <b>jamais</b> un encaisseur de commande, ni borne, ni scan, ni remboursement. Dossier (Kbis, gérant, vidéo) + <b>contrat de distribution signé</b> (modèle <code>contrat_partenaire</code>) + <b>carte bancaire du commerce enregistrée</b> + activation manager. <b>(18/09, soir)</b> À chaque vente, sa carte est <b>prélevée</b> du montant du bon d’achat moins sa commission TTC (1,10 % HT + TVA 20 %, autofacturée art. 289 CGI) — prestataire <b>Stripe</b> (1,5 % + 0,25 €, charge d'AJEK). <b>Carte refusée = aucun bon d’achat</b> ; carte absente ou expirée = vente fermée.</td></tr>
+    <tr><td>Écrans</td><td><code>ui/partenaire/</code> 00 · 01 · 02 · 03 · 04 · 05 · 07 · 08 ; <code>commercial/03</code> et <code>09</code> (signature, vue gérant) ; <code>manager/29</code> (réseau, relevés, commerces sans carte) et <code>41</code> (Bons d’achat &amp; cartes cadeaux) ; client : <code>fly/01</code>, <code>mode/05</code>, <code>mode/03</code>, <code>ecrans/25</code>.</td></tr>
+    <tr><td>Données</td><td><code>partners</code> (v2), <code>gift_cards</code> étendue (origine, partenaire, solde, ticket, blocage), <code>gift_card_movements</code>, <code>signature_links</code> et, depuis le soir du 18/09, <code>partner_cards</code> (l'empreinte de carte — jamais le numéro) et <code>partner_charges</code> (les prélèvements) ; vue <code>v_partner_monthly_statements</code>. Service <code>bons</code> + <code>lib/bons.js</code>. <b>L'émission est transactionnelle : le prélèvement d'abord, le bon d’achat ensuite.</b></td></tr>
+    <tr><td>Documents</td><td><a href="ESPACE-COMMERCANT/documents/contrat-distribution-bons.html">contrat de distribution</a> · <a href="ESPACE-COMMERCANT/documents/cgu-espace-partenaire.html">CGU espace partenaire v2</a> · <a href="ESPACE-COMMERCANT/documents/conditions-bon-payencash.html">conditions du bon d’achat</a> — v1 à faire relire par l'avocat (qualification du contrat, seuil ACPR, soldes expirés). <b>(18/09, soir)</b> La question de la <b>détention des fonds</b> tombe : le commerçant encaisse pour son propre compte et règle AJEK dans la seconde — il ne détient jamais notre argent.</td></tr>
+  </table>
+
+  <h2>1. Contexte</h2>
+  <p>AJEK SASU est une <b>agence de voyage</b> (créée le 07/07/2026) qui vend des <b>billets d'avion</b> et <b>hébergements</b> (partenaire Duffel/Hotelbeds, commission 15-30 %) à une clientèle <b>sans carte bancaire</b>. Valeur ajoutée : <b>on peut payer sans carte bancaire, sans donner aucune donnée bancaire</b> — un bon d’achat ou un ticket acheté au comptoir d'un commerce du quartier. <i>(18/09, soir : le salarié qui se déplaçait encaisser est supprimé.)</i> Distribution : bouche-à-oreille + réseaux sociaux ; application en cours. La documentation d'origine (paiement au buraliste via Payrexx, agent indépendant) a été <b>entièrement refondue</b>.</p>
+
+<!-- (18/09, soir) LA COLONNE « CIBLE » DÉCRIVAIT LA CIBLE D'AOÛT : un agent salarié, un code de sécurité
+     sur le pas de la porte, un dépôt en automate. Cette cible-là est devenue une deuxième origine obsolète.
+     Le schéma garde donc sa forme — d'où l'on vient, où l'on va — avec la cible du 18/09 au soir. -->
+  <h2>2. Avant → Après</h2>
+  <div class="mermaid">
+flowchart LR
+  subgraph AVANT["Origines (obsoletes)"]
+    A1[Paiement au buraliste, Payrexx / Paysafecash]
+    A2[Borne et commercant qui encaisse la commande]
+    A3[Agent de caisse mobile salarie, depot Cash Services]
+  end
+  subgraph CIBLE["Cible AJEK - 18/09 au soir"]
+    B1[Deux moyens achetes au comptoir d un commerce] --> B2[Bon d achat PayEnCash : notre reseau, sous contrat]
+    B1 --> B3[Bon d achat PayEnCash : notre reseau, sous contrat]
+    B2 --> B4[Prelevement a la vente sur la carte du commerce<br/>montant moins sa commission - Stripe]
+    B3 --> B5[Debit du bon sous verrou - notre serveur]
+    B4 --> B6[Compte AJEK]
+    B5 --> B6
+  end
+  AVANT -.refonte.-> CIBLE
+  </div>
+  <div class="box"><b>Ce qui a disparu en route</b> : le buraliste qui encaisse pour nous (17/09 — un commerçant tiers qui encaisse pour AJEK est un service de paiement sans agrément), puis l'agent de caisse mobile (18/09 au soir — faire transporter des espèces par un salarié expose au risque humain et au cadre CNAPS). <b>Ce qui reste</b> : AJEK ne détient plus d'espèces nulle part, et le client ne donne aucune donnée bancaire.</div>
+
+<!-- (18/09, soir) LE TABLEAU DES DÉCISIONS STRUCTURANTES EN ANNONÇAIT SEPT, DONT CINQ N'EXISTENT PLUS :
+     le statut de l'agent, les deux options d'encaissement, le circuit du cash, le plafond découpé par transaction
+     et la rémunération de l'agent. Un tableau intitulé « décisions structurantes » ne peut pas rester faux : il
+     est ce qu'on lit pour savoir ce qui a été tranché. -->
+  <h2>3. Décisions structurantes</h2>
+  <table>
+    <tr><th>Domaine</th><th>Décision</th></tr>
+    <tr><td>Moyens de paiement</td><td><b>Deux moyens, achetés au comptoir d'un commerce</b> : le <b>Bon d’achat PayEnCash</b> (notre réseau, sous contrat de distribution) et le <b>Bon d’achat PayEnCash</b> (réseau de distribution, aucun lien contractuel, réglé en ligne par notre couche de données). iDEAL est configuré mais réservé aux Pays-Bas. <i>On ne dit jamais comment le client règle au comptoir.</i></td></tr>
+    <tr><td>Réseau partenaire</td><td>Le commerçant <b>vend le bon d’achat, il n'encaisse jamais une commande</b> : dossier KYB au coffre, contrat de distribution signé, carte du commerce enregistrée, activation manager. Sans carte valide, la vente reste fermée.</td></tr>
+    <tr><td>Argent</td><td><b>Prélèvement à la vente</b> (18/09, soir) : la carte du commerce est débitée du montant du bon d’achat moins sa commission TTC (1,10 % HT + TVA 20 %), via <b>Stripe</b> (1,5 % + 0,25 €, charge d'AJEK). <b>Le bon d’achat naît du paiement</b> — banque qui refuse, aucun code. Plus de créance, d'échéance ni de relance : reste le <b>relevé mensuel</b> et l'autofacture de commission (art. 289 CGI).</td></tr>
+    <tr><td>Plafonds</td><td>Nos plafonds, pas ceux d'un tiers : <b>5 € à 250 € par bon d’achat</b>, <b>1 000 € de bons utilisés par client et par jour</b>, 1 000 € sur 30 jours glissants, validité <b>12 mois</b>, annulation au comptoir <b>30 min</b>. Bon d’achat PayEnCash anonyme ≤ 50 € par opération.</td></tr>
+    <tr><td>Fournisseurs</td><td>Duffel = solde prépayé (fonds de roulement) · Hotelbeds = <b>post-payé</b> · Mode : achat ferme, facture et virement ≤ 7 j, expédition <b>Mondial Relay</b> par le fournisseur sur étiquette AJEK</td></tr>
+    <tr><td>Conformité</td><td>AML <b>non assujettie</b> (à confirmer) · <b>KYB</b> fournisseurs et commerces partenaires · <b>KYC</b> client gradué, la vérification prenant le relais des plafonds · art. <b>L521-3 CMF</b> (moyen de paiement à usage limité), <b>L315-1</b> a contrario, <b>256 ter CGI</b> (TVA à l'utilisation)</td></tr>
+    <tr><td>Fenêtre</td><td><b>120 minutes</b> pour régler une commande, une seule fenêtre pour toutes les commandes</td></tr>
+  </table>
+
+<!-- (18/09, soir) LE CYCLE DE VIE DÉCRIVAIT LA COURSE D'UN AGENT, d'AWAITING_AGENT au code de sécurité
+     remis sur le pas de la porte. Aucun de ces états n'existe plus : ce qui règle une commande, c'est le débit
+     d'un bon d’achat ou la NOTIFICATION SERVEUR du prestataire — jamais le retour du navigateur. -->
+  <h2 class="pb">4. Cycle de vie d'une commande</h2>
+  <div class="mermaid">
+stateDiagram-v2
+  [*] --> DRAFT
+  DRAFT --> AWAITING_PAYMENT: code genere (montant fige, fenetre 120 min)
+  AWAITING_PAYMENT --> PAID: bon d achat debite, OU notification serveur du prestataire
+  AWAITING_PAYMENT --> EXPIRED: fenetre depassee
+  PAID --> CONFIRMED: fournisseur OK
+  PAID --> FAILED: echec fournisseur
+  FAILED --> REFUNDED: re-credit du bon d achat, remboursement du prestataire, virement ou avoir
+  CONFIRMED --> [*]
+  </div>
+  <div class="box"><b>Un seul évènement fait passer à <code>PAID</code></b> : le débit d'un Bon d’achat PayEnCash (tout ou partie du montant dû) ou la notification serveur du prestataire pour un Bon d’achat PayEnCash. Le retour du navigateur ne règle rien — c'est la règle qui protège de la commande « payée » sans argent reçu. La fenêtre est de <b>120 minutes</b> pour toute commande ; passée, la commande est à reprogrammer, <b>sans frais</b>.</div>
+
+  <h2>5. Comment l'argent arrive (18/09, soir)</h2>
+  <div class="mermaid">
+flowchart LR
+  C1[Client au comptoir<br/>achete un bon d achat] --> M[Commercant partenaire<br/>encaisse pour son compte]
+  M -->|prelevement a la vente<br/>montant - commission| AJ[Compte AJEK]
+  C2[Client au comptoir<br/>achete un Bon d’achat PayEnCash] --> PW[Debit du bon<br/>sous verrou]
+  PW -->|notification serveur| AJ
+  AJ --> P[Achats fournisseurs : Duffel / Hotelbeds<br/>et virements fournisseurs Mode]
+  AJ -.recharge.-> DUF[Solde prepaye Duffel]
+  </div>
+  <div class="box"><b>AJEK ne détient plus d'espèces nulle part.</b> Le commerçant encaisse le prix du bon d’achat <b>pour son propre compte</b>, par les moyens qu'il accepte lui-même, et sa carte est <b>prélevée dans la seconde</b> du montant moins sa commission (prestataire Stripe, 1,5 % + 0,25 € à la charge d'AJEK). Le Bon d’achat PayEnCash, lui, ne transite jamais par nous : c'est notre couche de données qui encaisse et nous notifie — <b>seule la notification serveur règle une commande</b>, jamais le retour du navigateur. Le solde Duffel reste <b>avancé</b> puis rechargé. La <b>TVA collectée est une dette</b>, pas un revenu ; sur un bon d’achat à usages multiples, elle est due <b>à l'utilisation</b>, pas à la vente (art. 256 ter CGI).</div>
+
+  <h2>6. Les deux moyens de payer sans carte bancaire</h2>
+  <div class="mermaid">
+flowchart TB
+  CMD[Commande] --> CH{Comment payer ?}
+  CH -->|Bon d achat PayEnCash| BON[Achete au comptoir d un commercant partenaire<br/>notre reseau, sous contrat de distribution<br/>code sur un ticket, utilisable en une ou plusieurs fois]
+  CH -->|Bon d’achat PayEnCash| NEO[Achete au comptoir d un commerce partenaire<br/>sous contrat de distribution<br/>regle par notre couche de données]
+  </div>
+  <div class="box">Dans les deux cas, <b>aucune donnée bancaire n'est demandée au client</b> et il règle au comptoir comme il le souhaite — cela regarde le commerçant, pas nous. Le bon d’achat se débite dans le bus AJEK (tout ou partie du montant dû) ; le Bon d’achat PayEnCash passe par la page hébergée du prestataire. iDEAL est configuré mais réservé aux Pays-Bas : il ne s'affiche jamais en France.</div>
+
+<!-- (18/09, soir) LA MARCHE DE BOUT EN BOUT TESTAIT UNE CHAÎNE QUI N'EXISTE PLUS : créneau, position du
+     client, suivi de l'agent, encaissement avec rendu de monnaie et pourboire, dépôt en automate. Une recette
+     qui exige l'impossible ne se passe jamais — d'où les étapes réellement à prouver aujourd'hui. -->
+  <h2 class="pb">7. Test de bout en bout (« comme si le logiciel existait »)</h2>
+  <table>
+    <tr><th>Étape</th><th>Écran</th><th>Données</th><th>Endpoint</th></tr>
+    <tr><td>Recherche / sélection vol + hôtel</td><td>✅</td><td>✅</td><td>✅</td></tr>
+    <tr><td>Voyageurs</td><td>✅</td><td>✅ <code>order_travelers</code></td><td>✅</td></tr>
+    <tr><td>Récap + « Comment payer ? » (bon d’achat / Bon d’achat PayEnCash)</td><td>✅</td><td>✅ <code>orders.pay_method</code></td><td>✅</td></tr>
+    <tr><td>KYC gradué (3 achats ou 1 000 € / 7 j, puis vérification renforcée)</td><td>✅</td><td>🟧 <code>kyc_checks</code></td><td>🟧</td></tr>
+    <tr><td>Génération du code de paiement + fenêtre 120 min</td><td>✅</td><td>✅ <code>payments</code></td><td>✅ + plafonds</td></tr>
+    <tr><td>Où acheter : commerce partenaire (bon d’achat) ou commerce partenaire</td><td>✅</td><td>✅ <code>partners</code></td><td>✅</td></tr>
+    <tr><td><b>Vente d'un bon d’achat</b> : prélèvement accepté <b>puis</b> code émis</td><td>✅</td><td>✅ <code>partner_cards</code> · <code>partner_charges</code> · <code>gift_cards</code></td><td>🟧 Stripe</td></tr>
+    <tr><td>Prélèvement refusé → <b>aucun bon d’achat</b></td><td>✅</td><td>✅ <code>partner_charges</code></td><td>🟧</td></tr>
+    <tr><td>Règlement : débit du bon d’achat, ou notification serveur du prestataire</td><td>✅</td><td>✅ <code>gift_card_movements</code> · <code>psp_transactions</code></td><td>✅ pingback</td></tr>
+    <tr><td>Paiement fournisseur (Duffel / Hotelbeds)</td><td>✅</td><td>✅ <code>supplier_bookings</code></td><td>✅</td></tr>
+    <tr><td>Confirmation (PNR + rappel compagnie)</td><td>✅/🟧</td><td>✅/🟧</td><td>🟧 envoi</td></tr>
+    <tr><td>Remboursement : re-crédit du bon d’achat, ou remboursement du prestataire</td><td>✅</td><td>✅ <code>order_refunds</code></td><td>🟧</td></tr>
+    <tr><td>Relevé mensuel du commerce + autofacture de commission (art. 289 CGI)</td><td>✅</td><td>✅ vue <code>v_partner_monthly_statements</code></td><td>🟧</td></tr>
+  </table>
+  <div class="box"><b>Verdict</b> : le cœur voyage et la chaîne du bon d’achat se construisent <b>tels quels</b>. Ce qui reste à brancher tient au monde réel — les appels Stripe, les envois transactionnels, et la vérification d'identité renforcée.</div>
+
+<!-- (18/09, soir) LE MODÈLE DE DONNÉES D'AOÛT CITAIT DES TABLES QUI N'EXISTENT PLUS (agents, collections,
+     collection_zones, deposit_cards, agent_deposits, fleet_vehicles, shifts…). Le laisser tel quel, c'était
+     donner au développeur une liste de tables à créer qui ne seront jamais créées. Le miroir du schéma vit
+     ailleurs, et il est à jour : partie-6-donnees.html, 1:1 avec server/db/schema.sql. -->
+  <h2 class="pb">8. Modèle de données</h2>
+  <div class="mermaid">
+erDiagram
+  users ||--o{ orders : passe
+  users ||--o{ kyc_checks : verifie
+  orders ||--o{ order_travelers : contient
+  orders ||--|| payments : "1 code"
+  orders ||--o{ supplier_bookings : reserve
+  orders ||--o{ psp_transactions : "regle en ligne"
+  orders ||--o{ gift_card_movements : "debite un bon d achat"
+  partners ||--o{ gift_cards : emet
+  partners ||--o| partner_cards : "carte du commerce"
+  partners ||--o{ partner_charges : "prelevee a la vente"
+  gift_cards ||--o{ gift_card_movements : mouvemente
+  </div>
+  <p><b>Le schéma qui fait foi</b> est <code>server/db/schema.sql</code> — <b>128 tables + 3 vues</b> —, dont <a href="ESPACE-COMMERCANT/documents/partie-6-donnees.html">Étape 6 · Données</a> est le miroir 1:1. Les tables du réseau partenaire : <code>partners</code>, <code>partner_cards</code> (l'empreinte de carte, jamais le numéro), <code>partner_charges</code> (les prélèvements), <code>gift_cards</code>, <code>gift_card_movements</code>, <code>signature_links</code>, plus la vue <code>v_partner_monthly_statements</code> pour le relevé mensuel.</p>
+  <p><b>Ce que la liste d'août annonçait « à créer » et qui ne le sera jamais</b> : tout le domaine de l'agent de caisse mobile — <code>agents</code>, <code>collections</code>, <code>collection_zones</code>, <code>collection_points</code>, <code>collection_slots</code>, <code>deposit_cards</code>, <code>agent_deposits</code>, <code>cash_floats</code>, <code>fleet_vehicles</code>, <code>shifts</code>, <code>agent_availability</code>, <code>dispatch_config</code>, <code>bank_report_imports</code>, <code>agent_payouts</code>… L'agent est supprimé le 18/09 au soir ; aucune de ces tables n'existe dans le schéma.</p>
+
+  <h2>9. Ce qui reste à trancher</h2>
+<!-- (18/09, soir) Le remboursement « en espèces au point d'encaissement » supposait un point, puis un agent :
+     ni l'un ni l'autre n'existe. Ce qui le remplace est plus simple et déjà codé : le montant re-crédite le
+     bon d’achat. Les validations sociales (convention collective, visite médicale, DUERP) tombent avec le
+     salarié qu'elles concernaient. -->
+  <p style="background:#FFF6E5;padding:8px 12px;border-radius:6px;font-size:13px"><b>⚠️ Document daté du 2026-08-04, révisé le 18/09 au soir.</b> Le circuit de remboursement qui figurait ici (avoir + remise en espèces au point d'encaissement) n'a plus d'objet : il n'y a plus ni point, ni agent, ni espèces chez nous.</p>
+  <ul>
+    <li><b>Remboursement</b> : le montant <b>re-crédite le bon d’achat</b> (jamais d'espèces, jamais de rendu de monnaie) ; à défaut de bon, virement. L'annulation d'un bon d’achat au comptoir dans les 30 minutes rembourse aussi le prélèvement au commerce.</li>
+    <li><b>Validations expertes qui restent</b> : LCB-FT et qualification du contrat de distribution (avocat), régime de TVA du bon d’achat à usages multiples et autofacturation (expert-comptable), seuil de déclaration ACPR (art. L521-3 II CMF). <i>Celles qui tombent avec l'agent : convention collective, contrats de travail, visite médicale, DUERP, assurance transport de fonds.</i></li>
+    <li><b>Écrans manager</b> : le back-office compte <b>38 écrans</b> sur le disque ; ceux du domaine agent (livraisons, coursiers, zones, rémunération, flotte, planning, rapprochement, fonds de caisse) ont été supprimés le 18/09 au soir.</li>
+  </ul>
+
+  <p class="foot">AJEK SASU — Marignane (13). Documents de référence dans le dossier : MISE-A-JOUR · AUDIT-CONSOLIDE · NOUVELLES-FONCTIONNALITES · MODELE-DONNEES-COMPLEMENT · NOTE-BANQUE-AJEK-v14 · ANALYSE-RISQUES-CRITIQUE · PLAN-MAITRISE-RISQUES. <i>(18/09, soir : LOGISTIQUE-AGENT, AGENT-CAISSE-MOBILE-RH, DUERP et FICHE-PRISE-DE-COMMANDE décrivent l'agent de caisse mobile, supprimé — ils sont sans objet et ne sont plus cités ici.)</i> — Pour obtenir le PDF : ouvrir ce fichier dans un navigateur puis Cmd+P → « Enregistrer au format PDF ».</p>
+
+</div>
+</body>
+</html>

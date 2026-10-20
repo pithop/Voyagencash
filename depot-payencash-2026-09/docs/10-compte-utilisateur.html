@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash — Doc 10 : Compte utilisateur et flux de paiement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+  /* Sans ceci, un navigateur en mode sombre rend champs, listes et ascenseurs
+     en sombre sur notre fond creme. La doc est concue en clair, on le declare. */
+  color-scheme: light;
+    --vert: #1F4438; --cuivre: #D8722B; --creme: #F7F5F0; --encre: #1A1A1A;
+    --gris: #6B6966; --gris-clair: #E4E0D6; --blanc: #FFFFFF; --rouge: #C0392B; --radius: 10px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; color: var(--encre); background: var(--creme); line-height: 1.7; font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+  .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: var(--vert); color: var(--creme); overflow-y: auto; padding: 24px 0; z-index: 100; }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 0.5px solid rgba(244,241,234,0.15); margin-bottom: 16px; }
+  .sidebar-logo .brand { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 4px; }
+  .sidebar-logo .accent { color: var(--cuivre); }
+  .sidebar-logo .doc-num { font-size: 11px; color: rgba(244,241,234,0.5); margin-top: 4px; }
+  .sidebar nav a { display: block; padding: 7px 20px; font-size: 12.5px; color: rgba(244,241,234,0.7); text-decoration: none; border-left: 2px solid transparent; }
+  .sidebar nav a:hover { color: var(--creme); border-left-color: var(--cuivre); background: rgba(244,241,234,0.06); }
+  .sidebar nav .section-head { padding: 14px 20px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(244,241,234,0.35); font-weight: 600; }
+  .doc-nav { margin-top: 24px; padding: 16px 20px 0; border-top: 0.5px solid rgba(244,241,234,0.15); }
+  .doc-nav p { font-size: 11px; color: rgba(244,241,234,0.4); margin-bottom: 8px; }
+  .doc-nav a { display: block; font-size: 12px; color: rgba(244,241,234,0.6); text-decoration: none; padding: 4px 0; }
+  .doc-nav a:hover { color: var(--cuivre); }
+
+  .main { margin-left: 240px; max-width: 920px; padding: 48px 56px; }
+  .doc-header { border-bottom: 1px solid var(--gris-clair); padding-bottom: 24px; margin-bottom: 40px; }
+  .doc-header .doc-tag { display: inline-block; background: var(--cuivre); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px; letter-spacing: 0.04em; }
+  .doc-header h1 { font-family: 'Archivo', sans-serif; font-size: 30px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .doc-header .meta { display: flex; gap: 20px; font-size: 13px; color: var(--gris); flex-wrap: wrap; }
+
+  .section { margin-bottom: 48px; scroll-margin-top: 24px; }
+  h2 { font-family: 'Archivo', sans-serif; font-size: 21px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--gris-clair); color: var(--vert); }
+  h3 { font-family: 'Archivo', sans-serif; font-size: 16.5px; font-weight: 600; margin: 26px 0 12px; color: var(--encre); }
+  h4 { font-family: 'Archivo', sans-serif; font-size: 14px; font-weight: 600; margin: 18px 0 8px; color: var(--encre); }
+  p { margin-bottom: 12px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0 20px; }
+  th { background: var(--vert); color: var(--creme); padding: 9px 11px; text-align: left; font-weight: 600; font-size: 11.5px; }
+  td { padding: 8px 11px; border-bottom: 0.5px solid var(--gris-clair); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(244,241,234,0.5); }
+  td code { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: rgba(31,68,56,0.07); color: var(--vert); padding: 2px 6px; border-radius: 4px; }
+  pre { background: #1A1A2E; color: #E8E6E3; border-radius: var(--radius); padding: 16px 18px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7; overflow-x: auto; margin: 14px 0; }
+  pre .comment { color: #6B7A8D; }
+  pre .key { color: #82AAFF; }
+  pre .str { color: #C3E88D; }
+  pre .kw { color: #C792EA; }
+  pre .num { color: #F78C6C; }
+
+  .callout { border-radius: var(--radius); padding: 14px 16px; margin: 16px 0; font-size: 13.5px; display: flex; gap: 12px; align-items: flex-start; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: rgba(31,68,56,0.06); border-left: 3px solid var(--vert); }
+  .callout.warning { background: rgba(216,114,43,0.08); border-left: 3px solid var(--cuivre); }
+  .callout.danger { background: rgba(192,57,43,0.07); border-left: 3px solid var(--rouge); }
+  .callout strong { display: block; font-weight: 600; margin-bottom: 4px; color: var(--encre); }
+
+  .checklist { list-style:none; margin: 12px 0; }
+  .checklist li { padding: 6px 0 6px 28px; position:relative; font-size:14px; }
+  .checklist li::before { content:"☐"; position:absolute; left:0; color: var(--vert); font-size:16px; }
+
+  .flow-step { display:flex; gap:16px; margin-bottom:12px; align-items:flex-start; }
+  .flow-num { width:32px; height:32px; border-radius:50%; background:var(--vert); color:#fff; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
+  .flow-body { flex:1; }
+  .flow-body strong { display:block; font-weight:600; margin-bottom:4px; }
+  .flow-connector { width:2px; height:16px; background:var(--gris-clair); margin-left:15px; }
+
+  .case-box { border:0.5px solid var(--gris-clair); border-radius:var(--radius); padding:16px; margin:12px 0; background:#fff; }
+  .case-box .case-title { font-family:'Archivo', sans-serif; font-weight:700; font-size:14px; color:var(--vert); margin-bottom:10px; }
+
+  @media print { .sidebar { display:none; } .main { margin-left:0; padding:24px; } }
+  @media (max-width:768px) { .sidebar { display:none; } .main { margin-left:0; padding:24px 20px; } }
+</style>
+</head>
+<body>
+<div style="background:#E6F4EC;border:2px dashed #0C7F54;border-radius:10px;padding:12px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#0F2A24"><b>⚠️ Pivot du 18/09/2026 (soir) — remplace le bandeau du 17/09.</b> Ce document décrit le modèle « espèces à domicile par l'agent » d'août. <b>Ce modèle n'existe plus</b> : l'<b>agent de caisse mobile est supprimé</b>, et avec lui les courses, les tournées, les zones, le planning, la flotte, le fond de caisse, le rendu de monnaie, les dépôts en automate Cash Services et le découpage « 1 000 € d'espèces + complément carte ». Il reste <b>deux moyens de paiement</b>, tous deux achetés au comptoir d'un commerce : le <b>Bon d’achat PayEnCash</b> (bon d'achat prépayé émis par AJEK, vendu par un réseau de commerçants sous contrat — art. L521-3 CMF ; tables <code>gift_cards</code> · <code>gift_card_movements</code>) <i>(20/09 : le rail d'un prestataire en ligne est supprimé — le débit du bon est le seul valideur ; <code>psp_transactions</code> · <code>payment_tenders</code>, dont <code>method</code> vaut désormais <code>bon</code>, et lui seul — plus jamais <code>cash</code> ni <code>card</code>). Côté commerçant, le <b>reversement mensuel est abandonné</b> : sa carte bancaire enregistrée est <b>prélevée à chaque vente</b> du montant moins sa commission (1,10 % HT + TVA), via <b>Stripe</b> ; <b>un refus de la banque = aucun bon d’achat émis</b> (<code>partner_cards</code> · <code>partner_charges</code>). <b>Tout ce qui est écrit ici sur l'agent, la collecte, le dépôt, le dispatch ou un « point d'encaissement » est caduc</b> ; ce qui porte sur le catalogue, le prix, les fournisseurs et la commande reste vrai. Référence à jour : <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html" style="color:#0C7F54;font-weight:700">Étape 4</a> et <code>CLAUDE.md</code>.</div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">PayEn<span class="accent">Cash</span></div>
+    <div class="doc-num">Documentation technique · v2.0 (encaissement à domicile)</div>
+  </div>
+  <nav>
+    <div class="section-head">Document 10</div>
+    <a href="#intro">Introduction</a>
+    <a href="#inscription">Inscription (première utilisation)</a>
+    <a href="#connexion">Connexion (retour client)</a>
+    <a href="#kyc-conformite">Vérification d'identité (KYC gradué)</a>
+    <a href="#espace-personnel">Espace personnel client</a>
+    <a href="#filtres-avances">Filtres avancés du comparateur</a>
+    <a href="#alertes-prix">Alertes de prix</a>
+    <a href="#flux-paiement-cas">Flux de paiement A à Z — les 3 cas</a>
+    <a href="#cas-vol-seul">Cas 1 — Vol seul</a>
+    <a href="#cas-hotel-seul">Cas 2 — Hébergement seul</a>
+    <a href="#cas-package">Cas 3 — Vol + Hébergement</a>
+    <a href="#checklist">Checklist développeur</a>
+  </nav>
+  <div class="doc-nav">
+    <p>Documents</p>
+    <a href="01-flux-metier.html">← Doc 1 : Flux métier</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">← Doc 2 : Schéma BDD</a>
+    <a href="03-api-specs.html">← Doc 3 : API specs</a>
+    <a href="04-pricing.html">← Doc 4 : Pricing</a>
+    <a href="07-annulations-remboursements.html">← Doc 7 : Annulations</a>
+    <a href="09-espace-manager.html">← Doc 9 : Manager</a>
+    <a href="11-ui-v2.html">→ Doc 11 : UI v2 (écrans)</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">📖 Glossaire</a>
+  </div>
+</aside>
+
+<main class="main">
+<div class="bandeau-socle" style="background:#FDF1E7;border:1px solid #E39A2E;border-left:5px solid #E39A2E;border-radius:10px;padding:13px 17px;margin:0 0 28px;font-size:13.5px;line-height:1.65;color:#7a5410">⚠️ <b>Document socle (juillet 2026)</b> — conservé comme référence technique. Les décisions <b>À JOUR</b> vivent dans le fil rouge (10 étapes)&nbsp;: <a href="../ESPACE-COMMERCANT/documents/diagramme-principal.html" style="color:#0c7f54;font-weight:700">diagramme principal</a>. En cas d'écart, le fil rouge fait foi (ex.&nbsp;: carte bleue en complément, Mondial Relay, F13, codes promo fournisseurs).</div>
+
+
+  <div class="doc-header">
+    <span class="doc-tag">Document 10 / 11</span>
+    <h1>Compte utilisateur, authentification et flux de paiement cash</h1>
+    <div class="meta">
+      <span>Projet PayEnCash</span>
+      <span>Version 1.0</span>
+      <span>Juin 2026</span>
+    </div>
+  </div>
+
+  <section class="section" id="intro">
+    <h2>Introduction</h2>
+    <p>Ce document couvre deux volets complémentaires du compte client d'<strong>AJEK SASU</strong> (« PayEnCash » désigne l'application) : le cycle de vie complet du compte (inscription par OTP SMS, reconnexion, <strong>vérification d'identité KYC graduée</strong>, espace personnel, suivi d'encaissement, notation, alertes de prix), et le détail A à Z du flux de paiement <strong>cash collecté par agent salarié</strong> selon les 3 cas produit <strong>de la ligne voyage</strong> — vol seul, hébergement seul, ou les deux combinés. Il documente également les filtres avancés du comparateur identifiés par audit concurrentiel (Skyscanner, Kayak, Hopper).</p>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Ligne MODE : voir la note dédiée</strong> Ce document ne traite que la <strong>ligne voyage</strong> (billets Duffel / hôtels Hotelbeds). La <strong>ligne MODE</strong> (articles physiques : point d'entrée catalogue, panier, expédition, droit de rétractation légal) est spécifiée à part dans <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html"><code>Étape 4 · flux F11/F12</code></a> — s'y reporter pour le parcours d'achat d'articles et ses documents.</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Tables concernées (Doc 2)</strong> <code>users</code>, <code>otp_codes</code>, <code>user_sessions</code>, <code>price_alerts</code>, <code>orders</code>, <code>flight_offers</code>, <code>stay_offers</code>, <code>payments</code>, <code>supplier_bookings</code>, <code>deliveries</code>, <code>delivery_tracking_events</code>, <code>courier_ratings</code>, <code>notifications</code>. <em>Les quatre dernières manquaient à cette liste alors que ce document décrit le suivi d'encaissement, la notation de l'agent et les notifications.</em></div>
+    </div>
+  </section>
+
+  <section class="section" id="inscription">
+    <h2>Inscription — première utilisation</h2>
+    <p>Le compte est créé au moment de la première réservation. Il n'existe pas d'écran d'inscription indépendant — le client s'identifie naturellement quand il veut payer.</p>
+
+    <!-- Diagramme OTP inscription -->
+    <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:700px;display:block;margin:16px 0 20px;" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11">
+      <rect width="700" height="220" rx="10" fill="#F7F5F0"/>
+      <text x="350" y="22" font-size="13" font-weight="700" fill="#1F4438" text-anchor="middle">Flux d'inscription — OTP SMS (première réservation)</text>
+
+      <!-- Acteurs -->
+      <rect x="10" y="34" width="90" height="26" rx="5" fill="#1F4438"/>
+      <text x="55" y="50" fill="#F7F5F0" font-weight="600" text-anchor="middle">App client</text>
+      <rect x="140" y="34" width="110" height="26" rx="5" fill="#D8722B"/>
+      <text x="195" y="50" fill="#fff" font-weight="600" text-anchor="middle">API PayEnCash</text>
+      <rect x="290" y="34" width="110" height="26" rx="5" fill="#6B6966"/>
+      <text x="345" y="50" fill="#fff" font-weight="600" text-anchor="middle">Prestataire SMS</text>
+      <rect x="440" y="34" width="110" height="26" rx="5" fill="#2E6650"/>
+      <text x="495" y="50" fill="#F7F5F0" font-weight="600" text-anchor="middle">Base de données</text>
+      <rect x="590" y="34" width="100" height="26" rx="5" fill="#1F4438"/>
+      <text x="640" y="50" fill="#F7F5F0" font-weight="600" text-anchor="middle">Téléphone client</text>
+
+      <!-- Lignes verticales -->
+      <line x1="55" y1="60" x2="55" y2="210" stroke="#C4C0B6" stroke-width="1" stroke-dasharray="4,3"/>
+      <line x1="195" y1="60" x2="195" y2="210" stroke="#C4C0B6" stroke-width="1" stroke-dasharray="4,3"/>
+      <line x1="345" y1="60" x2="345" y2="210" stroke="#C4C0B6" stroke-width="1" stroke-dasharray="4,3"/>
+      <line x1="495" y1="60" x2="495" y2="210" stroke="#C4C0B6" stroke-width="1" stroke-dasharray="4,3"/>
+      <line x1="640" y1="60" x2="640" y2="210" stroke="#C4C0B6" stroke-width="1" stroke-dasharray="4,3"/>
+
+      <defs>
+        <marker id="a1" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#1F4438"/></marker>
+        <marker id="a2" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#D8722B"/></marker>
+        <marker id="a3" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#6B6966"/></marker>
+        <marker id="a4" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#2E6650"/></marker>
+      </defs>
+
+      <line x1="55" y1="78" x2="185" y2="78" stroke="#D8722B" stroke-width="1.5" marker-end="url(#a2)"/>
+      <text x="120" y="73" text-anchor="middle" fill="#D8722B" font-weight="600">Saisit son n° de tél</text>
+
+      <line x1="195" y1="96" x2="335" y2="96" stroke="#6B6966" stroke-width="1.5" marker-end="url(#a3)"/>
+      <text x="265" y="91" text-anchor="middle" fill="#6B6966">Envoi SMS code 6 chiffres</text>
+
+      <line x1="195" y1="114" x2="485" y2="114" stroke="#2E6650" stroke-width="1.5" marker-end="url(#a4)"/>
+      <text x="340" y="109" text-anchor="middle" fill="#2E6650">INSERT otp_codes (hash, expires_at)</text>
+
+      <line x1="345" y1="132" x2="630" y2="132" stroke="#6B6966" stroke-width="1.5" marker-end="url(#a3)"/>
+      <text x="488" y="127" text-anchor="middle" fill="#6B6966">SMS → "Votre code : 492817"</text>
+
+      <line x1="55" y1="152" x2="185" y2="152" stroke="#D8722B" stroke-width="1.5" marker-end="url(#a2)"/>
+      <text x="120" y="147" text-anchor="middle" fill="#D8722B" font-weight="600">Saisit le code OTP</text>
+
+      <line x1="195" y1="170" x2="485" y2="170" stroke="#2E6650" stroke-width="1.5" marker-end="url(#a4)"/>
+      <text x="340" y="165" text-anchor="middle" fill="#2E6650">Vérifie hash → INSERT users + user_sessions</text>
+
+      <line x1="185" y1="190" x2="65" y2="190" stroke="#1F4438" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#a1)"/>
+      <text x="120" y="185" text-anchor="middle" fill="#1F4438">← session_token (stocké keychain)</text>
+    </svg>
+
+    <table>
+      <thead><tr><th>Étape</th><th>Action</th><th>Table(s) concernée(s)</th><th>Point de vigilance</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Client saisit son numéro de téléphone</td><td>—</td><td>Valider le format E.164 côté client et côté serveur avant envoi SMS</td></tr>
+        <tr><td>2</td><td>Vérifier si le numéro existe déjà dans <code>users</code></td><td><code>users</code></td><td>Si oui → c'est une reconnexion (voir section suivante), pas une inscription</td></tr>
+        <tr><td>3</td><td>Générer le code à 6 chiffres, le hasher (<code>otp_codes.code_hash</code> = bcrypt), puis appeler le prestataire SMS (<strong>Brevo SMS</strong>, Doc 5)</td><td><code>otp_codes</code> (INSERT avec code_hash, expires_at +10min, attempts=0)</td><td>Rate limiting : max 3 SMS/heure/numéro. Jamais stocker le code en clair — uniquement <code>code_hash</code>.</td></tr>
+        <tr><td>4</td><td>Client reçoit le SMS et saisit le code</td><td>—</td><td>Bloquer après 3 tentatives incorrectes (<code>otp_codes.attempts</code>)</td></tr>
+        <tr><td>5</td><td>Vérification du hash + contrôle <code>expires_at</code></td><td><code>otp_codes</code> (UPDATE used_at)</td><td>Un code utilisé ou expiré est invalide même si le hash correspond</td></tr>
+        <tr><td>6</td><td>Créer le compte client</td><td><code>users</code> (INSERT)</td><td>Demander prénom/nom et email à ce moment — email obligatoire pour envoyer le billet</td></tr>
+        <tr><td>7</td><td>Créer la session</td><td><code>user_sessions</code> (INSERT)</td><td>Token = UUID stocké dans le keychain de l'app (Secure Storage), jamais en clair dans localStorage</td></tr>
+        <tr><td>8</td><td>Reprendre le tunnel de réservation</td><td><code>orders</code></td><td>Le DRAFT éventuellement créé avant l'authentification doit être rattaché au <code>user_id</code> nouvellement créé</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="connexion">
+    <h2>Connexion — client de retour</h2>
+    <p>Identique au flux d'inscription à partir de l'étape 3, sauf que l'étape 6 (création du compte) est remplacée par une récupération du compte existant. Le token de session existant est invalidé (<code>revoked_at</code>) et un nouveau est créé.</p>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Session persistante 30 jours</strong> Si la session est encore valide (<code>user_sessions.expires_at</code> non dépassé, <code>revoked_at</code> NULL), le client n'a pas à ressaisir son numéro — l'app le reconnecte automatiquement. Le OTP n'est demandé qu'à l'expiration de la session (30 jours) ou si le client se déconnecte manuellement.</div>
+    </div>
+    <table>
+      <thead><tr><th>Situation</th><th>Comportement</th></tr></thead>
+      <tbody>
+        <tr><td>Session valide dans le keychain</td><td>Connexion automatique, accès direct à l'espace personnel et au comparateur</td></tr>
+        <tr><td>Session expirée (>30 jours)</td><td>Afficher l'écran de saisie du numéro → OTP SMS → nouvelle session</td></tr>
+        <tr><td>Changement d'appareil</td><td>Le keychain ne se transfère pas → OTP SMS sur le nouveau téléphone obligatoire</td></tr>
+        <tr><td>Client perd son téléphone</td><td>Contacter le support PayEnCash — aucune récupération automatique possible, le numéro de téléphone est l'unique identifiant</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="kyc-conformite">
+    <h2>Vérification d'identité — KYC gradué</h2>
+    <p>AJEK opère un contrôle d'identité <strong>gradué par volume</strong>, à finalité unique de <strong>prévention de la fraude et de sécurité des agents</strong> — aucun usage commercial ni profilage. La vérification est opérée par un prestataire <strong>certifié PVID (référentiel ANSSI)</strong> ; seul le <strong>résultat</strong> est conservé, jamais les copies de pièces. Le positionnement (AJEK non assujettie LCB-FT, vérification = intérêt légitime à prévenir la fraude) est <strong>à confirmer par avis juridique</strong>.</p>
+    <table>
+      <thead><tr><th>Palier</th><th>Déclenchement</th><th>Effet côté client</th></tr></thead>
+      <tbody>
+        <tr><td>Vérification simple</td><td>Systématique dès la 1re commande, <strong>avant l'attribution d'un agent</strong></td><td>Le payeur et le bénéficiaire doivent être la même personne</td></tr>
+        <tr><td>Vérification renforcée</td><td>Dès qu'un client dépasse <strong>3 achats OU 1 000 € cumulés sur 7 jours glissants</strong> (seuil calculé en continu, sans intervention humaine)</td><td>Contrôle PVID renforcé requis avant de poursuivre la commande</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Plafond de paiement en espèces : 1 000 € par transaction</strong> Conformément aux art. L112-6 / D112-3 CMF pour les résidents fiscaux français, aucune transaction en espèces ne peut dépasser <strong>1 000 €</strong> (paramétrable), avec <strong>anti-fractionnement</strong>. Ce plafond est <strong>contrôlé côté serveur</strong> et figé sur la commande à la génération du code — l'app ne peut pas le contourner. Le palier KYC atteint est affiché sur la fiche client du CRM manager (Doc 9).</div>
+    </div>
+  </section>
+
+  <section class="section" id="espace-personnel">
+    <h2>Espace personnel client</h2>
+    <p>Accessible depuis l'app après authentification. Identifié comme fonctionnalité présente chez tous les concurrents audités (Skyscanner, Kayak, Booking.com) — un client ne se souvient pas de son code interne 3 jours après réservation, l'espace personnel est sa référence.</p>
+    <table>
+      <thead><tr><th>Section</th><th>Contenu</th><th>Source de données</th></tr></thead>
+      <tbody>
+        <tr><td>Mes réservations</td><td>Liste chronologique de toutes les commandes passées, avec statut actuel, destination, date de voyage</td><td><code>orders</code> WHERE user_id = current_user</td></tr>
+        <tr><td>Détail d'une réservation</td><td>Récapitulatif complet : vol (compagnie, horaires, PNR), hébergement (nom, dates), code interne à réafficher, statut, montant TTC (dont TVA), bagages inclus</td><td><code>orders</code> + <code>flight_offers</code> + <code>stay_offers</code> + <code>payments</code></td></tr>
+        <tr><td>Mes billets</td><td>Accès rapide aux billets des voyages à venir — le billet Duffel et le voucher Hotelbeds</td><td><code>supplier_bookings</code> joint à <code>flight_offers</code> WHERE <code>flight_offers.departure_at &gt; now()</code> — <code>orders</code> ne porte pas de date de départ, seulement <code>departure_date</code> (la date demandée), qui n'est pas l'horaire réel du vol acheté</td></tr>
+        <tr><td>Suivi d'encaissement</td><td>Pour une commande en cours de collecte : carte live de l'agent (position + ETA), statut de la tournée</td><td><code>deliveries</code> + <code>delivery_tracking_events</code> (temps réel WS/SSE, Doc 3)</td></tr>
+        <tr><td>Notation de l'agent</td><td>Après collecte / <code>CONFIRMED</code> : attribuer une note 1-5★ à la tournée</td><td><code>courier_ratings</code> (Doc 2)</td></tr>
+        <tr><td>Mes factures</td><td>Facture détaillée HT + TVA + TTC de chaque commande <code>CONFIRMED</code>, téléchargeable</td><td><code>orders</code> (montants, <code>vat_rate</code>, <code>vat_amount_cents</code>)</td></tr>
+        <tr><td>Mes alertes</td><td>Alertes de prix actives, avec la route et le seuil configuré — possibilité de désactiver</td><td><code>price_alerts</code> WHERE user_id = current_user AND is_active = true</td></tr>
+        <tr><td>Mes infos</td><td>Modifier prénom, nom, email — numéro de téléphone non modifiable (identifiant)</td><td><code>users</code> (UPDATE)</td></tr>
+        <tr><td>Encart bagages</td><td>Franchise bagage incluse dans le billet (voir Doc 7)</td><td><code>flight_offers.baggages_json</code></td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Le code interne doit être réaffichable depuis l'espace personnel</strong> Si le client ferme l'app avant la collecte, il doit pouvoir retrouver son code depuis "Mes réservations" — c'est aussi là qu'il suit l'arrivée de l'agent (carte + ETA). Ce code est <code>payments.barcode_value</code> (généré en interne) ; il reste <strong>réaffichable tant que la commande est en <code>AWAITING_COURIER</code> / <code>OUT_FOR_COLLECTION</code></strong> (avant expiration ou collecte). Le <strong>code de sécurité</strong>, lui, n'est affiché qu'une seule fois et n'est jamais réaffiché (haché en base) — le client le communique à l'agent au moment de la collecte.</div>
+    </div>
+  </section>
+
+  <section class="section" id="filtres-avances">
+    <h2>Filtres avancés du comparateur</h2>
+    <p>Audit concurrentiel Skyscanner / Kayak / Hopper / Liligo — fonctionnalités de filtrage retenues pour la version 1 de PayEnCash, au-delà des filtres de base (prix, durée, direct) déjà documentés au Doc 1.</p>
+    <table>
+      <thead><tr><th>Filtre</th><th>Implémentation</th><th>Source de données</th></tr></thead>
+      <tbody>
+        <tr><td>Compagnie aérienne</td><td>Liste multi-sélection des compagnies présentes dans les résultats — filtrer <code>flight_search_results</code> par <code>carrier_iata</code></td><td><code>flight_search_results.carrier_iata</code></td></tr>
+        <tr><td>Vol direct uniquement</td><td>Déjà documenté au Doc 1 — <code>connections_count = 0</code></td><td><code>flight_search_results.connections_count</code></td></tr>
+        <tr><td>Tranche horaire de départ</td><td>Matin (6h-12h), après-midi (12h-18h), soir (18h-minuit) — filtrer par <code>departure_at</code> stocké dans <code>flight_offers.departure_at</code> (heure locale)</td><td><code>flight_offers.departure_at</code></td></tr>
+        <tr><td>Remboursable uniquement (hébergement)</td><td>Filtrer les hébergements où <code>stay_search_results</code> correspond à un tarif sans pénalité d'annulation</td><td><code>stay_search_results.raw_offer_payload</code> → <code>cancellationPolicies</code></td></tr>
+        <tr><td>Nombre d'étoiles (hébergement)</td><td>Filtrer par catégorie Hotelbeds (1★ à 5★) — extraire du payload ou ajouter une colonne dédiée dans <code>stay_search_results</code></td><td><code>stay_search_results.raw_offer_payload</code> → champ <code>category</code> Hotelbeds</td></tr>
+        <tr><td>Budget restant minimum garanti</td><td>Afficher uniquement les vols qui laissent au moins X€ pour l'hébergement — calculé via <code>within_budget</code> et le budget déclaré</td><td><code>flight_search_results.within_budget</code></td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Tous ces filtres s'appliquent côté PayEnCash, pas par appel API supplémentaire</strong> Les données sont déjà dans <code>flight_search_results</code> / <code>stay_search_results</code> au moment de l'affichage — les filtres sont de simples clauses WHERE sur ces tables locales, sans appel supplémentaire à Duffel ou Hotelbeds.</div>
+    </div>
+  </section>
+
+  <section class="section" id="alertes-prix">
+    <h2>Alertes de prix</h2>
+    <p>Fonctionnalité identifiée comme différenciante chez Skyscanner (alertes email/push), Kayak (alertes avec prédicteur), Hopper (notifications "c'est le bon moment d'acheter"). Le client configure une alerte sur une route/seuil de budget et reçoit une notification push (via <code>users.push_token</code>) quand un prix descend sous son seuil.</p>
+
+    <h3>Flux de création d'une alerte</h3>
+    <div class="flow-step">
+      <div class="flow-num">1</div>
+      <div class="flow-body"><strong>Client crée une alerte depuis le comparateur ou l'espace personnel</strong> Il sélectionne une route (MRS → BCN), éventuellement une date, et saisit son budget plafond (ex. 20€ tout compris). PayEnCash INSERT dans <code>price_alerts</code> avec <code>budget_ceiling_cents</code> = 2000, <code>is_active = true</code>, <code>expires_at = now() + 30 days</code>.</div>
+    </div>
+    <div class="flow-connector"></div>
+    <div class="flow-step">
+      <div class="flow-num">2</div>
+      <div class="flow-body"><strong>Job CRON horaire (Doc 5)</strong> Pour chaque alerte active non expirée, appeler <code>POST /air/offer_requests</code> + <code>GET /air/offers?sort=total_amount&limit=1</code> pour obtenir le prix le plus bas actuel sur la route. Calculer le prix TTC avec marge fixe.</div>
+    </div>
+    <div class="flow-connector"></div>
+    <div class="flow-step">
+      <div class="flow-num">3</div>
+      <div class="flow-body"><strong>Comparer avec le seuil et le dernier prix constaté</strong> Si <code>prix_ttc ≤ budget_ceiling_cents</code> ET <code>prix_ttc &lt; last_checked_price_cents</code> (le prix a vraiment baissé, pas juste atteint le seuil une seconde fois) → envoyer une notification push via FCM.</div>
+    </div>
+    <div class="flow-connector"></div>
+    <div class="flow-step">
+      <div class="flow-num">4</div>
+      <div class="flow-body"><strong>Mettre à jour <code>price_alerts</code></strong> Incrémenter <code>triggered_count</code>. Si <code>triggered_count ≥ 3</code>, passer <code>is_active = false</code> pour éviter le spam. Toujours mettre à jour <code>last_checked_price_cents</code> et <code>last_checked_at</code>.</div>
+    </div>
+
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Coût API des alertes</strong> Chaque alerte active génère un appel Duffel toutes les heures. À 100 alertes actives = 2 400 appels API/jour. Surveiller les quotas Duffel et prévoir une logique de regroupement par route (une seule requête pour toutes les alertes MRS→BCN actives).</div>
+    </div>
+  </section>
+
+  <section class="section" id="flux-paiement-cas">
+    <h2>Flux de paiement cash A à Z — les 3 cas produit</h2>
+    <p>C'est ici que se jouent les différences concrètes entre les trois usages du produit. Le flux de collecte est identique dans les trois cas — c'est ce qui se passe <strong>après</strong> la validation de la collecte par l'agent qui diverge : 1 appel API fournisseur (Duffel seul ou Hotelbeds seul) vs 2 appels consécutifs (Duffel puis Hotelbeds).</p>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Point commun aux 3 cas : un seul code interne</strong> Quel que soit le cas, le client reçoit toujours un seul code interne, présenté à l'agent lors de la collecte. Ce code correspond à <code>orders.total_price_cents</code> (TTC) — le total peut inclure vol seul, hébergement seul, ou les deux. L'agent encaisse simplement le montant total en espèces, dans la limite du plafond de <strong>1 000 € par transaction</strong> (contrôle serveur, voir section KYC).</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Proforma avant paiement, reçu numéroté après collecte</strong> Avant la génération du code, le client visualise un <strong>récapitulatif proforma</strong> (montant TTC détaillé, dont TVA) — document non fiscal, sans valeur d'encaissement. Après validation de la collecte par l'agent, la commande <code>CONFIRMED</code> donne lieu à un <strong>reçu numéroté</strong> (numérotation séquentielle continue, exigence du logiciel de caisse art. 286-I-3° bis CGI) accessible dans « Mes factures ». Le code interne n'est ni le proforma ni le reçu : c'est un identifiant d'encaissement à usage unique.</div>
+    </div>
+  </section>
+
+  <section class="section" id="cas-vol-seul">
+    <h2>Cas 1 — Vol seul</h2>
+    <div class="case-box">
+      <div class="case-title">🛫 Parcours : le client choisit un vol et décline l'hébergement</div>
+      <p style="font-size:13px;color:var(--gris);margin:0;">tables actives : <code>orders</code>, <code>flight_search_results</code>, <code>flight_offers</code>, <code>payments</code>, <code>supplier_bookings</code> — stay_offers NULL</p>
+    </div>
+    <table>
+      <thead><tr><th>Phase</th><th>Action PayEnCash</th><th>API appelée</th><th>Résultat attendu</th></tr></thead>
+      <tbody>
+        <tr><td>Phase 1 — Comparateur</td><td>Appel <code>GET /air/offers</code>, affichage liste vols</td><td>Duffel</td><td>INSERT flight_search_results (N candidats)</td></tr>
+        <tr><td>Phase 1 — Sélection vol</td><td>Client choisit un vol, clique "Continuer sans hébergement"</td><td>—</td><td>INSERT flight_offers, <code>stay_offers</code> = NULL sur la commande</td></tr>
+        <tr><td>Phase 1 — Pricing</td><td>Appliquer marge <code>flight_only</code> (margin_config, Doc 4)</td><td>—</td><td><code>orders.total_price_cents</code> = (prix vol + marge <code>flight_only</code> + marge sécurité + <code>service_fee_cents</code>) + <code>vat_amount_cents</code> — formule complète au Doc 4</td></tr>
+        <tr><td>Phase 2 — Voyageurs</td><td>Saisie nom, prénom, date de naissance, sexe, titre (obligatoires pour Duffel)</td><td>—</td><td>INSERT order_travelers</td></tr>
+        <tr><td>Phase 3 — Génération du code</td><td>Générer en interne le code + code de sécurité pour <code>total_price_cents</code> (TTC), lancer le dispatch agent</td><td>interne</td><td>Code affiché au client, <code>orders.status = AWAITING_COURIER</code></td></tr>
+        <tr><td>Collecte à domicile</td><td>—</td><td>—</td><td>L'agent arrive, encaisse le cash, saisit le code de sécurité + photo</td></tr>
+        <tr><td>Phase 4 — Validation collecte</td><td>Vérification code de sécurité + photo, UPDATE orders.status = PAID</td><td>interne</td><td>Collecte tracée, Phase 5 enfilée (BullMQ)</td></tr>
+        <tr><td>Phase 5 — Achat vol Duffel</td><td>POST /air/orders avec l'offre sélectionnée + données voyageurs</td><td>Duffel</td><td>Billet émis, PNR retourné, INSERT supplier_bookings (type flight)</td></tr>
+        <tr><td>Phase 5 — Confirmation</td><td>UPDATE orders.status = CONFIRMED, envoi email billet</td><td>—</td><td>Client reçoit le billet par email + dans l'espace personnel</td></tr>
+      </tbody>
+    </table>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Si POST /air/orders Duffel échoue après la collecte</strong> Le cash a été collecté mais le billet n'a pas pu être émis. Ce cas est documenté au Doc 7 (mise en attente / retry, D4) — si irrésoluble, rembourser le client par <strong>retour cash agent</strong> (tournée <code>is_return</code>) et passer <code>orders.status = FAILED</code>. Ne jamais laisser une commande bloquée en PAID sans tentative de résolution automatique.</div>
+    </div>
+  </section>
+
+  <section class="section" id="cas-hotel-seul">
+    <h2>Cas 2 — Hébergement seul</h2>
+    <div class="case-box">
+      <div class="case-title">🏨 Parcours : le client cherche uniquement un hébergement sans vol</div>
+      <p style="font-size:13px;color:var(--gris);margin:0;">tables actives : <code>orders</code>, <code>stay_search_results</code>, <code>stay_offers</code>, <code>payments</code>, <code>supplier_bookings</code> — flight_offers NULL</p>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Ce cas nécessite un point d'entrée distinct dans l'app</strong> La page d'accueil actuelle (slider budget "J'ai du cash, je pars où ?") est orientée voyage complet. Pour l'hébergement seul, prévoir un onglet ou une catégorie séparée dans l'app où le client saisit directement une ville de destination et des dates.</div>
+    </div>
+    <table>
+      <thead><tr><th>Phase</th><th>Action PayEnCash</th><th>API appelée</th><th>Résultat attendu</th></tr></thead>
+      <tbody>
+        <tr><td>Phase 1 — Comparateur</td><td>Appel <code>POST /hotel-api/1.0/hotels</code> avec destination + dates, affichage liste hébergements</td><td>Hotelbeds</td><td>INSERT stay_search_results (N candidats)</td></tr>
+        <tr><td>Phase 1 — Sélection hébergement</td><td>Client choisit un hébergement — pas de vol associé</td><td>—</td><td>INSERT stay_offers, <code>flight_offers</code> = NULL sur la commande</td></tr>
+        <tr><td>Phase 1 — Pricing</td><td>Appliquer marge <code>stay_only</code> (margin_config, Doc 4)</td><td>—</td><td><code>orders.total_price_cents</code> = (prix hébergement + marge <code>stay_only</code> + marge sécurité + <code>service_fee_cents</code>) + <code>vat_amount_cents</code> — formule complète au Doc 4</td></tr>
+        <tr><td>Phase 2 — Voyageurs</td><td>Saisie nom + prénom (Hotelbeds n'exige que holder.name/surname)</td><td>—</td><td>INSERT order_travelers — moins de champs que pour Duffel</td></tr>
+        <tr><td>Phase 3 — Génération du code</td><td>Générer en interne le code + code de sécurité pour <code>total_price_cents</code> (TTC), lancer le dispatch agent</td><td>interne</td><td>Code affiché, <code>orders.status = AWAITING_COURIER</code></td></tr>
+        <tr><td>Phase 4 — Validation collecte</td><td>Agent encaisse le cash, vérification code de sécurité + photo</td><td>interne</td><td>UPDATE orders.status = PAID, Phase 5 enfilée</td></tr>
+        <tr><td>Phase 5 — Réservation Hotelbeds (post-payé)</td><td><code>POST /hotel-api/1.0/bookings</code> avec le rateKey conservé, puis règlement immédiat de la facture</td><td>Hotelbeds</td><td>Confirmation hôtel, booking reference, INSERT supplier_bookings (type stay), <code>settlement_status = settled</code></td></tr>
+        <tr><td>Phase 5 — Confirmation</td><td>UPDATE orders.status = CONFIRMED, envoi email voucher</td><td>—</td><td>Client reçoit le voucher par email + dans l'espace personnel</td></tr>
+      </tbody>
+    </table>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Volatilité du rateKey Hotelbeds</strong> Le <code>rateKey</code> stocké dans <code>stay_offers.hotelbeds_rate_key</code> au moment de la sélection peut expirer entre la sélection et le paiement. Si <code>POST /hotel-api/1.0/bookings</code> retourne une erreur de rateKey invalide après la collecte du cash, effectuer une nouvelle recherche pour ce même hôtel et comparer le prix — si disponible à un prix acceptable, confirmer ; sinon, rembourser le client par <strong>retour cash agent</strong>. Ce cas est à traiter dans la logique de gestion d'erreur Phase 5 du Doc 1.</div>
+    </div>
+  </section>
+
+  <section class="section" id="cas-package">
+    <h2>Cas 3 — Vol + Hébergement (Package)</h2>
+    <div class="case-box">
+      <div class="case-title">✈️🏨 Parcours : le client réserve un vol ET un hébergement avec son budget cash</div>
+      <p style="font-size:13px;color:var(--gris);margin:0;">tables actives : <code>orders</code>, <code>flight_search_results</code>, <code>flight_offers</code>, <code>stay_search_results</code>, <code>stay_offers</code>, <code>payments</code>, <code>supplier_bookings</code> × 2</p>
+    </div>
+    <p>C'est le cas le plus courant. Le slider budget ("J'ai du cash, je pars où ?") a été conçu pour ce cas. La marge appliquée est de <strong>8% sur le total combiné</strong> (cat. <code>package</code> dans <code>margin_config</code>) — moins cher que les deux achetés séparément. En Phase 5, les achats fournisseurs sont toujours <strong>séquentiels : Duffel d'abord, Hotelbeds ensuite</strong> — jamais en parallèle.</p>
+
+    <!-- Diagramme de répartition du budget -->
+    <svg viewBox="0 0 700 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:700px;display:block;margin:14px 0 20px;" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12">
+      <rect width="700" height="120" rx="10" fill="#F7F5F0"/>
+      <text x="350" y="22" font-size="13" font-weight="700" fill="#1F4438" text-anchor="middle">Répartition du budget cash entre vol et hébergement</text>
+
+      <!-- Barre budget total -->
+      <rect x="20" y="38" width="660" height="30" rx="6" fill="#E4E0D6"/>
+      <text x="20" y="34" font-size="10" fill="#6B6966">Budget déclaré : 50 €</text>
+
+      <!-- Part vol (exemple 15€ sur 50) -->
+      <rect x="20" y="38" width="198" height="30" rx="6" fill="#1F4438"/>
+      <text x="119" y="58" font-size="11" font-weight="600" fill="#F7F5F0" text-anchor="middle">Vol : 15 € (+ marge)</text>
+
+      <!-- Part hébergement (exemple 20€) -->
+      <rect x="218" y="38" width="264" height="30" rx="0" fill="#D8722B"/>
+      <text x="350" y="58" font-size="11" font-weight="600" fill="#fff" text-anchor="middle">Hébergement : 20 € (+ marge)</text>
+
+      <!-- Reste de poche -->
+      <rect x="482" y="38" width="198" height="30" rx="6" fill="rgba(31,68,56,0.12)"/>
+      <text x="581" y="58" font-size="11" fill="#1F4438" text-anchor="middle">Reste : 15 €</text>
+
+      <text x="350" y="100" font-size="11" fill="#6B6966" text-anchor="middle">total_price_cents = (vol + hébergement + marge package 8% + marge sécurité + service_fee) + TVA</text>
+    </svg>
+
+    <table>
+      <thead><tr><th>Phase</th><th>Action PayEnCash</th><th>API(s) appelée(s)</th><th>Résultat attendu</th></tr></thead>
+      <tbody>
+        <tr><td>Phase 1 — Comparateur vols</td><td>GET /air/offers trié par prix, filtré par budget total</td><td>Duffel</td><td>INSERT flight_search_results</td></tr>
+        <tr><td>Phase 1 — Sélection vol</td><td>Client choisit un vol — le budget restant se met à jour</td><td>—</td><td>INSERT flight_offers</td></tr>
+        <tr><td>Phase 1 — Comparateur hébergements</td><td>POST /hotel-api/1.0/hotels avec le budget restant comme filtre de prix max</td><td>Hotelbeds</td><td>INSERT stay_search_results (filtrés par budget restant)</td></tr>
+        <tr><td>Phase 1 — Sélection hébergement</td><td>Client choisit un hébergement</td><td>—</td><td>INSERT stay_offers</td></tr>
+        <tr><td>Phase 1 — Pricing</td><td>Appliquer marge <code>package</code> (8%, margin_config, Doc 4)</td><td>—</td><td><code>total_price_cents</code> = (prix vol + prix hébergement) × 1.08 + marge sécurité</td></tr>
+        <tr><td>Phase 2 — Voyageurs</td><td>Saisie complète requise par Duffel (nom, prénom, date naissance, sexe, titre, email, téléphone)</td><td>—</td><td>INSERT order_travelers — les mêmes champs sont transmis à Hotelbeds (holder.name/surname)</td></tr>
+        <tr><td>Phase 3 — Génération du code</td><td>UN SEUL code interne pour le total vol + hébergement (TTC)</td><td>interne</td><td>Code affiché + dispatch agent, statut AWAITING_COURIER</td></tr>
+        <tr><td>Phase 4 — Validation collecte</td><td>Agent encaisse le cash, vérification code de sécurité + photo, UPDATE orders.status = PAID</td><td>interne</td><td>Phase 5 enfilée (BullMQ)</td></tr>
+        <tr><td>Phase 5 — Achat vol (1er)</td><td>POST /air/orders — débite le Duffel Balance</td><td>Duffel</td><td>INSERT supplier_bookings (type flight) — PNR obtenu</td></tr>
+        <tr><td>Phase 5 — Réservation hôtel (2e)</td><td>POST /hotel-api/1.0/bookings — confirme puis règle la facture (post-payé)</td><td>Hotelbeds</td><td>INSERT supplier_bookings (type stay), <code>settlement_status = settled</code></td></tr>
+        <tr><td>Phase 5 — Confirmation</td><td>UPDATE orders.status = CONFIRMED, envoi email billet + voucher</td><td>—</td><td>Client reçoit les deux documents + accès espace personnel</td></tr>
+      </tbody>
+    </table>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Cas critique : Duffel réussit mais Hotelbeds échoue (ou l'inverse)</strong> C'est le scénario le plus délicat du package : le billet est émis mais l'hôtel ne répond pas (ou l'hôtel est confirmé mais le vol est épuisé entre temps). Le cash étant déjà collecté, appliquer la mise en attente / retry (D4) ; si irrésoluble, le client est remboursé par <strong>retour cash agent</strong> (D2) — intégralement (option recommandée : on annule ce qui a été confirmé) ou de la seule part échouée. Voir Doc 7 pour la logique de récupération Duffel / Hotelbeds.</div>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Ordre des appels Phase 5 : Duffel d'abord</strong> Toujours appeler Duffel avant Hotelbeds en Phase 5, pour deux raisons : le vol est la pièce maîtresse du voyage (sans vol, l'hébergement est inutile), et Duffel a une validation plus stricte (disponibilité, données voyageurs) — mieux vaut détecter une erreur Duffel avant d'avoir confirmé l'hôtel.</div>
+    </div>
+  </section>
+
+  <section class="section" id="checklist">
+    <h2>Checklist développeur</h2>
+    <ul class="checklist">
+      <li>Intégrer <strong>Brevo SMS</strong> pour l'OTP (prestataire retenu, Doc 5)</li>
+      <li>Implémenter le rate limiting sur l'envoi OTP (max 3/heure/numéro, max 10/jour) côté serveur, pas uniquement côté app</li>
+      <li>Prévoir le stockage sécurisé du token de session côté app (iOS Keychain, Android Keystore) — jamais en AsyncStorage non chiffré</li>
+      <li>Implémenter le job CRON horaire de vérification des alertes de prix, avec regroupement des alertes par route pour minimiser les appels API Duffel</li>
+      <li>Prévoir le réaffichage du <strong>code interne</strong> depuis l'espace personnel (le client peut fermer l'app avant la collecte) et le <strong>suivi live de l'agent</strong> (carte + ETA)</li>
+      <li>Implémenter la <strong>notation de l'agent</strong> (1-5★, <code>courier_ratings</code>) et l'accès à la <strong>facture</strong> HT + TVA + TTC depuis l'espace personnel</li>
+      <li>Implémenter le <strong>KYC gradué</strong> : vérification simple dès la 1re commande (avant attribution de l'agent), renforcée dès 3 achats ou 1 000 € cumulés sur 7 jours glissants, via prestataire PVID (résultat seul conservé)</li>
+      <li>Appliquer le <strong>plafond de 1 000 € par transaction en espèces</strong> côté serveur (paramétrable, figé sur la commande) avec anti-fractionnement — l'app ne doit jamais pouvoir le contourner</li>
+      <li>Générer un <strong>reçu numéroté</strong> à séquence continue à la confirmation (logiciel de caisse, art. 286-I-3° bis CGI), distinct du récapitulatif proforma affiché avant paiement</li>
+      <li>Documenter et implémenter la politique de gestion du cas package partiel (Duffel OK + Hotelbeds KO) avant lancement — remboursement par retour cash agent, total ou partiel (D2/D4)</li>
+      <li>Ajouter une colonne <code>star_rating</code> dans <code>stay_search_results</code> si le filtre par étoiles est implémenté dès la v1 (évite de parser le JSONB raw à chaque requête UI)</li>
+      <li>Intégrer les notifications push (FCM) pour les alertes de prix et le <strong>suivi d'encaissement à domicile</strong> — nécessite un compte Firebase et la configuration dans l'app</li>
+    </ul>
+  </section>
+
+</main>
+
+</body>
+</html>

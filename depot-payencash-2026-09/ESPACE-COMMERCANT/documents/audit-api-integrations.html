@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit des intégrations API — PayEnCash</title>
+<style>
+  :root{--ink:#0F2A24;--pri:#10A06A;--prid:#0C7F54;--bg:#F4F7F5;--mut:#5B6E66;--sep:#E3EAE6;--amber:#8a6d1f;--amberbg:#FBF3E0}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;padding:34px 18px 60px}
+  main{max-width:860px;margin:0 auto}
+  h1{font-size:26px;letter-spacing:-0.02em;margin-bottom:4px}
+  .sub{color:var(--mut);font-size:13.5px;margin-bottom:22px}
+  h2{font-size:17px;margin:26px 0 10px;color:var(--prid)}
+  .card{background:#fff;border-radius:14px;padding:16px 18px;margin-bottom:12px;box-shadow:0 1px 4px rgba(15,42,36,.06)}
+  .card.ok{border-left:4px solid var(--pri)}
+  .card.warn{border-left:4px solid #d9a52b;background:var(--amberbg)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+  th,td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--sep);vertical-align:top}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut)}
+  code{background:#EAF2EE;border-radius:5px;padding:1px 6px;font-size:11.5px}
+  b.k{color:var(--prid)}
+  p,li{font-size:13px;color:var(--mut)}
+  li{margin:4px 0 4px 18px}
+  .badge{display:inline-block;border-radius:6px;background:var(--pri);color:#fff;font-size:10px;font-weight:800;padding:2px 8px;letter-spacing:.06em;text-transform:uppercase}
+</style>
+<!-- (18/09, soir) La cascade de remboursement Duffel se terminait « par l'agent » : plus personne ne rend
+     d'espèces, la restitution va désormais à l'avoir puis au virement. Et le nombre de tables cité valait pour le
+     23/08 : on le date, en donnant le compte réel du jour — un chiffre sans date se lit comme s'il était actuel.
+     Le fond est le même partout : l'agent de caisse mobile est abandonné, parce qu'un salarié qui
+     transporte des espèces chez le client expose l'entreprise à un risque humain et à un cadre CNAPS que le
+     projet ne veut pas porter ; et le reversement mensuel du partenaire est remplacé par un prélèvement à la
+     vente, parce qu'attendre l'argent d'un commerçant créait une créance à relancer. On ne dit plus nulle
+     part comment le client règle au comptoir : la promesse est de payer AVEC UN BON D’ACHAT. -->
+</head>
+<body>
+<main>
+<h1>Audit des intégrations API</h1>
+<p class="sub">Relecture des contrats d'API, mapping variables ↔ tables ↔ flux, statut par partenaire — daté du 22 août 2026. Règle transverse : <b>aucun nom de partenaire API n'apparaît côté client</b> (secret professionnel) ; les noms ci-dessous sont réservés aux documents internes et aux apps équipe.</p>
+
+<h2>1 · Duffel — vols (prépayé)</h2>
+<div class="card ok">
+<span class="badge">Doc relue ✓</span>
+<table>
+<tr><th>Appel</th><th>Ce qu'on envoie</th><th>Ce qu'on reçoit → où ça vit chez nous</th></tr>
+<tr><td><code>POST /air/offer_requests</code> + <code>GET /air/offers</code></td><td>origin, destination, departure_date, passengers[{type}], cabin_class</td><td>offres : <code>id</code> (→ flight_offers.duffel_offer_id, text), base_amount/tax_amount (→ base_cents/tax_amount_cents, integer), <code>owner.iata_code</code> (→ flight_offers.airline_iata FK airlines), expires_at (timestamptz) ; <b>conditions.change_before_departure / refund_before_departure</b> → l'éligibilité aux packs Flex/Super Flex</td></tr>
+<tr><td><code>GET /air/airlines</code></td><td>—</td><td>référentiel compagnies → table <code>airlines</code> (iata_code PK, name, logo_symbol_url/logo_lockup_url, synced_at) — CRON de resynchronisation</td></tr>
+<tr><td><code>POST /air/orders</code></td><td>selected_offers[offer_id], passengers (les 7 champs : title, given_name, family_name, born_on, gender, email, phone E.164 — chiffrés AES-256 chez nous, order_travelers)</td><td>order id + billets → supplier_bookings (provider 'duffel', duffel_prepaid, débit de l'avance — provider_wallets)</td></tr>
+<tr><td><code>POST /air/order_change_requests</code> · <code>/air/order_cancellations</code></td><td>order_id, changements</td><td>l'exécution des promesses Flex (changement) et Super Flex (remboursement → moyen d'origine / avoir / virement)</td></tr>
+</table>
+<p style="margin-top:8px"><b class="k">Webhooks</b> : émission de billets → statut commande. <b class="k">Règle</b> : l'offre expire (expires_at) — c'est le « prix bloqué » côté vol : re-vérifier l'offre avant l'encaissement, jamais après.</p>
+</div>
+
+<h2>1b · Destinations &amp; VILLES MULTIPLES — audit du nommage (23/08)</h2>
+<div class="card">
+<p><b class="k">Règle d'or du mapping</b> : nos colonnes reprennent les <b>noms de champs des APIs à l'identique</b> — zéro renommage, zéro traduction — pour que la table de liaison se lise sans dictionnaire. Audit passé sur les 50 tables que comptait le schéma au 23/08 (validées Postgres réel ; il en compte <b>108 + 3 vues</b> au 18/09, dont <code>partner_cards</code> et <code>partner_charges</code>) : <code>airlines</code> ✓ (iata_code, logo_symbol_url… = Duffel /air/airlines), <code>hotel_offers</code> ✓ (rate_id, prebook_id, prebook_expires_at… = LiteAPI), <code>flight_offers</code> ✓ (duffel_offer_id, base/tax séparés comme base_amount/tax_amount).</p>
+<table>
+<tr><th>Source API</th><th>Champs (tels quels)</th><th>Chez nous</th></tr>
+<tr><td><code>Duffel GET /air/places</code></td><td><code>id, type (airport|city), iata_code, iata_city_code, iata_country_code, name, city_name, latitude, longitude, time_zone</code></td><td>table <code>places</code> — mêmes noms de colonnes (duffel_place_id pour id) ; CRON de resynchronisation comme airlines. C'est la source de la <b>combobox destination</b> de l'accueil (on écrit, la liste suit — name / city_name / iata_code).</td></tr>
+<tr><td><code>Nuitée GET /data/cities</code></td><td><code>city, country</code> (ISO-2)</td><td>table <code>nuitee_cities</code> — mêmes noms ; source de la combobox en mode Séjour.</td></tr>
+<tr><td>Liaison vol ↔ hôtel</td><td>—</td><td><code>place_city_links</code> (iata_city_code ↔ nuitee_city_id) : le pont qui relie « le vol vers BCN » et « les hôtels de Barcelone » — testé par jointure (places → liens → nuitee_cities) sur Postgres réel. <b>iata_city_code</b> est la clé de regroupement (CDG + ORY → PAR), exactement la sémantique Duffel.</td></tr>
+</table>
+<p style="margin-top:8px"><b class="k">Villes multiples (comme Ryanair)</b> — mécanique Duffel étudiée : une <code>offer_request</code> porte un tableau <code>slices[]</code>, chaque slice = <code>{origin, destination, departure_date}</code> ; les <code>offers</code> renvoyées couvrent <b>tous les tronçons à la fois</b>, et un seul <code>POST /air/orders</code> émet le dossier complet. Traduit chez nous : le composeur de tronçons de l'accueil (state.slices au schéma Duffel, l'arrivée du tronçon N pré-remplit le départ du N+1), le tunnel <code>parcours/04-vol-multi</code> (un vol par tronçon, total unique), et <b>un seul code de paiement en espèces</b> à la fin — même flux fly/01 → point ou domicile, le montant suit (?m=).</p>
+</div>
+
+<h2>2 · Nuitée (Connect · LiteAPI) — hôtels (post-payé)</h2>
+<div class="card ok">
+<span class="badge">Doc relue ✓</span>
+<p style="margin-bottom:6px">Remplace l'ancien partenaire hôtelier, <b>supprimé de tout le dossier</b> (20 fichiers nettoyés). Nuitée = 300+ sources, 2,6 M hôtels, sandbox « production-like » (clé sandbox suffisante pour la recette — aucune vraie clé nécessaire tant qu'on maquette).</p>
+<table>
+<tr><th>Appel</th><th>Ce qu'on envoie</th><th>Ce qu'on reçoit → où ça vit chez nous</th></tr>
+<tr><td><code>GET /data/hotels</code> · <code>GET /data/hotel</code></td><td>ville / hotelId</td><td>fiche COMPLÈTE : nom, étoiles, <b>checkinCheckoutTimes</b> (→ checkin_time/checkout_time), <b>hotelImportantInformation</b> (→ house_rules — TOUTES les consignes affichées), images, description → hotel_offers</td></tr>
+<tr><td><code>GET /data/reviews</code></td><td>hotelId</td><td><b>avis individuels + note agrégée</b> → table hotel_reviews (source 'nuitee') — affichés dans le dépliant hôtel ; nos avis post-séjour (source 'payencash') exigent un order payé (contrainte SQL avis_maison_verifie) et se publient à côté</td></tr>
+<tr><td><code>POST /hotels/rates</code></td><td><b>checkin, checkout</b> (calendrier arrivée→départ de l'accueil, OBLIGATOIRES), occupancies[{adults, children[]}], hotelIds</td><td>tarifs : <code>rateId</code> (→ hotel_offers.rate_id, text), room_type, board, <b>maxOccupancy</b> (→ max_guests : personnes MAX du logement, sans ambiguïté), <b>cancelPolicyInfos</b> datés + refundableTag NRFN/RFN (→ cancellation_policy jsonb — affichée ligne à ligne AVANT l'achat), refundable, prix → total_cents ; <code>nights</code> = colonne calculée (checkout − checkin), CHECK checkout &gt; checkin</td></tr>
+<tr><td><code>POST /rates/prebook</code></td><td>rateId</td><td><code>prebookId</code> + prix confirmé + fenêtre (→ hotel_offers.prebook_id / prebook_expires_at) — <b>le verrou de prix : support technique du « prix bloqué » côté hôtel</b></td></tr>
+<tr><td><code>DELETE /bookings/{id}</code></td><td>bookingId</td><td>annulation selon la cancellation policy du tarif (affichée AVANT l'achat) → cancellation_requests.provider_response ; fenêtre gratuite = remboursement intégral</td></tr>
+<tr><td><code>POST /rates/book</code></td><td>prebookId, holder, guests, clientReference (notre réf)</td><td>bookingId + confirmation → supplier_bookings (provider 'nuitee', <b>nuitee_postpaid</b> : facture réglée après, aucun solde immobilisé)</td></tr>
+</table>
+<p style="margin-top:8px"><b class="k">Ordre absolu</b> : rates → prebook → <b>encaissement espèces</b> → book. Prebook expiré avant l'encaissement → re-prebook et ré-affichage du prix AVANT de laisser payer.</p>
+</div>
+
+<h2>3 · Mondial Relay — colis MODE</h2>
+<div class="card ok">
+<span class="badge">Doc relue ✓</span>
+<p>Étiquettes + suivi + retours (transporteur retenu, le moins cher de France). L'API fournit <b>étiquette et tracking</b>, jamais de promesse de date → nos délais affichés sont des <b>estimations en jours ouvrés</b> (« entre ven. 28 août et mar. 1ᵉʳ sept. »), calculées par <code>PEC_DATA.estimationLivraison()</code> (atelier 2 j + réseau relais 3-5 j ouvrés). Webhook tracking → statuts commande (shipments, Partie 6b §3b). Retours : étiquette retour générée depuis mode_returns.</p>
+</div>
+
+<h2>4 · Odoo — comptabilité &amp; facturation</h2>
+<div class="card ok">
+<span class="badge">Doc relue ✓</span>
+<p>API XML-RPC/JSON-RPC : écritures comptables (ventes TTC régime de la marge art. 297 A — TVA jamais détaillée sur facture), factures fournisseurs (supplier_invoices → règlement ≤ 7 j), exports FEC. (17/09, <b>supprimé le 20/09</b>) Le paiement en ligne :  page hébergée, pingback serveur à serveur (« OK », renvoi toutes les 30 min), API Delivery Confirmation pour la ligne Mode, réserve glissante 5 % — entre au registre ; le rapprochement des virements du prestataire se fait sur <code>psp_transactions</code>. Identifiants en variables d'environnement, jamais en dur. Rapprochement : écritures Odoo. <i>(18/09, soir : l'import du rapport Cash Services et la table <code>bank_deposit_transactions</code> rapprochaient les dépôts d'espèces des agents — sans objet. Ce qu'il y a à rapprocher désormais, ce sont les prélèvements Stancer sur la carte des commerçants.)</i></p>
+</div>
+
+<h2>4b · Brevo — SMS &amp; email transactionnels</h2>
+<div class="card ok">
+<span class="badge">Doc relue ✓</span>
+<p>API v3 (<code>POST /v3/transactionalSMS/sms</code> · <code>POST /v3/smtp/email</code>, templates + variables). Chaque envoi est tracé dans <code>transactional_messages</code> (canal, template, payload, messageId, statut delivered/bounced via webhook). Templates : code de paiement (code + minuteur + point choisi) · paiement reçu · <b>billet émis</b> (PNR compagnie + n° e-ticket + <b>lien d'enregistrement de la compagnie</b> — jamais « téléchargez votre billet ») · voucher hôtel (code de confirmation à donner à la réception) · rappel 30 min avant l'expiration du prix bloqué. Modèles de messages à rédiger : item registre (Marketing).</p>
+</div>
+
+<h2>5 · Le serveur, éprouvé en conditions réelles (simulées)</h2>
+<div class="card ok">
+<p><b class="k">Test d'ampleur exécuté le 22/08</b> sur serveur simulé reproduisant les règles exactes (mêmes invariants, zéro risque, aucune clé nécessaire) : <b>8/8 tests passés</b> — réservation vol simple et multi-passagers au centime, <b>30 clients simultanés sur 9 sièges → exactement 9 ventes, zéro survente</b>, prix bloqué honoré à 119 min et refusé à 121, anti-double encaissement, plafond espèces 1 000 € avec proposition mixte automatique, 200 réservations parallèles (p95 ≈ 114 ms). Détail complet : <a href="audit-charge-api.html">audit-charge-api.html</a>. Étape suivante quand les clés seront fournies : rejouer la même batterie sur les <b>sandbox officielles</b> Duffel et LiteAPI.</p>
+</div>
+
+<h2>6 · Les logos des compagnies — a-t-on le droit ? (réponse concrète)</h2>
+<div class="card warn">
+<p><b>Oui, pour l'usage qu'on en fait — avec deux garde-fous.</b></p>
+<li><b>Le principe</b> : afficher le logo d'une compagnie À CÔTÉ du billet de cette compagnie qu'on vend est un <b>usage référentiel de la marque</b> (dire de qui est le produit), pas une contrefaçon : la marque sert à désigner la provenance réelle du service, ce que le droit des marques permet tant qu'il n'y a <b>ni confusion ni suggestion de partenariat</b> (on n'écrit jamais « en partenariat avec X », le logo n'apparaît QUE sur l'offre de X). C'est la pratique de toutes les agences en ligne.</li>
+<li><b>Le canal</b> : Duffel expose les logos officiels (<code>logo_symbol_url</code>) précisément pour que ses agences les affichent — passer par ce canal, c'est utiliser l'image que la plateforme de billetterie distribue à cet effet.</li>
+<li><b>Garde-fou n°1</b> : certaines compagnies (Ryanair en tête) sont procédurières contre les revendeurs — l'item avocat du registre couvre déjà « usage référentiel des logos » : à faire confirmer AVANT le lancement, et retirer sans discuter le logo de toute compagnie qui le demanderait.</li>
+<li><b>Garde-fou n°2</b> : jamais un logo de compagnie dans une PUBLICITÉ PayEnCash générique (bannières, affiches) — uniquement accolé à une offre réelle de cette compagnie.</li>
+</div>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Étape 2 · Le modèle d'affaires financier — PayEnCash</title>
+<style>
+:root{--ajek:#0f7a4d;--ajek-d:#0b5c3a;--ink:#1a1f1c;--muted:#5b675f;--line:#d9e5dd;--bg:#f4f7f5;--card:#fff;--chip:#e8f3ec;--gold:#b8860b;--goldbg:#fdf5e6}
+@media(prefers-color-scheme:dark){:root{--ink:#e8efe9;--muted:#9fb0a6;--line:#254034;--bg:#0d1512;--card:#121d18;--chip:#173026;--goldbg:#2a2410}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.tb{display:flex;gap:8px;flex-wrap:wrap;padding:12px 22px 0}.btn{border:1px solid var(--line);background:var(--card);color:var(--ajek-d);border-radius:8px;padding:6px 11px;font-size:12.5px;text-decoration:none;font-weight:700}
+.wrap{max-width:1080px;margin:0 auto;padding:8px 22px 60px}
+.head{background:linear-gradient(120deg,var(--ajek),var(--ajek-d));color:#fff;border-radius:14px;padding:22px 26px;margin:10px 0 18px}
+.head .k{font-size:12px;letter-spacing:.14em;font-weight:800;opacity:.85}.head h1{margin:4px 0 6px;font-size:24px}.head p{margin:0;font-size:13.5px;opacity:.94}
+h2{font-size:18px;color:var(--ajek-d);margin:30px 0 10px;border-bottom:2px solid var(--line);padding-bottom:6px}
+@media(prefers-color-scheme:dark){h2{color:#5fd39a}}
+table{width:100%;border-collapse:collapse;background:var(--card);font-size:12.5px}
+th{background:var(--ajek);color:#fff;text-align:left;padding:9px 10px;font-size:11.5px;letter-spacing:.03em}
+td{border-top:1px solid var(--line);padding:9px 10px;vertical-align:top}
+td b{color:var(--ajek-d)}@media(prefers-color-scheme:dark){td b{color:#5fd39a}}
+.tblwrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line)}
+a.doc{color:var(--ajek-d);font-weight:700;text-decoration:none;border-bottom:1px dashed var(--ajek)}
+@media(prefers-color-scheme:dark){a.doc{color:#5fd39a}}
+.gap{display:inline-block;background:var(--goldbg);border:1px dashed var(--gold);color:#8a6508;border-radius:8px;padding:2px 8px;font-size:11.5px;font-weight:700;margin:1px 2px}
+@media(prefers-color-scheme:dark){.gap{color:#e0b352}}
+.okp{display:inline-block;background:var(--chip);color:var(--ajek-d);border-radius:8px;padding:2px 8px;font-size:11.5px;font-weight:700;margin:1px 2px}
+@media(prefers-color-scheme:dark){.okp{color:#5fd39a}}
+.note{background:var(--goldbg);border-left:4px solid var(--gold);border-radius:8px;padding:10px 14px;font-size:13px;margin:14px 0}
+.ok{background:var(--chip);border-left:4px solid var(--ajek);border-radius:8px;padding:10px 14px;font-size:13px;margin:14px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13px}
+.card b{color:var(--ajek-d)}@media(prefers-color-scheme:dark){.card b{color:#5fd39a}}
+ul{margin:8px 0;padding-left:20px}li{margin:4px 0}
+.chain{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.chain .st{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700}
+.chain .st small{display:block;font-weight:500;color:var(--muted);font-size:10.5px;margin-top:2px}
+.chain .fl{color:var(--ajek-d);font-weight:800}
+</style><style>/*fresh*/
+:root{--ajek:#10A06A;--ajek-d:#0C7F54;--gold:#E39A2E}
+body{background:
+ radial-gradient(1100px 520px at 92% -12%, rgba(63,217,155,.16), transparent 62%),
+ radial-gradient(900px 460px at -12% 34%, rgba(227,154,46,.09), transparent 58%),
+ radial-gradient(700px 420px at 50% 115%, rgba(16,160,106,.10), transparent 60%),
+ var(--bg)}
+.head{background:linear-gradient(115deg,#0F2A24 0%,#0C7F54 55%,#10A06A 100%)!important;position:relative;overflow:hidden}
+.head::after{content:"";position:absolute;right:-40px;top:-60px;width:220px;height:220px;border-radius:50%;
+ background:radial-gradient(circle,rgba(63,217,155,.35),transparent 65%);pointer-events:none}
+h2{border-bottom:none!important;position:relative;padding-bottom:9px!important}
+h2::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:4px;border-radius:2px;
+ background:linear-gradient(90deg,#10A06A,#3FD99B)}
+.card{transition:transform .16s ease,box-shadow .16s ease}
+.card:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(15,42,36,.13)}
+.btn{transition:transform .12s ease,box-shadow .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(16,160,106,.22)}
+.ok{background:linear-gradient(120deg,#E6F4EC,#f0faf4)}
+.note{background:linear-gradient(120deg,#FDF1E7,#fdf7ee)}
+th{background:linear-gradient(115deg,#0C7F54,#10A06A)!important}
+</style>
+</head><body>
+<div class="tb"><a class="btn" href="diagramme-principal.html">🧭 Fil rouge</a><a class="btn" href="partie-1-marketing.html">← Étape 1 · Marketing</a><a class="btn" href="partie-2-juridique-socle.html">Étape 3 · Juridique →</a></div>
+<div class="wrap">
+
+<div class="head"><div class="k">ÉTAPE 2 / 10 · ENTRE MARKETING ET JURIDIQUE</div><h1>💶 Le modèle d'affaires financier — comment on gagne de l'argent, comment il circule</h1>
+<p>Avant le cadre juridique : <b>d'où vient chaque euro, ce qu'il contient, où il va</b>. Les trois lignes de revenus (Voyage, Promos, Mode), la grille de prix, le circuit de l'argent, les deux trésoreries fournisseurs, la fiscalité par ligne — et les règles que les maquettes et le code doivent respecter au centime. Source consolidée : <a class="doc" href="../../docs/08-mecanisme-financier.html">Doc 8 · Mécanisme financier</a> + décisions d'août 2026 (Mode, Fournisseurs, Mondial Relay, Promos).</p></div>
+<!-- (18/09, soir) Deux décisions fondatrices changent l'économie décrite ici : l'agent de caisse mobile est supprimé
+     (avec lui disparaissent une ligne de revenus, un salaire, un véhicule, une assurance et tout le circuit d'espèces),
+     et le reversement mensuel du partenaire devient un prélèvement à la vente — donc plus de créance ni de décalage de
+     trésorerie, mais une charge de prestataire nouvelle. -->
+<div class="note" style="border-left-color:#0C7F54"><b>Pivot du 17/09, complété le 18/09 au soir (décisions fondatrices) — ce que cette étape a intégré.</b> Plus de borne, plus de point partenaire qui encaisse (un commerçant tiers qui encaisse pour AJEK rend un service de paiement sans agrément), et <b>plus d'agent de caisse mobile</b>. Le client <b>paie avec un bon d’achat</b> par <b>deux moyens, achetés l'un et l'autre au comptoir d'un commerce</b> : le <b>Bon d’achat PayEnCash</b> — titre prépayé émis par AJEK, vendu par un <b>commerçant partenaire</b> dont la carte enregistrée est <b>débitée à la seconde de la vente</b>, montant du bon d’achat moins sa commission (§1 ligne « Bon d’achat », §1b) — et le <b>Bon d’achat PayEnCash</b> du <b>réseau de distribution</b> (hors contrat), saisi en ligne chez nous (page hébergée, notification serveur qui seule règle la commande). Le partenaire <b>n'encaisse jamais une commande</b> et <b>ne détient jamais nos fonds</b>. <b>Un bon d’achat suffit du client n'est requise nulle part.</b> Pays : France. Lignes : Fly et Mode.</div>
+
+<h2>1 · Les trois lignes de revenus</h2>
+<div class="tblwrap"><table>
+<tr><th>Ligne</th><th>Ce qu'on vend</th><th>Comment on gagne</th><th>Exemple canonique (celui des maquettes)</th></tr>
+<!-- (18/09, soir) Les « frais de déplacement 7,90 € » étaient la rémunération d'une course d'agent : sans agent de
+     caisse mobile, cette ligne de revenus n'a plus de source, et le prix ne dépend plus du moyen choisi. -->
+<tr><td><b>✈️ Voyage (FLY)</b></td><td>Vols (Duffel, plus de 200 compagnies) + hébergements (Nuitée), payés <b>avec un bon d’achat</b> (Bon d’achat PayEnCash)</td><td>Marge : <b>vol max(3 €, 15 %)</b> · <b>hôtel 10 %</b> · <b>package 8 %</b> — <b>aucun frais de déplacement, aucun supplément</b> : le prix affiché est le prix payé, quel que soit le moyen</td><td>Marseille → Barcelone : <b>62,35 €</b> — le même quel que soit le nombre de bons présentés (l'ancien tarif « 70,25 € avec agent » n'existe plus)</td></tr>
+<tr style="opacity:.55"><td><b>⭐ PayEnCash Prime</b> <i style="font-size:11px">(22/08, benchmark Opodo)</i> — <b style="color:#B3261E">REPORTÉ (27/08)</b> : retiré des maquettes et du périmètre de lancement, réactivable quand la société sera plus mature</td><td>Abonnement voyage : <b>8,97 €/mois</b> payé avec un bon d’achat (Opodo Prime : 8,99 €) — 20 € offerts en carte cadeau à la souscription · JAMAIS de renouvellement automatique (il expire si le membre ne revient pas payer)</td><td>Revenu récurrent : 8,97 €/mois/membre − coût carte cadeau amorti (20 € une fois) − avantages (prix membres, prix bloqué 2 h) · <b>AMENDEMENT GRILLE VOL : commission = min(max(3 €, 15 %), frais de service Opodo relevés − 0,02 €)</b> — sur le panier relevé Santorin 1 133,63 € : Opodo marge 66,35 € → nous 66,33 € (15 % aurait donné 170 €, invendable)</td><td>Relevé du 22/08 (capture conservée) : Santorin 2 adultes — comparatif DATÉ, cadrage pub comparative L122-1 chez l'avocat</td></tr>
+<tr><td><b>💶 Cascade de marge — exemple Santorin (relevé 22/08)</b></td><td>Prix client 1 133,61 € (Opodo − 0,02) · reversé compagnie 1 067,28 € · <b>marge brute 66,33 € (5,85 %)</b> · TVA sur marge (297 A) −11,06 € → 55,27 € HT · plus aucune part partenaire (17/09)</td><!-- (18/09, soir) Les cas ① et ② reposaient sur l'agent de caisse mobile et sur le complément par carte : supprimés,
+     ils n'ont plus de coût à décrire. Le cas du bon d’achat les remplace, avec une charge que le modèle ne portait pas
+     avant : les frais du prestataire qui prélève le commerçant. -->
+<td><b>DEUX CAS selon le moyen (18/09, soir)</b> : ① <b>réglé par Bon d’achat PayEnCash</b> → le commerce garde sa commission (1,10 % HT + TVA 20 %) et <b>AJEK supporte en plus les frais du prestataire Stripe</b> (1,5 % + 0,25 € par prélèvement) ; <b>mais ce panier-là dépasse nos plafonds</b> (250 € par bon d’achat, 1 000 € par client et par jour, 1 000 € sur 30 jours glissants) : il ne peut pas être réglé entièrement en bons d’achat · ② <b>plusieurs bons</b> (série émise au comptoir au-delà de 250 €) : c'est la voie pour un panier de ce montant. <b>Le mix des moyens reste un indicateur de marge</b>, pas un détail — la marge nette de cet exemple ne dépend plus que du prélèvement Stripe.</td><td>La grille suit le moyen : chaque commande porte son coût d'encaissement (<code>payments.method</code>)</td></tr>
+<tr><td><b>🏷️ Promos (FLY)</b></td><td>Offres A/R + hébergement <b>négociées et éditées à J−45 minimum</b>, 4 modes de voyage</td><td>La marge est <b>incluse dans le prix négocié</b> — l'offre reste toujours sous le « prix en normal » (prix de référence Omnibus, Étape 5)</td><td>Bucarest 3★ 7 nuits : <b>179 €</b> vs 285 € en normal</td></tr>
+<tr><td><b>🛍️ Mode</b></td><td>Prêt-à-porter, sneakers, accessoires — <b>neufs ou reconditionnés</b>, achetés ferme aux fournisseurs, vendus par AJEK</td><td>Grille (12/09/2026) : <b>prix client = prix d'achat + 7 % de marge + livraison au poids + contrôle atelier</b>. La marge est <b>indépendante des frais</b> : elle ne les absorbe plus, ils sont refacturés au client en sus</td><td>Air Max, colis 1,2 kg : achat <b>123 €</b> → marge <b>8,61 €</b> + Mondial Relay 7,99 € + atelier 2,20 € → client <b>141,80 €</b> → <b>8,61 € nets par pièce avant TVA sur marge</b>, quel que soit le poids</td></tr>
+<tr><td><b>🎟️ Le Bon d’achat PayEnCash</b> <i style="font-size:11px">(18/09 — ce n'est pas une ligne de revenu : un flux d'encaissement)</i></td><td>Bon d’achat prépayé à montant libre (5–250 €, référentiel <code>ref.bons</code>), <b>vendu au comptoir d'un commerçant partenaire</b> (ticket imprimé, code + QR), utilisable sur Mode et Fly en une ou plusieurs fois, 12 mois</td><td><b>La vente du bon d’achat est hors champ TVA</b> (bon à usages multiples, art. 256 ter CGI : la TVA naît à l'utilisation, selon la ligne consommée). <b>AJEK est payée à la vente, pas à la fin du mois</b> : la carte enregistrée du commerce est débitée de la valeur faciale <b>moins sa commission TTC</b> (1,10 % HT + TVA 20 %, autofacturée par AJEK, art. 289 CGI) — <b>le commerçant ne détient jamais nos fonds</b>, et un refus de la banque signifie <b>aucun bon d’achat émis</b>. Charge nouvelle pour AJEK : les <b>frais du prestataire Stripe</b> sur chaque prélèvement (1,5 % + 0,25 €, carte EEE — tarif standard relevé sur stripe.com le 18/09). Le revenu, lui, naît à l'utilisation du bon d’achat (marge de la ligne Fly ou Mode, comme pour tout autre moyen)</td><td>Un bon d’achat de 50 € : le commerce garde <b>0,55 € HT + 0,11 € de TVA</b> et nous règle <b>49,34 €</b> dans la seconde ; <b>0,99 €</b> de frais Stripe restent à notre charge · sur un mois à 100 bons d’achat pour 4 000 € : <b>52,80 € TTC</b> gardés par le commerce, <b>3 947,20 €</b> déjà encaissés, frais Stripe ≈ <b>84,21 €</b> (1,5 % du prélevé + 0,25 € × 100) — <span class="gap">total mensuel à recalculer sur la répartition réelle des montants</span></td></tr>
+</table></div>
+<div class="note"><b>Plus de prix plancher technique (12/09/2026).</b> L'ancienne grille × 1,217 faisait porter la livraison et l'atelier par la marge : sous ~23-25 € de prix client, la vente perdait de l'argent. Les frais étant désormais refacturés à part, <b>aucune pièce ne peut plus être vendue à perte</b>. Il ne reste qu'un <b>plancher commercial de 5 €</b> d'achat (et de prix après remise), pour qu'un code promo ne vide pas la facture du fournisseur. <b>Contrepartie à surveiller :</b> sur une petite pièce, 7 % font peu — 20 € d'achat = 1,40 € de marge pour un colis à manipuler. <span class="gap">À recaler à la 1ʳᵉ revue de marge : minimum de marge en euros, ou panier minimum</span></div>
+
+<h2>1b · Les moyens de paiement — le Bon d’achat PayEnCash et le Bon d’achat PayEnCash, achetés au comptoir d'un commerce (18/09, soir)</h2>
+<!-- (18/09, soir) Le « complément carte obligatoire au-dessus du plafond légal » n'existe plus : il n'existait que
+     parce qu'un agent recevait des billets. La carte bancaire du client ne figure plus nulle part dans le modèle. -->
+<p>« <b>Payer avec un bon d’achat</b> » est la promesse. <b>Deux moyens</b>, achetés l'un et l'autre <b>au comptoir d'un commerce</b> : le <b>Bon d’achat PayEnCash</b> (chez un commerçant partenaire sous contrat de distribution ; code saisi à « Comment payer » — en première position, <code>MOYENS_PAIEMENT</code>) et le <b>Bon d’achat PayEnCash</b> (chez un commerce de notre réseau de distribution, sous contrat). <b>La carte bancaire du client n'intervient jamais</b> : il n'y a plus ni complément carte, ni supplément, ni terminal. iDEAL reste configuré pour les Pays-Bas seulement, jamais proposé en France. <b>Comment le client règle son achat au comptoir ne relève pas de nous</b> : il paie le commerçant par les moyens que CE commerçant accepte.</p>
+<div class="tblwrap"><table>
+<tr><th>Aspect</th><th>Règle</th></tr>
+<tr><td>Bon d’achat PayEnCash (18/09)</td><td>Acheté <b>au comptoir</b> d'un commerçant partenaire, <b>5 € minimum, 250 € par bon d’achat</b> · utilisable <b>en une ou plusieurs fois</b> (le solde reste sur le code), <b>1 000 € de bons d’achat utilisés par client et par jour</b> et <b>1 000 € sur 30 jours glissants</b>, valable 12 mois · couvre tout (<code>payer par:'bon'</code>) ou une partie (<code>bonAppliquer</code>, le reste par un autre bon de la série) · <b>préfixe de ticket <code>BV-</code></b> · référentiel <code>ref.bons</code></td></tr>
+<tr><td>Le règlement au comptoir (L112-6 CMF)</td><td><b>Ce n'est pas notre règle</b> : le client règle le commerçant par les moyens que celui-ci accepte, et s'il paie en billets c'est à ce commerçant que l'art. L112-6 CMF s'applique — nos montants (250 € par bon d’achat) restent très en dessous de son plafond. <b>Ce qui nous engage, ce sont NOS plafonds</b> : ceux du référentiel <code>ref.bons</code>, contrôlés à l'utilisation</td></tr>
+<tr hidden><td>—</td><td>— · <b>pas de remboursement par le prestataire</b> (crédit compte client ou virement)</td></tr>
+<tr><td>Coût</td><td>Bon d’achat : <b>commission de distribution 1,10 % HT + TVA 20 %</b>, <b>retenue à la source</b> par le commerce (il n'est débité que du net) · <b>+ frais du prestataire Stripe à notre charge</b> : 1,5 % + 0,25 € par prélèvement (carte EEE, tarifs relevés le 18/09) — jamais montrés au commerçant · <i>(20/09 : il n'y a plus de second prestataire à payer)</i> (<span class="gap">réserve glissante 5 %)</td></tr>
+<!-- (18/09, soir) Le décalage de trésorerie « jusqu'au 10 du mois suivant » était le principal coût caché du bon
+     d’achat : le prélèvement à la vente le supprime, et avec lui la créance, l'échéance, la relance et l'impayé. -->
+<tr><td>Trésorerie</td><td>Bon d’achat : <b>encaissé à la vente</b>, dans la seconde — <b>aucun décalage, aucune créance, aucune échéance, aucun impayé</b> (le commerce est débité, il ne nous doit rien). Il ne reste qu'un <b>relevé mensuel calculé</b> (<code>v_partner_monthly_statements</code>) pour l'autofacture de commission et pour montrer au commerçant ce qu'il a gagné · <i>(20/09 : il n'y a plus de second flux à rapprocher — le rail en ligne est supprimé)</i></td></tr>
+<tr><td>Remboursements</td><td>Bon d’achat : <b>re-crédit du bon d’achat</b>, jamais en espèces (<code>bonRecrediter</code>) · sinon avoir, ou virement si le client a donné un IBAN · <b>un bon d’achat annulé au comptoir dans les 30 minutes contre-passe le prélèvement</b> du commerce (<code>order_refunds</code> · <code>partner_charges</code> en « remboursé ») · circuit F10</td></tr>
+<tr><td>Discours</td><td>« <b>Payer avec un bon d’achat</b> » : un Bon d’achat PayEnCash chez un commerçant partenaire, ou un Bon d’achat PayEnCash dans le réseau de distribution — à toi de choisir (<code>moyensPaiementLabel()</code>). <b>On ne dit jamais comment le client règle au comptoir</b> : c'est l'affaire du commerçant</td></tr>
+</table></div>
+
+<h2>2 · Ce que contient chaque euro collecté</h2>
+<p>Le cash encaissé n'est <b>pas du revenu</b>. Chaque encaissement se décompose ainsi — et le code comme la compta doivent savoir le faire :</p>
+<div class="tblwrap"><table>
+<tr><th>Composante</th><th>Nature</th><th>Destination</th></tr>
+<tr><td><b>Prix fournisseur</b> (vol, nuitée, article acheté ferme)</td><td>Dette / avance</td><td>Reconstitue l'avance Duffel · règle la facture Nuitée (post-payé) · paie la facture fournisseur Mode (virement ≤ 7 j)</td></tr>
+<!-- (18/09, soir) Les « frais de service 7,90 € » rémunéraient le déplacement d'un agent : sans agent de caisse
+     mobile, il n'y a plus de service à facturer, donc plus rien à ajouter à la marge. -->
+<tr><td><b>Marge PayEnCash</b> (grille §1) — <b>seule</b>, plus aucun frais de service</td><td><b>Revenu</b></td><td>Compte AJEK — le seul vrai chiffre de « gain »</td></tr>
+<tr><td><b>TVA</b> (sur la marge, ou 20 % sur le neuf)</td><td><b>Dette fiscale</b></td><td>Mise de côté, reversée à l'État — jamais comptée comme trésorerie disponible</td></tr>
+<tr><td><b>Remise « code promo fournisseur »</b> (ligne MODE)</td><td>Neutre pour AJEK</td><td>Éditée par le fournisseur sur ses pièces : le prix client baisse, <b>sa facture d'achat est réduite du même montant</b> — la marge AJEK est préservée. AJEK n'édite pas de codes MODE.</td></tr>
+<tr><td><b>Le cas du Bon d’achat PayEnCash</b> (18/09, soir)</td><td>À la vente du bon d’achat : <b>dette envers le porteur</b> (valeur stockée, pas un revenu) — mais <b>l'argent est déjà sur le compte AJEK</b>, prélevé sur la carte du commerce · à l'utilisation : la commande se décompose comme n'importe quelle autre (prix fournisseur, marge, TVA de la ligne consommée)</td><td><b>Bons d’achat en circulation = dette</b> à suivre (Manager · Bons d’achat PayEnCash) · la commission du commerce est un <b>coût de distribution</b> (1,10 % HT + TVA, autofacturée, <b>retenue à la source</b> : jamais décaissée) · les <b>frais Stripe</b> sont un coût d'encaissement · solde expiré après 12 mois : <span class="gap">produit AJEK — sort à valider par l'avocat</span></td></tr>
+<tr><td><b>Frais d'encaissement</b> (18/09, soir)</td><td>Coût</td><td>Bon d’achat : commission de distribution du commerce (1,10 % HT + TVA, retenue à la source) <b>+ frais du prestataire Stripe</b> (1,5 % + 0,25 € par prélèvement, à notre charge) · <b>plus aucun coût de déplacement, plus aucune rémunération par vente ni participation mensuelle de point</b> : le partenaire n'est rémunéré que sur les bons d’achat qu'il vend</td></tr>
+</table></div>
+
+<!-- (18/09, soir) Les cinq états du cash (collecté → déposé → rapproché → sur le compte → ventilé) décrivaient le
+     trajet des billets portés par un agent jusqu'à un automate : sans agent de caisse mobile, plus aucune espèce ne
+     transite par AJEK, et le seul circuit qui reste est électronique. Le numéro de section est conservé : d'autres
+     étapes renvoient à « Étape 2 §3 ». -->
+<h2>3 · Le circuit de l'argent — plus un euro d'espèces entre nos mains</h2>
+<div class="chain">
+<span class="st">vente au comptoir<small>le commerçant encaisse pour SON compte</small></span><span class="fl">→</span>
+<span class="st">prélèvement<small>sa carte est débitée : faciale − commission</small></span><span class="fl">→</span>
+<span class="st">bon d’achat émis<small>refus de la banque = aucun code</small></span><span class="fl">→</span>
+<span class="st">utilisation<small>le solde règle une commande Fly ou Mode</small></span><span class="fl">→</span>
+<span class="st">relevé mensuel<small>autofacture de commission (art. 289 CGI)</small></span>
+</div>
+<ul>
+<li><b>AJEK ne manipule plus d'espèces</b> : plus de collecte, plus de tournée, plus de dépôt en automate, plus de rapprochement de dépôt, plus de rendu de monnaie. Les seuls billets du circuit sont ceux que le client remet éventuellement au commerçant — <b>pour le propre compte de ce commerçant</b>.</li>
+<li><b>Le bon d’achat naît du paiement</b> : le prélèvement part <i>avant</i> l'émission du code. La banque accepte → le ticket s'imprime (<code>partner_charges</code> en « accepté », <code>gift_cards</code> créé) ; elle refuse → <b>aucun bon d’achat n'existe</b>, le commerçant rend au client ce qu'il a reçu, et la ligne reste au journal avec son motif pour expliquer l'écart.</li>
+<li><b>Le commerce est débité du net</b> : valeur faciale moins sa commission TTC (<code>partner_charges.amount_cents</code>). Il ne nous doit rien, à aucun moment — <b>il n'y a plus de créance à suivre, ni d'échéance, ni de relance</b>.</li>
+<li><b>Ce que le prestataire nous coûte</b> (1,5 % + 0,25 € par prélèvement) est porté par la ligne <code>partner_charges.psp_fee_cents</code> : c'est la marge réelle du manager, <b>jamais montrée au commerçant</b>.</li>
+
+<li><b>Un bon d’achat annulé au comptoir</b> dans les 30 minutes contre-passe le prélèvement (statut « remboursé ») : le débit a eu lieu, il ne s'efface pas, il se compense — sinon le relevé mentirait.</li>
+</ul>
+
+<h2>4 · Deux trésoreries fournisseurs opposées (+ la troisième, Mode)</h2>
+<div class="grid">
+<div class="card"><b>Duffel (vols) — PRÉPAYÉ, avance nécessaire</b><br>Duffel débite un <b>solde prépayé en temps réel</b> à la réservation. Le cash collecté n'est pas encore déposé à cet instant → la SASU maintient une <b>avance permanente</b> (fonds de roulement). Dimensionnement : <b>≈ D × X × Y</b> (D jours entre l'encaissement et l'arrivée des fonds sur le compte — <b>quasi nul : le bon est déjà payé quand le client le présente</b> — × X commandes vols/jour × Y montant Duffel moyen) + marge de pics. Alerte de solde insuffisant = indicateur de pilotage n°1.</div>
+<div class="card"><b>Nuitée (hôtels) — POST-PAYÉ, trésorerie inversée</b><br>Réservation confirmée, facture réglée ensuite (immédiatement à la validation, VCC/facture). Le cash est <b>déjà encaissé avant que la facture soit due</b> → aucune avance. Suivi : <code>settlement_status</code> (not_due / settled / failed). Un échec de règlement après encaissement suit le circuit retry → remboursement au client (re-crédit du bon d’achat, crédit compte client ou virement — jamais d'espèces).</div>
+<div class="card"><b>Fournisseurs Mode — ACHAT FERME, trésorerie inversée</b><br>L'achat ferme est déclenché <b>à l'encaissement client</b> : le cash est en caisse avant l'achat. Le fournisseur <b>facture AJEK</b> → <b>virement ≤ 7 jours</b>. Terminologie verrouillée côté fournisseur MODE : jamais « reversement des paiements clients », « solde », « cagnotte fournisseur », « ma boutique », « payez-moi » (le terme « solde prépayé Duffel » reste valide dans son contexte ; <b>« reversement partenaire » ne l'est plus nulle part</b> — 18/09, soir : le commerce est prélevé à la vente) — voir Étape 4 · F12. Coût logistique : <b>Mondial Relay 24R</b> (Point Relais®, expédié par le fournisseur sous étiquette AJEK — plus aucun ramassage) <b>à la tranche de poids</b> — 4,15 € jusqu'à 500 g · 5,99 € jusqu'à 1 kg · 7,99 € jusqu'à 3 kg · 15,99 € jusqu'à 10 kg · 25,99 € jusqu'à 25 kg (tarifs publics TTC relevés le 12/09/2026). <b>Ce coût est refacturé au client, pas absorbé par la marge</b> (12/09/2026) : le « coût interne moyen retenu 4,40 € » n'existe plus — c'était une moyenne, et elle faisait payer les colis lourds par la marge. Les tranches suivent le paramètre <code>Poids</code> de l'API Mondial Relay (grammes, min. 15 g, max. 25 kg).</div>
+</div>
+
+<h2>5 · La fiscalité, ligne par ligne — et ce que l'UI a le droit d'afficher</h2>
+<div class="tblwrap"><table>
+<tr><th>Ligne</th><th>Régime TVA</th><th>Règle d'affichage client (paniers, récaps, reçus, factures)</th></tr>
+<tr><td><b>Voyage &amp; Promos</b></td><td><b>TVA sur la marge</b> — art. 297 A CGI <span class="gap">à confirmer expert-comptable</span></td><td>Prix <b>TTC</b> · mention « TVA sur la marge (art. 297 A CGI) » · <b>la TVA ne se détaille JAMAIS</b> (ni sur l'écran, ni sur la facture) · aucune TVA déductible sur les achats Duffel/Nuitée</td></tr>
+<tr><td><b>Mode — reconditionné</b></td><td><b>TVA sur la marge des biens d'occasion</b> (art. 297 A CGI, assujetti-revendeur)</td><td>Prix <b>TTC</b> · mention « TVA sur la marge — non détaillée sur la facture »</td></tr>
+<tr><td><b>Mode — neuf</b></td><td><b>TVA 20 % classique</b> sur le prix total</td><td>Prix TTC · ligne « <b>dont TVA 20 %</b> : X € » affichable (X = prix × 20/120)</td></tr>
+</table></div>
+<div class="ok"><b>Implémenté dans les maquettes :</b> le panier Mode calcule la ligne TVA selon la composition (neuf détaillé / occasion « sur la marge — non détaillée ») · les récaps FLY et tunnels portent la mention 297 A · le suivi d'encaissement n'affiche plus de « dont TVA 20 % » erroné. Source unique : <code>PEC_DATA.fiscalite</code> (ui/assets/payencash-data.js).</div>
+<div class="note"><b>La TVA collectée n'est pas à vous :</b> <code>orders.vat_amount_cents</code> cumulé sur les commandes PAID/CONFIRMED d'une période = TVA à déclarer. Elle est exclue du bénéfice net (Manager · compte de résultat) et du dimensionnement de l'avance Duffel. Taxes aériennes Duffel ≠ TVA (redevances, non déductibles).</div>
+
+<h2>6 · Les coûts fixes et variables</h2>
+<div class="tblwrap"><table>
+<tr><th>Poste</th><th>Modèle</th><th>Où c'est suivi</th></tr>
+<!-- (18/09, soir) Le poste « Agents » (salaire, flotte, assurance transport de fonds) disparaît avec l'agent de
+     caisse mobile : il n'y a plus de course à payer, donc plus de charge à suivre ici. -->
+<tr><td>Prestataire de prélèvement (Stripe)</td><td>1,5 % + 0,25 € par prélèvement sur la carte du commerce — aucun coût fixe de réseau : plus de participation mensuelle de point</td><td>Manager · Trésorerie (poche paiement en ligne)</td></tr>
+<tr><td>Distribution du Bon d’achat PayEnCash (commerçants partenaires — 18/09, soir)</td><td><b>1,10 % HT + TVA 20 %</b> du montant des bons d’achat vendus (référentiel <code>ref.bons</code>), <b>retenus à la source</b> par le commerce sur le prélèvement, autofacturés par AJEK (art. 289 CGI) — <b>zéro matériel, zéro fixe, zéro flyer</b> : le seul coût est proportionnel aux bons d’achat vendus</td><td>Manager · Commerces partenaires (relevés mensuels, autofactures) · Bons d’achat PayEnCash (en circulation)</td></tr>
+<!-- (18/09, soir) Charge NOUVELLE née du prélèvement à la vente : encaisser le commerçant a un prix, que le modèle
+     ne portait pas tant qu'il attendait un virement mensuel. -->
+<tr><td>Prestataire du prélèvement (Stripe — 18/09, soir)</td><td><b>1,5 % + 0,25 € par prélèvement</b> (transaction carte EEE, tarif standard relevé sur stripe.com le 18/09) — supporté par AJEK, <b>sur chaque bon d’achat vendu</b> : le fixe de 0,25 € pèse d'autant plus que le bon d’achat est petit (sur 5 €, le minimum, il représente déjà 5 % du montant). <span class="gap">À surveiller : montant moyen du bon d’achat vendu. l'authentification forte se fait UNE fois, à l'enregistrement de la carte (SetupIntent Stripe) ; les prélèvements suivants sont initiés par le marchand (off_session) ; à obtenir de Stripe par écrit avant le réel : l'acceptation de l'activité « cartes cadeaux »</span></td><td>Manager · Commerces partenaires (frais du prestataire, ligne réservée au manager)</td></tr>
+<tr><td>Livraison Mode</td><td><b>Mondial Relay 24R</b>, à la tranche de poids (4,15 € ≤ 500 g · 5,99 € ≤ 1 kg · 7,99 € ≤ 3 kg · 15,99 € ≤ 10 kg · 25,99 € ≤ 25 kg — tarifs publics TTC relevés le 12/09/2026, indexés comme le paramètre <code>Poids</code> de l'API Mondial Relay) — « incluse » côté client au sens où <b>rien ne s'ajoute au paiement</b>, mais <b>refacturée en sus du prix d'achat</b> : elle ne se prend plus sur la marge. <span class="gap">Le forfait moyen 4,40 € masquait le vrai coût d'un colis lourd — à remplacer par la grille négociée dès la signature du contrat e-commerçant</span></td><td>Manager · Mode (compte de résultat, ligne Mondial Relay)</td></tr>
+<!-- (18/09, soir) Plus aucune espèce n'entre chez nous : il n'y a plus de dépôt à faire, donc plus de frais de
+     manipulation à provisionner. -->
+<tr><td>Atelier Mode</td><td>Contrôle, authentification, reconditionnement — coût interne par pièce</td><td>Manager · Mode</td></tr>
+</table></div>
+
+<h2>6b · Le point mort du pilote — combien de ventes pour tenir ?</h2>
+<!-- (18/09, soir) Le point mort reposait à 96 % sur le salaire de l'agent de caisse mobile, qui n'existe plus. On ne
+     réécrit pas un total en le devinant : la structure de coûts fixes du pilote doit être reconstruite avant d'annoncer
+     un nombre de ventes. -->
+<p><b>⚠️ Coûts fixes mensuels du pilote : <span class="gap">à recalculer entièrement</span></b> — l'ancien total (≈ 2 700 €/mois) était fait d'un agent salarié chargé à ≈ 2 600 € et de ≈ 90 € de serveur/outils. <b>L'agent de caisse mobile étant supprimé, il ne reste de cette addition que les outils</b> : aucun total n'est avancé ici tant que la nouvelle structure (outils, prestataires, animation du réseau de commerçants) n'est pas arrêtée. Marge de contribution par vente, en revanche, connue : vol ≈ 9,35 € (15 % de 62,35 €) moins le coût du moyen — <b>réglé par bon d’achat</b> : 0,69 € de commission HT gardée par le commerce + ≈ 1,17 € de frais Stripe ≈ <b>7,5 € nets</b> · MODE = <b>7 % du prix d'achat</b>, soit <b>~8,61 € nets</b> sur une pièce à 123 € (12/09/2026 — les frais ne sont plus absorbés par la marge, mais la marge ne les couvre plus non plus).</p>
+<div class="ok"><b><span class="gap">Point mort : à recalculer</span></b> — l'ancien résultat (≈ 385 ventes voyage/mois, ou ≈ 290 avec un mix MODE de 100 pièces) divisait des coûts fixes dont le salaire de l'agent faisait l'essentiel : <b>il n'a plus de sens et n'est pas transposé</b>. Ce qui reste vrai et sert à le refaire : <b>la nouvelle grille du 12/09 divise par ~2,3 la contribution MODE par pièce</b> (8,61 € au lieu de ~20 €) — à volume égal, MODE allège bien moins le point mort qu'espéré, le levier devient le <b>panier moyen</b> (7 % de 300 € = 21 €) et le volume, pas la pièce à 100 €. <b>C'est LE chiffre que le go/no-go du pilote (Étape 8) doit confronter au réel</b> — à recalculer dès que la structure de coûts fixes est arrêtée, avec les vraies données de S4. <b>(18/09, soir)</b> Le Bon d’achat PayEnCash reste le moyen le moins cher (≈ 1,86 € tout compris sur une vente à 62,35 €, commission HT du commerce + frais Stripe, contre ≈ 2 à 3 € en ligne) et <b>il n'ajoute plus aucun décalage de trésorerie</b> : il est encaissé à la vente.</div>
+
+<h2>7 · Les indicateurs que le Manager pilote</h2>
+<div class="grid">
+<div class="card"><b>Avance Duffel</b> — solde prépayé vs seuil D×X×Y · alerte basse = urgence n°1</div>
+<!-- (18/09, soir) « Encours agents » et « écarts de rapprochement de dépôt » mesuraient des espèces que plus personne
+     ne porte : ces deux indicateurs n'ont plus de grandeur à lire. -->
+<div class="card"><b>Prélèvements refusés</b> (18/09, soir) — cartes de commerce qui refusent ou expirent : chaque refus est <b>une vente perdue au comptoir</b>, c'est la file à traiter en premier</div>
+<div class="card"><b>TVA collectée</b> — cumul période, mise de côté</div>
+<div class="card"><b>Marge nette par ligne</b> — Voyage / Promos / Mode, après livraison, commission de distribution et frais du prestataire</div>
+<div class="card"><b>Frais du prestataire Stripe</b> (18/09, soir) — cumul des <code>psp_fee_cents</code> de la période et <b>montant moyen du bon d’achat vendu</b> : c'est lui qui décide du poids du fixe de 0,15 €</div>
+<div class="card"><b>Factures fournisseurs Mode</b> — délai ≤ 7 j respecté (conformité F12)</div>
+<div class="card"><b>Bons en circulation = dette</b> (18/09) — Σ soldes des bons actifs (émis − débités + re-crédités), par origine partenaire / cadeau · bons vendus sur 12 mois glissants → <b>veille du seuil ACPR 1 M€</b> (L521-3 II, Étape 3 §2b)</div>
+<div class="card"><b>Relevés mensuels des commerces</b> (18/09, soir) — bons d’achat vendus, commission gardée, montant prélevé, remboursements : la <b>preuve</b> et l'autofacture de commission, <b>jamais une créance</b> (il n'y a plus rien à devoir, donc plus de retard à surveiller)</div>
+</div>
+
+<h2>8 · Ce que le développeur doit retenir (contrat avec les Parties 4, 6 et 6b)</h2>
+<ul>
+<li>Les montants sont <b>en centimes</b> partout (<code>*_cents</code>) — l'affichage au centime près est un contrat, pas un détail.</li>
+<li>Le cash d'une commande <b>ne finance jamais directement</b> l'achat de cette commande (l'avance Duffel est dimensionnée à part, indépendamment du rythme des encaissements).</li>
+<li>Le <b>prélèvement précède le bon d’achat</b> (§3) — aucun code n'est émis avant l'accord de la banque, aucune transition sautée, tout est journalisé (<code>audit_log</code>, <code>event_log</code>).</li>
+<li>La TVA est calculée <b>par ligne de commande</b> selon le régime de l'article (voyage-marge / occasion-marge / neuf-20 %) et stockée (<code>orders.vat_amount_cents</code>, <code>order_items.vat_scheme</code>).</li>
+<li><b>Bon d’achat PayEnCash</b> (18/09, soir) : la valeur d'un bon d’achat est une <b>dette</b> (<code>gift_cards.balance_cents</code>, mouvements <code>gift_card_movements</code> : issue / debit / recredit) — jamais un revenu à l'émission ; le <b>prélèvement</b> du commerce est une ligne à part (<code>partner_charges</code>, carte tokenisée dans <code>partner_cards</code> — <b>le numéro de carte n'entre jamais en base</b>) ; le <b>relevé mensuel se CALCULE</b> (vue <code>v_partner_monthly_statements</code>), il ne se stocke pas et ne se « marque reçu » plus jamais : il n'y a plus rien à recevoir.</li>
+<li><b>Chaque arrondi est au centime, étape par étape</b> : commission HT, puis TVA sur cette commission, puis débit = faciale − commission TTC. C'est ce qui garantit que le serveur et l'écran tombent sur le même centime.</li>
+<li>Écrans qui matérialisent cette partie : panier Mode (TVA composée), récaps FLY (mention 297 A), suivi encaissement, Manager · Trésorerie (poche paiement en ligne) / Finance / Compte de résultat / Mode.</li>
+</ul>
+
+<div class="note"><b>⚠️ À reconfirmer avant développement</b> (principes fixés ici, valeurs contractuelles non figées) : conditions Nuitée (facturation, VCC) · rechargement du Duffel Balance · assujettissement LCB-FT · confirmation des régimes TVA (297 A voyage + occasion) par l'expert-comptable · (18/09, soir) <b>Bon d’achat PayEnCash</b> : qualification du contrat de distribution (avocat) — <i>la détention des fonds par le partenaire, elle, n'est plus une question : il est prélevé à la vente et ne détient jamais notre argent</i> —, TVA du bon à usages multiples et autofacture de commission (expert-comptable), <b>acceptation écrite par Stripe de l'activité « cartes cadeaux » (catégorie soumise à conditions) et délai de versement aux marques — à obtenir avant le passage en réel</b> (l'authentification forte se fait UNE fois, à l'enregistrement de la carte (SetupIntent Stripe) ; les prélèvements suivants sont initiés par le marchand (off_session)) — <a class="doc" href="partie-2-juridique-socle.html#bon">Étape 3 §2b</a>.</div>
+
+<p style="margin-top:24px"><a class="btn" href="partie-1-marketing.html">← Étape 1 · Marketing</a> <a class="btn" href="diagramme-principal.html">🧭 Fil rouge</a> <a class="btn" href="partie-2-juridique-socle.html">Continuer → Étape 3 · Juridique</a></p>
+</div>
+</body></html>

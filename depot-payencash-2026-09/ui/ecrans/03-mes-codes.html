@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Mes réservations</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<style>
+  /* Les 4 panes : colonnes espacées — `hidden` doit gagner sur le display:flex,
+     sinon le pane resterait visible (et sans flex, les `gap` étaient IGNORÉS :
+     c'était le « tout se colle » de l'écran). */
+  #t-codes, #t-voyages, #t-remb, #t-annule { display: flex; flex-direction: column; gap: 14px; }
+  #t-codes[hidden], #t-voyages[hidden], #t-remb[hidden], #t-annule[hidden] { display: none; }
+  /* Encart interne d'une carte (bloc avis, bloc notation) */
+  .sous-bloc { border-radius: 14px; background: var(--color-bg); padding: 13px 14px; }
+</style>
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-notif.js"></script>
+<!--
+  PAGE « MES CODES » — les réservations Fly. Onglets : réservations en cours (paiement à
+  finir), réglé, remboursement, annulé.
+  (17/09 — pivot) Plus de variante « au point » : une réservation non réglée mène à sa page
+  de paiement (fly/02), où le client saisit le code prépayé qu'il a acheté chez un commerçant.
+  (18/09, soir — l'agent de caisse mobile est abandonné) ONT DISPARU D'ICI : le second CTA
+  « Suivre mon agent — position en direct », la ligne « un agent vient à toi » avec l'adresse
+  d'encaissement, la carte « À domicile ou au travail » et la NOTATION 1-5★ de l'agent, qui
+  n'avait plus personne à viser — les deux moyens qui restent s'achètent au comptoir d'un
+  commerce et ne mettent aucun salarié en face du client. Ce qui les remplace : les moyens
+  DÉRIVÉS de D.moyensPaiement(), et le seul CTA « Payer ».
+  Le montant à régler s'affiche avec sa fenêtre de paiement. Cf. Doc 10 / Doc 11.
+-->
+</head>
+<body>
+
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-root-header">
+    <h1>Mes réservations</h1>
+  </div>
+
+  <div class="pec-body">
+
+    <!-- Onglets -->
+    <!-- 4 FILTRES, rien d'autre (fondatrice 27/08) : Réservations en cours (08/09 — ex « À payer ») · Réglé ·
+         Remboursement · Annulé (non réglé hors délais). Cet écran est celui de FLY : les commandes MODE vivent dans
+         « Commandes » de l'app Mode (fondatrice 08/09 « chaque app c'est commande ou réservation, ne mélange pas »). -->
+    <div class="pec-segmented" role="tablist">
+      <button role="tab" aria-selected="true" onclick="showTab(this,'t-codes')">Réservations en cours</button>
+      <button role="tab" aria-selected="false" onclick="showTab(this,'t-voyages')">Réglé</button>
+      <button role="tab" aria-selected="false" onclick="showTab(this,'t-remb')">Remboursement</button>
+      <button role="tab" aria-selected="false" onclick="showTab(this,'t-annule')">Annulé</button>
+    </div>
+
+    <!-- ===== EN COURS ===== -->
+<section id="t-codes">
+  <!-- DYNAMIQUE (fondatrice 25/08 : « plus de tickets en cours pré-remplis, je vais
+       faire des tests ») : les commandes À PAYER viennent du BUS inter-apps — elles
+       n existent que si TU as réellement lancé une commande. -->
+  <div id="cmds-apayer" data-fpage="10" style="display:flex;flex-direction:column;gap:14px"></div>
+  <!-- (07/09 — audit navigation : 16 codes sans recherche) -->
+  <input class="pec-search" type="search" data-fsearch="#cmds-apayer > *, #cmds-confirmees > *, #cmds-annule > *, #cmds-remb > *" placeholder="Chercher une réf, un trajet…" aria-label="Rechercher un code" style="margin:0 0 12px">
+  <div class="meta" data-fvide="#cmds-apayer > *, #cmds-confirmees > *, #cmds-annule > *, #cmds-remb > *" data-fvide-txt="Aucun code ne correspond à « %q »." style="display:none;padding:0 0 10px"></div>
+  <div id="codes-vide" class="pec-card" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:40px 24px;text-align:center">
+    <span style="display:flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:999px;background:var(--color-mint);color:var(--color-primary);font-size:24px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-scan"/></svg>
+    </span>
+    <p style="font-size:15px;font-weight:800;color:var(--color-ink)">Aucune commande à payer</p>
+    <p style="font-size:13px;color:var(--color-muted)">Lance une recherche — ta commande et son code de paiement apparaîtront ici.</p>
+    <a href="01-accueil.html" class="tap" style="margin-top:8px;display:inline-flex;align-items:center;gap:8px;border-radius:12px;background:var(--color-primary);color:#fff;padding:10px 16px;font-size:14px;font-weight:700;box-shadow:var(--shadow-cta)">
+      Lancer une recherche <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+    </a>
+  </div>
+  <!-- (18/09, soir — l'agent de caisse mobile est abandonné) LES DEUX LIGNES ÉTAIENT ÉCRITES : « En ligne »
+       et « À domicile ou au travail — l'agent vérifie ton code de sécurité et compte devant toi ». La seconde
+       décrit un métier qui n'existe plus, et la première nommait un seul moyen. Les deux sont remplacées par
+       la liste DÉRIVÉE de D.moyensPaiement() : chaque moyen y porte son propre libellé et sa propre aide
+       (ref.MOYENS_PAIEMENT) — le jour où un moyen s'ajoute, cette carte le montre sans être rouverte. -->
+  <div class="pec-card" style="margin-top:14px;padding:13px 14px;display:flex;flex-direction:column;gap:12px">
+    <p style="margin:0;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-muted-2)">Comment se passe le paiement</p>
+    <div id="moyens-comment" style="display:flex;flex-direction:column;gap:12px"></div>
+    <p style="margin:0;font-size:11px;line-height:1.5;color:var(--color-muted-2)">Dans les deux cas, tu achètes un <b style="color:var(--color-ink)">code prépayé chez un commerçant</b>, puis tu le saisis ici — <b style="color:var(--color-ink)">un bon d’achat suffit</b>. <a href="25-ou-acheter-un-bon.html" style="font-weight:800;color:var(--color-primary-dark)">Où en acheter un</a>.</p>
+  </div>
+</section>
+
+    <!-- ===== VOYAGES (confirmés + notation) ===== -->
+<section id="t-voyages" hidden>
+  <!-- DYNAMIQUE : une commande devient CONFIRMÉE quand son règlement est enregistré au bus —
+       code d un bon d’achat saisi, ou notification du prestataire. La carte porte alors la phrase de
+       règlement (reglementLibelle), l avis séjour vérifié et l accès au billet. -->
+  <div id="cmds-confirmees" data-fpage="10" style="display:flex;flex-direction:column;gap:14px"></div>
+  <div id="voyages-vide" class="pec-card" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:40px 24px;text-align:center">
+    <span style="display:flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:999px;background:var(--color-mint);color:var(--color-primary);font-size:24px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-ticket"/></svg>
+    </span>
+    <p style="font-size:15px;font-weight:800;color:var(--color-ink)">Aucun voyage confirmé</p>
+    <p style="font-size:13px;color:var(--color-muted)">Dès que ton règlement est confirmé, ta réservation vit ici : billet, détails, avis.</p>
+  </div>
+</section>
+
+    <!-- ===== REMBOURSEMENT ===== (fondatrice 27/08 : tout ce qui est remboursé) -->
+    <section id="t-remb" hidden>
+      <div id="cmds-remb" data-fpage="10" style="display:flex;flex-direction:column;gap:14px"></div>
+      <div id="remb-vide" class="pec-card" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:40px 24px;text-align:center">
+        <span style="display:flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:999px;background:var(--color-mint);color:var(--color-primary);font-size:24px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-refresh"/></svg></span>
+        <p style="font-size:15px;font-weight:800;color:var(--color-ink)">Aucun remboursement</p>
+        <p style="font-size:13px;color:var(--color-muted)">Si une annulation donne lieu à un remboursement, son suivi vivra ici — montant confirmé avant toute annulation ferme.</p>
+        <p style="font-size:11.5px;line-height:1.55;color:var(--color-muted-2);max-width:32ch">Un remboursement reste <b style="color:var(--color-ink)">conditionné à la politique de la compagnie ou de l'hôtel</b> : nous relayons leur offre et leurs conditions de tarif — nous ne remboursons pas à leur place.</p>
+      </div>
+    </section>
+
+    <!-- ===== ANNULÉ ===== (non réglé, hors délais — le prix bloqué a expiré) -->
+    <section id="t-annule" hidden>
+      <div id="cmds-annule" data-fpage="10" style="display:flex;flex-direction:column;gap:14px"></div>
+      <div id="annule-vide" class="pec-card" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:40px 24px;text-align:center">
+        <span style="display:flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:999px;background:var(--color-bg);color:var(--color-muted);font-size:24px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-x"/></svg></span>
+        <p style="font-size:15px;font-weight:800;color:var(--color-ink)">Aucune annulation</p>
+        <p style="font-size:13px;color:var(--color-muted)">Une commande non réglée dans les délais, ou annulée, apparaîtra ici — avec son motif.</p>
+      </div>
+    </section>
+  <div id="fermeture-slot"></div>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('');
+/* (17/09 — pivot) les moyens proposés dans le pays du client : dérivés, jamais écrits dans la page.
+   (18/09, soir) la liste ne filtre plus sur le type « psp » — le Bon d’achat PayEnCash n'est pas un paiement en ligne,
+   et l'écarter revenait à cacher au client le moyen le plus proche de chez lui. Chaque moyen affiche SON aide. */
+var D=window.PEC_DATA;if(!D||!D.moyensPaiement)return;
+var box=document.getElementById('moyens-comment');if(!box)return;
+function peindreMoyens(){
+  box.innerHTML=D.moyensPaiement().map(function(m){
+    var ico=m.type==='bon'?'store':'ticket';
+    return '<div style="display:flex;align-items:flex-start;gap:11px">'+
+      '<span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:11px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-'+ico+'"/></svg></span>'+
+      '<p style="min-width:0;margin:0;font-size:12px;line-height:1.5;color:var(--color-muted)"><b style="color:var(--color-ink)">'+D.esc(D.libelleMoyen(m.k))+'</b> — '+D.esc(m.aide||'')+'</p></div>';
+  }).join('');
+}
+peindreMoyens();
+window.addEventListener('pec-bus',peindreMoyens);})();</script>
+</div><!-- /pec-body -->
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" aria-current="page" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+
+<script>
+  // Onglets segmentés — OUVRIR un onglet marque ses nouveautés comme VUES (PEC_NOTIF)
+  function showTab(btn, id) {
+    document.querySelectorAll('.pec-segmented [role="tab"]').forEach(function (b) { b.setAttribute('aria-selected', 'false'); });
+    btn.setAttribute('aria-selected', 'true');
+    ['t-codes', 't-voyages', 't-remb', 't-annule'].forEach(function (s) { document.getElementById(s).hidden = (s !== id); });
+    if (window.PEC_NOTIF) PEC_NOTIF.marquerOngletVu(id);
+  }
+
+  // ── RENDU DYNAMIQUE (PEC_BUS) : les commandes n'existent que si le client en a
+  // réellement lancé — À payer (statut a_payer) · Confirmées (réglées, avec la phrase de
+  // règlement + avis + billet). Zéro donnée pré-remplie.
+  // TITRE de carte : ce que le client a SÉLECTIONNÉ (trajet) d'abord — jamais la
+  // réf en titre (elle est déjà rappelée en sous-titre).
+  // Repli propre par type quand le trajet manque.
+  function titreCarte(c){ return (c && (c.trajet || c.titre)) || (c && c.type === 'MODE' ? 'Ta commande mode' : c && c.type === 'HOTEL' ? 'Ton séjour' : 'Ton vol'); }
+  // MINUTEUR « prix bloqué 1 h » (règle produit) — calculé depuis l'horodatage
+  // de la commande (c.at), jamais un compte à rebours en dur. Passé le délai, la
+  // commande n'est plus « à payer » : elle bascule en « Annulé » (prix expiré).
+  // (03/09) la durée vient du référentiel (scenario.prixBloqueMinutes) — plus « 3600000 » figé
+  var PRIX_BLOQUE_MIN = (window.PEC_DATA && PEC_DATA.scenario && PEC_DATA.scenario.prixBloqueMinutes) || 60;
+  var PRIX_BLOQUE_MS = PRIX_BLOQUE_MIN * 60000;
+  var PRIX_BLOQUE_TXT = PRIX_BLOQUE_MIN >= 60 ? (PRIX_BLOQUE_MIN / 60) + ' h' : PRIX_BLOQUE_MIN + ' min';
+  function msRestant(c) { return (c && c.at) ? (c.at + PRIX_BLOQUE_MS - Date.now()) : PRIX_BLOQUE_MS; }
+  // (05/09) DEUX fenêtres concurrentes se disputaient la même commande : prixBloqueMinutes (60)
+  // ici et dans notifs(), fenetreEncaissementMinutes (120) dans le suivi et commanderPanier.
+  // La commande porte son `expireTs` : il fait foi ; à défaut, la fenêtre d'encaissement.
+  function estExpiree(c) {
+    if (c && c.expireTs) return Date.now() > c.expireTs; return msRestant(c) <= 0; }
+  function mmss(ms) { var s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  function carteApayer(c) {
+    var mCents = c.montant && !isNaN(parseFloat(String(c.montant).replace(',', '.'))) ? Math.round(parseFloat(String(c.montant).replace(',', '.')) * 100) : null;
+    // le lien du code porte la RÉF EXACTE (?ref=) — jamais une réf re-dérivée du
+    // montant, qui pourrait entrer en collision avec une commande déjà payée (29/08).
+    // (17/09 — pivot) le paiement EN LIGNE ; (18/09, soir) l'agent à domicile est abandonné : plus aucun suivi de course
+    var lien = c.type === 'MODE' ? ('../mode/11-code-paiement.html?ref=' + encodeURIComponent(c.ref))
+      : '../fly/02-ordre-paiement.html' + ((window.PEC_DATA && PEC_DATA.promoCommande && c.ref === PEC_DATA.promoCommande.ref) ? '?res=promo' : ('?ref=' + encodeURIComponent(c.ref) + (mCents ? '&m=' + mCents : '')));
+    var D = window.PEC_DATA || {};
+    var ic = function (n) { return '<span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:9px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px"><use href="#i-' + n + '"/></svg></span>'; };
+    var row = function (icone, html) { return '<div style="display:flex;align-items:flex-start;gap:9px;padding:6px 0">' + ic(icone) + '<span style="min-width:0;font-size:12px;line-height:1.5;color:var(--color-muted)">' + html + '</span></div>'; };
+    // RÉCAP compact — rappelle la réservation (voyageurs + titulaire + bagages),
+    // SANS les segments de vol : ils vivent dans « Détail complet » (carte allégée).
+    var nbVoy = c.voyageurs || 1;
+    var recap = row('users', '<b style="color:var(--color-ink)">' + nbVoy + ' voyageur' + (nbVoy > 1 ? 's' : '') + '</b> · titulaire <b style="color:var(--color-ink)">' + ((D.profil || {}).nomComplet || 'toi') + '</b> ' + (((D.profil || {}).verifie || (D.compteVerifieComplet && D.compteVerifieComplet())) ? '<span style="color:var(--color-primary-dark);font-weight:700">✓ vérifié</span>' : '<a href="10-compte.html" style="color:var(--color-amber-text);font-weight:700">compte à vérifier</a>') + (c.bagages ? '<br><span>' + c.bagages + '</span>' : ''));
+    /* TARIF à régler + moyens acceptés (référentiel PEC_DATA). (18/09, soir — l'agent de caisse mobile est
+       abandonné) LA LIGNE « LIEU » DISAIT « un agent vient à toi — <adresse d'encaissement> » : il n'y a plus
+       d'adresse d'encaissement sur une commande, et personne ne vient. Ce qui reste est vrai pour les deux
+       moyens : on achète son code prépayé chez un commerçant, on le saisit depuis son téléphone —
+       (18/09, soir, pivot « avec un bon d’achat ») et COMMENT le client règle ce code chez son commerçant
+       ne nous regarde pas : la promesse tenue est qu'un bon d’achat suffit ICI. */
+    var moyens = (typeof D.moyensPaiementLabel === 'function') ? D.moyensPaiementLabel() : '';
+    var tarif = row('banknote', '<b style="color:var(--color-ink);font-size:13.5px">À régler ' + (c.montant || '—') + ' €</b><br>' + moyens + ' · code prépayé, acheté chez un commerçant');
+    return '<div class="pec-card--elevated" data-ref="' + c.ref + '" style="background:var(--color-surface);border-radius:var(--radius-card);box-shadow:var(--shadow-elevated);padding:14px 16px 16px">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px"><div style="min-width:0">' +
+      '<div style="font-size:15px;font-weight:800;letter-spacing:-0.01em;color:var(--color-ink)">' + titreCarte(c) + '</div>' +
+      '<div style="font-size:10.5px;font-weight:700;color:var(--color-muted);margin-top:1px">' + c.ref + (c.dates ? ' · ' + c.dates : '') + '</div></div>' +
+      '<span style="flex:none;display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:var(--color-mint);padding:4px 10px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--color-primary-dark)">À payer</span></div>' +
+      '<div class="mp-timer" data-exp="' + (c.expireTs || ((c.at || Date.now()) + PRIX_BLOQUE_MS)) + '" style="display:inline-flex;align-items:center;gap:6px;margin-top:9px;border-radius:999px;background:var(--color-amber-well);color:var(--color-amber-text);padding:5px 11px;font-size:11px;font-weight:800"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px"><use href="#i-clock"/></svg> Prix bloqué — expire dans <span class="mp-cd">' + mmss(msRestant(c)) + '</span></div>' +
+      '<div style="border-top:1px solid var(--color-sep);margin-top:10px;padding-top:4px">' + recap + tarif + '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:8px;margin-top:11px">' +
+      '<a href="' + lien + '" class="pec-cta pec-cta--tight tap"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-lock"/></svg> Payer — ' + (c.montant || '—') + ' €</a>' +
+      // (18/09, soir) le second CTA « Suivre mon agent — position en direct » menait à un écran supprimé du
+      // dépôt, pour suivre quelqu'un qui ne part plus : il n'y a plus qu'un chemin, payer.
+      '<div style="display:flex;align-items:center;justify-content:center;gap:14px">' +
+      '<a href="../fly/10-reservation-detail.html?ref=' + c.ref + '" class="tap" style="display:inline-flex;align-items:center;gap:5px;padding:4px 0;font-size:11.5px;font-weight:700;color:var(--color-muted);text-decoration:none">Détail complet <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:11px"><use href="#i-arrow-right"/></svg></a>' +
+      '</div></div></div>';
+  }
+  /* (18/09, soir — l'agent de caisse mobile est abandonné) LE BLOC « NOTE TON AGENT » A DISPARU. Il ne
+     s'affichait que sur une commande réglée « par agent » (c.par === 'agent'), et sa note remontait au planning
+     des agents. Plus personne ne vient encaisser : il n'y a plus de prestation humaine à noter sur une
+     réservation, et laisser cinq étoiles mortes sur la carte aurait promis un suivi qui n'existe pas. Ce qui
+     reste du geste : la phrase de règlement, et l'avis de séjour (blocRecap). */
+  function carteConfirmee(c) {
+    var D = window.PEC_DATA || {};
+    var ic = function (n) { return '<span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:10px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px"><use href="#i-' + n + '"/></svg></span>'; };
+    var row = function (icone, html) { return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0">' + ic(icone) + '<span style="min-width:0;font-size:12px;line-height:1.45;color:var(--color-muted)">' + html + '</span></div>'; };
+    // les infos rapides : vols détaillés (A/R) ou compagnie · hôtel · règlement
+    var infos = '';
+    if (c.bagages) infos += row('luggage', c.bagages);
+    // (17/09 — pivot) PAR QUOI la commande a été réglée, avec sa preuve : une seule source (reglementLibelle),
+    // qui dit « Réglé par Bon d’achat PayEnCash ••••-••••-7K2M ».
+    var regl = (typeof D.reglementLibelle === 'function') ? D.reglementLibelle(c) : '';
+    infos += row('banknote', '<b style="color:var(--color-ink)">Règlement effectué</b>' + (regl ? '<br>' + (D.esc ? D.esc(regl) : regl) : ' · ' + (c.montant || '—') + ' €'));
+    return '<div class="pec-card" data-ref="' + c.ref + '">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px"><div style="min-width:0">' +
+      '<div style="font-size:15px;font-weight:800;letter-spacing:-0.01em;color:var(--color-ink)">' + titreCarte(c) + '</div>' +
+      '<div style="font-size:10.5px;font-weight:700;color:var(--color-muted);margin-top:1px">' + c.ref + (c.dates ? ' · ' + c.dates : '') + '</div></div>' +
+      '<span class="pec-pill pec-pill--done" style="flex:none">Confirmé</span></div>' +
+      '<div style="border-top:1px solid var(--color-sep);margin-top:9px;padding-top:3px">' + infos + '</div>' +
+      blocRecap(c.ref, c.voyageurs, false, c) +
+      '<a class="pec-cta pec-cta--tight tap" href="../fly/10-reservation-detail.html?ref=' + c.ref + '" style="display:flex;align-items:center;justify-content:center;gap:7px;margin-top:11px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-ticket"/></svg> Ma réservation — billet, PNR &amp; détails</a></div>';
+  }
+  // ── RÉCAP COMPLET partagé (fondatrice 27/08 : « comme l'écran avant de payer »).
+  // Retrouve la promo par réf (commande promo ou historique) ; le canonique
+  // PEC-Z6DNX8HV = le vol Barcelone du scénario.
+  function blocRecap(ref, voyageurs, editable, cmd) {
+    // le RÉCAP partagé vit dans le data-layer (UN seul endroit) — même trame
+    // sur les cartes ici ET le détail fly/10 : volet vol logo, hébergement
+    // riche avec photos, voyageurs.
+    var D = window.PEC_DATA;
+    return (D && D.blocRecapHTML) ? D.blocRecapHTML(ref, voyageurs, editable, cmd) : '';
+  }
+  // ── Remboursement / Annulé : rendus depuis PEC_DATA.reservationsHisto
+  // (05/09) le BUS fait foi : une commande annulée, remboursée ou en échec devient une carte
+  // d'historique — avant, elle n'apparaissait NULLE PART (reservationsHisto est un seed vide).
+  // (08/09 — fondatrice) FLY ne montre que SES réservations : une commande MODE n'est pas une réservation
+  function estReservation(c) { return String((c && c.type) || 'FLY').toUpperCase() !== 'MODE'; }
+  function histoDuBus(statuts) {
+    if (!window.PEC_BUS) return [];
+    // (11/09, revue) l'EXPIRÉE a sa propre carte (« Prix expiré ») : elle ne se range pas aussi dans « Annulé »
+    return PEC_BUS.commandes().filter(function (c) { return estReservation(c) && PEC_DATA.estAMoi(c) && statuts.indexOf(c.statut) !== -1 && !(c.expire === true && c.annulePar === 'systeme'); }).map(function (c) {   // (09/09 — lot 1 socle) jamais la réservation d'un autre compte
+      var q = new Date(c.rembourseAt || c.annuleAt || c.payeAt || c.at || Date.now());
+      return { ref: c.ref, montant: c.montant || 0, titre: c.titre || c.type || 'Commande',
+        statut: c.statut === 'rembourse' ? 'remboursement' : 'annule',
+        motif: c.motifRemboursement || c.motif || (c.statut === 'echec' ? 'encaissement en échec' : ''),
+        mode: c.modeRemboursement || '',
+        quand: q.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }), vols: [], heb: null };
+    });
+  }
+  function carteHisto(r) {
+    var Dt = window.PEC_DATA;
+    var P = r.promoId ? (Dt.promos.filter(function (p) { return p.id === r.promoId; })[0] || {}) : {};
+    var remb = r.statut === 'remboursement';
+    var ic = function (n) { return '<span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:10px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px"><use href="#i-' + n + '"/></svg></span>'; };
+    var row = function (icone, html) { return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0">' + ic(icone) + '<span style="min-width:0;font-size:12px;line-height:1.45;color:var(--color-muted)">' + html + '</span></div>'; };
+    var infos = '';
+    (r.vols || []).forEach(function (v) {
+      infos += row('plane', '<b style="color:var(--color-ink)">' + v.sens + '</b> · ' + v.compagnie + (v.heures ? ' · ' + v.heures : ''));
+    });
+    if (r.heb && r.heb.nom) infos += row('bed', '<b style="color:var(--color-ink)">' + r.heb.nom + '</b>' + (r.heb.etoiles ? ' ' + '★'.repeat(+r.heb.etoiles || 0) : '') + (r.heb.nuits ? ' · ' + r.heb.nuits + ' nuits' : ''));
+    infos += row(remb ? 'refresh' : 'x', '<b style="color:var(--color-ink)">' + String(r.montant).replace('.', ',') + ' €</b> · ' + r.quand);
+    return '<div class="pec-card" data-ref="' + r.ref + '">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px"><div style="min-width:0">' +
+      '<div style="font-size:15px;font-weight:800;letter-spacing:-0.01em;color:var(--color-ink)">' + (P.titre || titreCarte(r)) + '</div>' +
+      '<div style="font-size:10.5px;font-weight:700;color:var(--color-muted);margin-top:1px">' + r.ref + (r.dates ? ' · ' + r.dates : '') + '</div></div>' +
+      '<span style="flex:none;border-radius:999px;padding:4px 10px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;background:' + (remb ? 'var(--color-mint)' : 'var(--color-bg)') + ';color:' + (remb ? 'var(--color-primary-dark)' : 'var(--color-muted)') + '">' + (remb ? 'Remboursée' : 'Annulée') + '</span></div>' +
+      '<div style="border-top:1px solid var(--color-sep);margin-top:9px;padding-top:3px">' + infos + '</div>' +
+      blocRecap(r.ref, r.voyageurs) +
+      '<div style="border-radius:12px;background:var(--color-bg);padding:9px 12px;margin-top:9px;font-size:11px;line-height:1.55;color:var(--color-muted)">' + r.motif + '</div>' +
+      (remb ? '' : '<a class="tap" href="../fly/06-promos.html" style="display:inline-flex;align-items:center;gap:5px;margin-top:9px;font-size:11px;font-weight:800;color:var(--color-primary-dark);text-decoration:none">Revoir les offres du moment <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px"><use href="#i-arrow-right"/></svg></a>') +
+      '</div>';
+  }
+  // Carte « prix expiré » — une commande à payer dont le blocage 1 h est passé
+  // (rien dû, rien débité) : elle vit dans l'onglet Annulé, relançable.
+  function carteExpiree(c) {
+    // RELANCE INTELLIGENTE (fondatrice 30/08) : on ne repart PAS d'une recherche
+    // vierge. Si la commande a mémorisé ses critères (c.recherche : tunnel, dep,
+    // dest, dates, voyageurs), « Relancer » les REPREND et ramène DROIT au récap,
+    // au tarif du moment recalculé. Sinon (vieille commande), repli sur l'accueil.
+    var r = c.recherche;
+    var href = '01-accueil.html', label = 'Relancer une recherche', lead = 'Relance une recherche pour le tarif du moment.';
+    if (r && r.t) {
+      var p = [];
+      if (r.dep) p.push('dep=' + encodeURIComponent(r.dep));
+      if (r.dest) p.push('dest=' + encodeURIComponent(r.dest));
+      if (r.dates) p.push('dates=' + encodeURIComponent(r.dates));
+      if (r.voy) p.push('voy=' + encodeURIComponent(r.voy));
+      if (r.cie) p.push('cie=' + encodeURIComponent(r.cie));
+      if (r.mode) p.push('mode=' + encodeURIComponent(r.mode));
+      p.push('reprise=1');
+      href = '../parcours/' + r.t + '.html?' + p.join('&');
+      label = 'Relancer — reprendre mes infos';
+      lead = 'On reprend ta destination, tes dates et tes voyageurs, et on te ramène droit au <b style="color:var(--color-ink)">récap au tarif du moment</b> — pas besoin de tout ressaisir.';
+    }
+    return '<div class="pec-card--elevated" data-ref="' + c.ref + '" style="background:var(--color-surface);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:14px 16px 16px">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px"><div style="min-width:0">' +
+      '<div style="font-size:15px;font-weight:800;color:var(--color-ink)">' + titreCarte(c) + '</div>' +
+      '<div style="font-size:10.5px;font-weight:700;color:var(--color-muted);margin-top:1px">' + c.ref + (c.dates ? ' · ' + c.dates : '') + '</div></div>' +
+      '<span style="flex:none;border-radius:999px;background:var(--color-bg);padding:4px 10px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--color-muted)">Prix expiré</span></div>' +
+      '<p style="border-top:1px solid var(--color-sep);margin:10px 0 0;padding-top:10px;font-size:12px;line-height:1.5;color:var(--color-muted)">Le prix bloqué (' + PRIX_BLOQUE_TXT + ') est passé — <b style="color:var(--color-ink)">rien ne t\'a été débité, tu ne dois rien</b>. ' + lead + '</p>' +
+      '<a href="' + href + '" class="pec-cta pec-cta--tight tap" style="margin-top:11px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-refresh"/></svg> ' + label + '</a>' +
+      '</div>';
+  }
+  function renderHisto() {
+    var Dt = window.PEC_DATA; if (!Dt || !Dt.reservationsHisto) return;
+    var remb = Dt.reservationsHisto.filter(function (r) { return r.statut === 'remboursement'; }).concat(histoDuBus(['rembourse']));
+    document.getElementById('cmds-remb').innerHTML = remb.map(carteHisto).join('');
+    document.getElementById('remb-vide').style.display = remb.length ? 'none' : 'flex';
+  }
+  renderHisto();
+
+  function renderCommandes() {
+    if (!window.PEC_BUS) return;
+    var cmds = PEC_BUS.commandes().filter(function (c) { return estReservation(c) && PEC_DATA.estAMoi(c); });   // (08/09) les commandes Mode restent dans l'app Mode ; (09/09) et celles d'un autre compte n'y sont jamais
+    /* (11/09, revue) UNE COMMANDE EXPIRÉE N'EST PLUS « à payer » : depuis que le bus DÉRIVE l'expiration à la
+       lecture, `commandes()` l'a déjà passée en « annule » quand on arrive ici. Le filtre « a_payer && expirée »
+       ne rendait donc plus jamais rien : le carton « Prix expiré — relancer » était devenu inatteignable, et la
+       commande tombait dans « Annulé » sans un mot sur la raison. On reconnaît l'expiration à sa marque. */
+    var apayer = cmds.filter(function (c) { return c.statut === 'a_payer' && !estExpiree(c); });
+    var expire = cmds.filter(function (c) { return (c.statut === 'a_payer' && estExpiree(c)) || (c.expire === true && c.annulePar === 'systeme'); });
+    var payees = cmds.filter(function (c) { return c.statut === 'paye'; });   // 'rembourse'/'annule'/'echec' partent aux onglets dédiés
+    // garde-fou de rendu (28/08 — test de charge 780) : les plus récentes
+    // d'abord, 30 cartes max + compteur — jamais 780 cartes d'un coup
+    var CAP_CARTES = 30;
+    var apayerVis = apayer.slice(0, CAP_CARTES);
+    var _ap = document.getElementById('cmds-apayer'); if (!_ap) return;   /* (18/09, soir) la page a été remplacée pendant que le bus réveillait ce rendu : rien à peindre */
+    _ap.innerHTML = apayerVis.map(carteApayer).join('')
+      + (apayer.length > CAP_CARTES ? '<p style="margin:4px 0 0;text-align:center;font-size:12px;font-weight:600;color:var(--color-muted)">+ ' + (apayer.length - CAP_CARTES) + ' autres réservations à régler — les plus récentes sont affichées.</p>' : '');
+    document.getElementById('codes-vide').style.display = apayer.length ? 'none' : 'flex';
+    var payeesVis = payees.slice(0, CAP_CARTES);
+    document.getElementById('cmds-confirmees').innerHTML = payeesVis.map(carteConfirmee).join('')
+      + (payees.length > CAP_CARTES ? '<p style="margin:4px 0 0;text-align:center;font-size:12px;font-weight:600;color:var(--color-muted)">+ ' + (payees.length - CAP_CARTES) + ' autres réservations réglées.</p>' : '');
+    document.getElementById('voyages-vide').style.display = payees.length ? 'none' : 'flex';
+    // ANNULÉ = historique annulé (PEC_DATA) + commandes dont le prix bloqué a EXPIRÉ (1 h passée)
+    var histoAnn = ((window.PEC_DATA && PEC_DATA.reservationsHisto) ? PEC_DATA.reservationsHisto.filter(function (r) { return r.statut === 'annule'; }) : [])
+      .concat(histoDuBus(['annule', 'echec']));
+    document.getElementById('cmds-annule').innerHTML = histoAnn.map(carteHisto).join('') + expire.map(carteExpiree).join('');
+    document.getElementById('annule-vide').style.display = (histoAnn.length + expire.length) ? 'none' : 'flex';
+    // BADGES PAR ONGLET (fondatrice 30/08 : « afficher les nouvelles données jamais
+    // vues, elles se comptabilisent, puis disparaissent une fois vues »). Chaque
+    // réservation NON ENCORE VUE compte sur l'onglet de SON état ; enregistrer()
+    // n'auto-ré-active jamais une clé déjà consultée (rejouer le rendu n'allume rien).
+    // Ouvrir un onglet l'éteint (showTab → marquerOngletVu). « À payer » est l'onglet
+    // ouvert par défaut → marqué vu dès l'arrivée.
+    if (window.PEC_NOTIF) {
+      var rembH = (window.PEC_DATA && PEC_DATA.reservationsHisto) ? PEC_DATA.reservationsHisto.filter(function (r) { return r.statut === 'remboursement'; }) : [];
+      apayer.forEach(function (c) { PEC_NOTIF.enregistrer('resa-apayer:' + c.ref, 'resas', 't-codes'); });
+      payees.forEach(function (c) { PEC_NOTIF.enregistrer('resa-regle:' + c.ref, 'resas', 't-voyages'); });
+      rembH.forEach(function (r) { PEC_NOTIF.enregistrer('resa-remb:' + (r.ref || r.id), 'resas', 't-remb'); });
+      histoAnn.forEach(function (r) { PEC_NOTIF.enregistrer('resa-annule:' + (r.ref || r.id), 'resas', 't-annule'); });
+      expire.forEach(function (c) { PEC_NOTIF.enregistrer('resa-expire:' + c.ref, 'resas', 't-annule'); });
+    }
+  }
+  // On REND d'abord (les pastilles d'expiration se posent), PUIS l'arrivée dirigée
+  // ouvre le bon d’achat onglet — sinon marquer-vu passerait AVANT la pose et la pastille
+  // resterait allumée (fondatrice 30/08).
+  renderCommandes();
+  // arrivée dirigée (fondatrice 27/08) : ?tab=regle|apayer|remb|annule ouvre le bon d’achat filtre
+  (function () {
+    var q = (location.search.match(/[?&]tab=(regle|apayer|remb|annule)/) || [])[1];
+    if (!q) return;
+    var cible = { regle: 't-voyages', apayer: 't-codes', remb: 't-remb', annule: 't-annule' }[q];
+    var btn = document.querySelector('.pec-segmented [onclick*="' + cible + '"]');
+    if (btn) showTab(btn, cible);
+  })();
+  window.addEventListener('storage', renderCommandes);
+  window.addEventListener('pec-bus', renderCommandes);   // un règlement, une annulation, un remboursement arrivent par le bus
+  // Le minuteur VIT : chaque seconde on rafraîchit les comptes à rebours ; quand
+  // l'un atteint 0, on re-rend → la commande bascule en « Annulé — prix expiré ».
+  setInterval(function () {
+    var reload = false;
+    document.querySelectorAll('.mp-timer').forEach(function (el) {
+      var r = (+el.getAttribute('data-exp')) - Date.now();
+      var cd = el.querySelector('.mp-cd');
+      if (r <= 0) { reload = true; if (cd) cd.textContent = '0:00'; }
+      else if (cd) cd.textContent = mmss(r);
+    });
+    if (reload) renderCommandes();
+  }, 1000);
+
+  /* (18/09, soir — l'agent de caisse mobile est abandonné) L'ÉCOUTEUR DE NOTATION EST PARTI AVEC SES ÉTOILES.
+     Il ne servait qu'au bloc « Note ton agent » (.rate-dyn), le seul de cette page : depuis qu'aucun salarié ne
+     vient encaisser, plus rien ici n'appelle PEC_DATA.notationEnregistrer, et un écouteur délégué qui ne peut
+     plus rien attraper est une promesse morte de plus dans le fichier. */
+
+</script>
+</body>
+</html>

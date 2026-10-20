@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash MODE — Comment payer ?</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-mode-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-mode-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<link rel="stylesheet" href="../assets/vendor/maplibre-gl.css">
+<script src="../assets/vendor/maplibre-gl.js"></script>
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-notif.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-qr.js"></script><!-- (21/09) le flashcode de l'ordre de vente, dans la carte « À régler » -->
+<script src="../assets/payencash-comment-payer.js"></script><!-- (20/09, soir) le choix « comment payer », partagé avec Fly -->
+<script src="../assets/payencash-panier-badge.js"></script><!-- (19/09) la pastille « commande en cours / pièces au sac » sur l'onglet Commandes --><!-- (17/09 — pivot) l'annonce de la commande et l'ouverture de la transaction vivent dans le bus -->
+<!-- MODE — COMMENT PAYER ? (18/09, soir — décisions fondatrice)
+     « Supprime l'agent qui se déplace, elle perd toute sa logique » : L'AGENT DE CAISSE MOBILE EST ABANDONNÉ.
+     Sont partis avec lui — volet d'adresse, carnet, carte de position, frais de déplacement, complément carte,
+     bascule de canal agent↔en ligne, rendu de monnaie. Plus personne ne reçoit d'argent de la cliente ICI :
+     elle achète son bon d’achat AU COMPTOIR d'un commerce — et comment elle le règle là-bas ne nous regarde pas.
+     « Mode de paiement Bon d’achat PayEnCash, en respectant la logique ACPR au niveau du texte, affiche la
+     carte géographique » : DEUX MOYENS, CHACUN SA LOGIQUE ET SON TEXTE, tous deux dérivés de
+     PEC_DATA.moyensPourMontant(total) — cette page n'écrit NI un libellé, NI une raison, NI un plafond.
+     ① LE BON D’ACHAT PAYENCASH (en tête) — en Mode il s'applique AU SAC (panierBonAppliquer, débité au règlement par
+        reglerCommande) tant que la commande n'est pas verrouillée ; une commande DÉJÀ verrouillée passe par le bus
+        (bonAppliquer / payer par:'bon'), comme sur Fly. Son volet offre DEUX CHEMINS :
+          · « J'ai un bon d’achat »        → code → vérification → application totale (sac soldé / commande réglée) ou
+                                     partielle (les moyens se repeignent pour le RESTE) ;
+          · « Je veux en acheter » → LA CARTE GÉOGRAPHIQUE des commerces partenaires les plus proches (enseigne,
+                                     adresse, distance, temps à pied), et le renvoi vers ecrans/25 pour la liste
+                                     complète. (20/09) Le réseau de départ remplit la carte dès l'ouverture.
+     ② (20/09) LE TICKET D'UN RÉSEAU TIERS EST PARTI, et le rail en ligne avec lui : il n'y a plus qu'un titre,
+        le nôtre, et un seul geste qui règle — le DÉBIT du bon, sous verrou, dans notre couche de données.
+     Le TEXTE ACPR sous le moyen est DÉRIVÉ de bonsRef().fondement : les articles ne se réécrivent pas ici. -->
+<link rel="stylesheet" href="../assets/payencash-comment-payer.css"><!-- (20/09, soir) le style du choix « comment payer », partagé avec Fly -->
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device" style="position:relative">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll">
+    <div class="pec-info-body" style="padding-top:14px">
+
+      <a href="03-panier.html" onclick="if(history.length>1){history.back();return false}" class="tap" aria-label="Retour" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-chevron-left"/></svg>
+      </a>
+
+      <h1 style="font-size:23px;font-weight:800;letter-spacing:-0.02em;line-height:1.2;color:var(--color-ink);margin:14px 0 4px">Comment veux-tu payer ?</h1>
+      <!-- la liste des moyens se DÉRIVE (moyensPaiementLabel) — jamais écrite ici -->
+      <p id="op-lead" style="font-size:13.5px;font-weight:500;line-height:1.55;color:var(--color-muted);margin:0 0 12px"><b id="op-nart" style="color:var(--color-ink)">Ta commande</b> t'attend ✓ — choisis ton moyen de paiement, tout en une fois. <b style="color:var(--color-ink)"><span data-slogan>—</span>.</b> <span class="pec-moyens">—</span>.</p><!-- (21/09) le slogan unifié : il disait « avec un bon d’achat » -->
+
+      <!-- Panneau montant CLAIR (fondatrice 22/08 : fini le fond sombre terne) — prix bloqué intégré -->
+      <div class="pec-dark-banner" style="display:block;overflow:hidden;border-radius:16px;background:var(--color-surface);box-shadow:var(--shadow-elevated);padding:0;border:1.5px solid var(--color-mint)">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 15px">
+          <div style="min-width:0">
+            <div class="lbl"><span class="pec-marque--mini" data-pec-marque="mode"></span></div><!-- (21/09) la marque, avec son P -->
+            <div style="font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--color-primary-dark);margin-top:3px" id="lbl-pt">À régler</div>
+            <div id="op-trajet" style="font-size:11px;font-weight:600;color:var(--color-muted);margin-top:1px">Ta commande · prix final</div>
+          </div>
+          <div class="amt" style="flex:none;display:flex;align-items:baseline;gap:3px;margin:0"><span class="n" id="due-pt" style="font-size:28px;font-weight:800;letter-spacing:-0.02em;color:var(--color-ink)">—</span><span class="e" style="font-size:13px;font-weight:700;color:var(--color-primary)">€</span></div>
+        </div>
+        <!-- (21/09, fondatrice : « le ticket avec flashcode à présenter au partenaire / à l'agent … intégré dans la section
+             [À régler] ») LE FLASHCODE DE L'ORDRE DE VENTE, dans la carte du montant — même bloc sur Mode, Fly et la
+             page d'une boutique (PEC_DATA.ordreVenteBlocHTML). Il ne porte que la référence de la commande. -->
+        <div class="pec-ordre" id="op-ordre" hidden></div>
+        <div style="display:flex;align-items:center;gap:9px;background:var(--color-mint);padding:9px 15px">
+          <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:15px;color:var(--color-primary-dark)"><use href="#i-clock"/></svg>
+          <div style="min-width:0;font-size:10.5px;line-height:1.5;color:var(--color-mint-ink)"><b style="color:var(--color-primary-dark)">Prix bloqué — encore <span id="deadline">—</span>.</b> <span id="pb-expl">Ton tarif ne bouge pas le temps d'aller payer. Passé le délai, il peut varier — le code serait réédité au prix du moment.</span></div>
+        </div>
+      </div>
+      <script>(function(){var PB=window.PEC_DATA&&window.PEC_DATA.prixBloque;if(PB)document.getElementById('pb-expl').textContent=PB.explicationMode||PB.explication;})();</script>
+
+      <!-- (10/09) RIEN À PAYER — l'avoir (ou le Bon d’achat PayEnCash) couvre le sac entier. Il n'y a pas de point où
+           payer, pas de flashcode, rien à encaisser : la commande se valide ici et part réglée. Avant, elle
+           était refusée comme un « montant inexploitable » et l'écran accusait la cliente de ses quantités. -->
+      <div id="op-soldee" hidden style="margin-top:14px;border-radius:16px;background:var(--color-card);box-shadow:var(--shadow-card);padding:16px">
+        <div style="font-size:16px;font-weight:800;letter-spacing:-0.01em;color:var(--color-ink)">Il ne te reste rien à payer.</div>
+        <p id="op-soldee-detail" style="margin:6px 0 0;font-size:12.5px;font-weight:600;line-height:1.55;color:var(--color-muted)"></p>
+        <button type="button" class="pec-cta tap" id="op-soldee-cta" style="display:block;width:100%;text-align:center;margin-top:14px">Valider ma commande</button>
+        <p id="op-soldee-err" hidden style="margin:9px 0 0;font-size:11.5px;font-weight:700;color:#B3261E"></p>
+        <p style="margin:10px 0 0;font-size:11px;line-height:1.55;color:var(--color-muted)">Ta commande part directement en préparation chez le fournisseur — tu la suis dans « Mes livraisons ». Aucun code de paiement n'est émis : il n'y a rien à encaisser.</p>
+      </div>
+
+      <!-- (18/09 — Bon d’achat PayEnCash) LA PART DÉJÀ COUVERTE PAR UN BON D’ACHAT — lue sur le sac (panier.bon) ou, commande verrouillée, sur
+           la commande du bus (bonApplique) : jamais mémorisée ici. Les cartes en dessous sont repeintes pour le RESTE ;
+           « retirer » rend le dû entier (le bon d’achat n'est débité qu'au règlement). -->
+      <div id="bon-applique" hidden style="display:flex;align-items:center;gap:9px;border-radius:12px;background:var(--color-mint);padding:9px 12px;margin:12px 0 0;font-size:12px;font-weight:700;line-height:1.45;color:var(--color-mint-ink)">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:15px;color:var(--color-primary-dark)"><use href="#i-ticket"/></svg>
+        <span style="min-width:0;flex:1" id="bon-applique-txt">—</span>
+        <a href="#" id="bon-retirer" class="tap" style="flex:none;font-weight:800;color:var(--color-primary-dark);text-decoration:underline">retirer</a>
+      </div>
+
+      <!-- (20/09, soir) LE TRIO « comment veux-tu payer ? » est posé ici par le module partagé avec Fly
+           (ui/assets/payencash-comment-payer.js) : un seul balisage pour les deux applications. -->
+      <div data-pec-ou="trio"></div>
+
+      <!-- (20/09 — « enlève la logique Neosurf ») LA RANGÉE DES MOYENS A DISPARU. Elle posait un second choix
+           sous le premier — « en ligne », puis « lequel des deux » — alors qu'il n'y a plus qu'un titre : le
+           Bon d'achat PayEnCash. Un choix à une branche n'est pas un choix, c'est une étape de plus. -->
+
+      <!-- Le refus de la couche de données (commande bloquée, transaction refusée) s'AFFICHE ici — jamais un échec muet. -->
+      <div id="pt-bloque" style="display:none;margin:12px 0 0;padding:11px 13px;border-radius:12px;background:rgba(214,158,46,.10);border:1px solid var(--color-amber-text);font-size:11.5px;color:var(--color-amber-text);font-weight:600;line-height:1.45"></div>
+
+      <!-- (18/09 — Bon d’achat PayEnCash ; 18/09 au soir — les deux chemins) PANE BON D’ACHAT. POURQUOI un volet et pas la page du
+           prestataire : le bon d’achat n'est le titre de personne d'autre — il se vérifie (bonValider) et s'applique dans NOTRE
+           couche de données (au sac : panierBonAppliquer ; commande verrouillée : le bus). DEUX CHEMINS, parce que la
+           cliente arrive dans deux situations très différentes : elle a un ticket en main, ou elle ne sait pas où en
+           acheter — et le second n'est pas un lien en bas de page, c'est une CARTE. -->
+      <div class="pane" id="pane-bon">
+        <!-- (19/09, soir) LE DUO « j'ai un bon / je veux en acheter » A DISPARU : le TRIO du premier niveau pose
+             désormais la question, et il la pose mieux — en ligne, chez un partenaire, ou un agent se déplace. -->
+
+        <!-- CHEMIN ① — J'AI UN BON D’ACHAT. Le code se tape avec ou sans tirets, chaque refus s'affiche tel quel, en rouge.
+             Les ids sont ceux que le banc lit : ne pas les changer. -->
+        <div class="voie on" id="voie-jai-z">
+          <div class="pec-card" style="margin-top:12px;padding:14px 16px">
+            <div style="font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--color-muted)">Bon d’achat PayEnCash</div>
+            <!-- (20/09 — « pour bon d'achat PayEnCash enlève le texte associé ; si vérifié alors payer »)
+                 LE MODE D'EMPLOI A QUITTÉ CE CHAMP. Quelqu'un qui arrive ici a déjà son bon en main : lui
+                 réexpliquer où en acheter, à quel montant et combien en cumuler, c'est six lignes entre lui et
+                 le geste qu'il est venu faire. Ce qu'il lui faut tient en un titre et un champ. Le mode d'emploi
+                 reste là où il sert : sur le chemin « chez un partenaire », avant d'avoir le bon. -->
+            <div id="bon-titre" style="font-size:16px;font-weight:800;letter-spacing:-0.01em;color:var(--color-ink);margin-top:3px">Le code de ton bon d’achat</div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <input class="pec-input" id="bon-code" type="text" inputmode="latin" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="17" placeholder="XXXX-XXXX-XXXX" aria-label="Code du Bon d’achat PayEnCash (12 caractères)" style="flex:1;min-width:0;font-weight:800;letter-spacing:.12em;text-transform:uppercase">
+              <button type="button" class="pec-btn-secondary tap" id="bon-verifier" style="flex:none;padding:0 14px;font-weight:800">Vérifier</button>
+            </div>
+            <div id="bon-etat" hidden style="margin-top:10px;border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.55"></div>
+            <button type="button" class="pec-cta tap" id="bon-payer" hidden style="display:block;width:100%;text-align:center;margin-top:12px">Payer avec mon bon d’achat</button>
+            <button type="button" class="pec-cta tap" id="bon-appliquer" hidden style="display:block;width:100%;text-align:center;margin-top:12px">Appliquer ce bon d’achat à mon sac</button>
+            <p id="bon-cgv" hidden style="margin:8px 0 0;text-align:center;font-size:9.5px;line-height:1.5;color:var(--color-muted)">En payant, tu acceptes les <a href="18-informations-legales.html#cgv" style="color:var(--color-primary-dark);font-weight:700">CGV</a>, les <a href="18-informations-legales.html#bon" style="color:var(--color-primary-dark);font-weight:700">conditions du Bon d’achat PayEnCash</a> et la <a href="18-informations-legales.html#confidentialite" style="color:var(--color-primary-dark);font-weight:700">politique de confidentialité</a>.<br><span data-societe-ligne>—</span></p>
+          </div>
+        </div>
+
+        <!-- CHEMIN ② — JE VEUX EN ACHETER : la carte géographique des commerces partenaires les plus proches. -->
+        <div class="voie" id="voie-acheter-z" data-pec-ou="acheter"><!-- chez un partenaire · un agent se déplace : posés par le module --></div>
+      </div>
+
+      <!-- LES RÈGLES, EN UNE CARTE (fondatrice 24/08 : les 3 textes fusionnés).
+           (18/09, soir) La ligne du plafond légal des espèces (art. L112-6 CMF) est partie avec l'agent : plus
+           personne ne remet d'argent à PayEnCash ici, donc il n'y a plus de dette réglée en espèces à plafonner.
+           À la place, LE FONDEMENT LÉGAL DU BON D’ACHAT, dérivé de bonsRef().fondement. -->
+      <div class="pec-card" id="op-regles" style="margin-top:16px;padding:6px 15px">
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--color-sep)"><svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:16px;color:var(--color-primary-dark);margin-top:1px"><use href="#i-receipt"/></svg><span style="font-size:12.5px;line-height:1.55;color:var(--color-muted)">Quel que soit ton choix : <b style="color:var(--color-ink)">même reçu PayEnCash</b>, émis dès le paiement confirmé — et ta pièce reste réservée à ton nom le temps de régler.</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--color-sep)"><svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:16px;color:var(--color-primary-dark);margin-top:1px"><use href="#i-shield"/></svg><span style="font-size:12.5px;line-height:1.55;color:var(--color-muted)" id="regle-acpr">—</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0"><svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:16px;color:var(--color-primary-dark);margin-top:1px"><use href="#i-lock"/></svg><span style="font-size:12.5px;line-height:1.55;color:var(--color-muted)"><b style="color:var(--color-ink)">Un bon d’achat suffit</b> — ni numéro de carte, ni date d'expiration, ni cryptogramme, ni RIB pour commander : il n'existe <b style="color:var(--color-ink)">nulle part</b> de champ pour en saisir. Le Bon d’achat comme le ticket s'achètent au comptoir d'un commerce ; ici, tu ne saisis qu'un code déjà prépayé.</span></div>
+      </div>
+
+      <!-- Bannière ORANGE (fondatrice 22/08) : les points de fidélité gagnés sur la commande.
+           Ce qui reste vrai pour LES DEUX moyens : « payer avec un bon d’achat ». -->
+      <a class="tap" id="op-opodo" href="../fly/03-jeu-concours.html" style="display:block;position:relative;overflow:hidden;border-radius:16px;background:linear-gradient(115deg,#C2410C 0%,#F26F21 62%,#FF8A3C 100%);padding:15px 16px 14px;margin:16px 0 0;text-decoration:none;box-shadow:0 12px 30px rgba(194,65,12,.32)">
+        <span style="position:absolute;right:-28px;top:-40px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(255,214,170,.5),transparent 65%);pointer-events:none"></span>
+        <span style="display:inline-block;border-radius:6px;background:#fff;color:#C2410C;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:4px 9px">Un bon d’achat · que du bonus</span>
+        <span style="display:block;font-size:19px;font-weight:800;letter-spacing:-0.02em;line-height:1.1;color:#fff;margin-top:8px;text-transform:uppercase">Un bon d’achat ne coûte rien.<br><span style="color:#FFD9A8">Et ça rapporte <span id="pts-gain">—</span> points.</span></span>
+        <span style="display:block;font-size:11px;font-weight:600;color:rgba(255,255,255,.8);margin-top:6px">Sur tes <span id="due-pt2">—</span> € de commande — et ta cagnotte grimpe : remises &amp; tirage « voyage à gagner ».</span>
+      </a>
+      <!-- Une question, un doute ? → TRAME UNIQUE savHTML (fondatrice 24/08 : homogénéité) -->
+      <div id="sav-fly01" style="margin:12px 0 18px"></div>
+      <script>document.getElementById('sav-fly01').innerHTML = window.PEC_DATA.savHTML();</script>
+
+    </div>
+  </div><!-- /pec-body -->
+
+    <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="10-tendances.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-flame"/></svg>Tendances</a>
+    <a class="pec-tab" href="22-livraisons.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-package"/></svg>Suivi</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Mode</a>
+    <a class="pec-tab" aria-current="page" href="03-panier.html" style="position:relative"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-basket"/></svg>Commandes</a>
+    <a class="pec-tab" href="08-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+  <div data-pec-ou="modales"></div><!-- (20/09, soir) les modales d'accord et de mise en relation : posées par le module -->
+
+</div>
+</div>
+<script>
+  /* (18/09, soir) Deux volets seulement : le BON D’ACHAT (deux chemins) et le paiement EN LIGNE. Le volet de l'agent, la
+     carte de position, le carnet d'adresses et la répartition espèces/carte sont partis avec l'agent. */
+  function pane(btn, id){
+    document.querySelectorAll('.choix2 [role="tab"]').forEach(function(b){ b.setAttribute('aria-selected','false'); });
+    if (btn) btn.setAttribute('aria-selected','true');
+    document.querySelectorAll('.pane').forEach(function(p){ p.classList.remove('active'); });
+    var z = document.getElementById('pane-'+id);
+    if (z) z.classList.add('active');
+  }
+
+  /* ══ (21/09, fondatrice : « pourquoi le flashcode n'est pas intégré ? ») ARRIVER ICI AVEC UN SAC À RÉGLER, C'EST
+     COMMANDER ═══════════════════════════════════════════════════════════════════════════════════════════════
+     Depuis la purge du rail tiers (20/09), plus aucun écran ne passait la commande : « Commander » menait ici avec
+     le SAC, et la page annonçait pourtant « Ta commande t'attend » et un prix bloqué. Sans commande, pas de
+     référence — donc rien à faire lire au partenaire ni à l'agent, et un décompte qui repartait à chaque
+     chargement. La commande naît donc ici, une fois : les pièces sont réservées, la fenêtre d'encaissement court
+     (`expireTs`), le flashcode porte sa référence. Un sac SOLDÉ (avoir, bons posés au panier) garde son geste
+     « Valider ma commande » : il n'y a rien à encaisser, la cliente valide. Un refus se dit (motifBlocage). */
+  var _CMD05 = (function () {
+    var D0 = window.PEC_DATA;
+    if (!D0 || !D0.commanderPanier || !D0.panierCommandeGet || D0.panierCommandeGet()) return null;
+    if (D0.clientConnecte && !D0.clientConnecte()) return null;   // une commande appartient à un compte (garde de l'écran)
+    var t0 = D0.panierTotal ? D0.panierTotal() : null;
+    if (!t0 || !(t0.sousTotal > 0) || t0.total === 0) return null;
+    return D0.commanderPanier({ canal: 'bon', moyen: 'bon' });
+  })();
+
+  /* PRIX BLOQUÉ = LA FENÊTRE DE LA COMMANDE : son échéance (`expireTs`, posée par commanderPanier) fait foi — la même
+     que lisent le panier et l'écran du code (11). (21/09) Le décompte lisait `prixBloqueMinutes` (60, le prix d'un
+     billet d'avion) depuis un champ `at` que la commande Mode ne porte pas : il repartait de 60:00 à chaque
+     chargement, sur une commande qui expire, elle, à 120 min. Sans commande, rien ne se décompte. */
+  (function(){
+    var Dq = window.PEC_DATA;
+    var encQ = (Dq && Dq.panierCommandeGet) ? Dq.panierCommandeGet() : null, dl = document.getElementById('deadline');
+    if (!encQ && _CMD05 && _CMD05.bloque) {
+      /* la commande n'a pas pu naître : la bande ne décompte rien, elle dit pourquoi (le même motif que partout) */
+      var bandeK = dl.closest('div[style]').parentNode;
+      bandeK.style.background = 'var(--color-amber-well)';
+      bandeK.innerHTML = '<svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:15px;color:var(--color-amber-text)"><use href="#i-alert"/></svg>' +
+        '<div id="op-refus-cmd" style="min-width:0;font-size:10.5px;line-height:1.5;color:var(--color-amber-text)"></div>';
+      document.getElementById('op-refus-cmd').textContent = motifBlocage(_CMD05).replace(/^⚠ /, '');
+      return;
+    }
+    if (!encQ || !encQ.expireTs || !Dq.commandeRestant) return;
+    (function tick(){
+      var r = Dq.commandeRestant(encQ);   // « 1 h 59 », puis « 07:12 » — le même libellé que l'écran du code
+      dl.textContent = r.label;
+      if (!r.expiree) { setTimeout(tick, 1000); return; }
+      var bande = dl.closest('div[style]').parentNode;
+      bande.style.background = 'var(--color-amber-well)';
+      bande.innerHTML = '<svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:15px;color:var(--color-amber-text)"><use href="#i-alert"/></svg>' +
+        '<div style="min-width:0;font-size:10.5px;line-height:1.5;color:var(--color-amber-text)"><b>Prix expiré.</b> Le prix doit être revérifié avant de payer — ' +
+        '<a href="03-panier.html" style="font-weight:800;color:var(--color-amber-text);text-decoration:underline">revalider le prix</a>.</div>';
+      /* (20/09, soir) UN PRIX EXPIRÉ FERME TOUS LES CHEMINS — par une classe sur le cadre : le trio est posé par le
+         module APRÈS ce script, et un sélecteur lancé maintenant ne le trouverait pas. Règle : feuille partagée. */
+      var dev = document.querySelector('.pec-device'); if (dev) dev.classList.add('pec-prix-expire');
+    })();
+  })();
+
+  /* LE MONTANT — une seule source : la commande verrouillée si elle existe (c'est ELLE que le bus porte),
+     sinon le sac. Plus de « 9000 » (90 €) en dur quand rien n'est lu : 0, et l'écran le dit.
+     (18/09, soir) MDOM et FRAIS_DEP sont partis avec l'agent : il n'y a plus de second montant. */
+var _ENC05 = (window.PEC_DATA && PEC_DATA.panierCommandeGet) ? PEC_DATA.panierCommandeGet() : null;
+var M = _ENC05 ? Math.round((_ENC05.total || 0) * 100) : ((window.PEC_DATA && PEC_DATA.panierTotal) ? Math.round(PEC_DATA.panierTotal().total * 100) : 0);
+function eurC(c){ return (c/100).toFixed(2).replace('.', ',').replace(/,00$/, ''); }
+/* (10/09) LE SAC ENTIÈREMENT COUVERT PAR UN AVOIR (ou un bon d’achat). `commanderPanier` refusait un total nul comme un
+   montant « inexploitable » et cet écran accusait la cliente (« rouvre ton panier et vérifie les quantités ») :
+   avec un avoir qui couvre tout, elle ne pouvait plus commander du tout. Un sac soldé n'a pas de point de
+   paiement : on masque le choix, on explique, et on valide ici — la commande part réglée.
+   (18/09) La fonction est IDEMPOTENTE : elle s'appelle aussi plus tard, quand un bon d’achat appliqué depuis le volet
+   couvre tout ce qui restait — la page se recalcule sans se recharger. */
+var _T05 = (window.PEC_DATA && PEC_DATA.panierTotal) ? PEC_DATA.panierTotal() : null;
+var _SOLDEE = !_ENC05 && !!_T05 && _T05.sousTotal > 0 && _T05.total === 0;
+function peindreSoldee(t) {
+  var _moyens = [t.avoir > 0 ? 'ton avoir (' + PEC_DATA.eur(t.avoir) + ')' : null,
+                 t.carte > 0 ? 'ton Bon d’achat PayEnCash (' + PEC_DATA.eur(t.carte) + ')' : null].filter(Boolean);
+  document.querySelector('h1').textContent = 'Ta commande est déjà réglée';
+  var _ld = document.getElementById('op-lead');
+  if (_ld) _ld.innerHTML = '<b style="color:var(--color-ink)">Ton sac de ' + PEC_DATA.eur(t.sousTotal) + '</b> est entièrement couvert par ' + (_moyens.join(' et ') || 'tes remises') + ' — il n\'y a rien à aller payer.';
+  document.getElementById('lbl-pt').textContent = 'Réglé';
+  var _sd = document.getElementById('op-soldee'); _sd.hidden = false;
+  /* (19/09, soir) LA LIGNE SE CONTREDISAIT : « Sac 150 € · réglé par ton Bon d’achat PayEnCash (157,99 €) » —
+     le sous-total n'est pas ce que le bon d’achat couvre. Le détail suit désormais le même compte que le panier :
+     sac, colis, remises, puis ce qui a tout réglé. */
+  var _detS = ['Sac ' + PEC_DATA.eur(t.sousTotal)];
+  if (t.livraison > 0) _detS.push('colis ' + PEC_DATA.eur(t.livraison));
+  var _remS = (t.promo || 0) + (t.remiseCampagne || 0) + (t.remisePartage || 0);
+  if (_remS > 0) _detS.push('remises −' + PEC_DATA.eur(_remS));
+  _detS.push('réglé par ' + (_moyens.join(' et ') || 'tes remises'));
+  _detS.push('reste à payer ' + PEC_DATA.eur(0));
+  document.getElementById('op-soldee-detail').textContent = _detS.join(' · ') + '.';
+  var _tl = document.querySelector('.choix2'); if (_tl) _tl.hidden = true;
+  [].forEach.call(document.querySelectorAll('.pane'), function (pn) { pn.hidden = true; pn.classList.remove('active'); });
+  /* Le bandeau « prix bloqué » comptait la fenêtre d'encaissement : il n'y a pas de fenêtre, il n'y a rien à
+     aller payer. Les règles de règlement et les points gagnés ne s'appliquent à rien non plus : on ne laisse
+     pas une page dire le contraire. */
+  ['op-regles', 'op-opodo'].forEach(function (id) { var e = document.getElementById(id); if (e) e.hidden = true; });
+  var _dlB = document.getElementById('deadline');
+  if (_dlB && _dlB.parentNode) { _dlB.parentNode.parentNode.innerHTML = '<b style="color:var(--color-primary-dark)">Aucun délai à tenir.</b> Il n\'y a pas de fenêtre d\'encaissement : ton sac est déjà réglé, la commande part en préparation dès que tu la valides.'; }
+  var _dp = document.getElementById('due-pt'); if (_dp) _dp.textContent = eurC(0);
+  var _pb = document.getElementById('pt-bloque'); if (_pb) _pb.style.display = 'none';
+  /* (19/09, nuit) ET ON NE DEMANDE PAS SA POSITION : il n'y a aucun point où aller, aucun agent à faire
+     venir, rien à trier par distance. La modale d'accord reste fermée, et elle ne s'ouvrira pas. */
+  var _gp = document.getElementById('geopop'); if (_gp) _gp.hidden = true;
+  window.__pecSansPosition = true;
+}
+if (_SOLDEE) peindreSoldee(_T05);
+document.getElementById('op-soldee-cta').addEventListener('click', function () {
+  var e0 = document.getElementById('op-soldee-err'); e0.hidden = true;
+  var r = PEC_DATA.commanderPanier({ canal: 'soldee' });   // aucun moyen de paiement : il n'y a rien à encaisser
+  if (!r || r.bloque) {
+    e0.hidden = false;
+    // le motif RÉEL, dont un bon d’achat devenu indisponible (bonIndisponible) — une seule règle de lecture, motifBlocage
+    e0.textContent = !r ? 'Ton sac est vide.' : motifBlocage(r).replace(/^⚠ /, '');
+    return;
+  }
+  location.href = '04-commande.html?ref=' + encodeURIComponent(r.ref);   // SA commande, pas celle de démonstration
+});
+/* TOUT CE QUI DÉPEND DU MONTANT DÛ se repeint d'un seul geste — au chargement, puis à chaque bon d’achat appliqué ou retiré. */
+function majMontants() {
+  document.getElementById('due-pt').textContent = eurC(M);
+  document.getElementById('due-pt2').textContent = eurC(M);
+  /* (18/09, soir) LE BANDEAU NE SE DÉCOUPE PLUS. Il appelait `reglementAppliquer` / `montantARegler`, qui
+     rendaient « dont X en espèces + Y par carte sur le terminal de l'agent » : ces fonctions N'EXISTENT PLUS
+     dans le data-layer, et la phrase n'avait plus d'objet.
+     Sur une commande soldée le panneau dit « Réglé », pas « À régler ». */
+  var _sd2 = document.getElementById('op-soldee');
+  document.getElementById('lbl-pt').textContent = (_sd2 && !_sd2.hidden) ? 'Réglé' : (M < (window.__MBRUT05 || M) ? 'Reste à régler' : 'À régler');
+  // POINTS FIDÉLITÉ dérivés (fondatrice 31/08) : règle « 1 € encaissé = 1 pt » → plus de « +62 » figé
+  var _pg = document.getElementById('pts-gain'); if (_pg) _pg.textContent = '+' + Math.round(M / 100);
+}
+majMontants();
+/* op-trajet = l'ARTICLE du panier (parité fly : là où Fly montre le trajet, Mode montre la pièce).
+   (12/09) LE PIÈGE `a.taille` : sans commande verrouillée, le repli prenait l'ARTICLE du catalogue — dont la
+   taille est celle de la fiche, pas celle CHOISIE au panier. La taille se lit sur la ligne du panier. */
+var _art01 = _ENC05 ? ((_ENC05.lignes && _ENC05.lignes[0]) ? { nom: _ENC05.lignes[0].nom, taille: _ENC05.lignes[0].taille } : null)
+  : ((window.PEC_DATA && PEC_DATA.mode && PEC_DATA.mode.panier && PEC_DATA.mode.panier.items[0])
+      ? (function () { var _it = PEC_DATA.mode.panier.items[0], _a = PEC_DATA.article(_it.articleId) || {}; return { nom: _a.nom, taille: _it.taille || _a.taille }; })()
+      : null);
+var _tj01 = document.getElementById('op-trajet');
+var _nArt = _ENC05 ? (_ENC05.nbArticles || 0) : ((window.PEC_DATA && PEC_DATA.panierCount) ? PEC_DATA.panierCount() : 0);
+if (_tj01) _tj01.textContent = (_nArt > 1 ? _nArt + ' articles' : (_art01 ? _art01.nom + ' · T. ' + _art01.taille : 'Ta commande')) + ' · prix final';
+var _opn = document.getElementById('op-nart');
+if (_opn) _opn.textContent = 'Ta commande · ' + _nArt + ' article' + (_nArt > 1 ? 's' : '');
+
+/* Le motif RÉEL du refus de commanderPanier — plus de « ⚠ Impossible de commander : — épuisé »
+   quand la cause n'est pas le stock (compte suspendu, total non exploitable). */
+function motifBlocage(res) {
+  if (!res) return '⚠ Ta commande n\'a pas pu être lancée — reprends depuis ton panier.';
+  if (res.suspendu) return '⚠ Ton compte est suspendu : aucune commande ne peut partir. Contacte l\'assistance depuis Suivi › Assistance.';
+  if (res.bonIndisponible) return '⚠ ' + res.bonIndisponible;   // le bon d’achat du sac n'est plus disponible : le motif du data-layer, tel quel
+  if (res.totalInvalide) return '⚠ Le montant de ton panier n\'est pas exploitable — rouvre ton panier et vérifie les quantités.';
+  var noms = (res.indisponibles || []).map(function (x) { return x.nom; }).join(', ');
+  return noms ? ('⚠ Impossible de commander : ' + noms + ' — épuisé. Retire la pièce de ton panier.')
+              : '⚠ Ta commande n\'a pas pu être lancée — reprends depuis ton panier.';
+}
+</script>
+<script>
+/* ══ (17/09 — pivot ; 18/09 au soir — deux moyens) LE CHOIX DU MOYEN DE PAIEMENT ══════════════════════════
+   Ici vivait la liste des bornes, puis les trois moyens dont l'agent. Ce qui reste : les moyens que
+   `PEC_DATA.moyensPourMontant(total)` autorise POUR CE MONTANT — le Bon d’achat PayEnCash — peint tel
+   quels, avec leur aide et leur RAISON (le data-layer y met déjà le nombre de bons d’achat nécessaires, ou le compte
+   qu'il vient. Rien n'est écrit ici : ni le nom d'un moyen, ni un plafond.
+   Un moyen indisponible pour ce montant (m.dispo === false) se montre DÉSACTIVÉ avec sa raison : on ne masque
+   pas un moyen sans dire pourquoi. ══ */
+(function () {
+  var D = window.PEC_DATA, B = window.PEC_BUS;
+  if (!D || !D.moyensPourMontant) return;
+  var esc = function (v) { return D.esc ? D.esc(v) : String(v == null ? '' : v); };
+  var $ = function (id) { return document.getElementById(id); };
+  var bloque = $('pt-bloque');
+  var TOTAL = M / 100;                                   // le montant DÛ — le reste, quand un bon d’achat est appliqué
+  /* (20/09) LES CARTES DE MOYENS ONT DISPARU avec le second moyen : il n'y a plus qu'un titre, et il
+     s'écrit en toutes lettres au-dessus du champ. Ce qui reste ici, c'est la PART déjà couverte par un bon
+     d'achat — lue par `rafraichir`, jamais devinée. */
+  var partBon = 0, partBonPeint = -1;                    // la part déjà couverte par un bon d’achat (sac ou bus) — lue par rafraichir, jamais mémorisée
+  /* TOUT REFUS S'AFFICHE, dans le bandeau ambre sous le récap : le bus, la couche de données et le volet du bon
+     passent tous par ici. (20/09) Cette fonction avait été EMPORTÉE avec la rangée des moyens, alors que dix
+     appels la visaient encore : chaque vérification de code levait `refus is not defined` et l'écran ne
+     répondait plus du tout — ni refus, ni solde, ni bouton « payer ». */
+  function refus(msg) { if (!bloque) return; bloque.textContent = msg; bloque.style.display = msg ? 'block' : 'none'; }
+  /* (19/09, soir — « par défaut acheter un bon ») LE BON D'ACHAT EST LE CHOIX OUVERT D'EMBLÉE. L'écran arrivait
+     sans rien de sélectionné : la cliente devait deviner qu'il fallait cliquer pour voir quoi que ce soit. C'est
+     notre moyen — celui qui ne demande qu’un bon d’achat — et c'est celui qu'on propose en premier. Un
+     moyen indisponible pour ce montant ne s'ouvre pas : on laisse alors le choix entièrement au client. */
+  function ouvrirParDefaut() {
+    pane(null, 'bon');
+    /* (19/09, soir, puis nuit — « par défaut sur chez un partenaire ») ON OUVRE LA CARTE DES COMMERCES, PAS
+       LE CHAMP DE CODE. La plupart des clientes n'ont pas encore de bon en main : leur présenter un champ vide,
+       c'est leur demander quelque chose qu'elles n'ont pas. On montre d'abord OÙ en acheter ; le champ et
+     le champ du code reste à un doigt, sur « En ligne ». */
+    OU.choisir('partenaire');
+  }
+
+  /* LA PHRASE ACPR, DÉRIVÉE (18/09, soir) : chaque fondement de ref.bons.fondement est rédigé « art. X — explication ».
+     On en extrait la RÉFÉRENCE pour la phrase et on garde le texte entier au survol : rien n'est réécrit à la main. */
+  (function acpr() {
+    var z = $('regle-acpr'); if (!z || !D.bonsRef) return;
+    /* (18/09, soir) LA PHRASE DE FONDEMENT VIENT DU DATA-LAYER. Elle était construite à l'identique dans CINQ
+       écrans : cinq endroits à corriger le jour où l'avocat fait bouger un mot, et déjà une page qui avait gardé
+       un ancien nom de produit en repli. `D.bonFondementHTML()` la rend — articles en gras, texte complet en
+       infobulle — et `fondement.especes` (art. L112-6 CMF) n'y figure plus : plus personne ne règle de dette en
+       espèces ici. */
+    var h = D.bonFondementHTML();
+    z.innerHTML = h ? (h + ' <a href="18-informations-legales.html#bon" style="color:var(--color-primary-dark);font-weight:700">Conditions et fondement légal</a>.') : 'Le fondement légal du bon d’achat n\'est pas encore renseigné.';
+  })();
+
+  /* D'OÙ VIENT LE MONTANT DÛ — une seule règle, lue par rafraichir, le volet du bon d’achat et « retirer » :
+     · commande VERROUILLÉE → son total, moins la part d'un bon d’achat appliqué SUR LE BUS (bonApplique, non consommé) ; un bon d’achat posé
+       au sac AVANT la commande est déjà dans ce total (enc.bon / enc.carte) : il se lit, il ne se retire plus ici ;
+     · sinon → le sac (panierTotal : total, carte = part du bon d’achat du sac). */
+  function bonAppliqueBus(enc) { var c = (enc && B && B.commande) ? B.commande(enc.ref) : null; return (c && c.bonApplique && !c.bonApplique.consommeAt) ? c.bonApplique : null; }
+  function montantDu() {
+    var enc = D.panierCommandeGet ? D.panierCommandeGet() : null;
+    if (enc) {
+      /* DEUX PARTS PEUVENT SE CUMULER : les bons posés au SAC avant la commande (enc.bons — déjà déduits de son total,
+         débités au règlement) et un bon appliqué ENSUITE sur la commande du bus. (19/09, soir) Une commande peut porter
+         plusieurs bons (un bon est borné à 250 €) : `codes` les nomme tous, `code` reste le premier. (21/09) La commande
+         naissant désormais à l'arrivée sur cet écran, « un bon au panier, puis un autre ici » est le cas courant :
+         `fixe` ne vaut plus que pour les bons du sac, qui ne se retirent pas d'ici. */
+      var ba = bonAppliqueBus(enc), sac = !!((enc.bons || []).length && !enc.bonConsomme && enc.carte > 0);
+      var codes = (sac ? enc.bons.map(function (x) { return x.code; }) : []).concat(ba ? [ba.code] : []);
+      return { enc: enc, cents: Math.max(0, Math.round((enc.total || 0) * 100) - (ba ? Math.round(ba.montant * 100) : 0)),
+        part: (sac ? enc.carte : 0) + (ba ? ba.montant : 0), code: codes[0] || null, codes: codes,
+        plafonne: !!(ba && ba.plafonne), fixe: sac && !ba, bus: !!ba };
+    }
+    var t = D.panierTotal ? D.panierTotal() : { total: M / 100, carte: 0, sousTotal: 0, avoir: 0 };
+    var codes = D.panierBonsCodes ? D.panierBonsCodes() : [];
+    return { enc: null, t: t, cents: Math.round(t.total * 100), part: codes.length ? t.carte : 0, code: codes[0] || null, codes: codes, plafonne: !!t.bonsPlafonnes, fixe: false };
+  }
+
+  /* (17/09 — audit « écran sourd ») L'ÉCRAN ÉCOUTE. Le sac modifié dans un autre onglet, un avoir consommé, une commande
+     réglée ou annulée pendant que la page est ouverte : le montant et les moyens se recalculent depuis la MÊME source
+     (la commande verrouillée, sinon le sac) — jamais un montant périmé sous un bouton « Payer », et une commande close le dit.
+     (18/09) …et un bon d’achat appliqué, retiré, bloqué ou épuisé ailleurs se relit ; (18/09, soir) un point partenaire activé ou
+     suspendu repeint la carte des commerces du volet « je veux en acheter ». */
+  /* (20/09, soir) le trio n'est plus peint ici, avant que le choix ne soit monté : `ouvrirParDefaut`, en fin de
+     script, le peint une fois — l'appel anticipé tournait sur des variables encore indéfinies (levée de `var`). */
+  function rafraichir() {
+    try {
+      var du = montantDu(), enc = du.enc, tot = du.cents;
+      var c = enc && B && B.commande ? B.commande(enc.ref) : null;
+      if (c && (c.statut === 'paye' || c.statut === 'annule' || c.statut === 'rembourse'))
+        refus(c.statut === 'paye' ? 'Cette commande est déjà réglée — retrouve-la dans tes commandes.' : 'Cette commande est ' + (c.statut === 'annule' ? 'annulée' : 'remboursée') + ' — repars de ton sac.');
+      partBon = du.part || 0;
+      window.__MBRUT05 = tot + Math.round(partBon * 100);   // le brut, pour le libellé « Reste à régler » du bandeau
+      // le sac entièrement couvert (avoir, bon d’achat) : le bloc « rien à payer » remplace les moyens — sans recharger la page
+      if (!enc && du.t && du.t.sousTotal > 0 && tot === 0) { M = 0; TOTAL = 0; if (typeof peindreSoldee === 'function') peindreSoldee(du.t); if (typeof majMontants === 'function') majMontants(); peindreBonLigne(du); return; }
+      if (tot !== M) { M = tot; TOTAL = M / 100; if (typeof majMontants === 'function') majMontants(); }
+      else if (partBon !== partBonPeint) { partBonPeint = partBon; if (typeof majMontants === 'function') majMontants(); }   // la part déjà couverte a bougé : les montants suivent
+      peindreBonLigne(du);
+      peindreOrdre(enc);
+      if (typeof OU !== 'undefined') OU.rafraichirListe();
+    } catch (e) {}
+  }
+  /* ══ (21/09, fondatrice : « le ticket avec flashcode à présenter au partenaire / à l'agent … intégré dans la section
+     [À régler] ») LE FLASHCODE VIT DANS LA CARTE DU MONTANT ═══════════════════════════════════════════════════
+     Il porte l'ORDRE DE VENTE de cette commande : le commerce ou le distributeur le scanne, son écran relit au bus
+     ce qui reste à régler et prépare la vente. La commande doit donc être connue du bus dès qu'elle est passée — on
+     l'annonce ici si elle ne l'est pas encore, par le même geste que le règlement (annonceCommandeMode). On ne
+     redessine le flashcode que s'il change : le bus repeint l'écran souvent. */
+  var ordrePeint = '';
+  function peindreOrdre(enc) {
+    var z = $('op-ordre'); if (!z || !D.ordreVente) return;
+    if (enc && enc.ref && B && B.commande && !B.commande(enc.ref)) D.annonceCommandeMode(enc, {});
+    var ov = enc ? D.ordreVente(enc.ref) : null, sig = (ov && ov.vendable) ? ov.ref + '|' + ov.montant : '';
+    z.hidden = !sig;
+    if (sig === ordrePeint) return;
+    ordrePeint = sig;
+    z.innerHTML = sig ? D.ordreVenteBlocHTML({ url: D.ordreVenteUrl(ov.ref), ref: ov.ref, entite: D.ordreVenteEntite() }) : '';
+  }
+  window.addEventListener('storage', rafraichir);
+  window.addEventListener('pec-bus', rafraichir);
+
+  /* ══ (18/09 — Bon d’achat PayEnCash) LE VOLET DU BON D’ACHAT — CHEMIN ① « J'AI UN BON D’ACHAT » ═══════════════════════════════════════ */
+  var bonCourant = null;   // { code, applicable } — le dernier code VÉRIFIÉ : rien ne s'applique sans vérification
+  var cid = function () { return (D.clientActifGet && D.clientActifGet()) || null; };
+  /* (21/09) `bonNormaliser` vivait ici ET sur l'autre écran de paiement, et amputait le code d'un bon de boutique :
+     la mise en forme est celle du data-layer (bonSaisieFormater), qui reconnaît les deux réseaux. */
+  /* `etat` vaut true (valable, vert), false (refusé, rouge) ou 'porte' (ambre : le bon d’achat est bon d’achat, c'est une
+     vérification d'identité qui manque — on ne peint pas ça comme un refus). */
+  function bonEtat(html, etat) { var z = $('bon-etat'); if (!z) return; z.hidden = !html; z.innerHTML = html || ''; z.className = etat === 'porte' ? 'porte' : (etat ? 'ok' : 'ko'); }
+  function bonBoutons(payer, appliquer) { var bp = $('bon-payer'), ba = $('bon-appliquer'), cg = $('bon-cgv'); if (bp) bp.hidden = !payer; if (ba) ba.hidden = !appliquer; if (cg) cg.hidden = !(payer || appliquer); }
+  // la ligne « Bon d’achat appliqué −X € · reste Y € · retirer » + l'état du volet — depuis montantDu(), jamais depuis une variable locale
+  function peindreBonLigne(du) {
+    var ligne = $('bon-applique'), txt = $('bon-applique-txt'), ret = $('bon-retirer'); if (!ligne) return;
+    var n = (du.codes || (du.code ? [du.code] : [])).length;
+    var on = du.part > 0 && n > 0, reste = du.cents / 100;
+    ligne.hidden = !on;
+    /* (19/09, soir) PLUSIEURS BONS : la ligne les compte au lieu d'en nommer un seul, et le champ RESTE OUVERT
+       tant qu'il reste quelque chose à payer — un bon d'achat est borné à 250 €, un sac à 600 € en demande trois.
+       Il ne se ferme que lorsque le dû est couvert : là, un bon de plus ne servirait à rien. */
+    if (on && txt) txt.innerHTML = (n > 1 ? esc(String(n)) + ' Bons d’achat PayEnCash appliqués' : 'Bon d’achat PayEnCash ' + esc(D.bonMasque ? D.bonMasque(du.code) : du.code) + ' appliqué')
+      + ' <b>−' + esc(D.eur(du.part)) + '</b> · reste <b>' + esc(D.eur(reste)) + '</b>'
+      + (du.plafonne ? ' <span style="font-weight:600">(plafond du jour atteint)</span>' : '')
+      + (du.fixe ? ' <span style="font-weight:600">— appliqué' + (n > 1 ? 's' : '') + ' au sac avant la commande</span>' : ' ·');
+    if (ret) { ret.hidden = !on || du.fixe; ret.textContent = n > 1 ? 'tout retirer' : 'retirer'; }
+    var inp = $('bon-code'), bv = $('bon-verifier');
+    var ferme = on && !(reste > 0.004);
+    if (inp) inp.disabled = ferme;
+    if (bv) bv.disabled = ferme;
+    if (on) {
+      bonBoutons(false, false);
+      bonEtat((n > 1 ? esc(String(n)) + ' bons d’achat sont appliqués' : 'Ce bon d’achat est appliqué') + ' à ' + (du.enc ? 'ta commande' : 'ton sac') + ' : <b>−' + esc(D.eur(du.part)) + '</b>.'
+        + (reste > 0.004
+            ? ' Il reste <b>' + esc(D.eur(reste)) + '</b> à payer : présente un autre bon d’achat ci-dessus.'
+            : ' Tout est couvert — ' + (n > 1 ? 'ils seront débités' : 'il sera débité') + ' au règlement.')
+        + (du.fixe ? '' : ' <a href="#" id="bon-retirer-2" style="font-weight:800;color:inherit;text-decoration:underline">' + (n > 1 ? 'Tout retirer' : 'Retire-le') + '</a> pour recommencer.'), true);
+    }
+    else if (bonCourant === null) { bonEtat('', true); bonBoutons(false, false); }
+  }
+  function bonVerifier() {
+    refus('');
+    var code = D.bonSaisieFormater(($('bon-code') || {}).value), du = montantDu(), reste = du.cents / 100;
+    bonCourant = null; bonBoutons(false, false);
+    if (!D.bonValider) { bonEtat('Le Bon d’achat PayEnCash n\'est pas disponible sur cet appareil.', false); return; }
+    var v = D.bonValider(code, { clientId: cid(), montant: reste });
+    /* (18/09, soir) UNE PORTE, PAS UN MUR. Au-delà du plafond sur fenêtre glissante (bonsRef : plafondClientMois
+       sur fenetrePlafondJours), `bonValider` rend `verificationRequise: true` : le bon d’achat est INTACT, c'est l'identité
+       qui manque. Le motif du data-layer s'affiche TEL QUEL — on y ajoute seulement le chemin pour l'ouvrir. */
+    if (!v.ok) {
+      bonEtat(esc(v.motif || 'Bon d’achat refusé.') + (v.verificationRequise ? ' <a href="../ecrans/19-verification-identite.html" style="font-weight:800;color:inherit;text-decoration:underline">Vérifier mon identité</a>' : ''),
+        v.verificationRequise ? 'porte' : false);
+      return;
+    }
+    var couvre = v.applicable + 0.004 >= reste;
+    bonCourant = { code: v.bon.code, applicable: v.applicable };
+    bonEtat('<b>Bon d’achat ' + esc(D.bonMasque ? D.bonMasque(v.bon.code) : v.bon.code) + ' — ' + esc(D.bonEtatLbl ? D.bonEtatLbl(v.etat) : 'valable') + '.</b> Solde <b>' + esc(D.eur(v.solde)) + '</b>'
+      + (v.bon.expireLe ? ' · valable jusqu\'au ' + esc(new Date(v.bon.expireLe).toLocaleDateString('fr-FR')) : '') + '.<br>'
+      + (couvre ? 'Il couvre <b>tout</b> ce qu\'il reste à payer (' + esc(D.eur(reste)) + ') — il restera <b>' + esc(D.eur(Math.max(0, v.solde - reste))) + '</b> sur le bon d’achat.'
+                : 'Il couvre <b>' + esc(D.eur(v.applicable)) + '</b> sur ' + esc(D.eur(reste)) + (du.bus
+                    /* le bus garde UN bon en attente sur une commande : un second qui ne solde pas le reste ne s'y ajoute
+                       pas (il remplaçait le premier, sans un mot) — on le dit ici, avant tout geste */
+                    ? ', et un bon d’achat est déjà appliqué en attente sur ta commande : présente plutôt un bon qui règle tout le reste, ou retire le premier.'
+                    : ' : le reste (' + esc(D.eur(reste - v.applicable)) + ') se règle avec un autre bon d’achat.'))
+      + (v.plafonne ? ' <span style="font-weight:600">Plafond journalier : ' + esc(D.eur(v.plafondJour)) + ' de bons d’achat par jour et par compte.</span>' : ''), true);
+    var bp = $('bon-payer'), ba = $('bon-appliquer');
+    if (!du.enc) {
+      // AU SAC (même mécanique que 03-panier) : un seul geste — le sac se recalcule, soldé si le reste est nul
+      if (ba) ba.textContent = 'Appliquer ce bon d’achat à mon sac' + (couvre ? ' — rien d\'autre à payer' : ' (−' + D.eur(v.applicable) + ')');
+      bonBoutons(false, true);
+    } else {
+      // COMMANDE PASSÉE : le bus — réglée par ce bon s'il couvre le reste (avec celui déjà appliqué, le cas échéant), appliqué en partie sinon
+      if (bp) bp.textContent = 'Payer ' + D.eur(reste) + ' avec mon bon d’achat';
+      if (ba) ba.textContent = 'Utiliser ' + D.eur(v.applicable) + ' de mon bon d’achat, puis un autre bon pour le reste';
+      bonBoutons(couvre, !couvre && !du.bus);
+    }
+  }
+  function fermerVolet() {
+    document.querySelectorAll('.choix2 [role="tab"]').forEach(function (b) { b.setAttribute('aria-selected', 'false'); });
+    document.querySelectorAll('.pane').forEach(function (p) { p.classList.remove('active'); });
+    var lg = $('bon-applique'); if (lg && !lg.hidden) lg.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+  function bonAppliquer() {
+    refus('');
+    if (!bonCourant) { bonEtat('Vérifie d\'abord le code de ton bon d’achat.', false); return; }
+    var du = montantDu(), inp = $('bon-code');
+    if (!du.enc) {
+      var r = D.panierBonAppliquer(bonCourant.code);
+      if (!r || r.ok === false) { bonEtat(esc((r && r.motif) || 'Le bon d’achat n\'a pas pu être appliqué.'), false); return; }
+      bonCourant = null; if (inp) inp.value = '';
+      rafraichir();   // soldé si le reste est nul, sinon les cartes pour le reste + la ligne « Bon d’achat appliqué »
+      if (M > 0) fermerVolet();
+      return;
+    }
+    /* (21/09) UNE COMMANDE PASSÉE PREND UN BON DE PLUS, par-dessus ceux posés au sac : ils sont déjà déduits de son total,
+       celui-ci l'est de ce qu'il reste. Le refus du 19/09 (« ses parts sont figées ») datait d'une commande qui ne naissait
+       qu'au paiement ; elle naît désormais à l'arrivée ici, et « un bon au panier, puis un autre ici » est le cas courant. */
+    var cBus = B.commande(du.enc.ref);
+    if (cBus && cBus.statut === 'paye') { refus('⚠ Cette commande est déjà réglée.'); return; }
+    var rA = annoncerCmd(du.enc, {});   // la commande doit exister au bus ; canal et moyen restent tels quels
+    if (rA && rA.ok === false) { refus('⚠ ' + rA.message); return; }
+    var r2 = B.bonAppliquer(du.enc.ref, bonCourant.code, cid());
+    if (!r2 || r2.ok === false) { refus('⚠ ' + ((r2 && r2.message) || 'Le bon d’achat n\'a pas pu être appliqué.')); return; }
+    bonCourant = null; if (inp) inp.value = '';
+    rafraichir(); fermerVolet();
+  }
+  // COMMANDE VERROUILLÉE COUVERTE EN TOTALITÉ : annoncée (canal 'bon') puis RÉGLÉE par le bus (par:'bon' — c'est lui qui débite le
+  // bon d’achat et solde la commande Mode via reglerCommande) → le reçu (11-code-paiement)
+  function bonPayerTout() {
+    refus('');
+    var du = montantDu();
+    if (!bonCourant || !du.enc) { bonEtat('Vérifie d\'abord le code de ton bon d’achat.', false); return; }
+    var cBus = B.commande(du.enc.ref);
+    if (cBus && cBus.statut === 'paye') { refus('⚠ Cette commande est déjà réglée.'); return; }
+    var cmd = (D.panierCommandeMaj && D.panierCommandeMaj({ canal: 'bon', encaissement: 'Réglée par ' + D.libelleMoyen('bon'), pointNom: '', pointAdresse: '' })) || du.enc;
+    var rA = annoncerCmd(cmd, { canal: 'bon', moyen: 'bon' });
+    if (rA && rA.ok === false) { refus('⚠ ' + rA.message); return; }
+    var c2 = B.commande(cmd.ref) || {};
+    var rP = B.payer(cmd.ref, { par: 'bon', montant: c2.montant || String(cmd.total), bon: bonCourant.code });
+    if (!rP || rP.ok === false) { refus('⚠ ' + ((rP && rP.message) || 'Le règlement par Bon d’achat PayEnCash a été refusé.')); bonVerifier(); return; }
+    location.href = '11-code-paiement.html';
+  }
+  function bonRetirer(e) {
+    if (e) e.preventDefault();
+    refus('');
+    var du = montantDu();
+    if (du.enc) {
+      if (du.fixe) return;
+      var r = B.bonRetirer(du.enc.ref);
+      if (!r || r.ok === false) { refus('⚠ ' + ((r && r.message) || 'Le bon d’achat n\'a pas pu être retiré.')); return; }
+      bonCourant = null; rafraichir(); return;
+    }
+    var soldee = $('op-soldee') && !$('op-soldee').hidden;
+    D.panierBonRetirer(); bonCourant = null;
+    if (soldee) { location.reload(); return; }   // le bloc « rien à payer » avait remplacé les moyens : on repart d'une page propre
+    rafraichir();
+  }
+  var inpB = $('bon-code');
+  if (inpB) {
+    inpB.addEventListener('input', function () { inpB.value = D.bonSaisieFormater(inpB.value); bonCourant = null; bonBoutons(false, false); });
+    inpB.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); bonVerifier(); } });
+  }
+  if ($('bon-verifier')) $('bon-verifier').addEventListener('click', bonVerifier);
+  if ($('bon-payer')) $('bon-payer').addEventListener('click', bonPayerTout);
+  if ($('bon-appliquer')) $('bon-appliquer').addEventListener('click', bonAppliquer);
+  if ($('bon-applique')) $('bon-applique').addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#bon-retirer')) bonRetirer(e); });
+  if ($('bon-etat')) $('bon-etat').addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#bon-retirer-2')) bonRetirer(e); });
+
+  /* ══ (20/09, soir) LE CHOIX « COMMENT VEUX-TU PAYER ? » VIT DANS UN MODULE PARTAGÉ AVEC FLY ═══════════
+     (ui/assets/payencash-comment-payer.js). Il y a été déplacé TEL QUEL — le trio, les commerces, l'agent,
+     la modale d'accord, la carte. Cette page lui dit ce qui reste à régler et où mène une rencontre ; elle
+     garde le chemin ① (le champ du bon), qui règle SON sac. */
+  var OU = PEC_OU.monter({
+    montantDu: montantDu,
+    refus: refus,
+    urlRencontre: function (id) { return '25-rencontre.html?rdv=' + encodeURIComponent(id); }
+  });
+
+  /* L'ANNONCE D'UNE COMMANDE VERROUILLÉE — une seule fonction pour « Payer » en ligne et pour le bon d’achat.
+     Elle porte ce dont les comptes ont besoin (mêmes champs que le reçu, mode/11) : la valeur vendue se dérive des LIGNES, le
+     caractère fiscal aussi, et la part déjà couverte par un bon d’achat ou un avoir ne doit pas être comptée en recette encaissée.
+     Le montant annoncé est le TOTAL de la commande (brut) : c'est le bus qui recalcule la part d'un bon d’achat appliqué. */
+  function annoncerCmd(cmd, extra) { return D.annonceCommandeMode(cmd, extra); }   // (19/09, soir) le même bloc vivait ici ET sur 11-code-paiement, et manquait à la commande soldée : il vit dans la donnée
+
+  // la liste des moyens du bandeau d'accueil se dérive (jamais écrite) ; puis un bon d’achat déjà appliqué est restauré
+  if (D.moyensPaiementLabel) [].forEach.call(document.querySelectorAll('.pec-moyens'), function (e) { e.textContent = D.moyensPaiementLabel(); });
+  rafraichir();
+  ouvrirParDefaut();
+  /* ══ (20/09) ON ARRIVE ICI AVEC SON CODE EN MAIN (?bon=…) ══════════════════════════════════════════
+     C'est la sortie de l'écran de la rencontre : le distributeur a remis le bon là-bas, le champ de saisie
+     est ici. Le lien porte le code, l'écran le pose et le vérifie — la cliente n'a rien à recopier. Le
+     paramètre est lu une fois puis RETIRÉ de l'adresse : recharger la page ne doit pas rejouer le geste, et
+     un code n'a rien à faire dans un historique de navigation. */
+  (function () {
+    var q = new URLSearchParams(location.search).get('bon');
+    if (!q) return;
+    try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    OU.poserCode(q);
+  })();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "routes": [
+    {
+      "src": "^/$",
+      "dest": "/index.html"
+    },
+    {
+      "src": "^/app$",
+      "dest": "/depot-payencash-2026-09/ui/ecrans/01-accueil.html"
+    },
+    {
+      "src": "^/vols$",
+      "dest": "/depot-payencash-2026-09/ui/parcours/02-vol-aller-retour.html"
+    },
+    {
+      "src": "^/aller-simple$",
+      "dest": "/depot-payencash-2026-09/ui/parcours/01-vol-aller-simple.html"
+    },
+    {
+      "src": "^/mes-billets$",
+      "dest": "/depot-payencash-2026-09/ui/ecrans/03-mes-codes.html"
+    },
+    {
+      "handle": "filesystem"
+    }
+  ]
+}

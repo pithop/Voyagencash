@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PayEnCash — Tous les espaces</title>
+<!-- PORTAIL (fondatrice 05/09 : « redonne-moi les liens de chaque espace, une page web, je vais
+     l'ajouter sur mon dock »). Une seule porte d'entrée vers les apps + les outils de test.
+     Les identifiants de démo viennent du data-layer (comptesDemo) — jamais recopiés ici.
+     (17/09 — pivot) Plus de borne, plus de commerçant qui encaisse une commande.
+     (18/09) L'espace partenaire REVIENT, autrement : le commerçant VEND le Bon d’achat PayEnCash (titre prépayé
+     émis par AJEK, art. L521-3 CMF) ; le commercial recrute les fournisseurs Mode ET les commerces partenaires.
+     (18/09, soir) DEUX changements qui se voient d'ici : l'agent de caisse mobile est SUPPRIMÉ — sa carte ouvrait
+     ui/coursier/, dossier qui n'existe plus —, et le reversement mensuel du partenaire devient un PRÉLÈVEMENT
+     À LA VENTE sur la carte de son commerce, moins sa commission. Il reste deux moyens, achetés au comptoir
+     d'un commerce : le Bon d’achat PayEnCash (notre réseau) et le Bon d’achat PayEnCash (réseau de distribution). -->
+<link rel="stylesheet" href="ui/assets/payencash-v2.css">
+<script src="ui/assets/payencash-icons.js"></script>
+<script src="ui/assets/payencash-data.js"></script>
+<style>
+  body{margin:0;background:#F6F5F2;color:#12211C;font:15px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:34px 22px 60px}
+  header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  h1{margin:0;font-size:27px;font-weight:800;letter-spacing:-0.03em}
+  .sub{color:#6B7B74;font-size:13.5px}
+  h2{margin:34px 0 12px;font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:#6B7B74}
+  .grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  a.carte{display:block;background:#fff;border:1px solid #E4E7E5;border-radius:15px;padding:16px 17px;text-decoration:none;color:inherit;transition:.14s}
+  a.carte:hover{border-color:#2F9E6B;transform:translateY(-2px);box-shadow:0 6px 20px rgba(18,33,28,.08)}
+  .ic{width:38px;height:38px;border-radius:11px;background:#E7F4ED;color:#1E7A50;display:flex;align-items:center;justify-content:center;margin-bottom:11px}
+  .ic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .nm{font-weight:800;font-size:15px;letter-spacing:-.01em}
+  .ds{font-size:12.5px;color:#6B7B74;margin-top:4px;line-height:1.5}
+  .id{font-size:11.5px;color:#1E7A50;margin-top:9px;font-weight:700;font-variant-numeric:tabular-nums}
+  .outil .ic{background:#EEF1F0;color:#42544C}
+  footer{margin-top:38px;font-size:12px;color:#8A9А92;line-height:1.7}
+  code{background:#EEF1F0;border-radius:5px;padding:1px 6px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>PayEnCash</h1>
+    <span class="sub">Tous les espaces, une seule porte d'entrée.</span>
+  </header>
+  <p class="sub" style="margin:0">Ajoute cette page à ton Dock : elle ouvre chaque app à sa page d'accueil, avec l'identifiant de démonstration à utiliser.</p>
+  <!-- (23/09) LA PAGE PRINCIPALE EN TÊTE. Le portail listait des espaces d'application sans jamais nommer la page
+       que voit le monde extérieur — celle qu'on montre à une marque. Elle est maintenant la première chose ici. -->
+  <a href="ESPACE-COMMERCANT/marketing/landing-page.html" style="display:block;margin:14px 0 0;background:#0F2A24;color:#fff;border-radius:15px;padding:16px 19px;text-decoration:none">
+    <span style="display:block;font-size:10.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#3FD99B">La page principale · payencash.fr</span>
+    <span style="display:block;font-size:15.5px;font-weight:800;margin-top:5px">PayEnCash Solution — grossiste en bons d’achat de marque</span>
+    <span style="display:block;font-size:12.5px;line-height:1.55;color:#c9d8d0;margin-top:4px">Ce que nous achetons aux jeunes marques de prêt-à-porter et aux créateurs de sneakers, ce que nous leur payons, et à quel délai. C’est la page qu’on montre à une marque.</span>
+  </a>
+  <details style="margin:14px 0 0;background:#fff;border:1px solid #E4E7E5;border-radius:15px;padding:12px 17px;font-size:13px"><summary style="cursor:pointer;font-weight:800">Tester le Bon d’achat PayEnCash en 5 minutes (18/09) — inscription partenaire → dossier → contrat → activation manager → vente → paiement client</summary>
+  <ol>
+  <li><b>Inscription du commerce</b> — <a href="ui/partenaire/00-inscription.html"><code>ui/partenaire/00-inscription.html</code></a> : enseigne, adresse, SIRET, e-mail (code reçu), puis les pièces du coffre (Kbis, pièce du gérant, vidéo) → « transmis ». Le point naît en <code>contrat_a_signer</code>.</li>
+  <li><b>Dossier</b> — Manager <a href="ui/manager/29-partenaires.html"><code>29-partenaires</code></a> (ou <code>40-comptes</code>) : valider la candidature et chaque pièce du coffre.</li>
+  <li><b>Contrat</b> — le partenaire signe depuis <a href="ui/partenaire/07-mon-point.html"><code>partenaire/07-mon-point</code></a>, ou le commercial envoie le lien (<code>commercial/03-signature</code> → page gérant <code>commercial/09-signature-gerant</code>, code OTP).</li>
+  <li><b>Activation</b> — Manager <code>29-partenaires</code> → « Activer » (exige dossier valide ET contrat signé) : le point passe <code>actif</code>, il apparaît dans « Où acheter un bon d’achat » (<code>ecrans/25</code>).</li>
+  <li><b>Carte du commerce</b> — <a href="ui/partenaire/07-mon-point.html"><code>partenaire/07-mon-point</code></a> : enregistrer la carte bancaire du commerce. Sans elle la vente du <b>Bon d’achat PayEnCash</b> reste fermée. <i>(23/09 — sur la seconde ligne, PayEnCash Solution, le commerce sédentaire est désormais <b>prélevé par SEPA</b> après l'arrêté du soir, et le commissionnaire mobile <b>paie d'avance</b> : voir <a href="ui/tech/08-paiement.html"><code>tech/08-paiement</code></a> et <a href="ui/manager/45-solution-paiements.html"><code>manager/45</code></a>.)</i></li>
+  <li><b>Vente</b> — <a href="ui/partenaire/03-vendre.html"><code>partenaire/03-vendre</code></a> : montant (5–250 €), case « j'ai encaissé le montant auprès du client », « Émettre le bon d’achat » → la carte du commerce est débitée du montant moins sa commission, <b>puis</b> le ticket s'imprime avec le code. Banque qui refuse = aucun bon d’achat.</li>
+  <li><b>Paiement client</b> — <a href="ui/fly/01-ou-payer.html"><code>fly/01</code></a> ou <a href="ui/mode/05-ou-payer.html"><code>mode/05</code></a> : carte « Bon d’achat PayEnCash », code, « Vérifier » (solde), puis « Payer avec mon bon d’achat » (tout) ou « Utiliser X € » (le reste par un autre bon de la série). En fin de mois : Manager <code>29</code> → le <b>relevé</b> du point, d'où s'émet l'autofacture de commission (art. 289 CGI).</li>
+</ol>
+  <p style="margin:6px 0 0;color:#6B7B74">Le partenaire vend un bon d’achat, il n'encaisse jamais une commande. Fondement et textes : <a href="ESPACE-COMMERCANT/documents/partie-2-juridique-socle.html#bon">Étape 3 §2b</a>, <a href="ESPACE-COMMERCANT/documents/contrat-distribution-bons.html">contrat de distribution</a>.</p>
+  </details>
+
+  <h2>Ce que voient les clients</h2>
+  <div class="grille" id="g-client"></div>
+
+  <h2>Le réseau : ceux qui vendent le bon et ceux qui expédient</h2>
+  <div class="grille" id="g-terrain"></div>
+
+  <h2>Le back-office</h2>
+  <div class="grille" id="g-back"></div>
+
+  <h2>Outils de contrôle</h2>
+  <div class="grille" id="g-outils"></div>
+
+  <footer>
+    Serveur local : <code>python3 serve-8777.py</code> à la racine du projet, puis <code>http://localhost:8777/PORTAIL.html</code>.<br>
+    Les identifiants affichés sont ceux du trousseau de démonstration du data-layer — ils n'existent que dans cette maquette.
+  </footer>
+</div>
+
+<script>
+(function () {
+  var D = window.PEC_DATA || {};
+  // l'identifiant de démo de chaque espace vient du data-layer (comptesDemo), jamais écrit ici
+  function idDe(prefixe) {
+    var c = (D.comptesDemo || []).filter(function (x) { return String(x.espace).indexOf(prefixe) === 0; })[0];
+    return c ? (c.identifiant + ' · ' + c.motdepasse) : '';
+  }
+  var ESPACES = {
+    'g-client': [
+      ['Mode', 'ui/mode/01-accueil.html', 'i-basket', 'La boutique : catalogue, panier, paiement sans carte bancaire (Bon d’achat PayEnCash ou Bon d’achat PayEnCash), suivi des colis.', ''],
+      ['Fly', 'ui/ecrans/01-accueil.html', 'i-plane', 'Le voyage : recherche, offres, réservations, paiement sans carte bancaire (Bon d’achat PayEnCash ou Bon d’achat PayEnCash).', ''],
+      ['Créer un compte client', 'ui/mode/21-inscription.html', 'i-user', 'Le parcours d\'inscription, avec vérification SMS et e-mail.', '']
+    ],
+    'g-terrain': [
+      // (18/09, soir) La carte « Agent de caisse » ouvrait ui/coursier/02-connexion.html : l'app est supprimée.
+      ['Commerce partenaire', 'ui/partenaire/01-connexion.html', 'i-store', 'Le commerçant qui vend le Bon d’achat PayEnCash : ticket imprimé, bons d’achat vendus, relevé mensuel — sa carte est prélevée à chaque vente, moins sa commission ; il n\'encaisse aucune commande.', idDe('Partenaire')],
+      ['Fournisseur Mode', 'ui/fournisseur/01-connexion-kyb.html', 'i-package', 'L\'atelier : inscription, publication des pièces, stock, expéditions Mondial Relay, factures.', idDe('Fournisseur')],
+      ['Devenir partenaire', 'ui/partenaire/00-inscription.html', 'i-ticket', 'L\'inscription d\'un commerce en 4 étapes : dossier, code e-mail, pièces du coffre, transmis — puis contrat de distribution, carte du commerce et activation.', ''],
+      // (18/09, soir) La porte d'entrée du fournisseur manquait ici, alors que celle du partenaire y était.
+      ['Devenir fournisseur Mode', 'ui/fournisseur/00-inscription.html', 'i-package', 'La création du compte fournisseur : mentions du Kbis, adresse d\'expédition, catégories fournies, confirmation de l\'e-mail — puis KYB et contrat-cadre.', '']
+    ],
+    'g-back': [
+      ['Manager', 'ui/manager/01-connexion.html', 'i-layout', 'Le pilotage : commandes, trésorerie, paiements en ligne, commerces partenaires et leurs relevés (29), Bons d’achat PayEnCash et cartes cadeaux (41), ligne Mode, comptes, conformité.', idDe('Manager')],
+      ['Hotline', 'ui/hotline/00-connexion.html', 'i-headset', 'L\'assistance : file d\'appels, réclamations, contrôle des dossiers.', idDe('Hotline')],
+      ['Commercial', 'ui/commercial/00-connexion.html', 'i-briefcase', 'Le développement : recrutement des fournisseurs Mode et des commerces partenaires (Bon d’achat PayEnCash), signature du contrat de distribution, campagnes, concours.', '']
+    ],
+    'g-outils': [
+      ['Banc de test', 'tests/test-runner.html?t=30000', 'i-check', 'Les scénarios de bout en bout — la vérité sur l\'état du produit.', ''],
+      ['Simulation 360°', 'tests/simulation-360.html', 'i-eye', 'Six apps en direct pendant deux minutes d\'achats réels.', ''],
+      ['Audit exhaustif', 'tests/audit-exhaustif.html', 'i-search', 'Toutes les pages, tous les clics : erreurs, liens morts, écrans sourds.', ''],
+      ['Documentation', 'INDEX.html', 'i-file', 'Le dossier de conception, écran par écran.', ''],
+      ['Documents du Bon d’achat PayEnCash', 'ESPACE-COMMERCANT/documents/contrat-distribution-bons.html', 'i-receipt', 'Contrat de distribution, CGU partenaire, conditions du bon d’achat — et l\'Étape 3 §2b (art. L521-3 CMF).', '']
+    ]
+  };
+  Object.keys(ESPACES).forEach(function (id) {
+    var z = document.getElementById(id); if (!z) return;
+    z.innerHTML = ESPACES[id].map(function (e) {
+      return '<a class="carte' + (id === 'g-outils' ? ' outil' : '') + '" href="' + e[1] + '">' +
+        '<span class="ic"><svg viewBox="0 0 24 24"><use href="#' + e[2] + '"/></svg></span>' +
+        '<div class="nm">' + e[0] + '</div><div class="ds">' + e[3] + '</div>' +
+        (e[4] ? '<div class="id">' + e[4] + '</div>' : '') + '</a>';
+    }).join('');
+  });
+})();
+</script>
+</body>
+</html>

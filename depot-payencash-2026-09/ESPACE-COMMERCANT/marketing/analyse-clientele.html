@@ -1,0 +1,158 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Analyse de clientèle · PayEnCash</title>
+<style>
+:root{--ajek:#0f7a4d;--ajek-d:#0b5c3a;--ink:#1a1f1c;--muted:#5b675f;--line:#d9e5dd;--bg:#f4f7f5;--card:#fff;--chip:#e8f3ec;--gold:#b8860b;--goldbg:#fdf5e6;--blue:#1d6fa5}
+@media(prefers-color-scheme:dark){:root{--ink:#e8efe9;--muted:#9fb0a6;--line:#254034;--bg:#0d1512;--card:#121d18;--chip:#173026;--goldbg:#241d0f}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.sheet{max-width:1000px;margin:0 auto 60px;background:var(--card);border:1px solid var(--line)}
+header{background:linear-gradient(120deg,var(--ajek),var(--ajek-d));color:#fff;padding:26px 36px}.brand{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.9}header h1{margin:6px 0 2px;font-size:24px}header p{margin:3px 0 0;opacity:.93;font-size:13.5px}
+nav.j{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:8px 36px;display:flex;gap:8px;overflow-x:auto;white-space:nowrap}
+nav.j a{font-size:12.5px;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 11px;flex:none}nav.j a:hover{border-color:var(--ajek);color:var(--ajek)}
+.body{padding:22px 36px 40px}
+h2{font-size:17px;color:var(--ajek-d);margin:30px 0 8px;border-bottom:2px solid var(--line);padding-bottom:6px}h3{font-size:14.5px;color:var(--ajek-d);margin:16px 0 4px}@media(prefers-color-scheme:dark){h2,h3{color:#5fd39a}}
+p{margin:8px 0}ul{margin:6px 0 6px 2px;padding-left:20px}li{margin:5px 0}
+.kpis{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.kpi{flex:1;min-width:150px;border:1px solid var(--line);border-radius:12px;padding:12px 14px}.kpi b{display:block;font-size:24px;color:var(--ajek-d)}@media(prefers-color-scheme:dark){.kpi b{color:#5fd39a}}.kpi span{font-size:12px;color:var(--muted)}.kpi sup{font-size:10px;color:var(--blue)}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12.8px}th,td{text-align:left;padding:7px 9px;border:1px solid var(--line);vertical-align:top}th{background:var(--chip);font-weight:600}
+.note{background:var(--chip);border:1px solid var(--line);border-left:3px solid var(--ajek);border-radius:8px;padding:12px 14px;font-size:13.5px;color:var(--muted);margin:12px 0}
+.warn{background:var(--goldbg);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--ink);margin:12px 0}
+.est{display:inline-block;background:var(--goldbg);border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:11px;color:var(--gold);font-weight:700}
+sup a{color:var(--blue);text-decoration:none;font-size:10px}
+.funnel{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.tier{border:1px solid var(--line);border-radius:10px;padding:10px 14px;position:relative}
+.tier .lbl{font-weight:800;font-size:13px}.tier .num{float:right;font-weight:800;color:var(--ajek-d)}@media(prefers-color-scheme:dark){.tier .num{color:#5fd39a}}.tier .d{font-size:12.5px;color:var(--muted)}
+.t-tam{background:linear-gradient(90deg,var(--chip),transparent)}.t-sam{background:linear-gradient(90deg,var(--goldbg),transparent);margin:0 4%}.t-som{background:linear-gradient(90deg,rgba(15,122,77,.14),transparent);margin:0 8%}
+.src{font-size:12px;color:var(--muted)}.src ol{padding-left:20px}.src li{margin:5px 0}.src a{color:var(--blue)}
+.toolbar{max-width:1000px;margin:16px auto 0;display:flex;gap:10px;justify-content:flex-end;padding:0 8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 12px;font-size:12.5px;text-decoration:none}.btn.p{background:var(--ajek);color:#fff;border-color:var(--ajek)}
+@media print{body{background:#fff}.toolbar,nav.j{display:none}.sheet{border:none}}
+</style></head><body>
+<!-- (18/09, soir) Le bandeau datait du 17/09 et annonçait encore l'agent salarié qui se déplace :
+     cette branche est supprimée. Le réécrire, plutôt que le retirer, parce que tout ce document a été
+     pensé sous un modèle mort — sans avertissement en tête, un lecteur qui n'a pas suivi le pivot
+     prendrait ses hypothèses de volume pour des acquis. Ce qui change aussi : un réseau sous contrat
+     existe de nouveau (les commerçants qui vendent le bon d’achat), mais il vend un bon et n'encaisse aucune
+     commande — l'économie « par point » décrite plus bas n'est donc plus la nôtre. Ce qui ne change
+     PAS : les données de marché (§1 cash, §2 voyage, §4 diaspora, §5 carte cadeau) et leurs sources
+     Banque de France / BCE / INSEE. Elles décrivent un marché, pas notre promesse. -->
+<div style="background:#E6F4EC;border:2px dashed #0C7F54;border-radius:10px;padding:10px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#0F2A24"><b>Mise à jour du 18/09/2026 (soir) :</b> ce document de cadrage date du modèle « points partenaires (tabacs) ». Il n'y a plus ni borne, ni agent qui se déplace : le client <b>paie avec un bon d’achat</b>, de deux façons achetées au comptoir d'un commerce — le <b>Bon d’achat PayEnCash</b> (nos commerçants partenaires, sous contrat de distribution, commission de 1,10 % HT + TVA retenue à la vente) et le <b>Bon d’achat PayEnCash</b> (réseau de distribution, aucun lien contractuel avec nous, réglé en ligne via notre prestataire). Les hypothèses « 3 tabacs », « passage tabac → ventes » et « part au point » sont <b>à recalculer</b> sur ce modèle — référence à jour : <a href="../documents/partie-4-flux.html" style="color:#0C7F54;font-weight:700">Étape 4</a> et <a href="../documents/partie-1b-financier.html" style="color:#0C7F54;font-weight:700">Étape 2 §1b</a>.</div>
+<div class="toolbar"><a class="btn" href="../documents/diagramme-principal.html">🗺️ Diagramme</a><a class="btn" href="index.html">Marketing</a><a class="btn" href="positionnement-cash-cartes-cadeau.html">Positionnement</a><a class="btn" href="strategie.html">Stratégie</a><a class="btn p" href="#" onclick="window.print();return false">Imprimer / PDF</a></div>
+<div class="sheet">
+<header><div class="brand">PayEnCash · AJEK — étude de marché</div><h1>Analyse de clientèle</h1><p>Segmentation, profils socio-culturels, panier moyen &amp; dimensionnement (TAM/SAM/SOM) · sur données Banque de France, BCE, INSEE · 18 août 2026, revu le 18/09 au soir</p></header>
+<nav class="j"><a href="#quoi">Nature de l'analyse</a><a href="#cash">Marché du cash</a><a href="#voyage">Marché voyage</a><a href="#segments">Segments</a><a href="#diaspora">Diaspora</a><a href="#cadeau">Carte cadeau</a><a href="#taille">TAM/SAM/SOM</a><a href="#reco">Ce que ça implique</a><a href="#sources">Sources</a></nav>
+<div class="body">
+
+<h2 id="quoi">0 · De quel type d'analyse parle-t-on ?</h2>
+<p>Ce document n'est <strong>ni de la macroéconomie</strong> (PIB, inflation) <strong>ni exactement de la microéconomie</strong>. C'est une <strong>étude de marché</strong> : une <strong>analyse de segmentation de clientèle</strong> (qui sont nos clients, par âge / profil social / motivation), appuyée sur des <strong>buyer personas</strong> et un <strong>dimensionnement de marché TAM / SAM / SOM</strong>. Discipline : <strong>marketing stratégique</strong>, nourri de données socio-économiques publiques.</p>
+<div class="note">⚠️ <strong>Statut des chiffres.</strong> Les données <strong>marché</strong> (cash, voyage, diaspora, carte cadeau) sont <strong>sourcées</strong> (Banque de France, BCE, INSEE — voir §Sources). Les <strong>paniers</strong> sont désormais basés sur les <strong>tarifs réels des vols</strong> (compagnies via <strong>Duffel</strong>, §2) — plus sur une hypothèse. Seuls les <strong>volumes</strong> et le <strong>dimensionnement</strong> restent des <strong>estimations</strong> <span class="est">EST.</span>, à figer avec les vraies ventes du pilote (et les tarifs exacts de l'API Duffel).</div>
+
+<h2 id="cash">1 · Le marché du cash en France</h2>
+<div class="kpis">
+<div class="kpi"><b>43 %</b><span>des paiements en point de vente réglés en <strong>espèces</strong> en 2024 (en nombre)<sup><a href="#s1">1</a></sup></span></div>
+<div class="kpi"><b>60 %</b><span>des consommateurs jugent <strong>important</strong> de pouvoir payer en espèces<sup><a href="#s2">2</a></sup></span></div>
+<div class="kpi"><b>52 %</b><span>part du cash en <strong>zone euro</strong> (France en-dessous)<sup><a href="#s1">1</a></sup></span></div>
+</div>
+<p><strong>Tendance :</strong> le cash recule (68 % des paiements en 2016 → 50 % en 2022 → <strong>43 % en 2024</strong>, la carte passant devant pour la 1ʳᵉ fois en proximité)<sup><a href="#s1">1</a></sup>. <strong>Mais</strong> — et c'est tout le fondement de PayEnCash — l'attachement reste massif : <strong>anonymat, simplicité, gestion du budget</strong> sont les motifs cités<sup><a href="#s2">2</a></sup>.</p>
+<div class="warn"><strong>Insight clé :</strong> le cash n'est pas « le passé », c'est un <strong>choix de 4 Français sur 10</strong> à chaque passage en caisse. Le marché n'est pas à créer, il est <strong>déjà là et énorme</strong> — il faut juste le servir sur le voyage, ce que personne ne fait.</div>
+<h3>Qui paie le plus en cash ? (profil socio-démo)</h3>
+<ul>
+<li><strong>Les 55 ans et plus</strong> : probabilité d'usage principal des espèces <strong>nettement plus forte</strong> que chez les &lt; 25 ans<sup><a href="#s3">3</a></sup>.</li>
+<li><strong>Les personnes en « fragilité budgétaire »</strong> : recours au cash plus fréquent<sup><a href="#s3">3</a></sup>. En France, <strong>4,6 M</strong> de personnes en <strong>fragilité financière</strong> fin 2024 (+6,3 %/an)<sup><a href="#s4">4</a></sup> et <strong>1,3 M</strong> d'interdits bancaires<sup><a href="#s4">4</a></sup>.</li>
+<li><strong>Petits montants &amp; quotidien</strong> : le cash domine encore là où rapidité et simplicité priment<sup><a href="#s3">3</a></sup>.</li>
+</ul>
+
+<h2 id="voyage">2 · Le marché du voyage (et où se place PayEnCash)</h2>
+<div class="kpis">
+<div class="kpi"><b>1 734 €</b><span>panier moyen <strong>vacances</strong> des Français 2024 (+4,8 %)<sup><a href="#s5">5</a></sup></span></div>
+<div class="kpi"><b>1 795 €</b><span>panier moyen <strong>agences</strong> (en ligne + physiques)<sup><a href="#s5">5</a></sup></span></div>
+<div class="kpi"><b>~3 000 €</b><span>panier <strong>agence traditionnelle</strong> (≈ 2× le online)<sup><a href="#s5">5</a></sup></span></div>
+</div>
+<div class="warn"><strong>Base : les tarifs Duffel (notre fournisseur).</strong> Duffel n'a pas de « prix à lui » : c'est une API qui renvoie les <strong>offres réelles des compagnies</strong> (plus de 200 compagnies, contenu NDC + GDS + low-cost)<sup><a href="#s13">13</a></sup>. AJEK affiche ce tarif, <strong>plus sa marge</strong>. Compagnies utiles confirmées sur Duffel : <strong>Air Algérie</strong> (Maghreb, hub Alger), <strong>Vueling</strong> &amp; <strong>Transavia</strong> (Europe / France-Maghreb). ⚠️ <strong>Ryanair &amp; easyJet</strong> ont une disponibilité <strong>limitée</strong> via API : le tarif Europe affiché passera surtout par Vueling / Transavia / NDC (souvent un peu au-dessus de l'ultra-low-cost).</div>
+<div class="tw"><table>
+<thead><tr><th>Route (via Duffel)</th><th>Compagnie type</th><th>Prix A/R indicatif</th><th>Source</th></tr></thead>
+<tbody>
+<tr style="background:var(--goldbg)"><td>🇩🇿 Maghreb — Alger</td><td>Air Algérie (sur Duffel)</td><td><strong>~281 → 448 €</strong> (jan. → été)</td><td><sup><a href="#s11">11</a></sup><sup><a href="#s13">13</a></sup></td></tr>
+<tr style="background:var(--goldbg)"><td>🇲🇦 Maroc — Marrakech</td><td>Transavia / NDC</td><td><strong>~282 → 359 €</strong></td><td><sup><a href="#s11">11</a></sup></td></tr>
+<tr style="background:var(--goldbg)"><td>🇹🇳 Tunisie — Tunis</td><td>Transavia / NDC</td><td><strong>~278 → 383 €</strong></td><td><sup><a href="#s11">11</a></sup></td></tr>
+<tr><td>🇪🇺 Europe (Rome, Barcelone, Madrid…)</td><td>Vueling / Transavia</td><td><strong>~80 → 200 €</strong> (selon saison)</td><td><sup><a href="#s10">10</a></sup><sup><a href="#s13">13</a></sup></td></tr>
+</tbody></table></div>
+<div class="note"><strong>Comment se forme notre panier &amp; notre marge (modèle Duffel)<sup><a href="#s14">14</a></sup> :</strong><br>• <strong>Prix payé par le client</strong> = tarif Duffel (compagnie) <strong>+ marge AJEK</strong> — la marge est <strong>librement fixée</strong> par nous, c'est notre commission.<br>• <strong>Frais Duffel à déduire</strong> (coûts) : ~<strong>3 $/commande</strong> + <strong>1 %</strong> du montant (contenu managé) + <strong>1–2,5 $/segment</strong> passager (+ 2 % si change de devise).<br>• <strong>Rémunération du commerçant</strong> : le partenaire ne touche plus un pourcentage de la commission d'une commande — il <strong>vend un Bon d’achat PayEnCash</strong> et garde <strong>1,10 % HT + TVA</strong>, retenus à la vente. L'ancien « 25 % de la commission nette » n'a plus d'objet : ce qui reste chez AJEK après la commission du commerçant est <strong>à recalculer</strong> (Étape 2 §1b).</div>
+<!-- (18/09, soir) Le partenaire n'encaisse plus de commande : il ne peut donc plus être intéressé à
+     la marge d'un voyage. Recalculer plutôt qu'écrire un nombre : la marge nette dépend du taux de
+     transformation « bon vendu → commande », qu'aucune vente réelle n'a encore mesuré. -->
+<div class="warn"><strong>Panier réintégré, sur base Duffel :</strong> Europe <strong>~80–200 €</strong> · diaspora Maghreb : billets basse saison <strong>60–120 €</strong> (moy. 85 €/billet) · <strong>A/R été/fêtes ~280–450 €</strong>. Le « panier de travail 120 € » des docs de rémunération ne vaut que pour l'Europe en basse saison ; <strong>il sous-estime la diaspora</strong>. ⚠️ Les <strong>tarifs exacts</strong> s'obtiennent par une <strong>requête à l'API Duffel (mode test)</strong> — étape développeur, à faire pour figer les vrais chiffres.</div>
+
+<h2 id="segments">3 · Les segments de clientèle (socio-culturel · âge · panier)</h2>
+<p>Croisement des <strong>4 motivations</strong> et des <strong>6 scénarios</strong> avec le profil socio-culturel, la tranche d'âge et le panier estimé.</p>
+<div class="tw"><table>
+<thead><tr><th>Segment</th><th>Âge</th><th>Profil socio-culturel</th><th>Panier estimé <span class="est">EST.</span></th><th>Fréquence / volume</th></tr></thead>
+<tbody>
+<tr><td>🛡️ <strong>Anti-scam</strong> (Karim)</td><td>18–35</td><td>Urbain, mobile-first, CSP moyenne, digital mais méfiant en ligne</td><td>~80–200 € (A/R Europe via Duffel<sup><a href="#s10">10</a></sup>)</td><td>1–2 / an</td></tr>
+<tr><td>⏳ <strong>Anti-prélèvement</strong> (Marc)</td><td>45–65</td><td>Classe moyenne, prudent, échaudé par les abonnements</td><td>150–300 €</td><td>1–2 / an</td></tr>
+<tr><td>🎁 <strong>Cash reçu</strong> (Léa)</td><td>18–25</td><td>Étudiant / jeune actif, cadeaux &amp; pourboires en liquide</td><td>~80–200 € (A/R Europe via Duffel<sup><a href="#s10">10</a></sup>)</td><td>1–3 / an</td></tr>
+<tr><td>🙅 <strong>Préférence / budget</strong> (Fatou)</td><td>35–55</td><td>Gestion du budget familial, revenus modestes-moyens</td><td>120–250 € (famille)</td><td>1–2 / an</td></tr>
+<tr style="background:var(--goldbg)"><td>🌍 <strong>Diaspora — au pays</strong> (Rachid)</td><td>30–60</td><td>Familles maghrébines/africaines, communauté, revenus modestes-moyens</td><td>Basse saison <strong>60–120 €</strong>/billet · <strong>A/R été/fêtes ~280–450 €</strong><sup><a href="#s11">11</a></sup></td><td><strong>Élevée</strong>, saisonnière (été / fêtes)</td></tr>
+<tr style="background:var(--goldbg)"><td>🤝 <strong>Cagnotte / groupe</strong> (Inès)</td><td>20–35</td><td>Événementiel (EVJF/EVG), organisateurs, réseaux sociaux</td><td><strong>500–2 000 €</strong> (collectif)</td><td>Ponctuel, gros ticket</td></tr>
+<tr style="background:var(--goldbg)"><td>🐷 <strong>Épargne / tirelire</strong> (Ahmed)</td><td>30–50</td><td>Prévoyant, revenu partiellement en cash, fierté du comptant</td><td>200–500 € (voyage offert)</td><td>1 / an, planifié</td></tr>
+<tr><td>🎁 <strong>Voyage surprise</strong></td><td>25–55</td><td>En couple, veut la discrétion sur le relevé commun</td><td>200–600 €</td><td>Ponctuel</td></tr>
+<tr><td>📵 <strong>Fracture numérique / seniors</strong></td><td>60 +</td><td>Inconfort du paiement en ligne, préfère l'humain au comptoir</td><td>150–300 €</td><td>1–2 / an</td></tr>
+<tr><td>🧾 <strong>Revenus en espèces</strong></td><td>25–50</td><td>Serveurs, coiffeurs, VTC, artisans, marchés</td><td>100–200 €</td><td>1–2 / an</td></tr>
+</tbody></table></div>
+<p class="src">Colonnes <strong>Âge / Profil</strong> = croisement des motivations avec les tendances socio-démo sourcées (§1, §4). Colonne <strong>Panier</strong> = <strong>prix réels des vols A/R</strong> (§2, sources 10-11) selon la destination du segment ; colonne <strong>Fréquence</strong> = <span class="est">EST.</span> à valider au pilote.</p>
+
+<h2 id="diaspora">4 · Focus diaspora — le gisement à ne pas rater</h2>
+<div class="kpis">
+<div class="kpi"><b>3,5 M</b><span>immigrés nés en <strong>Afrique</strong> en France (2023) — 48 % des immigrés<sup><a href="#s6">6</a></sup></span></div>
+<div class="kpi"><b>~29 %</b><span>des immigrés viennent du <strong>Maghreb</strong> (Algérie 12,2 % · Maroc 11,7 % · Tunisie 4,8 %)<sup><a href="#s6">6</a></sup></span></div>
+<div class="kpi"><b>4–5 M</b><span>Algériens &amp; descendants (est. haute) ; ~3 M Marocains ; ~1 M Tunisiens<sup><a href="#s7">7</a></sup></span></div>
+</div>
+<p>Ce segment <strong>cumule tous les atouts</strong> pour PayEnCash : forte <strong>culture du cash</strong>, <strong>voyages fréquents &amp; saisonniers</strong> vers le pays (été, fêtes), décisions <strong>familiales &amp; communautaires</strong> (bouche-à-oreille), et il correspond <strong>exactement</strong> aux destinations déjà affichées (<strong>Alger ~281→448 €, Marrakech ~282→359 €, Tunis ~278→383 €</strong> A/R, soit ~280–450 €). Le <strong>buraliste de quartier</strong> comme point de confiance y est un atout décisif. Marseille &amp; Aix-Encagnane (zones du pilote) sont des <strong>bassins de diaspora majeurs</strong>.</p>
+<div class="warn"><strong>C'est probablement le premier moteur de volume du pilote.</strong> À traiter comme une cible prioritaire (persona <em>Rachid</em>), pas comme un « bonus ».</div>
+
+<h2 id="cadeau">5 · Le marché de la carte cadeau</h2>
+<div class="kpis">
+<div class="kpi"><b>~8 Mds €</b><span>marché français de la <strong>carte cadeau</strong> (2023)<sup><a href="#s8">8</a></sup></span></div>
+<div class="kpi"><b>+13,2 %</b><span>hausse des achats de cartes cadeaux en 2024<sup><a href="#s8">8</a></sup></span></div>
+<div class="kpi"><b>+22 %</b><span>cartes cadeaux <strong>B2B</strong> activées en 2024 (cadeaux d'entreprise)<sup><a href="#s8">8</a></sup></span></div>
+</div>
+<p>Marché <strong>gros &amp; en croissance</strong> qui valide le <strong>2ᵉ produit</strong> « Offrez un voyage » : il élargit la cible aux <strong>offreurs</strong> (persona <em>Sylvie</em>), lisse la <strong>saisonnalité</strong> (Noël, Aïd, mariages, fête des mères), et ouvre une piste <strong>B2B</strong> (cadeaux d'entreprise / CSE). Depuis le 18/09, ce 2ᵉ produit a un nom : c'est le <strong>Bon d’achat PayEnCash</strong> en version cadeau (5 à 250 €, 12 mois). Rappel du cadre légal : le bon doit rester accepté sur le seul site d'AJEK — <strong>moyen de paiement à usage limité</strong>, art. L521-3 CMF (voir <a href="positionnement-cash-cartes-cadeau.html">positionnement §4</a>).</p>
+
+<h2 id="taille">6 · Dimensionnement — TAM / SAM / SOM</h2>
+<p>Entonnoir du marché total au marché réellement capturable au lancement. <span class="est">EST.</span> = hypothèses PayEnCash à partir des sources ; ordres de grandeur, pas des promesses.</p>
+<div class="funnel">
+<div class="tier t-tam"><span class="num">~15–20 M</span><span class="lbl">TAM — Marché total adressable</span><div class="d">Adultes en France qui <strong>utilisent régulièrement les espèces</strong> et voyagent au moins 1×/an. Base : ~52 M d'adultes, 43 % d'usage cash<sup><a href="#s1">1</a></sup> + 60 % d'attachement<sup><a href="#s2">2</a></sup>, croisés au taux de départ en voyage. <span class="est">EST.</span></div></div>
+<div class="tier t-sam"><span class="num">~300–500 k</span><span class="lbl">SAM — Marché adressable desservi (zone pilote)</span><div class="d">Mêmes profils en <strong>Bouches-du-Rhône</strong> (~2 M hab.<sup><a href="#s9">9</a></sup>), Aix &amp; Marseille, <strong>diaspora incluse</strong>, à portée d'un point de proximité. <span class="est">EST.</span></div></div>
+<div class="tier t-som"><span class="num">~1 000–1 500 ventes</span><span class="lbl">SOM — Marché capturable (pilote 3 points × 3 mois)</span><div class="d">Objectif go/no-go : <strong>≥ 30–40 ventes/mois/point</strong> × 3 points × 3 mois ≈ <strong>300–450 ventes</strong> au pilote ; potentiel annualisé ~1 000–1 500. Panier <strong>réel 120–350 €</strong> selon le mix (Europe → diaspora, §2) → <strong>CA test ≈ 40–160 k€</strong>. <span class="est">EST.</span> sur les volumes. ⚠ Ces volumes supposaient qu'un point <em>encaisse</em> la commande. Depuis le 18/09 au soir, le commerçant vend un bon et la commande se fait ensuite sur payencash.fr : le taux de passage « bon vendu → commande » est <strong>à recalculer</strong>, ainsi que tout montant qui reposait sur la ligne « agent / déplacement ».</div></div>
+</div>
+<div class="note">La logique : on ne « prend » pas 15 M de clients. On <strong>valide sur 3 points</strong> qu'un flux existe (SOM), puis on <strong>densifie le réseau</strong> pour grignoter le SAM, zone par zone.</div>
+
+<h2 id="reco">7 · Ce que ça implique (reco)</h2>
+<ul>
+<li><strong>Cible n°1 = la diaspora</strong> (Rachid) : c'est le croisement cash + voyage + communauté + destinations. Prioriser Marseille / quartiers à forte diaspora, buraliste connu.</li>
+<li><strong>Cible n°2 = préférence/budget &amp; anti-prélèvement</strong> (Fatou, Marc) : le gros du « 60 % attachés au cash », paniers moyens, volume régulier.</li>
+<li><strong>Accélérateurs de panier</strong> : cagnotte/groupe (Inès) et carte cadeau (Sylvie) — ce sont eux qui font <strong>monter le ticket</strong> au-delà des 120 €.</li>
+<!-- (18/09, soir) « Point » est devenu un mot piégé : il désignait le point partenaire qui
+     encaissait. L'actif, lui, n'a pas disparu — c'est le comptoir d'un commerce de quartier. -->
+<li><strong>Le comptoir de proximité est un actif</strong>, pas une contrainte : il sert précisément les seniors, la fracture numérique et la confiance communautaire.</li>
+<li><strong>Assumer le positionnement « accessible »</strong> : petit panier, haute fréquence — l'inverse de l'agence à 1 795 €, et c'est tant mieux (marché non servi).</li>
+<li><strong>Prochaine étape data</strong> : le pilote doit <strong>mesurer</strong> le panier réel et le mix segments (surtout la part diaspora) pour remplacer les <span class="est">EST.</span> par du réel.</li>
+</ul>
+
+<h2 id="sources">Sources</h2>
+<div class="src"><ol>
+<li id="s1"><strong>Paiements en espèces en France 2024 (43 %), tendance, comparaison zone euro</strong> — étude BCE SPACE 2024 / Banque de France, via <a href="https://www.boursorama.com/budget/banque/actualites/les-paiements-par-carte-bancaire-depassent-ceux-en-especes-pour-la-premiere-fois-en-2024-dans-les-commerces-de-proximite-cfee66a63d3facf3c3f006e023ceae6c">Boursorama</a> &amp; <a href="https://lechommerces.fr/lutilisation-des-especes-se-reduit-considerablement-dans-les-commerces-de-proximite/">L'Echommerces</a>.</li>
+<li id="s2"><strong>60 % attachés à la possibilité de payer en espèces (anonymat, simplicité, budget)</strong> — <a href="https://www.lafinancepourtous.com/2025/03/06/les-francais-utilisent-moins-les-especes-mais-y-restent-attaches/">La finance pour tous</a> (d'après BCE).</li>
+<li id="s3"><strong>Usage cash plus fort chez les 55+ et en fragilité budgétaire ; petits montants</strong> — Banque de France, <a href="https://www.banque-france.fr/system/files/2025-12/BDF261-5_Cartographie-MP_0.pdf">Bulletin BdF 261/5</a> ; <a href="https://www.insee.fr/fr/statistiques/8616827?sommaire=8616883">INSEE — Paiements et usages du numérique</a>.</li>
+<li id="s4"><strong>4,6 M en fragilité financière fin 2024 ; 1,3 M d'interdits bancaires</strong> — <a href="https://www.banque-france.fr/system/files/2025-06/OIB-2024_Rapport.pdf">Observatoire de l'inclusion bancaire, rapport 2024 (Banque de France)</a>.</li>
+<li id="s5"><strong>Panier moyen vacances 1 734 € / agences 1 795 € / agence traditionnelle ~3 000 €</strong> — Observatoire du tourisme &amp; étude Liligo 2024, via <a href="https://www.quotidiendutourisme.com/actualites/observatoire-janvier-2025-bilan-2024-et-perspectives-2025-962085.php">Le Quotidien du Tourisme</a> &amp; <a href="https://www.lechotouristique.com/article/voyages-a-forfait-bilan-2024-et-premieres-tendances-2025">L'Écho touristique</a>.</li>
+<li id="s6"><strong>3,5 M d'immigrés nés en Afrique (48 %), ~29 % du Maghreb (Algérie 12,2 %, Maroc 11,7 %, Tunisie 4,8 %)</strong> — <a href="https://www.insee.fr/fr/statistiques/8237722">INSEE Première n° 2010 (2023)</a>.</li>
+<li id="s7"><strong>Estimations hautes avec descendants (4–5 M Algériens, ~3 M Marocains, ~1 M Tunisiens)</strong> — P. Vermeren, via <a href="https://fr.wikipedia.org/wiki/Diasporas_maghr%C3%A9bines">Diasporas maghrébines (Wikipédia)</a>.</li>
+<li id="s8"><strong>Marché carte cadeau ~8 Mds € (2023), +13,2 % achats en 2024, B2B +22 %</strong> — <a href="https://www.globalpos.fr/chiffres-carte-cadeau-2024/">GlobalPOS</a> ; <a href="https://www.lsa-conso.fr/les-raisons-du-boom-des-cartes-cadeaux,358168">LSA Conso</a>.</li>
+<li id="s9"><strong>Population Bouches-du-Rhône ~2 M hab.</strong> — ordre de grandeur INSEE (recensement).</li>
+<li id="s10"><strong>Prix A/R Europe low-cost (Rome ~134 €, dès 53 €, 74 € l'hiver → 177 € l'été)</strong> — <a href="https://www.kayak.fr/vols/Ryanair-France-FR0/Rome-ROM.b.FR.ksp">KAYAK — vols Ryanair France → Rome</a>.</li>
+<li id="s11"><strong>Prix A/R Maghreb (Alger 281→448 €, Maroc 282→359 €, Tunisie 278→383 €)</strong> — baromètre Digitrips / L'Écho touristique (134 000+ réservations), via <a href="https://www.afrik.com/maghreb-forte-baisse-des-prix-des-billets-d-avion-vers-l-algerie-le-maroc-et-la-tunisie-en-2026">Afrik.com</a> &amp; <a href="https://observalgerie.com/2026/07/06/voyage/voyages-dete-pourquoi-les-billets-pour-lalgerie-sont-les-seuls-a-ne-pas-baisser">Observ'Algérie</a>.</li>
+<li id="s12"><strong>Tendance prix des billets au départ de France (+1,6 % en 2024 ; Afrique du Nord +6,4 %)</strong> — DGAC, via <a href="https://www.air-journal.fr/2025-01-25-france-les-prix-des-billets-davion-ont-augmente-de-16-en-2024-par-rapport-a-2023-5260562.html">Air Journal</a>.</li>
+<li id="s13"><strong>Couverture Duffel (plus de 200 compagnies : NDC + GDS + low-cost ; Air Algérie, Vueling, Transavia confirmées ; Ryanair/easyJet limités)</strong> — <a href="https://duffel.com/airlines">Duffel — Our Airlines</a> &amp; <a href="https://duffel.com/flights/airlines/air-alg%C3%A9rie">Duffel — Air Algérie</a>.</li>
+<li id="s14"><strong>Modèle Duffel — marge libre du vendeur + frais (~3 $/commande, 1 % contenu managé, 1–2,5 $/segment, FX 2 %)</strong> — <a href="https://duffel.com/docs/guides/margin-and-markups">Duffel — Margin &amp; markups</a> &amp; <a href="https://duffel.com/pricing">Duffel — Pricing</a>.</li>
+</ol></div>
+
+<p style="font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:12px;margin-top:22px">PayEnCash — marque d'AJEK SAS · analyse de clientèle (étude de marché) · 18 août 2026. Données marché sourcées ; paniers &amp; dimensionnement = estimations à valider au pilote. Voir <a href="positionnement-cash-cartes-cadeau.html">Positionnement</a> · <a href="strategie.html">Stratégie</a>.</p>
+</div></div></body></html>

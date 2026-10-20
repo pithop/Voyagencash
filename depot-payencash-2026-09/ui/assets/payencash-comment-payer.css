@@ -1,0 +1,175 @@
+/* ══ PAYENCASH — LE STYLE DU CHOIX « COMMENT VEUX-TU PAYER ? » (20/09, soir) ═══════════════════════════════
+   Il vivait dans la page de Mode — et à moitié recopié dans celle de Fly : trente-trois règles
+   IDENTIQUES, au caractère près. Il vit ici, une fois, pour les deux. Le composant qu'il habille est dans
+   payencash-comment-payer.js. ══ */
+  .pane{display:none}.pane.active{display:block}
+  /* (20/09 — « révérifie les formulaires : aide à la saisie, champs obligatoires ») UN CHAMP DIT TROIS CHOSES :
+     ce qu'il attend (son intitulé), s'il est obligatoire (.req) ou non (.opt), et comment le remplir (.aide).
+     Un champ en faute porte .ko : le bord rougit, et le message nomme le champ — jamais « formulaire invalide ». */
+  .req{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--color-primary-dark)}
+  .opt{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-muted)}
+  .aide{margin:5px 2px 0;font-size:10.5px;line-height:1.5;color:var(--color-muted)}
+  .pec-input.ko{border-color:#C0463A;box-shadow:0 0 0 2px rgba(192,70,58,.13)}
+  /* (20/09, soir — « ça doit être TOUJOURS la même animation ») LE VOLET DU CHEMIN CHOISI S'OUVRE comme
+     celui de la page d'un lien PayEnCash Solution, et comme la modale du widget : socle, pecVolet. */
+  /* (21/09, fondatrice : « es-tu sûre d'avoir intégré ce que je t'ai dit ?? ») LES TROIS CHEMINS, PAS DEUX :
+     « En ligne » apparaissait d'un coup, quand les deux autres glissaient — la même question, deux gestes. */
+  #voie-jai-z.on, #ach-carte-commerce:not([hidden]), #ach-carte-agent:not([hidden]){animation:pecVolet .24s cubic-bezier(.22,.8,.3,1) both}
+  /* (20/09, soir) LE RÉCAP DU VOLET AGENT — même idiome que les règles du bas de page : une icône, une
+     ligne, un filet. Trois paragraphes de tailles différentes ne se lisaient pas comme un tout. */
+  .agt-lig{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--color-sep);font-size:12.5px;line-height:1.55;color:var(--color-muted)}
+  .agt-lig:last-child{border-bottom:none}
+  .agt-lig .pec-ico{flex:none;font-size:16px;color:var(--color-primary-dark);margin-top:1px}
+  .agt-lig b{color:var(--color-ink)}
+  .seclbl{display:flex;justify-content:space-between;align-items:center;margin:18px 0 10px}
+  .seclbl b{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--color-muted)}
+  .ptcard{display:flex;align-items:center;gap:12px;background:var(--color-card);border-radius:18px;padding:13px 14px;margin-bottom:10px;text-decoration:none;color:inherit;box-shadow:0 1px 4px rgba(15,42,36,.07),0 8px 22px rgba(15,42,36,.06)}
+  .ptcard .ic{flex:none;width:40px;height:40px;border-radius:14px;background:var(--color-mint);display:flex;align-items:center;justify-content:center;color:var(--color-primary-dark)}
+  .ptcard .mid{flex:1;min-width:0}
+  .ptcard .chev{flex:none;color:var(--color-muted)}
+  .ptcard .lblc{display:block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted)}
+  .ptcard .valc{display:block;font-size:13px;font-weight:600;color:var(--color-ink);margin-top:3px;line-height:1.45}
+  /* (18/09, soir) Les règles du volet AGENT (carte de position, chips d'adresse, formulaire du carnet) sont
+     parties AVEC LUI. Les marqueurs .mk-user / .mk-pt restent : ils servent la carte des COMMERCES qui vendent
+     le Bon — c'est le seul lieu géographique qui subsiste dans le parcours. */
+  .mk-user{width:20px;height:20px;border-radius:50%;background:var(--color-primary);box-shadow:0 0 0 5px rgba(16,160,106,.25),0 2px 6px rgba(15,42,36,.3)}
+  .mk-pt{display:flex;align-items:center;gap:5px;background:var(--color-ink);color:#fff;font-size:10.5px;font-weight:700;border-radius:999px;padding:5px 10px;box-shadow:0 4px 10px rgba(15,42,36,.3);white-space:nowrap;cursor:pointer}
+  .mk-pt .pec-ico{font-size:12px;color:var(--color-bright)}
+  /* LES DEUX CHEMINS DU BON (18/09, soir) : « j'ai un bon » / « je veux en acheter » */
+  .duo{display:flex;gap:7px;margin:12px 0 0}
+  .duo button{flex:1;border-radius:999px;background:var(--color-card);box-shadow:var(--shadow-card);padding:9px 10px;font-size:12px;font-weight:800;color:var(--color-muted)}
+  .duo button[aria-pressed="true"]{background:var(--color-primary);color:#fff}
+  .voie{display:none}.voie.on{display:block}
+  .mapwrap{position:relative;height:180px;border-radius:18px;overflow:hidden;box-shadow:0 8px 22px rgba(15,42,36,.12);margin-top:12px}
+  .cmz{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--color-sep);width:100%;text-align:left;background:none}
+  .cmz:last-child{border-bottom:none}
+  .cmz .rg{flex:none;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:11px;font-weight:800}
+  .cmz .nm{font-size:13.5px;font-weight:800;color:var(--color-ink)}
+  .cmz .ad{font-size:11px;line-height:1.45;color:var(--color-muted);margin-top:1px}
+  .cmz .di{display:block;font-size:11px;font-weight:800;color:var(--color-primary-dark);margin-top:2px}
+  /* la fiche MISE EN AVANT par un clic sur l'épingle (et l'inverse) — sans ce style, la classe ne faisait rien */
+  .cmz.vu{background:var(--color-mint);border-radius:12px;padding-left:9px;padding-right:9px}
+  /* (19/09, soir — « la carte comme Uber où on avance en direction du partenaire ») LE GUIDAGE.
+     Un bouton par commerce ouvre le suivi ; le bandeau au-dessus de la carte dit où on en est. */
+  /* (19/09, nuit) DEUX RÉSEAUX SUR LA MÊME CARTE : la pastille dit lequel, et elle n'est pas décorative —
+     ce qu'on y obtient est dit par la donnée (`achete`), jamais par l'écran. */
+  .cmz .qo{font-size:11px;line-height:1.45;font-weight:700;color:var(--color-ink);margin-top:4px}
+  .cmz .go{flex:none;align-self:center;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:10.5px;font-weight:800;padding:7px 11px;white-space:nowrap}
+  .cmz .go[aria-pressed="true"]{background:var(--color-primary);color:#fff}
+  .navb{display:flex;align-items:flex-start;gap:11px;margin-top:10px;border-radius:16px;padding:11px 12px;background:var(--color-card);box-shadow:var(--shadow-card)}
+  .navb .dt{flex:none;width:34px;height:34px;border-radius:12px;background:var(--color-mint);color:var(--color-primary-dark);display:flex;align-items:center;justify-content:center}
+  .navb .tt{font-size:13.5px;font-weight:800;color:var(--color-ink);letter-spacing:-0.01em}
+  .navb .ss{font-size:11.5px;line-height:1.5;color:var(--color-muted);margin-top:2px}
+  .navb .st{flex:none;align-self:center;border-radius:999px;background:var(--color-sep);color:var(--color-muted);font-size:10.5px;font-weight:800;padding:7px 10px}
+  .navb.arrive{background:var(--color-mint)}
+  .navb.arrive .dt{background:var(--color-primary);color:#fff}
+  .navb.arrive .tt{color:var(--color-mint-ink)}
+  .navb.arrive .ss{color:var(--color-mint-ink)}
+  /* le point qui AVANCE : pastille qui respire, pour distinguer un relevé vivant d'un relevé figé */
+  .mk-user.live{animation:pecpulse 1.8s ease-out infinite}
+  @keyframes pecpulse{0%{box-shadow:0 0 0 5px rgba(16,160,106,.28),0 2px 6px rgba(15,42,36,.3)}70%{box-shadow:0 0 0 16px rgba(16,160,106,0),0 2px 6px rgba(15,42,36,.3)}100%{box-shadow:0 0 0 5px rgba(16,160,106,0),0 2px 6px rgba(15,42,36,.3)}}
+  @media (prefers-reduced-motion:reduce){.mk-user.live{animation:none}}
+  /* ══ (19/09, nuit — « où est la modale pour accepter le partage de position ») LA DEMANDE D'ACCORD ═════
+     Reprise telle quelle de l'écran d'avant le changement de modèle : on ne déclenche JAMAIS la popup native
+     du téléphone sans avoir dit d'abord à quoi la position sert, et ce qu'on en fait. Deux sorties, et la
+     seconde n'est pas un cul-de-sac : « je saisis une adresse » mène quelque part. ══ */
+  /* (20/09, soir — « toujours la même animation ») LES DEUX MODALES S'OUVRENT COMME PARTOUT AILLEURS :
+     le fond se voile, la feuille monte. Les images d'animation vivent dans le socle (pecVoile/pecModale). */
+  .scrim{position:absolute;inset:0;background:rgba(15,42,36,.48);display:flex;align-items:center;justify-content:center;z-index:60;padding:26px;animation:pecVoile .18s ease-out both}
+  .popup{background:var(--color-card);border-radius:22px;padding:22px 20px 16px;max-width:290px;text-align:center;box-shadow:0 24px 60px rgba(15,42,36,.35);animation:pecModale .24s cubic-bezier(.22,.8,.3,1) both}
+  .popup .pic{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);margin-bottom:10px}
+  .popup h3{margin:0 0 6px;font-size:15.5px;font-weight:800;line-height:1.3;color:var(--color-ink)}
+  .popup p{margin:0 0 16px;font-size:12px;color:var(--color-muted);line-height:1.5}
+  .popup .allow{display:block;width:100%;background:var(--color-primary);color:#fff;font-weight:800;font-size:13.5px;border-radius:13px;padding:12px;border:none;cursor:pointer}
+  .popup .deny{display:block;width:100%;margin-top:6px;padding:10px;font-weight:700;font-size:12.5px;color:var(--color-muted);background:none;border:none;cursor:pointer}
+  .popup .err{margin:9px 0 0;font-size:11.5px;font-weight:700;line-height:1.45;color:#8E2A1E}
+  /* ══ (19/09, nuit — « ça doit mettre en relation et un appel pour confirmer ») LA MISE EN RELATION ═════
+     Reprise de l'écran de recherche d'agent d'avant le changement de modèle : on ne lance personne sans avoir
+     dit ce qui va se passer, montré le numéro qu'on va appeler, et obtenu un accord. ══ */
+  .popup.lg{max-width:330px;text-align:left;max-height:88%;overflow-y:auto}
+  .popup.lg h3{text-align:left}
+  .popup .tel{margin-top:12px;border-radius:14px;background:var(--color-bg);padding:11px 13px}
+  .popup .tel .k{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--color-muted)}
+  .popup .tel .v{font-size:17px;font-weight:800;letter-spacing:.04em;font-variant-numeric:tabular-nums;color:var(--color-ink)}
+  .canaux{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:8px}
+  .canaux button{display:flex;flex-direction:column;align-items:center;gap:4px;border:none;border-radius:12px;background:var(--color-bg);padding:10px 4px;cursor:pointer;font:inherit}
+  .canaux button[aria-pressed="true"]{background:var(--color-mint);box-shadow:0 0 0 2px var(--color-primary)}
+  .canaux button .pec-ico{font-size:17px;color:var(--color-primary-dark)}
+  .canaux button span{font-size:11px;font-weight:700;color:var(--color-ink)}
+  /* (20/09, soir — fondatrice : « je vois mal la case à cocher ») ELLE DOIT SE VOIR AVANT D'ÊTRE COCHÉE.
+     Son bord était `--color-sep`, la même ligne grise que le cadre autour : une case vide dans un cadre
+     vide, sur un fond gris. Elle est plus grande, son bord est celui de la marque, et une coche blanche
+     apparaît quand elle est cochée. Le texte passe de 10,5 à 11,5 px : c'est un consentement, il se lit. */
+  .rgpdrow{display:flex;align-items:flex-start;gap:11px;margin-top:12px;border-radius:12px;border:1.5px solid var(--color-sep);background:var(--color-card);padding:12px 13px;cursor:pointer}
+  .rgpdrow:has(input:checked){border-color:var(--color-primary);background:var(--color-mint)}
+  .rgpdrow input{appearance:none;-webkit-appearance:none;position:relative;flex:none;width:23px;height:23px;margin:0;border:2.5px solid var(--color-primary);border-radius:7px;background:var(--color-card);cursor:pointer}
+  .rgpdrow input:checked{background:var(--color-primary)}
+  /* la coche est dessinée, pas une image : elle suit la taille et reste nette partout */
+  .rgpdrow input:checked::after{content:'';position:absolute;left:6px;top:2px;width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+  .rgpdrow input:focus-visible{outline:2px solid var(--color-primary-dark);outline-offset:2px}
+  .rgpdrow span{font-size:11.5px;line-height:1.55;color:var(--color-ink)}
+  .popup .recap{margin-top:11px;border-radius:14px;background:var(--color-mint);padding:11px 13px;font-size:12px;line-height:1.55;color:var(--color-mint-ink)}
+  /* L'ATTENTE QUI RESPIRE — trois points, comme avant : un écran qui cherche doit avoir l'air de chercher. */
+  .dots i{display:inline-block;width:5px;height:5px;margin-left:3px;border-radius:50%;background:currentColor;opacity:.3;animation:pecdot 1.2s infinite}
+  .dots i:nth-child(2){animation-delay:.2s} .dots i:nth-child(3){animation-delay:.4s}
+  @keyframes pecdot{0%,60%,100%{opacity:.3}30%{opacity:1}}
+  @media (prefers-reduced-motion:reduce){.dots i{animation:none;opacity:.6}}
+  /* le petit mot (19/09, soir — « faites-vous plaisir à vous ou à vos proches, un délire du genre, très petit ») */
+  .plaisir{font-size:10.5px;line-height:1.5;color:var(--color-muted);text-align:center;margin:9px 6px 0;font-style:italic}
+  .geoask{border-radius:14px;background:var(--color-mint);padding:12px 13px;margin-top:10px;font-size:11.5px;line-height:1.55;color:var(--color-mint-ink)}
+  .geoask b{color:var(--color-primary-dark)}
+  /* ══ (23/09, fondatrice : « pour la modale de paiement, ajoute pour API et lien envoyé … notre réseau accepte
+     espèces, pièces et CB ; ses bons d'achat sont utilisés sur le site de l'émetteur ; une fois utilisé, non
+     remboursable ; pas de possibilité d'utiliser un bon sur un autre site ; réseau limité ») LE RAPPEL DU RÉSEAU
+     D'UNE MARQUE — sous le titre de « Acheter un bon d'achat », avant la carte. Petit et lisible, sur le fond menthe
+     des encarts d'information (.geoask) : ce n'est ni un refus ni un état, c'est ce qu'on lit avant d'aller au
+     comptoir. Ses mots viennent du réseau (PEC_TECH.reseauOu → rappel) ; Mode et Fly n'ont pas ce bloc. ══ */
+  .pec-rappel{border-radius:14px;background:var(--color-mint);padding:11px 13px;margin-top:10px;font-size:11.5px;line-height:1.55;color:var(--color-mint-ink)}
+  .pec-rappel .t{display:block;font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--color-primary-dark);margin-bottom:5px}
+  .pec-rappel b{color:var(--color-ink)}
+  .pec-rappel ul{margin:0;padding-left:16px}
+  .pec-rappel li{margin:0 0 4px}
+  .pec-rappel li:last-child{margin-bottom:0}
+  .vide{border-radius:14px;background:var(--color-amber-well);padding:12px 13px;margin-top:10px;font-size:12px;line-height:1.55;color:var(--color-amber-text)}
+  #bon-etat.ok{background:var(--color-mint);color:var(--color-mint-ink)}
+  #bon-etat.ko{background:#FDECEA;border:1px solid #F0B4AC;color:#8E2A1E;font-weight:700}
+  /* (18/09, soir) UNE PORTE, PAS UN MUR : le plafond sur fenêtre glissante n'est pas un refus — il demande
+     une vérification d'identité, et le bon reste intact. Ambre, donc : ni le vert du « valable », ni le rouge. */
+  #bon-etat.porte{background:var(--color-amber-well);border:1px solid var(--color-amber-text);color:var(--color-amber-text);font-weight:700}
+  /* LE CHOIX — une carte par MOYEN (moyensPourMontant), empilées : le nombre de moyens dépend du pays et du
+     montant, il n'est pas écrit dans la page. */
+  /* (19/09, soir — « je veux le même design ») DEUX GRANDES CARTES CÔTE À CÔTE. À deux moyens, c'est un CHOIX,
+     et un choix se pose devant les yeux — pas en pile. Au-delà de deux (ou sur un très petit écran), on retombe
+     sur l'empilement : trois cartes serrées sur une ligne ne se lisent plus. */
+  .choix2{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+  .agtc{display:flex;align-items:center;gap:10px;border-radius:13px;background:var(--color-surface);box-shadow:var(--shadow-card);padding:11px 12px;margin-top:8px}
+  .agtc .nm{font-size:13px;font-weight:800;color:var(--color-ink)}
+  .agtc .zn{font-size:11px;color:var(--color-muted);line-height:1.45}
+  .agtc .nt{flex:none;font-size:12px;font-weight:800;color:var(--color-primary-dark)}
+  /* (20/09, soir — passe de code mort) `.choix2.duo2` et `.cmpl` sont partis : plus AUCUN élément ne
+     portait ces classes depuis que le duo « chez moi / lieu public » a été remplacé par le trio, et
+     `.cmz .rsx` / `.cmz .neo` étaient les restes de la pastille de réseau et du bouton du rail tiers,
+     purgés le 20/09 au matin. Du décor sans corps. */
+  /* (19/09, soir) LE TRIO : en ligne · chez un partenaire · un agent se déplace — trois cartes de même poids. */
+  .choix2.duo3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:stretch}
+  .choix2.duo3 [role="tab"]{flex-direction:column;align-items:flex-start;gap:7px;padding:12px 10px;height:100%}
+  .choix2.duo3 [role="tab"] .txt2{flex:1}
+  .choix2.duo3 [role="tab"] b{font-size:12.5px;line-height:1.25}
+  .choix2.duo3 [role="tab"] small{font-size:10.5px;line-height:1.4}
+  @media (max-width:400px){ .choix2.duo3{grid-template-columns:1fr} .choix2.duo3 [role="tab"]{flex-direction:row;align-items:flex-start} }
+  .choix2 [role="tab"]{display:flex;align-items:flex-start;gap:11px;width:100%;border-radius:16px;background:var(--color-surface);box-shadow:var(--shadow-card);padding:13px 14px;text-align:left}
+  .choix2 [role="tab"] .ic2{flex:none;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:11px;background:var(--color-mint);color:var(--color-primary-dark)}
+  .choix2 [role="tab"] .txt2{min-width:0;flex:1}
+  .choix2 [role="tab"] b{display:block;font-size:14px;color:var(--color-ink)}
+  .choix2 [role="tab"] small{display:block;font-size:10.5px;font-weight:600;color:var(--color-muted);line-height:1.4;margin-top:2px}
+  .choix2 [role="tab"][aria-selected="true"]{box-shadow:0 0 0 2px var(--color-primary), var(--shadow-card);background:var(--color-mint)}
+  .choix2 [role="tab"][aria-selected="true"] .ic2{background:var(--color-primary);color:#fff}
+
+/* (20/09, soir) UN PRIX EXPIRÉ FERME TOUS LES CHEMINS. La page pose `.pec-prix-expire` sur son cadre ; la règle
+   s'applique à ce qui est déjà là ET à ce que le module posera ensuite — un grisage par élément manquait le
+   trio, injecté après le script qui constatait l'expiration. */
+.pec-prix-expire .choix2 [role="tab"], .pec-prix-expire .ptcard, .pec-prix-expire #bon-payer, .pec-prix-expire #bon-appliquer,
+/* `!important` parce que c'est un ÉTAT QUI FERME : il doit l'emporter sur tout état d'un composant (carte
+   sélectionnée, bouton actif), quel que soit l'ordre des feuilles. Au banc comme à la main, lire l'opacité
+   juste après avoir posé la classe rend encore 1 : `.tap` a une transition de 0,12 s — attendre qu'elle passe. */
+.pec-prix-expire #bon-verifier, .pec-prix-expire #agt-demander { opacity: .45 !important; pointer-events: none !important; }

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assistance, réclamations & flux inter-apps — la logique complète</title>
+<style>
+  :root{--ink:#0F2A24;--pri:#10A06A;--prid:#0C7F54;--bg:#F4F7F5;--mut:#5B6E66;--sep:#E3EAE6;--mint:#E3F4EC;--amber:#8a6d1f;--amberbg:#FBF3E0}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;padding:34px 18px 60px}
+  main{max-width:920px;margin:0 auto}
+  h1{font-size:26px;letter-spacing:-0.02em;margin-bottom:4px}
+  .sub{color:var(--mut);font-size:13.5px;margin-bottom:22px}
+  h2{font-size:17px;margin:26px 0 10px;color:var(--prid)}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(15,42,36,.06);font-size:12.5px}
+  th{background:var(--mint);color:var(--prid);text-align:left;padding:10px 13px;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+  td{padding:10px 13px;border-top:1px solid var(--sep);color:var(--mut);vertical-align:top}
+  td b{color:var(--ink)}
+  td code{background:#EAF2EE;border-radius:5px;padding:1px 6px;font-size:11px}
+  .ok{background:#fff;border-left:4px solid var(--pri);border-radius:12px;padding:13px 16px;font-size:13px;color:var(--mut);margin:10px 0}
+  .regle{background:var(--amberbg);border-left:4px solid #d9a52b;border-radius:12px;padding:13px 16px;font-size:13px;color:var(--amber);margin:14px 0}
+  p{font-size:13px;color:var(--mut);margin-bottom:8px}
+</style>
+</head>
+<body>
+<main>
+<h1>Assistance, réclamations &amp; flux inter-apps</h1>
+<p class="sub">Décision fondatrice du 24 août : l'assistance n'est pas une page — c'est un SYSTÈME. Ce document fixe la logique complète : qui répond, en combien de temps, ce qui remonte, ce qui est tracé, et comment les espaces (client, hôte, manager, commercial, fournisseur, <b>partenaire</b>) communiquent. Tables : <code>support_conversations</code>, <code>support_messages</code>, <code>reclamations</code>, <code>event_log</code> — schéma de référence <code>server/db/schema.sql</code> (<b>108 tables + 3 vues</b>), flux testé par jointure.</p>
+<!-- (18/09, soir) L'agent de caisse mobile est supprimé : il n'y a plus d'espace agent à faire communiquer, plus
+     d'appel de sécurisation avant un déplacement, et plus de remboursement remis en main propre. L'espace qui
+     entre dans la boucle à sa place est celui du commerçant partenaire, qui vend le Bon d’achat PayEnCash. -->
+
+<h2>1 · Le flux support — de la question au médiateur</h2>
+<table>
+<tr><th>Niveau</th><th>Qui</th><th>Canal</th><th>SLA</th><th>Ce qui se passe</th></tr>
+<tr><td><b>0 · Auto-service</b></td><td>Le client seul</td><td>FAQ recherchable (app, page Assistance)</td><td>—</td><td>6 réponses métier + FAQ complète. État vide → renvoi vers le chat (jamais un cul-de-sac).</td></tr>
+<tr><td><b>1 · Hôte</b></td><td>Naïma, Karim… (prénom réel)</td><td>Chat · rappel gratuit (numéro du compte) · 0 805 626 626 · WhatsApp · email</td><td><b>2 h ouvrées</b></td><td>Une conversation <code>CNV-…</code> LIÉE à la réservation (<code>order_ref</code>). L'historique reste dans l'app du client (« Mes conversations »).</td></tr>
+<tr><td><b>2 · Manager</b></td><td>Espace manager (écran 27)</td><td>File des réclamations escaladées</td><td><b>48 h</b></td><td>Escalade AUTOMATIQUE si SLA hôte dépassé, ou à la demande du client (« Déposer une réclamation », <code>REC-…</code>). Issues : remboursement (re-crédit du bon d’achat, remboursement du prestataire en ligne, virement, avoir — jamais d'espèces) · geste commercial · réponse motivée.</td></tr>
+<tr><td><b>3 · Médiateur</b></td><td>Médiateur du Tourisme et du Voyage (MTV)</td><td>mtv.travel — saisine gratuite</td><td>si <b>60 j</b> sans accord</td><td>Les coordonnées du MTV sont jointes D'OFFICE à toute réponse finale de niveau 2 (obligation légale médiation consommation, art. L612-1 C. conso).</td></tr>
+</table>
+<div class="regle"><b>Règle d'or</b> : aucune impasse. Chaque niveau annonce le suivant, chaque refus est motivé par écrit, et le client garde TOUT son historique dans l'app.</div>
+<div class="ok"><b>Assistance v5 (24/08)</b> : la page client devient un vrai outil de communication client ↔ hotline ↔ manager. <b>Rappel</b> : un COMPTE À REBOURS en direct s'affiche dès la demande — le délai annoncé est calculé sur le temps d'appel réellement passé par les hôtes (transparence affichée en toutes lettres), la demande part en file hotline (<code>hotline_calls.due_at</code>) et la prise en charge par un(e) hôte est horodatée à l'écran (« Karim a pris ta demande en charge — temps écoulé : 0:08 »). <b>« On répond à vos questions »</b> : chat et FAQ fusionnés — questions toutes prêtes qui se déplient comme un échange, réponses avec LIENS vers les pages (réservations, moyens de paiement, annulation, où acheter un bon d’achat…), champ libre conservé. <b>Réclamations</b> : formulaire à champs par défaut (réservation du compte pré-listée, motifs métier, description, pièce jointe) + fenêtre de SUIVI par réclamation (tab dédié, historique horodaté qui s'enrichit en direct). <b>Réassurance</b> : chiffres dérivés du data-layer (clients, note), carte des emplacements avec recherche de proximité, horaires, réseaux sociaux en bas de page.</div>
+
+<div class="card" style="margin:14px 0"><b>1a-bis · LE SAV IN-APP (fondatrice 27/08) — le flux « problème de réservation »</b><br>
+En bas de CHAQUE page de l'app (carte de fermeture partagée <code>PEC_DATA.fermetureHTML</code>), la rangée « Un problème de réservation ? » ouvre une <b>modale</b> : ① la <b>réf du ticket</b> (les commandes réelles du client proposées en un clic — la clé commune de coopération) → ② un <b>mini-chat immédiat</b> qui cerne le besoin (arbre <code>PEC_DATA.sav</code> : annulation, remboursement, modification, vol retardé, souci de règlement, autre — réponse automatique conforme aux règles maison) → ③ <b>résolu ?</b> Oui : consigné <code>clot_satisfait</code> canal <code>app-auto</code> (la hotline VOIT les auto-résolutions — matière à améliorer les réponses) · Non : <b>un humain prend le relais</b> — <code>PEC_BUS.ouvrirDemande</code> crée la demande (INF-/REC- selon la catégorie), l'assigne à l'<b>hôte EN POSTE</b> du planning (jamais « au premier qui la voit »), et elle apparaît <b>en direct</b> dans la file de <code>ui/hotline/01-pilotage.html</code>, badgée « reçue de l'app », avec le fil d'échanges complet. La clôture est un GESTE de l'hôte, tracée au journal (<code>PEC_BUS.noter('sav', …)</code>). Tables cibles : <code>hotline_calls</code> + <code>reclamations</code> + <code>event_log</code>.<br><br>
+<b>TOUTES LES LIAISONS CÂBLÉES (audit 27/08)</b> — ce qui remonte à la hotline, en direct : ① la <b>modale SAV</b> (ci-dessus, INF-/REC-) · ② le <b>rappel demandé</b> (Assistance → <code>demanderAppel type rappel</code>, avec le numéro du compte) · ③ l'<b>appel de bienvenue « premiers clients »</b> (cohorte de lancement — geste commercial de la hotline, il ne conditionne aucune commande) · ④ l'<b>escalade du chat</b> (Assistance : la réponse libre propose « Passer à un humain » → conversation CNV- avec le FIL TRANSMIS — l'hôte reprend le même fil). Les <b>appels entrants 0805</b> n'ont pas de source in-app : exemples du data-layer, étiquetés. Côté hotline : chaque arrivée est badgée « reçu(e) de l'app », les KPI comptent le vivant, « Appel passé ✓ » et « Clôturer » sont des GESTES réels tracés au journal, « Voir le fil » ouvre les échanges consignés. Les ids sont SÉQUENTIELS (compteur partagé) : plusieurs utilisateurs, plusieurs demandes simultanées — jamais de collision. <b>ASSIGNATION 100 % AUTOMATIQUE (fondatrice 27/08)</b> : chaque demande/appel est assigné à sa création — hôte EN POSTE du planning, le MOINS CHARGÉ (charge réelle = en-cours + vifs), fallback superviseure si personne n'est en poste ; plus aucun « à assigner » manuel — la superviseure supervise et peut réassigner, elle ne distribue plus.</div>
+<h2>1b · La HOTLINE — la délégation qui évite le goulot manager</h2>
+<p>Le manager ne peut pas tout faire : l'espace <b>Hotline</b> (ui/hotline) est l'outil de l'équipe support déléguée. La <b>superviseure</b> (Naïma) voit tout et <b>assigne</b> ; chaque <b>hôte</b> voit SA file ; le manager ne reçoit QUE les réclamations escaladées. La hotline couvre : les appels entrants (0 805), les <b>rappels demandés</b> (priorité — le client attend), le chat, les <b>formulaires de satisfaction</b> remontés par SMS post-appel (une note ≤ 3 crée AUTOMATIQUEMENT une réclamation — aucun mécontent ne passe entre les mailles, testé en base : note 2/5 → REC lié), et la cohorte <b>premiers clients</b> : au lancement, pas droit à l'erreur — appel de bienvenue, appel retour J+1, jusqu'au 2ᵉ achat. Tables : <code>hotline_calls</code> (assigne_a, due_at, priorité), <code>satisfaction_requests</code> / <code>satisfaction_responses</code> (reclamation_id auto).</p>
+
+<h2>1c · INFORMATION & RÉCLAMATION — deux démarches, un planning (25/08)</h2>
+<p>Côté client, la section s'appelle <b>« Information &amp; réclamation »</b> : deux portes distinctes — <b>Demande d'information</b> (réf <code>INF-…</code>, réponse sous 24 h) et <b>Réclamation</b> (réf <code>REC-…</code>, hôte 2 h → manager 48 h) — et les <b>tickets</b> se suivent en liste compacte (En cours / Clôturés), chaque ligne se déplie pour l'historique. Côté hotline, l'onglet « Demandes — information &amp; réclamation » reçoit le flux, et <b>LA RÈGLE DE BASE de la plateforme : chaque tâche est associée au PLANNING</b> — le dispatch va à l'hôte <b>en poste sur le créneau</b> (table <code>hotline_shifts</code> — « en poste » se CALCULE, il ne s'écrit pas), jamais « au premier qui la voit ». Cycle de vie d'une demande : <b>en cours</b> → <b>en retard</b> (échéance dépassée → alerte superviseure) → <b>clôturée — client satisfait</b> ou <b>clôturée — client insatisfait</b> (notation SMS post-clôture ; insatisfait → revue superviseure, et note ≤ 3 → réclamation automatique comme pour les appels).</p>
+
+<!-- (18/09, soir) La section « 2 · La 1ʳᵉ commande à domicile » organisait le pop-up de sécurisation de fly/05 :
+     il n'existait que pour ne pas envoyer un agent chez un inconnu. Il n'y a plus de déplacement, donc plus rien à
+     sécuriser ; ce qui la remplaçait déjà en pratique, c'est la vérification du COMPTE, qui, elle, a un objet. -->
+<h2>2 · La 1ʳᵉ commande — ce qui reste à vérifier</h2>
+<p>L'appel de sécurisation avant l'envoi d'un agent est <b>sans objet depuis le 18/09 au soir</b> : personne ne se déplace. Ce qui protège la première commande, c'est le <b>compte vérifié</b> (SMS <i>et</i> e-mail) et, au-delà des paliers, la <b>vérification d'identité renforcée</b> (→ <a href="spec-kyc-verifications.html">spec KYC</a>). La cohorte <b>premiers clients</b> garde son appel de bienvenue et son appel retour J+1 : ce sont des gestes commerciaux de la hotline, ils ne conditionnent aucune commande. Si le client pose sa question par chat ou demande un rappel pendant son parcours, la conversation reste rattachée à la même réservation (<code>order_ref</code>) et une seule voix lui répond. Tout est visible côté manager (écran 23 : appels · écran 27 : conversations).</p>
+
+<h2>3 · Vol + hôtel : aller simple OU aller-retour — le process comblé</h2>
+<p><b>Le trou identifié</b> : chez Opodo/Expedia, un « package » est aller-retour PAR DÉFAUT et le choix aller simple est caché — le client subit. Chez nous, séparation des fournisseurs (Duffel pour le vol, Nuitée pour l'hôtel) = liberté totale, mais le choix n'était offert qu'EN vol seul. <b>Corrigé</b> : le sélecteur Aller simple · Aller-retour s'affiche aussi en Vol + Hôtel sur l'accueil, le choix est transmis au tunnel (<code>?ar=1</code>) qui arrive PRÉ-RÉGLÉ, et le tunnel lui-même permet d'en changer. Les DONNÉES : A/R = 2 slices Duffel (aller + retour) + 1 booking Nuitée dont les dates (arrivée → départ) restent LES MÊMES que le calendrier commun — une seule saisie de dates, comme promis dans le calendrier (« vol ET hôtel ensemble »). En aller simple + hôtel : 1 slice + le même booking — le retour appartient au client.</p>
+
+<h2>3b · LA RÉF DU TICKET — la clé de coopération (v6, 24/08)</h2>
+<p>Pour traiter VITE (annulations, litiges, suivis), tous les espaces parlent la même langue : <b>la référence du ticket</b>. Une conversation = <code>CNV-…</code>, une réclamation = <code>REC-…</code>, une commande = <code>CMD-…</code>/<code>PEC-…</code>/<code>M-…</code>, un appel hotline = <code>APL-…</code> — et chaque fil support est LIÉ à sa réservation (<code>support_conversations.order_ref</code>, <code>reclamations.order_ref</code>, index par référence sur <code>event_log</code>). Concrètement : le client donne une réf au chat (la mini-IA <b>Pec</b> la détecte et retrouve le dossier — statut, niveau d'escalade, hôte en charge), la hotline et le manager ont chacun <b>un champ « chercher par réf »</b> qui filtre leurs files, et toute annulation se traite à partir de la réf — jamais « le vol de la semaine dernière ». Le chat est <b>IA + humain</b> : Pec répond immédiatement (code, billet, prix bloqué, retrouve les tickets), un(e) hôte reprend la main dès que la demande sort du cadre — et TOUT reste tracé dans le même fil CNV-.</p>
+
+<h2>4 · Le protocole de traçabilité — event_log, un espace par partie prenante</h2>
+<table>
+<tr><th>Rôle</th><th>Son espace</th><th>Ce qu'il voit dans son journal</th></tr>
+<tr><td><b>Client</b></td><td>App (Assistance → Mes conversations)</td><td>SES fils, SES réclamations, chaque étape horodatée.</td></tr>
+<tr><td><b>Hôte</b></td><td>Chat + téléphonie</td><td>Ses conversations en charge, ses SLA, ses notations post-appel.</td></tr>
+<tr><td><b>Manager</b></td><td>Écran 27 (assistance) + 23 (appels)</td><td>TOUT : conversations, escalades, décisions, le journal complet.</td></tr>
+<tr><td><b>Commercial</b></td><td>Écran 23 (campagnes)</td><td>Ses relances, ses conversions — jamais les fils support des hôtes.</td></tr>
+<tr><td><b>Marketing</b></td><td>Comparatif du jour · promos</td><td>Publications et mises à jour d'offres, horodatées.</td></tr>
+<tr><td><b>Fournisseur (MODE)</b></td><td>App fournisseur</td><td>Ses pièces (soumis → publié → vendu → expédié), ses factures et ses virements.</td></tr>
+<tr><td><b>Commerçant partenaire</b></td><td>App partenaire</td><td>Ses ventes de bons d’achat, ses prélèvements (acceptés et refusés), ses relevés mensuels — jamais une commande d'un client.</td></tr>
+</table>
+<p>Implémentation : chaque action écrit UNE ligne <code>event_log (acteur, role, espace, action, ref, at)</code> — index par rôle et par référence. La lecture est FILTRÉE par le rôle du connecté (plusieurs utilisateurs sur la même app = chacun son périmètre) ; seul le manager lit tout. Zéro suppression : le journal est append-only.</p>
+
+<h2>5 · Les flux inter-apps — qui parle à qui</h2>
+<table>
+<tr><th>Événement</th><th>Émetteur</th><th>Récepteurs</th><th>Preuve dans les maquettes</th></tr>
+<tr><td>Règlement effectué</td><td>Bon d’achat (débit du code) / Prestataire (pingback du Bon d’achat PayEnCash)</td><td>Client (reçu + points animés) · Manager (trésorerie) · Brevo (billet SMS+email)</td><td>fly/02 « Soldé » — mêmes réfs PEC-…. <b>RÈGLE (25/08, révisée 17/09 puis 18/09 au soir) : la VALIDATION appartient au débit du bon d’achat ou à la notification du prestataire — JAMAIS au client</b>, dont l'écran ne fait qu'attendre et basculer tout seul. En base : un règlement s'adosse toujours à un mouvement de <code>gift_card_movements</code> ou à une <code>psp_transactions</code> acceptée — jamais à une déclaration.</td></tr>
+<tr><td>Question / réclamation</td><td>Client (app)</td><td>Hôte (chat) → Manager (écran 27 : MÊMES CNV-/REC- que l'app)</td><td>PEC_DATA.assistance partagé — testé au banc (FX·191)</td></tr>
+<tr><td>Bon d’achat vendu au comptoir</td><td>Commerçant partenaire (partenaire/03)</td><td>Client (le code, immédiatement utilisable) · Manager (prélèvements, refus de carte) · Commerçant (son relevé)</td><td>partenaire/03 ↔ manager/29 — règle « pas de prélèvement, pas de bon d’achat »</td></tr>
+<tr><td>Inscription fournisseur (MODE)</td><td>Candidat fournisseur</td><td>Manager (KYB : candidate → kyb_pending → active) → publication des pièces</td><td>App fournisseur ↔ <code>suppliers</code> + <code>kyc_documents</code> — cycle de la pièce</td></tr>
+<tr><td>Stock qui bouge</td><td>Fournisseur / expiration / annulation</td><td>File d'attente (fenêtres 15 min) · alertes clients · Brevo</td><td>Politique zéro-vente-perdue — vagues W1-W7 + U (700 users) prouvées serveur</td></tr>
+</table>
+<div class="ok"><b>État des lieux honnête (24/08, revu le 18/09 au soir)</b> : les flux paiement, stock et support sont maquettés BOUT EN BOUT avec données partagées et prouvés au banc (189+ scénarios) et sur serveur simulé (4 vagues, dont 700 utilisateurs mêlés). L'inscription fournisseur est spécifiée (table suppliers avec statuts) et présente dans les espaces — le FORMULAIRE candidat de bout en bout reste une maquette d'étape ultérieure (registre). Aucun trou de process identifié sans règle écrite.</div>
+
+</main>
+</body>
+</html>

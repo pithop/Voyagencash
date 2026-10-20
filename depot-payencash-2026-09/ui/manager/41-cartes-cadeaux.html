@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash Manager — Bons d’achat PayEnCash & cartes cadeaux</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-p-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-p-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<link rel="stylesheet" href="../assets/payencash-manager.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-manager-nav.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-filters.js"></script><!-- (07/09) recherche · tri · pagination par convention -->
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-qr.js"></script><!-- (18/09 — Bon d’achat PayEnCash) le QR du ticket réimprimé (bonTicketHTML) -->
+<!--
+  BONS D’ACHAT PAYENCASH & CARTES CADEAUX (18/09 — Bon d’achat PayEnCash).
+  POURQUOI cet écran change : la « carte cadeau » du 04/09 (code court, consommée en une fois, activée/désactivée à la main)
+  est devenue le Bon d’achat PayEnCash — un bon d'achat prépayé à montant libre, vendu au comptoir d'un commerçant
+  partenaire OU émis ici par le manager (c'est alors une carte cadeau : même objet, origine « manager »). Il s'utilise en
+  une ou plusieurs fois (le solde reste sur le bon d’achat), vaut validiteMois, et ne se rembourse jamais en espèces (re-crédit).
+  Ce que le manager fait ICI : émettre (bonEmettre origine manager), retrouver un bon d’achat par son code ou son ticket
+  (bonsRecherche), bloquer / débloquer (perte, vol, fraude — motivé), annuler un bon d’achat jamais utilisé (motivé), réimprimer
+  le ticket (bonTicketHTML — la même source que le comptoir du partenaire). L'état (actif · épuisé · expiré · bloqué ·
+  annulé) est DÉRIVÉ : seuls bloqué et annulé s'écrivent. Plafonds et validité viennent de bonsRef(), jamais d'ici.
+-->
+<style>
+  /* (18/09 — Bon PayEnCash) à l'impression, seul le ticket sort — le reste de l'écran ne va pas sur le papier du client */
+  @media print { body * { visibility: hidden; } #cc-ticket, #cc-ticket * { visibility: visible; } #cc-ticket { position: absolute; left: 0; top: 0; width: 100%; } }
+</style>
+</head>
+<body>
+<!-- (18/09, soir — prélèvement à la vente) tables du schéma reflétées par cet écran : `gift_cards`, `gift_card_movements`, `partners`, `partner_cards`, `partner_charges`, `audit_log` — miroir server/db/schema.sql (partie 6) -->
+
+<div class="pec-admin">
+
+  <aside class="pec-aside" data-pec-nav></aside>
+
+  <main class="pec-main">
+    <div class="pec-topbar">
+      <div>
+        <h1>Bons d’achat PayEnCash &amp; cartes cadeaux</h1>
+        <p class="sub">Tous les bons d’achat : vendus au comptoir des commerces partenaires ou émis ici (carte cadeau). Usage fractionné, état dérivé, blocage motivé — la table fait foi, le panier client la lit.</p>
+        <p class="sub" style="font-size:11px;color:var(--color-muted)">Validité à l'émission : <b id="cc-validite">—</b> · montant entre <b id="cc-min">—</b> et <b id="cc-max">—</b> par bon d’achat · <b id="cc-plafond-jour">—</b> de bons d’achat utilisés par client et par jour (référentiel ref.bons, réglable dans <a href="10-configuration.html">Configuration</a>) · jamais de remboursement en espèces : re-crédit du bon d’achat.</p>
+      </div>
+      <div class="pec-topbar-actions" style="display:flex;gap:8px;align-items:center">
+        <input class="pec-search" id="cc-montant" inputmode="decimal" placeholder="Montant €" aria-label="Montant du bon d’achat à émettre" style="width:120px">
+        <button class="pec-btn pec-btn--sm tap" id="cc-creer">Émettre un bon d’achat (carte cadeau)</button>
+      </div>
+    </div>
+
+    <!-- (18/09, soir — prélèvement à la vente) CINQ KPI DÉRIVÉS de bonsGet() (état par bonEtat) et de relevesReseau() pour les
+         ventes du réseau. reversementsReseau() a disparu avec le reversement mensuel : ce qui se lit ici, c'est ce qui a
+         RÉELLEMENT été prélevé sur les cartes des commerces — et, à côté, les prélèvements REFUSÉS, qui n'ont créé AUCUN bon d’achat. -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px">
+      <div class="pec-panel" style="padding:13px 15px">
+        <p class="pec-section-label" style="margin:0 0 2px">BONS D’ACHAT ACTIFS</p>
+        <div style="font-size:26px;font-weight:800;color:var(--color-ink)" id="cc-k-actives">—</div>
+        <div class="hint" style="font-size:11.5px;color:var(--color-muted)" id="cc-k-actives-s">avec un solde, ni expirés, ni bloqués</div>
+      </div>
+      <div class="pec-panel" style="padding:13px 15px">
+        <p class="pec-section-label" style="margin:0 0 2px">EN CIRCULATION</p>
+        <div style="font-size:26px;font-weight:800;color:var(--color-ink)" id="cc-k-encours">—</div>
+        <div class="hint" style="font-size:11.5px;color:var(--color-muted)">Σ des soldes des bons d’achat actifs — engagement à honorer</div>
+      </div>
+      <div class="pec-panel" style="padding:13px 15px">
+        <p class="pec-section-label" style="margin:0 0 2px">VENDUS PAR LES PARTENAIRES CE MOIS</p>
+        <div style="font-size:26px;font-weight:800;color:var(--color-ink)" id="cc-k-vendus">—</div>
+        <div class="hint" style="font-size:11.5px;color:var(--color-muted)" id="cc-k-vendus-s">au comptoir des commerces — relevés et prélèvements en <a href="29-partenaires.html">Commerces partenaires</a></div>
+      </div>
+      <div class="pec-panel" style="padding:13px 15px">
+        <p class="pec-section-label" style="margin:0 0 2px">Émis par <span class="pec-nom">PayEnCash</span></p>
+        <div style="font-size:26px;font-weight:800;color:var(--color-ink)" id="cc-k-emis">—</div>
+        <div class="hint" style="font-size:11.5px;color:var(--color-muted)" id="cc-k-emis-s">cartes cadeaux émises depuis cet écran</div>
+      </div>
+      <div class="pec-panel" style="padding:13px 15px">
+        <p class="pec-section-label" style="margin:0 0 2px">UTILISÉS</p>
+        <div style="font-size:26px;font-weight:800;color:var(--color-ink)" id="cc-k-utilisees">—</div>
+        <div class="hint" style="font-size:11.5px;color:var(--color-muted)" id="cc-k-utilisees-s">bons d’achat ayant réglé au moins une commande (bus)</div>
+      </div>
+    </div>
+
+    <!-- LE TICKET RÉIMPRIMÉ / LE BON D’ACHAT QUI VIENT D'ÊTRE ÉMIS — une seule source (bonTicketHTML), la même que le comptoir du partenaire -->
+    <div class="pec-panel" id="cc-ticket-panel" hidden style="margin-bottom:14px">
+      <div class="pec-panel-head"><div><h2 id="cc-ticket-titre">Ticket</h2><p class="s">Le ticket porte le code, le QR, la validité et les mentions consommateur du référentiel. Imprimer n'envoie que le ticket.</p></div>
+        <div style="display:flex;gap:8px"><button class="pec-btn pec-btn--sm tap" id="cc-imprimer">Imprimer le ticket</button><button class="pec-btn pec-btn--ghost pec-btn--sm tap" id="cc-ticket-fermer">Fermer</button></div></div>
+      <div class="pec-panel-body"><div id="cc-ticket"></div></div>
+    </div>
+
+    <div class="pec-panel">
+      <div class="pec-panel-head"><div><h2>Tous les bons d’achat</h2><p class="s" id="cc-note">—</p></div>
+        <input class="pec-search" type="search" id="cc-recherche" placeholder="Code (12 caractères) ou n° de ticket BV-…" aria-label="Rechercher un bon d’achat par code ou ticket" style="max-width:320px"></div>
+      <div class="pec-panel-body">
+        <input class="pec-search" type="search" data-fsearch="#cc-rows tr" placeholder="Filtrer la liste affichée (point, état, client…)" aria-label="Filtrer la liste affichée" style="margin:0 0 10px;max-width:420px">
+        <div class="meta" data-fvide="#cc-rows tr" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+        <!-- UN GESTE MOTIVÉ (bloquer, annuler) SE CONFIRME ICI : le client lit le motif au panier, il n'est jamais optionnel. -->
+        <div id="cc-act-form" hidden style="margin:0 0 10px;border:1px solid var(--color-sep);border-radius:10px;padding:10px 12px;background:var(--color-surface)">
+          <div style="font-weight:700;font-size:12.5px" id="cc-act-titre">—</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
+            <input class="pec-search" id="cc-act-motif" placeholder="motif (obligatoire)" aria-label="Motif" style="min-width:300px;flex:1">
+            <button type="button" class="pec-btn pec-btn--sm tap" id="cc-act-go">Confirmer</button>
+            <button type="button" class="pec-btn pec-btn--ghost pec-btn--sm tap" id="cc-act-annuler">Annuler</button>
+          </div>
+        </div>
+        <div id="cc-msg" hidden class="meta" style="border-radius:10px;padding:9px 12px;margin:0 0 10px;font-weight:700"></div>
+        <table data-fsortable class="pec-table">
+          <thead><tr><th>Code</th><th>Ticket</th><th>Origine · point</th><th class="num">Montant</th><th class="num">Solde</th><th>État</th><th>Émis le</th><th>Expire le</th><th>Client</th><th></th></tr></thead>
+          <tbody id="cc-rows" data-fpage="15"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+  /* (18/09 — Bon d’achat PayEnCash) ZÉRO DUR : plafonds et validité = bonsRef() ; les bons d’achat = bonsRecherche(q) (état dérivé) ; chaque geste
+     passe par SA porte du data-layer (bonEmettre / bonBloquer / bonDebloquer / bonAnnuler) et son refus s'affiche mot pour mot. */
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.bonsGet || !D.bonEmettre) return;
+    function $(id) { return document.getElementById(id); }
+    function esc(s) { return D.esc ? D.esc(s) : String(s == null ? '' : s); }
+    function acteur() { return (window.PEC_MGR && PEC_MGR.acteur) ? PEC_MGR.acteur() : 'manager (démo)'; }
+    function dfr(ts) { return ts ? new Date(ts).toLocaleDateString('fr-FR') : '—'; }
+    var reveles = {}, action = null;
+    function message(txt, ok) {
+      var z = $('cc-msg'); if (!txt) { z.hidden = true; z.innerHTML = ''; return; }
+      z.hidden = false; z.innerHTML = txt;
+      z.style.background = ok ? 'var(--color-mint, #E7F4ED)' : '#FDECEA'; z.style.border = ok ? '1px solid var(--color-primary)' : '1px solid #F0B4AC'; z.style.color = ok ? 'var(--color-primary-dark, #1E7A50)' : '#8E2A1E';
+    }
+    function entete() {
+      var R = D.bonsRef();
+      $('cc-validite').textContent = R.validiteMois + ' mois';
+      $('cc-min').textContent = D.eur(R.minimum); $('cc-max').textContent = D.eur(R.plafondBon); $('cc-plafond-jour').textContent = D.eur(R.plafondClientJour);
+      $('cc-montant').placeholder = D.eur(R.minimum) + ' – ' + D.eur(R.plafondBon);
+    }
+    function montrerTicket(b, titre) {
+      $('cc-ticket-panel').hidden = false;
+      $('cc-ticket-titre').textContent = titre || ('Ticket ' + b.ticket + ' — ' + D.eur(b.montant));
+      $('cc-ticket').innerHTML = D.bonTicketHTML(b);
+      $('cc-ticket-panel').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+    function rendre() {
+      entete();
+      var tous = D.bonsGet(), now = Date.now();
+      var actifs = tous.filter(function (b) { return D.bonEtat(b, now) === 'actif'; });
+      var solde = actifs.reduce(function (s, b) { return s + b.solde; }, 0);
+      var utilises = tous.filter(function (b) { return (b.mouvements || []).some(function (m) { return m.type === 'debit'; }); });
+      var debits = 0; tous.forEach(function (b) { (b.mouvements || []).forEach(function (m) { if (m.type === 'debit') debits += m.montant; }); });
+      var emis = tous.filter(function (b) { return b.origine === 'manager' && b.statut !== 'annule'; });
+      /* (18/09, soir — prélèvement à la vente) relevesReseau() remplace reversementsReseau(), supprimée avec la créance
+         mensuelle. Elle porte aussi `refuses` : un prélèvement refusé par la banque n'a créé AUCUN bon d’achat — la table `gift_cards`
+         n'en garde donc aucune trace, et c'est précisément pour ça que cet écran doit le dire. */
+      var rr = D.relevesReseau ? D.relevesReseau() : { ventes: 0, preleve: 0, refuses: 0, lignes: [] };
+      var nbVendus = rr.lignes.reduce(function (s, l) { return s + l.nb; }, 0);
+      $('cc-k-actives').textContent = String(actifs.length);
+      $('cc-k-actives-s').textContent = actifs.length ? D.eur(solde) + ' de solde cumulé' : 'avec un solde, ni expirés, ni bloqués';
+      $('cc-k-encours').textContent = D.eur(solde);
+      $('cc-k-vendus').textContent = nbVendus ? nbVendus + ' · ' + D.eur(rr.ventes) : '0';
+      /* Ce que le manager doit lire ici : ce qui est passé sur les cartes, et ce qui n'est pas passé du tout. Une carte absente
+         ou expirée (partenairesSansCarte) empêche la prochaine vente ; un refus a déjà fait repartir un client sans bon d’achat. */
+      var sansCarte = D.partenairesSansCarte ? D.partenairesSansCarte() : [];
+      $('cc-k-vendus-s').innerHTML = (nbVendus
+        ? D.eur(rr.preleve) + ' prélevés sur les cartes des commerces'
+        : 'au comptoir des commerces')
+        + (rr.refuses ? ' · <b style="color:var(--color-danger)">' + rr.refuses + ' prélèvement(s) refusé(s)</b> — aucun bon d’achat émis' : '')
+        + (sansCarte.length ? ' · ' + sansCarte.length + ' commerce(s) sans carte valide' : '')
+        + ' — <a href="29-partenaires.html">relevés et prélèvements</a>';
+      $('cc-k-emis').textContent = emis.length ? emis.length + ' · ' + D.eur(emis.reduce(function (s, b) { return s + b.montant; }, 0)) : '0';
+      $('cc-k-utilisees').textContent = String(utilises.length);
+      $('cc-k-utilisees-s').textContent = utilises.length ? D.eur(debits) + ' réglés par bon d’achat au total (bus)' : 'bons d’achat ayant réglé au moins une commande (bus)';
+      var q = $('cc-recherche').value, l = D.bonsRecherche(q);
+      $('cc-note').textContent = tous.length
+        ? tous.length + ' bon d’achat' + (tous.length > 1 ? 's' : '') + ' au total' + (q.trim() ? ' — ' + l.length + ' trouvé(s) pour « ' + q.trim() + ' »' : '') + ' · le panier client (Mode 03, Fly 01) valide le code contre CETTE table.'
+        : 'Aucun bon d’achat — le premier naît d\'une vente au comptoir d\'un partenaire, ou d\'une émission ici (carte cadeau).';
+      $('cc-rows').innerHTML = l.length ? l.map(function (b) {
+        var et = b.etat, code = reveles[b.code] ? b.code : D.bonMasque(b.code);
+        var jamaisServi = !(b.mouvements || []).some(function (m) { return m.type === 'debit'; });
+        var acts = [];
+        if (et === 'actif' || et === 'epuise') acts.push('<button class="pec-btn pec-btn--ghost pec-btn--sm tap" data-bloquer="' + esc(b.code) + '">Bloquer…</button>');
+        if (et === 'bloque') acts.push('<button class="pec-btn pec-btn--sm tap" data-debloquer="' + esc(b.code) + '">Débloquer</button>');
+        if (et !== 'annule' && jamaisServi) acts.push('<button class="pec-btn pec-btn--ghost pec-btn--sm tap" data-annuler="' + esc(b.code) + '">Annuler…</button>');
+        if (et !== 'annule') acts.push('<button class="pec-btn pec-btn--ghost pec-btn--sm tap" data-ticket="' + esc(b.code) + '">Réimprimer</button>');
+        return '<tr><td class="ref"><span title="' + esc(b.code) + '" data-reveal="' + esc(b.code) + '" style="cursor:pointer;font-family:var(--font-mono)">' + esc(code) + '</span></td>' +
+          '<td class="meta">' + esc(b.ticket || '—') + '</td>' +
+          '<td>' + (b.origine === 'manager' ? 'PayEnCash (carte cadeau)' : esc(b.enseigne || b.pointId || 'partenaire')) + '<div class="meta">par ' + esc(b.emisPar || '—') + '</div></td>' +
+          '<td class="num">' + esc(D.eur(b.montant)) + '</td><td class="num"><b>' + esc(D.eur(b.solde)) + '</b></td>' +
+          '<td><span class="pec-pill ' + D.bonEtatPill(et) + '">' + esc(D.bonEtatLbl(et)) + '</span>' +
+            (et === 'bloque' && b.motifBlocage ? '<div class="meta" style="max-width:200px;white-space:normal">' + esc(b.motifBlocage) + '</div>' : '') +
+            (et === 'annule' && b.motifAnnulation ? '<div class="meta" style="max-width:200px;white-space:normal">' + esc(b.motifAnnulation) + '</div>' : '') + '</td>' +
+          '<td class="meta">' + dfr(b.emisLe) + '</td><td class="meta">' + dfr(b.expireLe) + (b.prolongeLe ? '<div>prolongé (re-crédit)</div>' : '') + '</td>' +
+          '<td class="meta">' + (b.clientId ? esc(b.clientId) : '<span title="posé au premier usage">—</span>') + '</td>' +
+          '<td style="white-space:nowrap">' + acts.join(' ') + '</td></tr>';
+      }).join('') : '<tr><td colspan="10" class="meta" style="text-align:center;padding:18px">' + (q.trim() ? 'Aucun bon d’achat pour « ' + esc(q.trim()) + ' » — un code a 12 caractères (XXXX-XXXX-XXXX), un ticket commence par ' + esc(D.bonsRef().prefixeTicket) + '.' : 'Aucun bon d’achat — émets-en un avec un montant, il part actif pour ' + esc(String(D.bonsRef().validiteMois)) + ' mois.') + '</td></tr>';
+    }
+
+    $('cc-creer').addEventListener('click', function () {
+      var r = D.bonEmettre({ montant: $('cc-montant').value, origine: 'manager', par: acteur() });
+      if (!r.ok) { message('✗ ' + esc(r.motif), false); $('cc-note').textContent = r.motif; if (r.champ === 'montant') $('cc-montant').focus(); return; }
+      $('cc-montant').value = '';
+      message('✓ Bon d’achat ' + esc(r.bon.code) + ' émis — ' + esc(D.eur(r.bon.montant)) + ', ticket ' + esc(r.bon.ticket) + ', valable jusqu\'au ' + esc(dfr(r.bon.expireLe)) + '. Remets le ticket (ou le code) au bénéficiaire.', true);
+      reveles[r.bon.code] = true;
+      rendre();
+      montrerTicket(r.bon, 'Bon d’achat émis — ticket ' + r.bon.ticket + ' · ' + D.eur(r.bon.montant));
+      $('cc-note').textContent = 'Bon d’achat ' + r.bon.code + ' émis — ' + D.eur(r.bon.montant) + ', actif, expire le ' + dfr(r.bon.expireLe) + '. Donne le code au client.';
+    });
+    $('cc-recherche').addEventListener('input', rendre);
+    $('cc-imprimer').addEventListener('click', function () { window.print(); });
+    $('cc-ticket-fermer').addEventListener('click', function () { $('cc-ticket-panel').hidden = true; $('cc-ticket').innerHTML = ''; });
+    function ouvrirAction(kind, code) {
+      action = { kind: kind, code: code };
+      $('cc-act-titre').textContent = (kind === 'bloquer' ? 'Bloquer le bon d’achat ' : 'Annuler le bon d’achat ') + code + ' — motif obligatoire' + (kind === 'bloquer' ? ' (perte, vol, fraude suspectée — le client lit la raison)' : ' (erreur de montant, client reparti sans payer…)');
+      $('cc-act-motif').value = ''; $('cc-act-form').hidden = false; $('cc-act-motif').focus();
+    }
+    $('cc-act-annuler').addEventListener('click', function () { action = null; $('cc-act-form').hidden = true; });
+    $('cc-act-go').addEventListener('click', function () {
+      if (!action) return;
+      var m = $('cc-act-motif').value.trim(), r = action.kind === 'bloquer' ? D.bonBloquer(action.code, m, acteur()) : D.bonAnnuler(action.code, m, acteur());
+      if (!r.ok) { message('✗ ' + esc(r.motif), false); return; }
+      message('✓ Bon d’achat ' + esc(r.bon.code) + ' ' + (action.kind === 'bloquer' ? 'bloqué' : 'annulé') + ' (motif : ' + esc(m) + ') — journalisé à ton nom.', true);
+      action = null; $('cc-act-form').hidden = true; rendre();
+    });
+    $('cc-rows').addEventListener('click', function (e) {
+      var t = e.target.closest('[data-reveal],[data-bloquer],[data-debloquer],[data-annuler],[data-ticket]'); if (!t) return;
+      var code;
+      if ((code = t.getAttribute('data-reveal'))) { reveles[code] = !reveles[code]; rendre(); return; }
+      if ((code = t.getAttribute('data-bloquer'))) { ouvrirAction('bloquer', code); return; }
+      if ((code = t.getAttribute('data-annuler'))) { ouvrirAction('annuler', code); return; }
+      if ((code = t.getAttribute('data-debloquer'))) {
+        var r = D.bonDebloquer(code, acteur());
+        message(r.ok ? '✓ Bon d’achat ' + esc(code) + ' débloqué — solde ' + esc(D.eur(r.bon.solde)) + ' de nouveau utilisable.' : '✗ ' + esc(r.motif), !!r.ok);
+        rendre(); return;
+      }
+      if ((code = t.getAttribute('data-ticket'))) { var b = D.bonParCode(code); if (b) montrerTicket(b); }
+    });
+    window.addEventListener('pec-bus', rendre);
+    window.addEventListener('storage', rendre);
+    rendre();
+  })();
+</script>
+</body>
+</html>

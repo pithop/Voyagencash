@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Médiation</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<!-- Page MÉDIATION (fondatrice 30/08) : déplacée depuis l'Assistance vers une page
+     dédiée, liée depuis le Compte. Escalade hôte → manager → Médiateur du Tourisme
+     et du Voyage (MTV), le tout depuis PEC_DATA.assistance.escalade (zéro dur). -->
+<style>
+  .h1{font-size:23px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;color:var(--color-ink);margin:14px 0 6px}
+  .h1 em{font-style:normal;color:var(--color-primary)}
+  .lead{font-size:14.5px;font-weight:500;line-height:1.5;color:var(--color-muted);margin:0 0 4px}
+  .step{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px dashed var(--color-sep)}
+  .step:last-child{border-bottom:none}
+  .step .n{flex:none;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:12px;font-weight:800}
+  .step .b{font-size:13.5px;font-weight:800;color:var(--color-ink)}
+  .step p{margin:2px 0 0;font-size:12px;line-height:1.5;color:var(--color-muted)}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;background:var(--color-surface)">
+
+    <div style="padding:18px 20px 0">
+      <a href="10-compte.html" class="tap" aria-label="Retour" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-chevron-left"/></svg>
+      </a>
+      <h1 class="h1">En cas de<br><em>désaccord.</em></h1>
+      <p class="lead">On règle presque tout avec toi, directement. Si le désaccord persiste, un médiateur indépendant et gratuit peut être saisi.</p>
+    </div>
+
+    <div class="pec-info-body">
+
+      <!-- L'escalade : on essaie d'abord de résoudre -->
+      <p class="pec-section-label" style="margin:0 0 10px">On essaie d'abord de résoudre avec toi</p>
+      <div class="pec-card" style="padding:6px 15px 8px">
+        <div class="step"><span class="n">1</span><div style="min-width:0"><span class="b">L'hôte du support</span><p id="med-hote">Une vraie personne te répond et cherche une solution.</p></div></div>
+        <div class="step"><span class="n">2</span><div style="min-width:0"><span class="b">Le manager</span><p id="med-manager">Si ce n'est pas résolu, il reprend le dossier et peut proposer un geste commercial.</p></div></div>
+        <div class="step"><span class="n">3</span><div style="min-width:0"><span class="b" id="med-med-nom">Le Médiateur du Tourisme et du Voyage</span><p id="med-med-delai">Désaccord persistant ? Tu peux le saisir, gratuitement.</p></div></div>
+      </div>
+
+      <!-- Ce qu'est le médiateur -->
+      <div class="pec-card" style="margin-top:14px;display:flex;align-items:flex-start;gap:12px">
+        <span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:12px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:19px"><use href="#i-shield"/></svg></span>
+        <div style="min-width:0">
+          <p style="margin:0;font-size:14px;font-weight:800;color:var(--color-ink)">Un tiers indépendant et gratuit</p>
+          <p style="margin:5px 0 0;font-size:12.5px;line-height:1.55;color:var(--color-muted)">Le <b style="color:var(--color-ink)" id="med-nom-2">Médiateur du Tourisme et du Voyage (MTV)</b> est un organisme neutre. Il examine ton litige et propose une solution amiable. Sa saisine est <b style="color:var(--color-ink)">100 % gratuite</b> et n'enlève aucun de tes droits (art. L612-1 du Code de la consommation).</p>
+        </div>
+      </div>
+
+      <!-- Comment le saisir -->
+      <p class="pec-section-label" style="margin:22px 0 10px">Comment le saisir</p>
+      <div class="pec-card" style="padding:6px 15px 8px">
+        <div class="step"><span class="n">✓</span><div style="min-width:0"><span class="b">Nous avoir contactés d'abord</span><p>Le médiateur ne peut être saisi qu'après une réclamation écrite restée sans accord de notre part.</p></div></div>
+        <div class="step"><span class="n">✓</span><div style="min-width:0"><span class="b">Dans le délai</span><p id="med-delai-2">Si aucune solution n'est trouvée sous 60 jours, tu peux le saisir.</p></div></div>
+        <div class="step"><span class="n">✓</span><div style="min-width:0"><span class="b">Sur son site officiel</span><p>La saisine se fait en ligne sur <b id="med-site" style="color:var(--color-primary-dark)">mtv.travel</b> — gratuitement, avec ton dossier.</p></div></div>
+      </div>
+
+      <div class="pec-info-card" style="margin-top:22px;text-align:center;padding:22px 20px">
+        <p style="font-size:14.5px;font-weight:700;color:var(--color-ink)">Un souci en cours ?</p>
+        <p style="margin-top:4px;font-size:12.5px;color:var(--color-muted)">Commence par nous en parler — c'est souvent réglé tout de suite.</p>
+        <a href="14-assistance.html" class="tap" style="margin-top:14px;display:inline-flex;align-items:center;gap:8px;border-radius:12px;background:var(--color-primary);color:var(--color-bg);padding:10px 18px;font-size:14px;font-weight:600">Contacter l'assistance <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-arrow-right"/></svg></a>
+      </div>
+
+      <div id="fermeture-slot"></div>
+    </div>
+
+    <nav class="pec-tabbar" aria-label="Navigation principale">
+      <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+      <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+      <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+      <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+      <a class="pec-tab" aria-current="page" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+    </nav>
+  </div>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('');})();</script>
+</div>
+</div>
+
+<script>
+  // Escalade et médiateur DEPUIS PEC_DATA.assistance.escalade — zéro chiffre en dur.
+  (function () {
+    var D = window.PEC_DATA; var e = D && D.assistance && D.assistance.escalade;
+    if (!e) return;
+    var set = function (id, html) { var n = document.getElementById(id); if (n) n.innerHTML = html; };
+    if (e.hote) set('med-hote', 'Une vraie personne te répond — ' + e.hote + '.');
+    if (e.manager) set('med-manager', e.manager + '.');
+    if (e.mediateur) {
+      set('med-med-nom', e.mediateur.nom); set('med-nom-2', e.mediateur.nom);
+      set('med-med-delai', 'Désaccord persistant ? ' + e.mediateur.delai + '.');
+      set('med-delai-2', e.mediateur.delai + '.');
+      if (e.mediateur.site) set('med-site', e.mediateur.site);
+    }
+  })();
+</script>
+</body>
+</html>

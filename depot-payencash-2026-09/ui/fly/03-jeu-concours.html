@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Un voyage à gagner</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-notif.js"></script>
+<!-- Espace concours (F9) — REFONTE fondatrice 24/08 : le LOT est un voyage CONCRET
+     (photo de la destination, valeur, dates, ce qui est inclus) publié par le MARKETING
+     depuis le cockpit (Concours · GED) — source : PEC_DATA.concoursGet() (le lot PUBLIÉ).
+     (08/09 — audit commercial) la page lit désormais concoursGet() : le lot du mois est celui que le
+     marketing a publié depuis ui/commercial/06-concours.html, et le nombre de participants vient du
+     COMPTE réel (concoursParticipations) — plus aucun total écrit.
+     Charte : VERTE dominante, homogène avec le reste du site — le bleu royal reste
+     l'ACCENT unique du concours (badge + compteur). Vrais logos réseaux (socialHTML paths).
+     Gratuit, sans obligation d'achat · la cagnotte donne des tickets bonus (règlement). -->
+<style>
+  .h1{font-size:23px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;color:var(--color-ink);margin:14px 0 6px}
+  .h1 em{font-style:normal;color:var(--color-primary)}
+  .lead{font-size:13.5px;font-weight:500;line-height:1.55;color:var(--color-muted);margin:0 0 14px}
+  .seclbl{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--color-muted);margin:18px 0 10px}
+  .netrow{display:flex;align-items:center;gap:12px;padding:13px 16px;text-decoration:none;color:inherit;border-top:1px solid var(--color-sep)}
+  .netrow:first-of-type{border-top:none}
+  .netrow .ic{flex:none;width:38px;height:38px;border-radius:999px;background:var(--color-mint);display:flex;align-items:center;justify-content:center;color:var(--color-primary-dark)}
+  .netrow .nm{flex:1;min-width:0}
+  .netrow .nm b{display:block;font-size:13.5px;font-weight:700}
+  .netrow .nm span{display:block;font-size:11.5px;color:var(--color-muted);margin-top:1px}
+  .netrow .chev{flex:none;color:var(--color-muted)}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:18px 20px 8px">
+
+    <!-- APRÈS-TIRAGE (fondatrice 26/08) : dès que le tirage est passé, ce bloc s'affiche
+         en tête — la gagnante (profil de maquette), les modalités, et la suite. -->
+    <div id="cc-resultat" style="display:none;margin:14px 16px 0;border-radius:20px;overflow:hidden;background:linear-gradient(160deg,#0F2A24,#123B30 55%,#0E5E40 140%);box-shadow:0 14px 32px rgba(15,42,36,.3)">
+      <div style="padding:16px 16px 15px">
+        <div style="display:inline-block;border-radius:6px;background:#fff;color:var(--color-primary-dark);font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:4px 10px">Tirage terminé</div>
+        <div style="font-size:20px;font-weight:800;letter-spacing:-0.02em;line-height:1.2;color:#fff;margin-top:9px">Bravo <span id="cc-gagnante" style="color:var(--color-bright)">—</span> !</div>
+        <p id="cc-modalites" style="font-size:11.5px;line-height:1.55;color:rgba(255,255,255,.78);margin-top:6px">—</p>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:12px;border-radius:14px;background:rgba(255,255,255,.1);padding:10px 12px">
+          <img id="cc-lot-photo" src="" alt="" style="flex:none;width:44px;height:44px;border-radius:12px;object-fit:cover">
+          <p style="font-size:11px;line-height:1.45;color:rgba(255,255,255,.85)">Elle gagne <b id="cc-lot" style="color:#fff">—</b> — la remise du lot est organisée par notre équipe, qui la contacte directement.</p>
+        </div>
+        <p style="font-size:10.5px;line-height:1.5;color:rgba(255,255,255,.6);margin-top:10px">Tu n'as pas gagné cette fois ? <b style="color:var(--color-bright)">Le concours de septembre arrive</b> — chaque commande réglée te donne un ticket, comme toujours. Gratuit, sans achat obligatoire.</p>
+      </div>
+    </div>
+
+
+    <a href="../ecrans/01-accueil.html" class="tap" aria-label="Retour" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)">
+      <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-chevron-left"/></svg>
+    </a>
+
+<!-- (11/09) « chaque mois » était une promesse de PÉRIODICITÉ que rien ne tient : le lot se publie au geste
+         du marketing, et `concoursGet()` peut être nul — la page du client, qui est celle que lit la cliente,
+         la gardait. -->
+    <h1 class="h1">Un voyage<br><em>à gagner.</em></h1>
+    <p class="lead">Gratuit, sans obligation d'achat. Tirage à date fixe, gagnant annoncé sur nos réseaux.</p>
+
+    <!-- (10/09 — lot 8) AUCUN LOT PUBLIÉ : l'état normal entre deux concours. La page le DIT, au lieu
+         d'afficher un lot de démonstration écrit au référentiel. -->
+    <div class="pec-card" id="lot-vide" style="display:none;padding:16px">
+      <div style="font-size:14px;font-weight:800;color:var(--color-ink)">Aucun lot publié pour l'instant</div>
+      <p style="font-size:12px;line-height:1.55;color:var(--color-muted);margin-top:6px">Le prochain voyage à gagner sera annoncé ici et sur nos réseaux. Le jeu est gratuit et sans obligation d'achat : rien à faire d'ici là.</p>
+    </div>
+
+    <!-- LE LOT DU MOIS — un voyage CONCRET : photo, valeur, dates, inclus -->
+    <div class="pec-card pec-card--elevated" id="lot-carte" style="overflow:hidden">
+      <div style="position:relative;height:168px;overflow:hidden">
+        <img id="lot-photo" src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,50,39,.1),rgba(13,50,39,.76))"></div>
+        <span style="position:absolute;left:14px;top:12px;border-radius:7px;background:linear-gradient(135deg,#C9223F,#F23B57);color:#fff;font-size:9px;font-weight:800;letter-spacing:.13em;padding:4px 9px">CONCOURS — <span id="lot-mois">—</span></span>
+        <div style="position:absolute;left:14px;right:14px;bottom:12px">
+          <div id="lot-titre" style="font-size:19px;font-weight:800;letter-spacing:-0.02em;color:#fff;line-height:1.2">—</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+            <span id="lot-dest" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:rgba(255,255,255,.92)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px"><use href="#i-map-pin"/></svg>—</span>
+            <span id="lot-valeur" style="border-radius:999px;background:rgba(255,255,255,.95);color:var(--color-ink);font-size:11px;font-weight:800;padding:3px 10px">—</span>
+          </div>
+        </div>
+      </div>
+      <div style="padding:13px 16px">
+        <div id="lot-inclus" style="display:grid;gap:6px"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:11px;padding-top:11px;border-top:1px solid var(--color-sep)">
+          <span style="font-size:10.5px;font-weight:700;color:var(--color-muted)">Séjour <b id="lot-dates" style="color:var(--color-ink)">—</b> · tirage le <b id="lot-tirage" style="color:var(--color-ink)">—</b></span>
+          <span style="flex:none;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;color:#C9223F" id="cd">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MA PARTICIPATION -->
+    <div class="pec-card" style="padding:13px 16px;margin-top:12px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="flex:none;width:38px;height:38px;border-radius:999px;background:var(--color-mint);display:flex;align-items:center;justify-content:center;color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-check"/></svg></span>
+        <span style="min-width:0;flex:1">
+          <span style="display:block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted)">Ta participation <span id="pa-mois">du mois</span></span>
+          <span style="display:block;font-size:13px;font-weight:600;margin-top:3px" id="pa-etat">—</span>
+        </span>
+        <span class="pec-pill pec-pill--done" style="flex:none" id="lot-tickets">—</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--color-sep);font-size:11.5px;color:var(--color-muted);line-height:1.45">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;color:var(--color-primary-dark);font-size:14px"><use href="#i-star"/></svg>
+        <span id="pa-bonus">—</span>
+      </div>
+    </div>
+
+    <a class="pec-cta tap" href="#" id="cc-participer" style="display:block;text-align:center;margin:14px 0 6px">Je participe au tirage du mois</a>
+    <div style="text-align:center;font-size:10.5px;color:var(--color-muted)">Une participation par personne et par mois · <a href="../../ESPACE-COMMERCANT/documents/reglement-jeu-concours.html" target="_blank" style="color:var(--color-primary-dark);font-weight:700">règlement</a></div>
+
+    <div class="pec-card" style="padding:0;overflow:hidden;margin-bottom:18px">
+      <a class="netrow tap" href="https://instagram.com/payencash" target="_blank" rel="noopener">
+        <span class="ic"><svg viewBox="0 0 24 24" width="17" height="17"><rect x="2.5" y="2.5" width="19" height="19" rx="5.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.3" cy="6.7" r="1.35" fill="currentColor"/></svg></span>
+        <span class="nm"><b>Instagram</b><span>@payencash — l'annonce du gagnant en story</span></span>
+        <svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <a class="netrow tap" href="https://tiktok.com/@payencash" target="_blank" rel="noopener">
+        <span class="ic"><svg viewBox="0 0 24 24" width="17" height="17"><path d="M14.5 3c.4 2.3 1.9 3.9 4.2 4.2v3.1c-1.6 0-3-.5-4.2-1.4v5.6a5.6 5.6 0 1 1-5.6-5.6c.34 0 .67.03 1 .1v3.2a2.55 2.55 0 1 0 1.6 2.37V3h3z" fill="currentColor"/></svg></span>
+        <span class="nm"><b>TikTok</b><span>@payencash — les coulisses des voyages gagnés</span></span>
+        <svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <a class="netrow tap" href="https://snapchat.com/add/payencash" target="_blank" rel="noopener">
+        <span class="ic"><svg viewBox="0 0 24 24" width="17" height="17"><path d="M12 2.8c3 0 5 2.2 5 5.2v1.5c.7.3 1.6-.3 1.9.4.3.6-.7 1.2-1.6 1.6.5 1.5 1.8 2.6 3.2 2.9-.3 1-1.6 1.3-2.8 1.5-.1.5-.2 1-.5 1-.9 0-1.7.2-2.3.8-.8.7-1.8 1.1-2.9 1.1-1.1 0-2.1-.4-2.9-1.1-.6-.6-1.4-.8-2.3-.8-.3 0-.4-.5-.5-1-1.2-.2-2.5-.5-2.8-1.5 1.4-.3 2.7-1.4 3.2-2.9-.9-.4-1.9-1-1.6-1.6.3-.7 1.2-.1 1.9-.4V8c0-3 2-5.2 5-5.2z" fill="currentColor"/></svg></span>
+        <span class="nm"><b>Snapchat</b><span>payencash</span></span>
+        <svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <a class="netrow tap" href="#" id="cc-whatsapp">
+        <span class="ic"><svg viewBox="0 0 24 24" width="17" height="17"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L4 20l1.2-4.5A8.5 8.5 0 1 1 21 11.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.3 9.2c.6 2.2 2.2 3.8 4.5 4.4l1-1.2 2 1.1c-.6 1.4-2 1.9-3.4 1.4-2.8-1-5-3.1-5.8-6-.4-1.4.2-2.7 1.6-3.2l1 2-.9 1.5Z" fill="currentColor"/></svg></span>
+        <span class="nm"><b>Chaîne WhatsApp PayEnCash</b><span>les bonnes offres + l'annonce du gagnant</span></span>
+        <span class="pec-pill pec-pill--done" style="flex:none" id="cc-whatsapp-pill">Rejoindre</span>
+      </a>
+    </div>
+
+    <p style="text-align:center;font-size:9.5px;color:var(--color-muted-2);margin:0 0 14px">Lot publié par l'équipe marketing — photo &amp; conditions validées (GED) · <a href="../../ESPACE-COMMERCANT/documents/reglement-jeu-concours.html" target="_blank" style="color:var(--color-muted);font-weight:700">règlement complet</a></p>
+
+  <div id="fermeture-slot"></div>
+<script>/* (17/09 — pivot) L'ATTRIBUTION PAR FLYER DE POINT A DISPARU AVEC LE RÉSEAU D'ENCAISSEMENT. Les lots de flyers
+   étaient distribués par les commerces qui encaissaient à la borne (?pt=<id>&src=flyer, ?lot=<réf>) : ce réseau n'existe
+   plus, donc plus de lot à créditer — `flyersScan` n'existe plus. (18/09) Les commerçants partenaires d'aujourd'hui VENDENT
+   le Bon d’achat PayEnCash — ils ne distribuent pas de lots et n'encaissent aucune commande : rien à rebrancher ici. Le seul canal tracé qui reste est le lien d'un
+   INFLUENCEUR (?code= / ?inf=) : il compte un clic et retient le code pour la session, de sorte que la
+   participation au concours lui soit bien attribuée. */
+(function(){ try { if (window.PEC_DATA && PEC_DATA.influenceurCapter) PEC_DATA.influenceurCapter(); } catch (e) {} })();</script>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('../ecrans/');})();</script>
+</div><!-- /pec-body -->
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="../ecrans/03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="../ecrans/01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="../ecrans/14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" href="../ecrans/10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+  (function(){
+    /* (10/09 — lot 8, constat D-39) ARRIVÉE PAR UN LIEN TRACÉ. Le lien d'un influenceur porte `?code=` ;
+       personne ne le lisait, donc aucune retombée n'était attribuable. Le clic se compte ici, et le code se
+       retient pour la visite : participer dix minutes plus tard reste attribué au bon d’achat influenceur. */
+    try { if (window.PEC_DATA && PEC_DATA.influenceurCapter) PEC_DATA.influenceurCapter(); } catch (eI) {}
+    // LE LOT vient du marketing (PEC_DATA.concoursGet — le lot publié) — la page ne fait que consommer
+    var C = window.PEC_DATA && window.PEC_DATA.concoursGet();
+    /* (10/09 — lot 8, constat D-36) « Aucun lot publié » est un état NORMAL — entre deux concours, c'est même
+       l'état habituel. La page le dit au lieu d'afficher le lot de démonstration qui traînait au référentiel. */
+    var vide = document.getElementById('lot-vide'), carte = document.getElementById('lot-carte');
+    if (vide) vide.style.display = C ? 'none' : '';
+    if (carte) carte.style.display = C ? '' : 'none';
+    if (C) {
+      // (08/09) une photo publiée depuis la GED peut être un lien ou une donnée : elle se prend telle quelle
+      var ph = String(C.lot.photo || '');
+      document.getElementById('lot-photo').src = /^(data:|https?:|\.\.?\/)/.test(ph) ? ph : '../assets/photos/' + ph;
+      document.getElementById('lot-mois').textContent = C.mois.toUpperCase();
+      document.getElementById('lot-titre').textContent = C.lot.titre;
+      document.getElementById('lot-dest').innerHTML = '<svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px"><use href="#i-map-pin"/></svg>' + C.lot.destination;
+      document.getElementById('lot-valeur').textContent = 'valeur ' + C.lot.valeur.toLocaleString('fr-FR') + ' €';
+      document.getElementById('lot-dates').textContent = C.lot.dates;
+      document.getElementById('lot-tirage').textContent = C.tirageLe;
+      document.getElementById('lot-inclus').innerHTML = C.lot.inclus.map(function (x) {
+        return '<span style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--color-muted)"><svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;margin-top:2px;font-size:13px;color:var(--color-primary)"><use href="#i-check"/></svg><span><b style="color:var(--color-ink)">' + x.split(' — ')[0] + '</b>' + (x.indexOf(' — ') > -1 ? ' — ' + x.split(' — ')[1] : '') + '</span></span>';
+      }).join('');
+    }
+    /* Compte à rebours RÉEL vers le tirage. (10/09 — lot 8) La page RE-DÉCODAIT le libellé « 31 août » avec sa
+       propre table de mois, à côté de celle du data-layer : deux lectures d'une même date, donc deux vérités
+       possibles. Une seule source : `concoursTirageAt`. */
+    var now = new Date();
+    var tAt = (window.PEC_DATA && PEC_DATA.concoursTirageAt) ? PEC_DATA.concoursTirageAt(C) : null;
+    var tirage = tAt ? new Date(tAt) : null;
+    var s = tirage ? Math.max(0, Math.floor((tirage - now) / 1000)) : 0, el = document.getElementById('cd');
+    (function t(){
+      var d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60), x=s%60;
+      el.textContent = !tirage ? '—' : (tirage < now && s === 0 ? 'tirage passé' : (d+' j '+String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0')));
+      if (s>0) s--;
+      setTimeout(t,1000);
+    })();
+    // les liens réseaux viennent du référentiel (PEC_DATA.ref.reseaux) — plus d'URL écrite ici
+    var R = window.PEC_DATA && PEC_DATA.ref && PEC_DATA.ref.reseaux;
+    if (R) [].forEach.call(document.querySelectorAll('a.netrow[href^="http"]'), function (a) {
+      var h = a.getAttribute('href');
+      if (/instagram/.test(h) && R.instagram) a.href = R.instagram;
+      else if (/tiktok/.test(h) && R.tiktok) a.href = R.tiktok;
+      else if (/snapchat/.test(h) && R.snapchat) a.href = R.snapchat;
+    });
+  })();
+</script>
+<script>
+// MA PARTICIPATION — un ÉTAT RÉEL (fondatrice : zéro « ✓ envoyé » décoratif) : le clic
+// écrit un consentement (D.consentir, type concours-<mois>) et une trace au journal des
+// flux (PEC_BUS.noter 'concours', identifiant du client connecté) ; au chargement, la
+// carte relit cet état. Tickets et bonus viennent de PEC_DATA.concoursGet() / cagnottePoints.
+(function () {
+  var D = window.PEC_DATA; if (!D || !D.concoursGet) return;
+  var C = D.concoursGet(); if (!C) return;                    // aucun lot publié : rien à quoi participer
+  var TYPE = 'concours-' + (C.moisCle || C.mois);
+  var apres = D.concoursApresTirage && D.concoursApresTirage();
+  var cl = D.clientCourant ? D.clientCourant() : null;
+  var ident = (cl && (cl.telComplet || cl.id)) || (D.profil && D.profil.telComplet) || '—';
+  function elision(m) { return (/^[aeiouyéèê]/i.test(m) ? "d'" : 'de ') + m; }
+  function trace() {
+    var l = (D.consentements ? D.consentements() : []).filter(function (c) { return c.type === TYPE && !c.retire; });
+    return l.length ? l[l.length - 1] : null;
+  }
+  function rendre() {
+    var t = trace();
+    document.getElementById('pa-mois').textContent = elision(C.mois);
+    var etat = document.getElementById('pa-etat'), pill = document.getElementById('lot-tickets'), bonus = document.getElementById('pa-bonus');
+    if (t) {
+      var d = new Date(t.at);
+      etat.textContent = 'Enregistrée le ' + d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) + ' · tirage le ' + C.tirageLe;
+      pill.textContent = (C.tickets || 1) + ' ticket' + ((C.tickets || 1) > 1 ? 's' : '');
+    } else {
+      etat.textContent = apres ? 'Aucune participation enregistrée pour ce tirage.' : 'Aucune participation pour l\'instant — un geste suffit, ci-dessous.';
+      pill.textContent = '0 ticket';
+    }
+    var pts = (D.scenario && D.scenario.cagnottePoints) || 0;
+    bonus.innerHTML = pts > 0
+      ? 'Ta cagnotte (' + pts.toLocaleString('fr-FR') + ' pts) t\'offre <b style="color:var(--color-ink)">' + (C.ticketsBonus || 0) + ' ticket' + ((C.ticketsBonus || 0) > 1 ? 's' : '') + ' bonus</b> ce mois-ci.'
+      : 'Aucun ticket bonus pour l\'instant — chaque commande réglée en donne un.';
+    var cta = document.getElementById('cc-participer');
+    if (!cta) return;
+    if (apres) { cta.textContent = 'Tirage terminé — les participations sont closes'; cta.style.pointerEvents = 'none'; cta.style.opacity = '.6'; }
+    else if (t) { cta.textContent = '✓ Participation enregistrée — tirage le ' + C.tirageLe; cta.style.pointerEvents = 'none'; cta.style.opacity = '.85'; }
+  }
+  var cta = document.getElementById('cc-participer');
+  if (cta) cta.addEventListener('click', function (e) {
+    e.preventDefault();
+    if (apres || trace()) return;
+    if (D.consentir) D.consentir(TYPE, 'Participation au concours ' + elision(C.mois) + ' — ' + C.lot.titre + ' (règlement accepté)');
+    // (09/09 — lot 1 socle) enregistrement, plus une ligne de journal · (10/09 — lot 8) le code influenceur RETENU, pas seulement celui de l'URL
+    if (D.concoursParticiper) D.concoursParticiper(ident, { mois: C.moisCle || C.mois, lot: C.lot.titre, tickets: C.tickets || 1, code: (D.codeInfluenceurCourant ? D.codeInfluenceurCourant() : null) });
+    rendre();
+  });
+  // Chaîne WhatsApp : aucun lien de chaîne dans le référentiel (PEC_DATA.ref.reseaux) →
+  // la DEMANDE est enregistrée (consentement 'canal-whatsapp'), jamais un « ✓ suivie » fictif
+  var wa = document.getElementById('cc-whatsapp'), wpill = document.getElementById('cc-whatsapp-pill');
+  function rendreWa() { if (wpill && D.consentementActif && D.consentementActif('canal-whatsapp')) wpill.textContent = '✓ Demande enregistrée'; }
+  if (wa) wa.addEventListener('click', function (e) {
+    e.preventDefault();
+    if (D.consentementActif && D.consentementActif('canal-whatsapp')) return;
+    if (D.consentir) D.consentir('canal-whatsapp', 'Rejoindre la chaîne WhatsApp PayEnCash — recevoir les offres et l\'annonce du gagnant');
+    if (window.PEC_BUS && PEC_BUS.noter) PEC_BUS.noter('canal_whatsapp', ident, { par: 'client', demande: 'rejoindre la chaîne' });
+    rendreWa();
+  });
+  rendre(); rendreWa();
+  // (08/09 — audit « écran sourd ») une participation enregistrée depuis un autre onglet, ou un changement de session client,
+  // se relisent sans recharger — l'état vient des consentements du compte
+  window.addEventListener('pec-bus', function () { rendre(); rendreWa(); });
+  window.addEventListener('storage', function (e) { if (!e.key || /^pec-(consentements|client-actif|session)/.test(e.key)) { rendre(); rendreWa(); } });
+})();
+</script>
+<script>
+// Bascule après-tirage : la page passe en mode RÉSULTATS (PEC_DATA.concoursApresTirage)
+(function () {
+  var D = window.PEC_DATA;
+  if (!D || !D.concoursApresTirage || !D.concoursApresTirage()) return;
+  var C = D.concoursGet(), R = C && C.resultat, b = document.getElementById('cc-resultat');
+  if (!b || !R) return;
+  // (08/09) le nombre de participants est COMPTÉ (concoursParticipations), jamais écrit
+  var P = D.concoursParticipations ? D.concoursParticipations() : null;
+  document.getElementById('cc-gagnante').textContent = R.gagnante + (R.ville ? ' (' + R.ville + ')' : '');
+  document.getElementById('cc-modalites').textContent = R.modalites + (P && P.participants ? ' · ' + P.participants.toLocaleString('fr-FR') + ' participants.' : '.');
+  document.getElementById('cc-lot').textContent = C.lot.titre;
+  document.getElementById('cc-lot-photo').src = document.getElementById('lot-photo').src;
+  b.style.display = 'block';
+})();
+</script>
+</body>
+</html>

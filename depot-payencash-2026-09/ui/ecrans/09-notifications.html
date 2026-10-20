@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Notifications</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-filters.js"></script><!-- (07/09) recherche · tri · pagination par convention -->
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<!--
+  NOTIFICATIONS CLIENT — centre in-app.
+
+  ZÉRO DONNÉE EN DUR (audit 28/08 : la page portait 4 notifications fictives —
+  « Yanis », 62,35 €, « 2 non lues » figé, bouton « Tout marquer comme lu » mort).
+  Le fil est DÉRIVÉ des faits du bus par PEC_DATA.notifs() : commandes (à payer /
+  payées), vérifications KYC, demandes SAV. Lu/non-lu persiste par id stable
+  ('pec-notif-lues') — purgé à la suppression du compte.
+
+  Les moments qui comptent restent RETROUVABLES ici, même si le push a été raté
+  (téléphone verrouillé, permission refusée).
+
+  Le clic marque comme lu ET navigue. Deux effets pour un geste — sinon le compteur
+  ne redescend jamais et la pastille devient du bruit qu'on apprend à ignorer.
+  Liste vivante : écoute 'pec-bus' (onglet courant) ET 'storage' (autres onglets).
+-->
+</head>
+<body>
+
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-header">
+    <a class="pec-back tap" href="10-compte.html" aria-label="Retour">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-chevron-left"/></svg>
+    </a>
+    <div class="pec-header-title">
+      <div class="t">Notifications</div>
+      <div class="s" id="nt-sous-titre">—</div>
+    </div>
+  </div>
+
+  <div class="pec-body">
+
+    <div id="nt-barre" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px" hidden>
+      <span style="font-size:12.5px;font-weight:700;color:var(--color-muted-2)" id="nt-compte">—</span>
+      <button class="pec-btn-secondary tap" id="nt-tout-lu" style="width:auto;height:32px;flex-shrink:0;padding:0 14px;font-size:12px;white-space:nowrap">
+        Tout marquer comme lu
+      </button>
+    </div>
+
+    <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+    <input class="pec-search" type="search" data-fsearch="#nt-liste > *" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+    <div class="meta" data-fvide="#nt-liste > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+    <div id="nt-liste" data-fpage="15"></div>
+
+    <!-- État vide honnête : rien d'inventé pour meubler -->
+    <div id="nt-vide" hidden style="text-align:center;padding:34px 20px 26px">
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:999px;background:var(--color-mint)">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:24px;color:var(--color-primary-dark)"><use href="#i-bell"/></svg>
+      </span>
+      <p style="margin:12px 0 4px;font-size:14.5px;font-weight:800;color:var(--color-ink)">Rien pour l'instant</p>
+      <!-- (18/09, soir — l'agent de caisse mobile est abandonné) « Agent en route » ne se produit plus : aucune
+             notification ne peut plus naître d'un déplacement. Ce qui reste est ce que le bus émet vraiment. -->
+      <p style="margin:0;font-size:12.5px;line-height:1.55;color:var(--color-muted)">Code de paiement, règlement confirmé, réponse de l'assistance : tes moments importants s'afficheront ici.</p>
+    </div>
+
+    <div class="pec-reassure">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-bell"/></svg>
+      <div>
+        Cette liste reste complète même si tu as refusé les notifications sur ton téléphone.
+        Rien ne se perd ici.
+      </div>
+    </div>
+
+    <!-- PRÉFÉRENCES (03/09) : le même consentement que le Compte (D.consentir 'communications') —
+         un seul interrupteur, une seule vérité. Les alertes de commande, elles, ne se coupent pas. -->
+    <p class="pec-section-label" style="margin-top:16px">Préférences</p>
+    <div class="pec-card" style="padding:4px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0">
+        <span style="min-width:0;line-height:1.35"><span style="display:block;font-size:12.5px;font-weight:800;color:var(--color-ink)">Alertes de commande</span><span style="display:block;font-size:10.5px;font-weight:600;color:var(--color-muted)">Code de paiement, fenêtre qui se ferme, règlement confirmé, réponse de l'assistance — toujours actives.</span></span>
+        <span style="flex:none;font-size:10.5px;font-weight:800;color:var(--color-primary-dark)">Actives</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-top:1px solid var(--color-sep)">
+        <span style="min-width:0;line-height:1.35"><span style="display:block;font-size:12.5px;font-weight:800;color:var(--color-ink)">Offres et bons plans</span><span style="display:block;font-size:10.5px;font-weight:600;color:var(--color-muted)" id="nt-pref-txt">Promos, tirages, codes — SMS, e-mail et notifications.</span></span>
+        <button type="button" role="switch" aria-checked="false" id="nt-pref-com" class="tap" aria-label="Recevoir les offres et bons plans" style="flex:none;width:44px;height:26px;border-radius:999px;border:0;background:var(--color-sep);position:relative;cursor:pointer;transition:background .2s"><span style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(15,42,36,.3);transition:transform .2s"></span></button>
+      </div>
+    </div>
+
+  </div>
+
+<nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+
+<script>
+  (function () {
+    var D = window.PEC_DATA;
+    function quand(at) {
+      if (!at) return '';
+      var d = Date.now() - at;
+      if (d < 60000) return 'à l\'instant';
+      if (d < 3600000) return 'il y a ' + Math.round(d / 60000) + ' min';
+      if (d < 86400000) return 'il y a ' + Math.round(d / 3600000) + ' h';
+      if (d < 172800000) return 'hier';
+      var dt = new Date(at);
+      return ('0' + dt.getDate()).slice(-2) + '/' + ('0' + (dt.getMonth() + 1)).slice(-2);
+    }
+    function carte(n) {
+      var nonLu = !n.lu;
+      return '<a class="pec-card' + (nonLu ? '' : ' pec-card--flat') + ' tap nt-item" data-nid="' + n.id + '" href="' + n.href + '" style="display:block">' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<span class="pec-tile pec-tile--mint" style="width:32px;height:32px;font-size:15px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#' + n.icone + '"/></svg></span>' +
+          '<span style="font-size:' + (nonLu ? '14px' : '13.5px') + ';font-weight:' + (nonLu ? '800' : '700') + ';color:var(' + (nonLu ? '--color-ink' : '--color-muted-2') + ')">' + n.titre + '</span>' +
+        '</div>' +
+        '<p style="margin:8px 0 0;font-size:' + (nonLu ? '13px' : '12.5px') + ';line-height:1.5;color:var(' + (nonLu ? '--color-ink' : '--color-muted') + ')">' + n.texte + '</p>' +
+        '<div style="margin-top:6px;font-size:11.5px;color:var(--color-muted)">' + quand(n.at) + (n.ref ? ' · ' + n.ref : '') + '</div>' +
+      '</a>';
+    }
+    function rendre() {
+      var liste = D.notifs();
+      var nonLues = liste.filter(function (n) { return !n.lu; });
+      var lues = liste.filter(function (n) { return n.lu; });
+      document.getElementById('nt-sous-titre').textContent =
+        nonLues.length ? nonLues.length + ' non lue' + (nonLues.length > 1 ? 's' : '') : (liste.length ? 'tout est lu' : 'aucune notification');
+      document.getElementById('nt-vide').hidden = liste.length > 0;
+      var barre = document.getElementById('nt-barre');
+      barre.hidden = nonLues.length === 0;
+      document.getElementById('nt-compte').textContent = nonLues.length + ' non lue' + (nonLues.length > 1 ? 's' : '');
+      document.getElementById('nt-liste').innerHTML =
+        nonLues.map(carte).join('') +
+        (lues.length ? '<hr class="pec-sep" style="margin:6px 0"><p class="pec-section-label" style="margin-top:0">Déjà lues</p>' + lues.map(carte).join('') : '');
+    }
+    // clic = lu + navigation (le href fait le reste)
+    document.getElementById('nt-liste').addEventListener('click', function (e) {
+      var a = e.target.closest('.nt-item');
+      if (a) D.notifLue(a.getAttribute('data-nid'));
+    });
+    document.getElementById('nt-tout-lu').addEventListener('click', function () {
+      D.notifsToutLu(); rendre();
+    });
+    // liste VIVANTE : l'onglet courant (pec-bus) et les autres onglets (storage)
+    window.addEventListener('pec-bus', rendre);
+    window.addEventListener('storage', rendre);
+    rendre();
+    // PRÉFÉRENCE « offres » = consentement prouvable (art. 7 RGPD), partagé avec le Compte : consentir / retirerConsentement
+    var sw = document.getElementById('nt-pref-com');
+    function peindre() {
+      var on = !!(D.consentementActif && D.consentementActif('communications'));
+      sw.setAttribute('aria-checked', String(on));
+      sw.style.background = on ? 'var(--color-primary)' : 'var(--color-sep)';
+      sw.firstChild.style.transform = on ? 'translateX(18px)' : '';
+      var t = document.getElementById('nt-pref-txt'); if (t) t.textContent = on ? 'Activées — retire ton accord quand tu veux.' : 'Promos, tirages, codes — SMS, e-mail et notifications.';
+    }
+    sw.addEventListener('click', function () {
+      if (sw.getAttribute('aria-checked') === 'true') D.retirerConsentement('communications');
+      else D.consentir('communications', 'Recevoir les offres et bons plans (SMS, email, notifications)');
+      peindre();
+    });
+    peindre();
+    // le consentement appartient au COMPTE CONNECTÉ (scopé sur clientActifGet) : on repeint au retour
+    // sur l'onglet et quand la session client change ailleurs (Manager, Compte) — jamais l'accord d'un autre.
+    window.addEventListener('focus', peindre);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) peindre(); });
+    window.addEventListener('storage', function (e) { if (!e.key || /^pec-(client-actif|session|consentements)/.test(e.key)) peindre(); });
+  })();
+</script>
+
+</body>
+</html>

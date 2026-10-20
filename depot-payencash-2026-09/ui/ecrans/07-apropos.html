@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — À propos</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<!-- Page info « À propos » — calquée sur app/(info)/a-propos/page.tsx.
+     (17/09 — pivot) Plus de borne ni de commerce qui encaisse : la promesse est « un bon d’achat suffit », et les
+     moyens sont DÉRIVÉS de PEC_DATA.moyensPaiementLabel (.js-moyens). L'argument fondateur reste : la défiance
+     vise la carte tapée sur internet, pas le web.
+     (18/09, soir — l'agent de caisse mobile est abandonné) LE CHIFFRE « à domicile — un agent salarié se
+     déplace chez toi ou au travail » a quitté la rangée de preuves : plus personne ne se déplace. Ce qui le
+     remplace dit la vraie promesse — deux codes prépayés achetés chez un commerçant.
+     (18/09, soir — pivot de positionnement) « payer en espèces » ne se dit plus : ce que PayEnCash garantit,
+     c'est qu'UN BON D’ACHAT SUFFIT. Comment le client règle son code chez son commerçant ne
+     nous regarde pas. -->
+<style>
+  .h1{font-size:23px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;color:var(--color-ink);margin:14px 0 6px}
+  .h1 em{font-style:normal;color:var(--color-primary)}
+  .lead{font-size:14.5px;font-weight:500;line-height:1.5;color:var(--color-muted);margin:0 0 4px}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;background:var(--color-surface)">
+
+<div style="padding:18px 20px 0">
+  <a href="01-accueil.html" class="tap" aria-label="Retour" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)">
+    <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-chevron-left"/></svg>
+  </a>
+  <h1 class="h1">Né d'une<br><em>frustration réelle.</em></h1>
+  <p class="lead">PayEnCash existe parce que trop de gens se sont heurtés à « carte obligatoire » quand ils voulaient juste voyager.</p>
+</div>
+
+    <div class="pec-info-body">
+      <h2 class="pec-h2" style="margin-bottom:8px">Le problème qu'on a décidé de résoudre.</h2>
+      <p style="font-size:13px;line-height:1.6;color:var(--color-muted)">En France, des millions de personnes n'ont pas de carte bancaire, sont à découvert, ou n'ont tout simplement pas confiance dans le paiement par carte sur internet. Pourtant, elles ont de l'argent — en espèces.</p>
+      <p style="margin-top:10px;font-size:13px;line-height:1.6;color:var(--color-muted)">Quand elles veulent réserver un billet d'avion ou une nuit d'hôtel, c'est impossible : chaque site exige une carte. Le voyage reste un privilège pour ceux qui ont accès au système bancaire classique. PayEnCash est né pour changer ça.</p>
+
+      <figure style="margin:24px 0 0;border-radius:16px;background:var(--color-ink);padding:20px;color:var(--color-bg)">
+        <blockquote style="margin:0;font-size:15px;font-weight:600;line-height:1.5">« On a voulu créer le service que ma voisine, ma tante, mon ami à découvert auraient voulu avoir pour partir en vacances. »</blockquote>
+        <figcaption style="margin-top:10px;font-size:12px;color:var(--color-muted-2)"><span id="ap-presidente">Emilie Ruiz</span> — Fondatrice, <span id="ap-nom1">AJEK</span> (éditrice de PayEnCash)</figcaption>
+      </figure>
+
+      <h2 class="pec-h2" style="margin:28px 0 8px">Rendre le voyage accessible à tous.</h2>
+      <p style="font-size:13px;line-height:1.6;color:var(--color-muted)">Peu importe ta situation bancaire — à découvert, sans carte, ou simplement attaché à tes espèces. Avec PayEnCash, tu réserves dans l'app les mêmes vols et hôtels que sur les grands sites, et tu paies <strong>avec un bon d’achat</strong> — <span class="js-moyens">—</span> : deux <strong>codes prépayés</strong> que tu achètes chez un commerçant près de chez toi, et que tu saisis ensuite. <strong>Un bon d’achat suffit.</strong> Un service simple, accessible, sans jugement.</p>
+
+      <!-- Des FAITS, pas des stats inventées (fondatrice : « jamais d'informations
+           inventées ») — les 4 promesses vérifiables du service. -->
+      <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="pec-info-card" style="padding:14px 16px;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--color-primary)">bon d’achat</div><div style="margin-top:4px;font-size:11px;line-height:1.3;color:var(--color-muted)">aucune CB requise, ni pour réserver ni pour payer</div></div>
+        <div class="pec-info-card" style="padding:14px 16px;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--color-primary)">0 €</div><div style="margin-top:4px;font-size:11px;line-height:1.3;color:var(--color-muted)">de frais d'annulation PayEnCash</div></div>
+        <div class="pec-info-card" style="padding:14px 16px;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--color-primary)">en ligne</div><div style="margin-top:4px;font-size:11px;line-height:1.3;color:var(--color-muted)">un bon d’achat remis par un distributeur qui se déplace</div></div>
+        <div class="pec-info-card" style="padding:14px 16px;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--color-primary)">au comptoir</div><div style="margin-top:4px;font-size:11px;line-height:1.3;color:var(--color-muted)">ton code prépayé s'achète chez un commerçant, près de chez toi</div></div>
+      </div>
+
+      <h2 class="pec-h2" style="margin:28px 0 8px">Une <span id="ap-forme1">SAS</span> française, de terrain.</h2>
+      <p style="font-size:13px;line-height:1.6;color:var(--color-muted)">PayEnCash est l'application développée et exploitée par <strong id="ap-nom2">AJEK</strong>, <span id="ap-forme2">SAS</span> fondée à <span id="ap-siege">Marignane</span>, qui lance son service auprès des habitants de <span id="ap-zones">Marseille et sa région</span>. On est proches des gens qu'on sert — des familles, des jeunes, des seniors, des personnes éloignées du système bancaire classique. <span id="ap-presidente2">Emilie Ruiz</span>, fondatrice et présidente d'<span id="ap-nom3">AJEK</span>, a construit PayEnCash de A à Z, de l'architecture technique à la stratégie commerciale.</p>
+
+      <div class="pec-info-card" style="margin-top:28px;text-align:center;padding:24px 20px">
+        <p style="font-size:13px;color:var(--color-muted)">Vous êtes journaliste ou créateur de contenu ? On est disponibles.</p>
+        <a href="08-contact.html" class="tap" style="margin-top:12px;display:inline-flex;align-items:center;gap:8px;border-radius:12px;background:var(--color-primary);color:var(--color-bg);padding:10px 20px;font-size:14px;font-weight:600">Nous contacter <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-arrow-right"/></svg></a>
+      </div>
+    </div>
+
+    <nav class="pec-tabbar" aria-label="Navigation principale">
+      <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+      <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+      <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+      <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+      <a class="pec-tab" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+    </nav>
+  </div>
+<!-- (03/09) société / forme / siège / présidente / zones = D.ref.societe et D.ref.zones — le « SASU » figé (contredit par le ref : SAS) est purgé -->
+<script>(function(){var D=window.PEC_DATA,S=D&&D.ref&&D.ref.societe;if(!S)return;var set=function(id,v){var e=document.getElementById(id);if(e&&v)e.textContent=v;};set('ap-nom1',S.nom);set('ap-nom2',S.nom);set('ap-nom3',S.nom);set('ap-forme1',S.forme);set('ap-forme2',S.forme);set('ap-presidente',S.presidente);set('ap-presidente2',S.presidente);var ville=(String(S.siege||'').match(/\d{5}\s+(.+)$/)||[])[1];set('ap-siege',ville);var Z=(D.ref.zones||[]).map(function(z){return z.ville;}).filter(function(v,i,a){return v&&a.indexOf(v)===i;});if(Z.length)set('ap-zones',Z.length>1?Z.slice(0,-1).join(', ')+' et '+Z[Z.length-1]:Z[0]);})();</script>
+<script>
+// (17/09 — pivot) les moyens de régler : dérivés du pays du client, jamais écrits dans la page
+// (18/09, soir) la page ÉCOUTE : la seule phrase qui nomme des moyens ne doit jamais en promettre un retiré du référentiel
+(function(){var D=window.PEC_DATA;if(!D||!D.moyensPaiementLabel)return;
+function peindre(){var t=D.moyensPaiementLabel();if(!t)return;[].forEach.call(document.querySelectorAll('.js-moyens'),function(e){e.textContent=t;});}
+peindre();window.addEventListener('pec-bus',peindre);window.addEventListener('storage',function(e){if(!e.key||/^pec/.test(e.key))peindre();});})();
+</script>
+</div>
+</div>
+</body>
+</html>

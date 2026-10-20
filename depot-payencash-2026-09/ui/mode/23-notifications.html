@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash MODE — Notifications</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-mode-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-mode-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-filters.js"></script><!-- (07/09) recherche · tri · pagination par convention -->
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-panier-badge.js"></script><!-- (19/09) la pastille « commande en cours / pièces au sac » sur l'onglet Commandes -->
+<!-- FIL DE NOTIFICATIONS MODE (fondatrice 08/09 « créer le fil de notification complet de Mode ») :
+     Mode n'avait AUCUN fil — seul Fly en avait un. Le fil est DÉRIVÉ des faits du compte et du bus
+     (18/09, soir — l'agent de caisse mobile est abandonné, « enlève toute mention de rendu de monnaie ») deux
+     familles de faits ne peuvent plus naître : « agent arrivé » et « rendu de monnaie à virer / viré ».
+     (PEC_DATA.notifs, scopé sur l'app Mode) : commande à payer / messages / réglée /
+     expirée / close, colis Mondial Relay (étiquette, en route, contrôle atelier), retour SAV ouvert
+     ou clôturé, alerte de prix ou de stock déclenchée, points fidélité crédités, démarque acceptée sur
+     un favori (sous consentement « communications »), RIB pris en compte.
+     Rien n'est inventé, rien n'est stocké à part : la table `notifications` (audience client) est la
+     projection de ces faits ; seul lu / non-lu persiste (read_at ↔ 'pec-notif-lues', id STABLE par fait). -->
+<style>
+  .nt-item{display:block;margin-top:10px;text-decoration:none;color:inherit}
+  .nt-item .h{display:flex;align-items:center;gap:9px}
+  .nt-item .h .ic{flex:none;width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--color-mint);color:var(--color-primary-dark)}
+  .nt-item .h .t{min-width:0;flex:1;font-size:14px;font-weight:800;color:var(--color-ink)}
+  .nt-item .h .pt{flex:none;width:8px;height:8px;border-radius:999px;background:var(--color-primary)}
+  .nt-item p{margin:8px 0 0;font-size:13px;line-height:1.5;color:var(--color-ink)}
+  .nt-item .m{margin-top:6px;font-size:11.5px;color:var(--color-muted)}
+  .nt-item.lu .h .t{font-size:13.5px;font-weight:700;color:var(--color-muted-2)}
+  .nt-item.lu p{font-size:12.5px;color:var(--color-muted)}
+  .nt-fam{display:flex;gap:6px;overflow-x:auto;padding:12px 0 2px;scrollbar-width:none}
+  .nt-fam::-webkit-scrollbar{display:none}
+  .nt-fam button{flex:none;border:1px solid var(--color-sep);background:var(--color-surface);color:var(--color-ink);border-radius:999px;padding:6px 11px;font-size:11.5px;font-weight:700;cursor:pointer}
+  .nt-fam button[aria-pressed="true"]{background:var(--color-ink);color:var(--color-surface);border-color:var(--color-ink)}
+  .nt-fam button .n{margin-left:4px;font-weight:600;opacity:.75}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:14px 18px 8px">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <a href="08-compte.html" class="tap" aria-label="Retour au compte" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-surface);box-shadow:var(--shadow-card)">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-chevron-left"/></svg>
+      </a>
+      <button class="pec-btn-secondary tap" id="nt-tout-lu" type="button" hidden style="width:auto;height:32px;flex-shrink:0;padding:0 14px;font-size:12px;white-space:nowrap">Tout marquer comme lu</button>
+    </div>
+    <h1 style="font-size:22px;font-weight:800;letter-spacing:-0.02em;margin-top:10px">Notifications</h1>
+    <div style="font-size:12px;color:var(--color-muted);margin-top:3px" id="nt-sous-titre">—</div>
+
+    <!-- Les familles du fil : un filtre par nature de fait (kit data-fscope / data-ftag) — les compteurs se calculent -->
+    <div class="nt-fam" data-fscope="#nt-liste > .nt-item" role="group" aria-label="Filtrer par famille">
+      <button type="button" data-fval="tous" aria-pressed="true">Tout<span class="n" data-nfam="tous"></span></button>
+      <button type="button" data-fval="commandes" aria-pressed="false">Commandes<span class="n" data-nfam="commandes"></span></button>
+      <button type="button" data-fval="livraisons" aria-pressed="false">Colis<span class="n" data-nfam="livraisons"></span></button>
+      <button type="button" data-fval="retours" aria-pressed="false">Retours<span class="n" data-nfam="retours"></span></button>
+      <button type="button" data-fval="alertes" aria-pressed="false">Alertes<span class="n" data-nfam="alertes"></span></button>
+      <button type="button" data-fval="compte" aria-pressed="false">Compte<span class="n" data-nfam="compte"></span></button>
+    </div>
+
+    <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+    <input class="pec-search" type="search" data-fsearch="#nt-liste > *" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:10px 0 0;max-width:420px">
+    <div class="meta" data-fvide="#nt-liste > .nt-item" data-fvide-txt="Rien dans cette famille pour l'instant." style="display:none;padding:10px 0 0;font-size:12.5px;color:var(--color-muted)"></div>
+    <div class="meta" data-fvide="#nt-liste > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:10px 0 0;font-size:12.5px;color:var(--color-muted)"></div>
+    <div id="nt-liste" data-fpage="15"></div>
+
+    <!-- État vide honnête : rien d'inventé pour meubler -->
+    <div id="nt-vide" class="pec-vide" hidden>
+      <span class="pec-vide-ico"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-bell"/></svg></span>
+      <p class="pec-vide-t">Rien pour l'instant</p>
+      <p class="pec-vide-s">Commande confirmée, colis en route, retour traité, alerte de prix, points crédités : tes moments importants s'afficheront ici.</p>
+      <div class="pec-vide-actions"><a class="pec-cta pec-cta--tight tap" href="09-recherche.html">Parcourir la boutique</a></div>
+    </div>
+
+    <div class="pec-reassure" style="margin-top:16px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-bell"/></svg>
+      <div id="nt-reassure">Cette liste reste complète même si tu as coupé les notifications sur ton téléphone. Rien ne se perd ici.</div>
+    </div>
+
+  </div><!-- /pec-body -->
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="10-tendances.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-flame"/></svg>Tendances</a>
+    <a class="pec-tab" href="22-livraisons.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-package"/></svg>Suivi</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Mode</a>
+    <a class="pec-tab" href="03-panier.html" style="position:relative"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-basket"/></svg>Commandes</a>
+    <a class="pec-tab" aria-current="page" href="08-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+  (function () {
+    var D = window.PEC_DATA; if (!D) return;
+    var esc = function (s) { return (window.PEC_DATA && PEC_DATA.esc) ? PEC_DATA.esc(s) : String(s == null ? '' : s); };
+    function quand(at) {
+      if (!at) return '';
+      var d = Date.now() - at;
+      if (d < 60000) return 'à l\'instant';
+      if (d < 3600000) return 'il y a ' + Math.round(d / 60000) + ' min';
+      if (d < 86400000) return 'il y a ' + Math.round(d / 3600000) + ' h';
+      if (d < 172800000) return 'hier';
+      var dt = new Date(at);
+      return ('0' + dt.getDate()).slice(-2) + '/' + ('0' + (dt.getMonth() + 1)).slice(-2);
+    }
+    function carte(n) {
+      return '<a class="pec-card' + (n.lu ? ' pec-card--flat lu' : '') + ' tap nt-item" data-nid="' + esc(n.id) + '" data-ftag="' + esc(n.famille) + '" href="' + esc(n.href) + '">' +
+        '<div class="h"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:15px"><use href="#' + esc(n.icone) + '"/></svg></span>' +
+        '<span class="t">' + esc(n.titre) + '</span>' + (n.lu ? '' : '<span class="pt" aria-label="non lue"></span>') + '</div>' +
+        '<p>' + esc(n.texte) + '</p>' +
+        '<div class="m">' + quand(n.at) + (n.ref ? ' · ' + esc(n.ref) : '') + '</div>' +
+      '</a>';
+    }
+    function rendre() {
+      var liste = D.notifs({ app: 'mode' });
+      var nonLues = liste.filter(function (n) { return !n.lu; }), lues = liste.filter(function (n) { return n.lu; });
+      document.getElementById('nt-sous-titre').textContent =
+        nonLues.length ? nonLues.length + ' non lue' + (nonLues.length > 1 ? 's' : '') + ' · ' + liste.length + ' au total' : (liste.length ? 'tout est lu · ' + liste.length + ' au total' : 'aucune notification');
+      document.getElementById('nt-vide').hidden = liste.length > 0;
+      document.getElementById('nt-tout-lu').hidden = nonLues.length === 0;
+      // compteurs par famille (non lues) — vides quand rien n'attend
+      var parFam = {}; nonLues.forEach(function (n) { parFam[n.famille] = (parFam[n.famille] || 0) + 1; });
+      [].forEach.call(document.querySelectorAll('[data-nfam]'), function (el) {
+        var k = el.getAttribute('data-nfam'), v = k === 'tous' ? nonLues.length : (parFam[k] || 0);
+        el.textContent = v ? String(v) : '';
+      });
+      document.getElementById('nt-liste').innerHTML =
+        nonLues.map(carte).join('') +
+        (lues.length ? '<p class="pec-section-label" style="margin:16px 0 0">Déjà lues</p>' + lues.map(carte).join('') : '');
+      // le filtre actif reprend la main après le rendu (le kit ré-applique les groupes data-fscope)
+    }
+    // clic = lu + navigation (le href fait le reste)
+    document.getElementById('nt-liste').addEventListener('click', function (e) {
+      var a = e.target.closest('.nt-item');
+      if (a) D.notifLue(a.getAttribute('data-nid'));
+    });
+    document.getElementById('nt-tout-lu').addEventListener('click', function () { D.notifsToutLu({ app: 'mode' }); rendre(); });
+    // préférence « notifications » du compte (08-compte) : coupée → on le dit, le fil reste complet
+    try {
+      var l = (D.consentements ? D.consentements() : []).filter(function (c) { return c.type === 'notifications'; });
+      if (l.length && D.consentementActif && !D.consentementActif('notifications')) document.getElementById('nt-reassure').textContent = 'Tu as coupé les notifications de commande dans ton Compte : rien ne t\'est poussé, mais ce fil reste complet.';
+    } catch (e) {}
+    rendre();
+    // le fil suit le bus (paiement, colis, retour) et la session client sans recharger la page
+    window.addEventListener('pec-bus', rendre);
+    window.addEventListener('storage', function (e) { if (!e.key || /^pec/.test(e.key)) rendre(); });
+  })();
+</script>
+</body>
+</html>

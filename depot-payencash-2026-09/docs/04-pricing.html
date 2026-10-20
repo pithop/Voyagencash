@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash — Doc 4 : Logique de pricing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+  /* Sans ceci, un navigateur en mode sombre rend champs, listes et ascenseurs
+     en sombre sur notre fond creme. La doc est concue en clair, on le declare. */
+  color-scheme: light;
+    --vert: #1F4438; --cuivre: #D8722B; --creme: #F7F5F0; --encre: #1A1A1A;
+    --gris: #6B6966; --gris-clair: #E4E0D6; --blanc: #FFFFFF; --rouge: #C0392B; --bleu: #1A5276; --radius: 10px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; color: var(--encre); background: var(--creme); line-height: 1.7; font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+  .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: var(--vert); color: var(--creme); overflow-y: auto; padding: 24px 0; z-index: 100; }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 0.5px solid rgba(244,241,234,0.15); margin-bottom: 16px; }
+  .sidebar-logo .brand { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 4px; }
+  .sidebar-logo .brand .accent { color: var(--cuivre); }
+  .sidebar-logo .doc-num { font-size: 11px; color: rgba(244,241,234,0.5); margin-top: 4px; }
+  .sidebar nav a { display: block; padding: 7px 20px; font-size: 12.5px; color: rgba(244,241,234,0.7); text-decoration: none; border-left: 2px solid transparent; transition: all 0.15s; }
+  .sidebar nav a:hover, .sidebar nav a.active { color: var(--creme); border-left-color: var(--cuivre); background: rgba(244,241,234,0.06); }
+  .sidebar nav .section-head { padding: 14px 20px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(244,241,234,0.35); font-weight: 600; }
+  .doc-nav { margin-top: 24px; padding: 16px 20px 0; border-top: 0.5px solid rgba(244,241,234,0.15); }
+  .doc-nav p { font-size: 11px; color: rgba(244,241,234,0.4); margin-bottom: 8px; }
+  .doc-nav a { display: block; font-size: 12px; color: rgba(244,241,234,0.6); text-decoration: none; padding: 4px 0; }
+  .doc-nav a:hover { color: var(--cuivre); }
+
+  .main { margin-left: 240px; max-width: 920px; padding: 48px 56px; }
+
+  .doc-header { border-bottom: 1px solid var(--gris-clair); padding-bottom: 24px; margin-bottom: 40px; }
+  .doc-header .doc-tag { display: inline-block; background: var(--cuivre); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px; letter-spacing: 0.04em; }
+  .doc-header h1 { font-family: 'Archivo', sans-serif; font-size: 32px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .doc-header .meta { display: flex; gap: 20px; font-size: 13px; color: var(--gris); flex-wrap: wrap; }
+
+  .section { margin-bottom: 48px; scroll-margin-top: 24px; }
+  h2 { font-family: 'Archivo', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--gris-clair); color: var(--vert); }
+  h3 { font-family: 'Archivo', sans-serif; font-size: 17px; font-weight: 600; margin: 28px 0 12px; color: var(--encre); }
+  h4 { font-family: 'Archivo', sans-serif; font-size: 13px; font-weight: 600; margin: 20px 0 8px; color: var(--gris); text-transform:uppercase; letter-spacing:0.04em; }
+  p { margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 12px 0 20px; }
+  th { background: var(--vert); color: var(--creme); padding: 9px 12px; text-align: left; font-weight: 600; font-size: 12px; }
+  td { padding: 8px 12px; border-bottom: 0.5px solid var(--gris-clair); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(244,241,234,0.5); }
+  tr:last-child td { border-bottom: none; }
+  td code { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: rgba(31,68,56,0.07); color: var(--vert); padding: 2px 6px; border-radius: 4px; }
+  pre { background: #1A1A2E; color: #E8E6E3; border-radius: var(--radius); padding: 18px 20px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; overflow-x: auto; margin: 14px 0; }
+  pre .comment { color: #6B7A8D; }
+  pre .key { color: #82AAFF; }
+  pre .str { color: #C3E88D; }
+  pre .num { color: #F78C6C; }
+  pre .kw { color: #C792EA; }
+  pre .fn { color: #82AAFF; }
+
+  .callout { border-radius: var(--radius); padding: 14px 16px; margin: 16px 0; font-size: 14px; display: flex; gap: 12px; align-items: flex-start; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: rgba(31,68,56,0.06); border-left: 3px solid var(--vert); }
+  .callout.warning { background: rgba(216,114,43,0.08); border-left: 3px solid var(--cuivre); }
+  .callout.danger { background: rgba(192,57,43,0.07); border-left: 3px solid var(--rouge); }
+  .callout.tip { background: #EAF3DE; border-left: 3px solid #27500A; }
+  .callout strong { display: block; font-weight: 600; margin-bottom: 4px; color: var(--encre); }
+
+  .formula-box {
+    background:#fff; border:1.5px solid var(--vert); border-radius: var(--radius);
+    padding: 18px 20px; margin: 16px 0;
+    font-family:'JetBrains Mono', monospace; font-size: 14px;
+  }
+  .formula-box .label { font-family:'Inter', sans-serif; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--gris); margin-bottom:8px; font-weight:600; }
+
+  .scenario-card {
+    background:#fff; border:0.5px solid var(--gris-clair); border-radius: var(--radius);
+    padding:16px; margin: 12px 0;
+  }
+  .scenario-card .scenario-title { font-weight:600; font-size:14px; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+  .scenario-card table { margin: 8px 0 0; }
+
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+  .tag.green { background: #EAF3DE; color: #27500A; }
+  .tag.amber { background: #FAEEDA; color: #633806; }
+  .tag.coral { background: #FAECE7; color: #712B13; }
+
+  @media print { .sidebar { display: none; } .main { margin-left: 0; padding: 24px; } }
+  @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; padding: 24px 20px; } }
+</style>
+</head>
+<body>
+<div style="background:#E6F4EC;border:2px dashed #0C7F54;border-radius:10px;padding:12px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#0F2A24"><b>⚠️ Pivot du 18/09/2026 (soir).</b> Ce document décrit le calcul du prix sous le modèle « espèces à domicile par l'agent » d'août. <b>La logique de prix elle-même reste vraie</b> — marge fixe, marge de sécurité par délai, stratégie de re-fetch sur offre expirée : elle ne dépend pas du moyen de paiement, et ce document en est désormais la <b>seule référence</b>. <b>Est caduc</b> tout ce qui porte sur les <b>frais de déplacement</b>, la majoration d'urgence ou de nuit, le créneau de collecte et le coût d'un agent : l'<b>agent de caisse mobile est supprimé</b>. Le client paie sans carte par <b>Bon d’achat PayEnCash</b> ou <b>Bon d’achat PayEnCash</b>, achetés au comptoir d'un commerce, <b>sans frais supplémentaires</b>. <b>À rechiffrer</b> : le coût variable n'est plus un salaire, ce sont <b>deux commissions</b> — 1,10 % HT au commerçant qui vend le bon d’achat, 1,5 % + 0,25 € au prestataire qui le prélève (Stripe). Référence à jour : <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html" style="color:#0C7F54;font-weight:700">Étape 4</a> et <code>CLAUDE.md</code>.</div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">PayEn<span class="accent">Cash</span></div>
+    <div class="doc-num">Documentation technique · v2.0 (encaissement à domicile)</div>
+  </div>
+  <nav>
+    <div class="section-head">Document 4</div>
+    <a href="#intro">Introduction</a>
+    <a href="#composantes">Composantes du prix final</a>
+    <a href="#tva">TVA &amp; prix TTC</a>
+    <a href="#marge-comparateur">Marge sur le comparateur multi-offres</a>
+    <a href="#marge-fixe">Marge commerciale fixe</a>
+    <a href="#recap-3-cas">Récapitulatif — total collecté par l'agent (3 cas)</a>
+    <a href="#marge-securite">Marge de sécurité par délai</a>
+    <a href="#calibrage">Calibrage par la donnée</a>
+    <a href="#refetch">Stratégie de re-fetch (offre expirée)</a>
+    <a href="#gestion-delta">Gestion de l'écart final</a>
+    <a href="#scenarios">Scénarios complets chiffrés</a>
+    <a href="#pricing-hebergement">Pricing hébergement</a>
+    <a href="#regles-affichage">Règles d'affichage client</a>
+  </nav>
+  <div class="doc-nav">
+    <p>Documents</p>
+    <a href="01-flux-metier.html">← Doc 1 : Flux métier</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">← Doc 2 : Schéma BDD</a>
+    <a href="03-api-specs.html">← Doc 3 : Spécifications API</a>
+    <a href="05-architecture.html">→ Doc 5 : Architecture technique</a>
+    <a href="06-segment-maghreb.html">→ Doc 6 : Segment Maghreb</a>
+    <a href="07-annulations-remboursements.html">→ Doc 7 : Annulations &amp; remboursements</a>
+    <a href="08-mecanisme-financier.html">→ Doc 8 : Mécanisme financier</a>
+    <a href="09-espace-manager.html">→ Doc 9 : Espace Manager</a>
+    <a href="10-compte-utilisateur.html">→ Doc 10 : Compte utilisateur</a>
+    <a href="11-ui-v2.html">→ Doc 11 : UI v2 (écrans)</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">📖 Glossaire central des champs</a>
+  </div>
+</aside>
+
+<main class="main">
+<div class="bandeau-socle" style="background:#FDF1E7;border:1px solid #E39A2E;border-left:5px solid #E39A2E;border-radius:10px;padding:13px 17px;margin:0 0 28px;font-size:13.5px;line-height:1.65;color:#7a5410">⚠️ <b>Document socle (juillet 2026)</b> — conservé comme référence technique. Les décisions <b>À JOUR</b> vivent dans le fil rouge (10 étapes)&nbsp;: <a href="../ESPACE-COMMERCANT/documents/diagramme-principal.html" style="color:#0c7f54;font-weight:700">diagramme principal</a>. En cas d'écart, le fil rouge fait foi (ex.&nbsp;: carte bleue en complément, Mondial Relay, F13, codes promo fournisseurs).</div>
+
+
+  <div class="doc-header">
+    <span class="doc-tag">Document 4 / 11</span>
+    <h1>Logique de pricing</h1>
+    <div class="meta">
+      <span>Projet PayEnCash</span>
+      <span>Version 1.0</span>
+      <span>Juin 2026</span>
+    </div>
+  </div>
+
+  <section class="section" id="intro">
+    <h2>Introduction</h2>
+    <p>Ce document détaille comment PayEnCash construit le prix final affiché au client, à partir des prix bruts retournés par Duffel et Hotelbeds. Il couvre le calcul de la marge commerciale, la marge de sécurité liée au délai estimé jusqu'à la collecte du cash, les frais de service d'encaissement, la TVA et l'affichage TTC, la stratégie de re-fetch en cas d'offre expirée, et la gestion de l'écart entre prix affiché et prix réellement débité.</p>
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div><strong>Principe directeur</strong> Le prix montré au client à l'écran budget (Phase 1) doit être le plus proche possible du montant qui sera réellement collecté par l'agent (Phase 4). Toute la logique ci-dessous vise à minimiser l'écart entre ces deux moments, qui peuvent être séparés par la fenêtre de collecte (jusqu'à plusieurs heures selon le créneau).</div>
+    </div>
+  </section>
+
+  <!-- COMPOSANTES -->
+  <section class="section" id="composantes">
+    <h2>Composantes du prix final</h2>
+    <p>Le montant collecté par l'agent (<code>orders.total_price_cents</code>, voir Doc 2) est un montant <strong>TTC</strong>. Il se compose d'un total <strong>HT</strong> (quatre éléments, ci-dessous) auquel s'ajoute la <strong>TVA</strong> (voir la section suivante).</p>
+
+    <div class="formula-box">
+      <div class="label">Formule générale (TTC)</div>
+      total_ht_cents = base_price_cents + margin_fixed_cents + margin_safety_cents + service_fee_cents<br>
+      total_price_cents = total_ht_cents + vat_amount_cents&nbsp;&nbsp;(TTC)
+    </div>
+
+    <table>
+      <thead><tr><th>Composante</th><th>Calculé à</th><th>Source</th><th>Variabilité</th></tr></thead>
+      <tbody>
+        <tr><td><code>base_price_cents</code></td><td>Phase 1 (affichage)</td><td>Somme des prix bruts Duffel + Hotelbeds</td><td>Fixé à l'affichage, peut différer du prix réel à l'achat</td></tr>
+        <tr><td><code>margin_fixed_cents</code></td><td>Phase 1 (affichage)</td><td>Règle commerciale PayEnCash, configurable</td><td>Constante pour une même route/catégorie</td></tr>
+        <tr><td><code>margin_safety_cents</code></td><td>Phase 3 (fenêtre de collecte)</td><td>Table de correspondance délai → marge (voir section suivante)</td><td>Dépend du délai estimé jusqu'à la collecte</td></tr>
+        <tr><td><code>service_fee_cents</code></td><td>Phase 3 (génération du code)</td><td>Frais de service d'encaissement — somme des composantes actives de <code>delivery_fee_config</code> (D13, Doc 2)</td><td>Configurable dans le manager (fixe, %, prix/km, majoration nuit)</td></tr>
+        <tr><td><code>vat_amount_cents</code></td><td>Phase 3 (génération du code)</td><td>TVA sur le total HT : <code>round(total_ht_cents × vat_rate)</code> — <code>vat_rate</code> configurable dans le manager (défaut 20%)</td><td>Suit le total HT et le taux de TVA configuré</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Aucun coût de paiement par commande — l'agent est un coût fixe, pas une commission</strong> Aucune commission de prestataire de paiement n'est prélevée par transaction. L'agent est <strong>exclusivement salarié</strong> d'AJEK SASU (voir D11 rév.) : son salaire est un coût d'exploitation <strong>fixe</strong>, hors marge par commande, qui n'entre pas dans cette formule — il n'existe aucune rémunération à la tournée ni commission liée au volume livré. À l'inverse, les frais de service d'encaissement (<code>service_fee_cents</code>, D13) sont un <strong>revenu</strong> PayEnCash, intégrés à <code>total_price_cents</code> et payés en cash par le client.</div>
+    </div>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Le prix payé par le client ne dépend jamais de l'agent qui livre</strong> Cette formule s'arrête à <code>total_price_cents</code> : elle ne connaît pas l'identité de l'agent ni son salaire, et ne doit jamais en dépendre. Deux clients identiques paient le même prix, quel que soit le salarié qui effectue l'encaissement. Le salaire de l'agent est un coût de structure suivi séparément (voir Doc 8) — il réduit notre bénéfice global, jamais le prix affiché commande par commande. Répercuter un coût agent dans le prix rendrait le tarif imprévisible et dépendant du dispatch.</div>
+    </div>
+  </section>
+
+  <!-- TVA -->
+  <section class="section" id="tva">
+    <h2>TVA et prix TTC</h2>
+    <p>Tous les prix affichés au client sont <strong>TTC</strong> (toutes taxes comprises), comme l'impose l'affichage B2C. Sur la ligne <strong>Voyage</strong> (ce document), le régime de TVA est <strong>fixé</strong> : régime de la <strong>marge</strong> (agences de voyages, art. <strong>297 A du CGI</strong>) — l'assiette n'est pas le prix total mais la <strong>marge seule</strong>. Le taux <code>vat_rate</code> reste <strong>paramétrable dans le manager</strong> (valeur par défaut 20%), et figé sur la commande à la génération du code.</p>
+
+    <div class="formula-box">
+      <div class="label">Calcul de la TVA — régime de la marge (art. 297 A CGI, ligne Voyage)</div>
+      total_ht_cents = base_price_cents + margin_fixed_cents + margin_safety_cents + service_fee_cents<br>
+      margin_total_cents = margin_fixed_cents + margin_safety_cents + service_fee_cents&nbsp;&nbsp;(assiette TVA)<br>
+      vat_amount_cents = round(margin_total_cents × vat_rate)&nbsp;&nbsp;(vat_rate = 0.20 par défaut)<br>
+      total_price_cents = total_ht_cents + vat_amount_cents&nbsp;&nbsp;(TTC, montant collecté)
+    </div>
+
+    <table>
+      <thead><tr><th>Champ (Doc 2, <code>orders</code>)</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>vat_rate</code></td><td>Taux de TVA appliqué, figé à la génération du code — source : configuration manager (défaut 0.20)</td></tr>
+        <tr><td><code>vat_basis_cents</code></td><td>Assiette TVA figée = <code>margin_total_cents</code> (marge fixe + marge de sécurité + frais de service) — <strong>exclut</strong> <code>base_price_cents</code>, réglé aux fournisseurs sans TVA facturée au client (régime de la marge)</td></tr>
+        <tr><td><code>vat_amount_cents</code></td><td>Montant de TVA = <code>round(vat_basis_cents × vat_rate)</code> — affiché au client comme « dont TVA »</td></tr>
+        <tr><td><code>total_price_cents</code></td><td>Montant <strong>TTC</strong> collecté en cash par l'agent = HT + TVA</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      <span class="callout-icon">🧾</span>
+      <div><strong>Affichage &amp; documents</strong> Le client voit toujours le prix TTC, avec une ligne <strong>« dont TVA X € »</strong> à chaque écran de prix (budget, <strong>devis proforma</strong> au récapitulatif, code de collecte) et un <strong>reçu numéroté</strong> remis par l'agent à l'encaissement, détaillant HT, TVA et TTC. Voir Doc 1 pour l'affichage dans le tunnel et Doc 10 pour la facture du compte client.</div>
+    </div>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>La TVA collectée n'est pas un revenu</strong> Le montant de TVA encaissé en cash par l'agent est collecté pour le compte de l'État et doit être <strong>reversé</strong> (TVA collectée) — il ne fait jamais partie de la marge PayEnCash. Voir Doc 8 pour le suivi de trésorerie et la distinction revenu / TVA à reverser.</div>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Régime fixé pour Voyage — pas un paramètre à arbitrer</strong> Sur cette ligne, l'assiette est <strong>toujours</strong> la marge seule (marge fixe + marge de sécurité + frais de service) : la TVA payée aux fournisseurs (Duffel, Hotelbeds) n'est ni facturée au client ni déduite. Ce choix n'est plus ouvert au débat pour Voyage ; seuls le taux exact, l'exonération du transport aérien international et les taux réduits restent à confirmer avec un expert-comptable. <strong>La ligne Mode</strong> (articles achetés fermement à des partenaires) suit une logique différente — régime standard <em>ou</em> marge selon la provenance de l'article — voir <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html"><code>Étape 4 · flux F11/F12</code></a>, non couvert par ce document.</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Ce que le régime de la marge change en pratique</strong> Sur l'exemple de ce document — billet 96,00 €, marges 12,40 €, frais de service 3,96 € : l'assiette TVA vaut <strong>16,36 €</strong> (marges + frais de service, hors prix billet) et le client paie <strong>115,63 €</strong>. Un régime <code>standard</code> (assiette = 112,36 €, prix client 134,83 €) n'est <strong>pas retenu</strong> pour Voyage — il n'est mentionné qu'à titre de comparaison.</div>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Ce que le code doit garantir</strong> <code>orders.vat_regime</code> (toujours <code>margin</code> pour Voyage) et <code>orders.vat_basis_cents</code> sont <strong>copiés et figés</strong> à la génération du code, au même titre que <code>vat_rate</code>. Une évolution du taux ou du régime en cours d'exploitation ne doit jamais réécrire une commande déjà passée : sinon le « dont TVA » du reçu cesse de correspondre à ce que le client a réellement payé.</div>
+    </div>
+  </section>
+
+  <!-- MARGE SUR LE COMPARATEUR -->
+  <section class="section" id="marge-comparateur">
+    <h2>Application de la marge sur chaque candidat comparé</h2>
+    <p>Depuis l'introduction du comparateur multi-offres (Doc 1, Phase 1), la marge fixe ne se calcule plus une seule fois sur l'offre déjà retenue : elle doit être appliquée à <strong>chaque ligne</strong> de <code>flight_search_results</code> et <code>stay_search_results</code> (Doc 2) au moment de l'affichage de la liste, pour que le client compare des prix TTC cohérents entre eux, et non des prix bruts fournisseur qui changeraient d'ordre une fois la marge ajoutée.</p>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Piège à éviter : ne jamais trier sur le prix brut fournisseur</strong> Si le tri affiché au client (du moins cher au plus cher) se base sur <code>total_amount_cents</code> brut Duffel plutôt que sur le prix TTC marge incluse, l'ordre d'affichage peut être incorrect — un vol moins cher chez Duffel mais avec une catégorie de marge différente (ex. compagnie low-cost à pénalité tarifaire spécifique, si une telle règle existait) pourrait apparaître avant un vol en réalité moins cher pour le client. Calculer et stocker le prix TTC sur chaque ligne du comparateur avant tri, ne pas trier sur le prix brut puis ajouter la marge après coup.</div>
+    </div>
+    <h4>Implémentation (pseudo-code)</h4>
+    <pre><span class="comment">// category : 'flight_only' par défaut au stade du comparateur de vols (Phase 1 étape 4)
+// Le client n'a pas encore indiqué s'il veut aussi un hôtel à ce stade.
+// Si le client choisit ensuite un hôtel, le total est recalculé en 'package' (8%) côté récapitulatif.
+// Cette distinction est documentée dans buildOrderTotalPrice() (Doc 4, section recap-3-cas).</span>
+<span class="kw">function</span> <span class="fn">buildComparedFlightList</span>(duffelOffers, category = <span class="str">'flight_only'</span>) {
+  <span class="kw">return</span> duffelOffers.map(offer => {
+    <span class="kw">const</span> marginCents = calculateFixedMargin(offer.total_amount_cents, category);
+    <span class="kw">const</span> displayedPriceCents = offer.total_amount_cents + marginCents;
+    <span class="kw">return</span> {
+      ...offer,
+      displayed_price_cents: displayedPriceCents,   <span class="comment">// → flight_search_results, champ de tri réel</span>
+    };
+  }).sort((a, b) => a.displayed_price_cents - b.displayed_price_cents);
+}</pre>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Le prix affiché dans le comparateur de vols utilise la marge flight_only (15%)</strong> À l'étape du comparateur de vols, le client n'a pas encore décidé s'il veut aussi un hôtel — on ne peut pas encore appliquer la marge package (8%). En pratique, si le client choisit ensuite un hôtel, le récapitulatif de Phase 3 recalcule le total avec la marge package, et le montant final collecté par l'agent sera légèrement inférieur à la somme affichée dans les deux comparateurs séparés. C'est à indiquer clairement à l'écran récapitulatif : "Prix total avec remise package".</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Marge de sécurité non appliquée au stade du comparateur</strong> La marge de sécurité (section suivante) dépend du délai estimé jusqu'à la collecte, connu seulement à la Phase 3 — donc après que le client ait déjà choisi un vol et un hébergement dans le comparateur. Le prix affiché dans les listes comparées (<code>within_budget</code>, Doc 2) intègre la marge fixe mais pas encore la marge de sécurité ; un écart résiduel, plus faible que celui géré au Doc 7, peut donc apparaître entre le prix affiché dans la liste et le montant final collecté par l'agent — à mentionner clairement à l'écran récapitulatif (Phase 3).</div>
+    </div>
+  </section>
+
+  <!-- MARGE FIXE -->
+  <section class="section" id="marge-fixe">
+    <h2>Marge commerciale fixe</h2>
+    <p>C'est la marge que PayEnCash décide librement d'appliquer pour générer du revenu — indépendante de tout risque de variation de prix fournisseur.</p>
+
+    <table>
+      <thead><tr><th>Catégorie</th><th>Règle de calcul</th><th>Exemple</th></tr></thead>
+      <tbody>
+        <tr><td>Vol seul</td><td>+ 3 € fixe par billet, OU + 15% du prix Duffel (le plus élevé des deux)</td><td>Vol à 15 € → max(15+3, 15×1.15) = max(18, 17.25) = <strong>18 €</strong></td></tr>
+        <tr><td>Hébergement seul</td><td>+ 10% du prix Hotelbeds</td><td>Hôtel à 22 € → <strong>24,20 €</strong> (arrondi à 24 €)</td></tr>
+        <tr><td>Package vol + hébergement</td><td>+ 8% sur le total combiné (remise de 2 points vs vente séparée)</td><td>15 € + 22 € = 37 € → 37 × 1.08 = <strong>40 €</strong></td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div><strong>Pourquoi une remise sur les packages ?</strong> Encourager la vente combinée (vol + hébergement) augmente le panier moyen même avec un taux de marge légèrement inférieur — c'est une décision commerciale, pas une contrainte technique. Cette règle doit rester configurable en base (table de configuration, voir Doc 5) plutôt que codée en dur.</div>
+    </div>
+
+    <h4>Implémentation (pseudo-code)</h4>
+    <pre><span class="comment">// category : 'flight_only' | 'stay_only' | 'package' — correspond à margin_config.category (Doc 2)</span>
+<span class="kw">function</span> <span class="fn">calculateFixedMargin</span>(basePriceCents, category) {
+  <span class="kw">switch</span> (category) {
+
+    <span class="kw">case</span> <span class="str">'flight_only'</span>:
+      <span class="comment">// Vol seul : 15% du prix Duffel, plancher 3€ — source : margin_config WHERE category='flight_only'</span>
+      <span class="kw">return</span> Math.max(
+        <span class="num">300</span>,                               <span class="comment">// plancher 3€ en centimes (margin_config.fixed_floor_cents)</span>
+        Math.round(basePriceCents * <span class="num">0.15</span>)  <span class="comment">// 15% (margin_config.percentage)</span>
+      );
+
+    <span class="kw">case</span> <span class="str">'stay_only'</span>:
+      <span class="comment">// Hébergement seul : 10% du prix Hotelbeds — source : margin_config WHERE category='stay_only'</span>
+      <span class="kw">return</span> Math.round(basePriceCents * <span class="num">0.10</span>);
+
+    <span class="kw">case</span> <span class="str">'package'</span>:
+      <span class="comment">// Package vol + hébergement : 8% du total combiné brut — source : margin_config WHERE category='package'</span>
+      <span class="kw">return</span> Math.round(basePriceCents * <span class="num">0.08</span>);
+
+    <span class="kw">default</span>:
+      <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">`Catégorie de marge inconnue : ${category}`</span>);
+  }
+}</pre>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Ne jamais utiliser un booléen hasAccommodation — utiliser la catégorie à 3 valeurs</strong> La version précédente de ce pseudocode utilisait <code>hasAccommodation: boolean</code>, ce qui confondait <code>stay_only</code> (10%) et <code>package</code> (8%) sous la même branche — un bug silencieux qui sous-facturerait la marge sur tous les hébergements seuls de 2 points. La catégorie est lue depuis <code>margin_config</code> (Doc 2) pour rester configurable sans toucher au code.</div>
+    </div>
+  </section>
+
+  <!-- RÉCAPITULATIF 3 CAS -->
+  <section class="section" id="recap-3-cas">
+    <h2>Récapitulatif : le montant collecté par l'agent — les 3 cas</h2>
+    <p>Le montant que l'agent collecte en cash est <strong>toujours</strong> <code>orders.total_price_cents</code>. Les exemples ci-dessous détaillent le cœur de la logique de prix — <strong>base + marge fixe + marge de sécurité</strong> — pour chaque cas d'achat. Les frais de service d'encaissement (<code>service_fee_cents</code>, configurables dans le manager, D13) s'<strong>ajoutent</strong> à ce sous-total pour former le total <strong>HT</strong> ; la <strong>TVA</strong> (20% par défaut) s'ajoute ensuite pour donner le montant <strong>TTC</strong> réellement collecté. Ces deux éléments (frais de service, TVA) ne sont pas chiffrés dans les cartes ci-dessous car ils dépendent de la configuration.</p>
+
+    <!-- Diagramme des 3 cas de calcul -->
+    <svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:760px;display:block;margin:14px 0 20px;" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11">
+      <rect width="760" height="200" rx="10" fill="#F7F5F0"/>
+      <text x="380" y="22" font-size="13" font-weight="700" fill="#1F4438" text-anchor="middle">Sous-total = base + marge fixe + marge sécurité (＋ frais de service configurables)</text>
+
+      <!-- CAS 1 : Vol seul -->
+      <rect x="10" y="36" width="230" height="150" rx="8" fill="#fff" stroke="#1F4438" stroke-width="1.5"/>
+      <rect x="10" y="36" width="230" height="28" rx="8" fill="#1F4438"/>
+      <rect x="10" y="52" width="230" height="12" fill="#1F4438"/>
+      <text x="125" y="54" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">Cas 1 — Vol seul</text>
+      <text x="125" y="82" font-size="11" fill="#1F4438" text-anchor="middle" font-weight="600">Prix Duffel brut</text>
+      <text x="125" y="97" font-size="13" font-weight="700" fill="#1F4438" text-anchor="middle">15 €</text>
+      <line x1="20" y1="108" x2="230" y2="108" stroke="#E4E0D6" stroke-width="0.5"/>
+      <text x="125" y="124" font-size="10" fill="#6B6966" text-anchor="middle">+ max(3€, 15×15%) = 3 €</text>
+      <text x="125" y="138" font-size="10" fill="#6B6966" text-anchor="middle">+ sécurité 1h (1 adulte) = 1 €</text>
+      <line x1="20" y1="148" x2="230" y2="148" stroke="#E4E0D6" stroke-width="0.5"/>
+      <text x="125" y="165" font-size="14" font-weight="700" fill="#D8722B" text-anchor="middle">= 19 € sous-total</text>
+      <text x="125" y="180" font-size="9" fill="#6B6966" text-anchor="middle">marge flight_only 15% (plancher 3€)</text>
+
+      <!-- CAS 2 : Hôtel seul -->
+      <rect x="265" y="36" width="230" height="150" rx="8" fill="#fff" stroke="#2E6650" stroke-width="1.5"/>
+      <rect x="265" y="36" width="230" height="28" rx="8" fill="#2E6650"/>
+      <rect x="265" y="52" width="230" height="12" fill="#2E6650"/>
+      <text x="380" y="54" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">Cas 2 — Hébergement seul</text>
+      <text x="380" y="82" font-size="11" fill="#2E6650" text-anchor="middle" font-weight="600">Prix Hotelbeds brut</text>
+      <text x="380" y="97" font-size="13" font-weight="700" fill="#2E6650" text-anchor="middle">22 €</text>
+      <line x1="275" y1="108" x2="485" y2="108" stroke="#E4E0D6" stroke-width="0.5"/>
+      <text x="380" y="124" font-size="10" fill="#6B6966" text-anchor="middle">+ 22 × 10% = 2,20 €</text>
+      <text x="380" y="138" font-size="10" fill="#6B6966" text-anchor="middle">+ sécurité 1h hôtel = 0 €</text>
+      <line x1="275" y1="148" x2="485" y2="148" stroke="#E4E0D6" stroke-width="0.5"/>
+      <text x="380" y="165" font-size="14" font-weight="700" fill="#D8722B" text-anchor="middle">= 24,20 € sous-total</text>
+      <text x="380" y="180" font-size="9" fill="#6B6966" text-anchor="middle">marge stay_only 10%</text>
+
+      <!-- CAS 3 : Package -->
+      <rect x="520" y="36" width="230" height="150" rx="8" fill="#fff" stroke="#D8722B" stroke-width="1.5"/>
+      <rect x="520" y="36" width="230" height="28" rx="8" fill="#D8722B"/>
+      <rect x="520" y="52" width="230" height="12" fill="#D8722B"/>
+      <text x="635" y="54" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">Cas 3 — Package</text>
+      <text x="635" y="82" font-size="11" fill="#D8722B" text-anchor="middle" font-weight="600">Prix Duffel + Hotelbeds</text>
+      <text x="635" y="97" font-size="13" font-weight="700" fill="#D8722B" text-anchor="middle">15 + 22 = 37 €</text>
+      <line x1="530" y1="108" x2="740" y2="108" stroke="#E4E0D6" stroke-width="0.5"/>
+      <text x="635" y="124" font-size="10" fill="#6B6966" text-anchor="middle">+ 37 × 8% = 2,96 €</text>
+      <text x="635" y="138" font-size="10" fill="#6B6966" text-anchor="middle">+ sécurité 1h (1 adulte) = 1 €</text>
+      <line x1="530" y1="148" x2="740" y2="148" stroke="#E4E0D6" stroke-width="0.5"/>
+      <text x="635" y="165" font-size="14" font-weight="700" fill="#D8722B" text-anchor="middle">= 40,96 € sous-total</text>
+      <text x="635" y="180" font-size="9" fill="#6B6966" text-anchor="middle">marge package 8% — moins cher que 1+2 séparés</text>
+    </svg>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div><strong>Aller simple et aller-retour : même formule de pricing</strong> Le <code>offer_price_cents</code> retourné par Duffel est toujours un prix combiné — pour un aller-retour, il inclut aller + retour dans un seul montant. La formule <code>total_price_cents = base + marge fixe + marge sécurité</code> s'applique de la même façon dans les deux cas. L'aller-retour n'est pas facturé comme 2 × aller simple — c'est un prix unique Duffel plus avantageux.</div>
+    </div>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>L'agent collecte orders.total_price_cents — pas le prix fournisseur</strong> Duffel et Hotelbeds reçoivent leur propre prix brut en Phase 5. Le cash collecté par l'agent = prix brut fournisseur + marge PayEnCash + marge de sécurité + frais de service. Ces montants sont distincts et ne doivent jamais être confondus (voir Doc 3, section distinction des montants).</div>
+    </div>
+
+    <table>
+      <thead><tr><th>Cas</th><th>base_price_cents</th><th>margin_fixed_cents</th><th>margin_safety_cents (exemple 1h)</th><th>Sous-total (base + marges) *</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Cas 1 — Vol seul</strong></td>
+          <td>Prix Duffel brut<br><code>flight_offers.offer_price_cents</code><br>Ex. 1500 (15 €)</td>
+          <td>max(300, round(1500 × 0.15)) = max(300, 225) = <strong>300</strong> (3 €)<br>→ <code>margin_config WHERE category='flight_only'</code></td>
+          <td>100 × nb_adultes (1 adulte) = <strong>100</strong> (1 €)</td>
+          <td><strong>1900</strong> (19 €)<br>= 1500 + 300 + 100</td>
+        </tr>
+        <tr>
+          <td><strong>Cas 2 — Hébergement seul</strong></td>
+          <td>Prix Hotelbeds brut<br><code>stay_offers.offer_price_cents</code><br>Ex. 2200 (22 €)</td>
+          <td>round(2200 × 0.10) = <strong>220</strong> (2,20 €)<br>→ <code>margin_config WHERE category='stay_only'</code></td>
+          <td>0 (marge sécu hébergement = 0 à 60 min)</td>
+          <td><strong>2420</strong> (24,20 €)<br>= 2200 + 220 + 0</td>
+        </tr>
+        <tr>
+          <td><strong>Cas 3 — Package vol + hébergement</strong></td>
+          <td>Prix Duffel + Prix Hotelbeds<br><code>flight_offers.offer_price_cents + stay_offers.offer_price_cents</code><br>Ex. 1500 + 2200 = 3700 (37 €)</td>
+          <td>round(3700 × 0.08) = <strong>296</strong> (2,96 €)<br>→ <code>margin_config WHERE category='package'</code></td>
+          <td>100 × 1 adulte (vol) + 0 (hôtel à 60 min) = <strong>100</strong></td>
+          <td><strong>4096</strong> (40,96 €)<br>= 3700 + 296 + 100</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>* Le sous-total est HT et n'est pas le montant final</strong> <code>total_ht_cents = sous-total (base + marge fixe + marge de sécurité) + service_fee_cents</code>. La TVA, elle, ne porte pas sur ce total HT mais sur la <strong>marge seule</strong> (régime de la marge, art. 297 A CGI — voir section TVA) : <code>vat_amount_cents = round(margin_total_cents × vat_rate)</code>, puis <code>total_price_cents (TTC) = total_ht_cents + vat_amount_cents</code>. Exemple cas 1, hors frais de service : assiette TVA = 3 € (marge) + 1 € (sécurité) = 4 € → TVA = 0,80 € → 19 € HT devient <strong>19,80 € TTC dont 0,80 € de TVA</strong>. Les frais de service (Doc 2 <code>delivery_fee_config</code>, D13) et la TVA sont figés à la génération du code ; le client voit toujours le TTC avec la ligne « dont TVA » (voir section TVA).</div>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Le package est moins cher que vol seul + hébergement seul vendus séparément</strong> Vol seul (19 €) + hébergement seul (24,20 €) = 43,20 €. Package = 40,96 €. Différence : 2,24 € en faveur du client — c'est l'effet voulu de la remise package à 8% vs 15%+10% séparés. Ce différentiel doit être visible dans l'UI pour encourager l'achat combiné.</div>
+    </div>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Plafond espèces 1 000 € par transaction</strong> Le montant collecté en cash par l'agent (<code>total_price_cents</code>) est plafonné par la loi à <strong>1 000 € par transaction</strong> (art. L112-6 / D112-3 du Code monétaire et financier). Avant génération du code de collecte, le calcul doit vérifier <code>total_price_cents ≤ 100000</code> (centimes) ; en cas de dépassement (ex. package famille nombreuse, séjour long), bloquer la génération et proposer un règlement scindé en <strong>commandes distinctes légitimes</strong> — jamais un fractionnement artificiel d'une même prestation pour contourner le plafond (anti-fractionnement). Ce contrôle est commun aux lignes Voyage et Mode (voir <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html"><code>Étape 4 · flux F11/F12</code></a>).</div>
+    </div>
+
+    <h4>Implémentation complète (pseudo-code assemblage final)</h4>
+    <pre><span class="kw">function</span> <span class="fn">buildOrderTotalPrice</span>(order) {
+  <span class="kw">const</span> hasFlight = order.flight_offers_id !== <span class="kw">null</span>;
+  <span class="kw">const</span> hasStay   = order.stay_offers_id !== <span class="kw">null</span>;
+  <span class="comment">// Refus EXPLICITES du client (Doc 2) — à ne pas confondre avec « pas encore répondu ».</span>
+  <span class="kw">const</span> noFlight  = order.flight_declined_at !== <span class="kw">null</span>;
+  <span class="kw">const</span> noStay    = order.stay_declined_at   !== <span class="kw">null</span>;
+
+  <span class="comment">// 1. Déterminer la catégorie — sur des CHOIX, jamais sur une absence.</span>
+  <span class="comment">//    Une commande n'est catégorisable que si ses DEUX axes sont tranchés.</span>
+  <span class="kw">let</span> category;
+  <span class="kw">if</span>      (hasFlight && hasStay) category = <span class="str">'package'</span>;
+  <span class="kw">else if</span> (hasFlight && noStay)  category = <span class="str">'flight_only'</span>;
+  <span class="kw">else if</span> (noFlight  && hasStay) category = <span class="str">'stay_only'</span>;   <span class="comment">// D12 — hôtel seul</span>
+  <span class="kw">else throw new</span> IncompleteOrderError(order.id);
+
+  <span class="comment">// L'ancienne version terminait par `else category = 'stay_only'`. Un DRAFT vierge —</span>
+  <span class="comment">// ni vol choisi, ni refus exprimé — tombait donc dans cette branche et se voyait</span>
+  <span class="comment">// appliquer la marge d'un séjour sur une commande vide. Lever ici est le seul</span>
+  <span class="comment">// comportement sûr : un prix ne se calcule pas sur une commande incomplète.</span>
+
+  <span class="comment">// 2. Calculer le prix de base (somme des prix bruts fournisseurs)</span>
+  <span class="kw">const</span> flightBase = hasFlight ? order.flight_offer.offer_price_cents : <span class="num">0</span>;
+  <span class="kw">const</span> stayBase   = hasStay   ? order.stay_offer.offer_price_cents   : <span class="num">0</span>;
+  <span class="kw">const</span> basePriceCents = flightBase + stayBase;   <span class="comment">// → orders.base_price_cents</span>
+
+  <span class="comment">// 3. Marge fixe (lue depuis margin_config, Doc 2)</span>
+  <span class="kw">const</span> marginConfig = await db.query(<span class="str">`SELECT percentage, fixed_floor_cents FROM margin_config WHERE category = $1`</span>, [category]);
+  <span class="kw">const</span> marginFixedCents = calculateFixedMargin(basePriceCents, category);  <span class="comment">// → orders.margin_fixed_cents</span>
+
+  <span class="comment">// 4. Marge de sécurité (calculée en Phase 3 selon la fenêtre de collecte estimée)</span>
+  <span class="kw">const</span> marginSafetyCents = calculateSafetyMargin(delayBucket, order.nb_adults, hasStay);  <span class="comment">// → orders.margin_safety_cents</span>
+
+  <span class="comment">// 5. Frais de service d'encaissement — somme des composantes actives de delivery_fee_config (D13)</span>
+  <span class="kw">const</span> serviceFeeCents = calculateServiceFee(order);  <span class="comment">// → orders.service_fee_cents (config manager, Doc 9)</span>
+
+  <span class="comment">// 6. Total HT (base + marges + frais de service)</span>
+  <span class="kw">const</span> totalHtCents = basePriceCents + marginFixedCents + marginSafetyCents + serviceFeeCents;
+
+  <span class="comment">// 7. TVA — régime de la marge (art. 297 A CGI, fixé pour Voyage) : assiette = marge seule, PAS le total HT</span>
+  <span class="kw">const</span> marginTotalCents = marginFixedCents + marginSafetyCents + serviceFeeCents;  <span class="comment">// → orders.vat_basis_cents</span>
+  <span class="kw">const</span> vatAmountCents = Math.round(marginTotalCents * order.vat_rate);  <span class="comment">// → orders.vat_amount_cents</span>
+
+  <span class="comment">// 8. Total TTC — montant du code interne, collecté en cash par l'agent (Phase 4)</span>
+  <span class="kw">const</span> totalPriceCents = totalHtCents + vatAmountCents;  <span class="comment">// → orders.total_price_cents (TTC)</span>
+
+  <span class="comment">// 9. Contrôle légal — plafond espèces 1 000€/transaction (L112-6/D112-3), anti-fractionnement</span>
+  <span class="kw">if</span> (totalPriceCents > <span class="num">100000</span>) <span class="kw">throw new</span> CashLimitExceededError(order.id, totalPriceCents);
+
+  <span class="kw">return</span> totalPriceCents;
+}</pre>
+  </section>
+
+  <!-- MARGE SÉCURITÉ -->
+  <section class="section" id="marge-securite">
+    <h2>Marge de sécurité par délai</h2>
+    <p>Cette marge couvre le risque que le prix Duffel/Hotelbeds ait augmenté entre l'affichage initial (Phase 1) et l'achat réel (Phase 5). Elle est calculée à la Phase 3, en fonction du délai estimé jusqu'à la collecte du cash par l'agent.</p>
+
+    <table>
+      <thead><tr><th>Délai estimé (fenêtre de collecte)</th><th>Marge de sécurité (vol)</th><th>Marge de sécurité (hébergement)</th><th>Justification</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag green">15 min</span></td><td>+ 0 € / voyageur</td><td>+ 0 €</td><td>Fenêtre quasi-instantanée, risque négligeable</td></tr>
+        <tr><td><span class="tag green">30 min</span></td><td>+ 0 € / voyageur</td><td>+ 0 €</td><td>Risque encore très faible sur la plupart des routes</td></tr>
+        <tr><td><span class="tag amber">1 heure</span></td><td>+ 1 € / voyageur</td><td>+ 0 €</td><td>Les prix vol peuvent bouger sur une heure (places restantes)</td></tr>
+        <tr><td><span class="tag coral">2 heures et +</span></td><td>+ 2 € / voyageur</td><td>+ 1 €</td><td>Fenêtre large, variation plus probable des deux côtés</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div><strong>Valeurs V1 figées (décision produit — lot v2)</strong> Ces marges sont les valeurs retenues et <strong>figées</strong> pour le lancement : vol <code>15 min → +0 €</code>, <code>30 min → +0 €</code>, <code>1 h → +1 €/voyageur</code>, <code>2 h+ → +2 €/voyageur</code> ; hébergement <code>+1 €</code> à <code>2 h+ (120 min)</code> et <code>+0 €</code> en deçà. Elles doivent correspondre à la table <code>margin_config</code> (Doc 2). La section suivante décrit comment les <em>recalibrer</em> ensuite sur la donnée réelle (table <code>price_history</code>) sans modifier ces valeurs par défaut.</div>
+    </div>
+
+    <h4>Implémentation (pseudo-code)</h4>
+    <pre><span class="kw">const</span> SAFETY_MARGIN_TABLE = {
+  flight: { <span class="num">15</span>: <span class="num">0</span>, <span class="num">30</span>: <span class="num">0</span>, <span class="num">60</span>: <span class="num">100</span>, <span class="num">120</span>: <span class="num">200</span> },   <span class="comment">// centimes / voyageur</span>
+  stay:   { <span class="num">15</span>: <span class="num">0</span>, <span class="num">30</span>: <span class="num">0</span>, <span class="num">60</span>: <span class="num">0</span>,   <span class="num">120</span>: <span class="num">100</span> }
+};
+
+<span class="kw">function</span> <span class="fn">calculateSafetyMargin</span>(delayBucketMinutes, travelerCount, hasAccommodation) {
+  <span class="kw">const</span> flightSafety = SAFETY_MARGIN_TABLE.flight[delayBucketMinutes] * travelerCount;
+  <span class="kw">const</span> staySafety = hasAccommodation ? SAFETY_MARGIN_TABLE.stay[delayBucketMinutes] : <span class="num">0</span>;
+  <span class="kw">return</span> flightSafety + staySafety;
+}</pre>
+  </section>
+
+  <!-- CALIBRAGE -->
+  <section class="section" id="calibrage">
+    <h2>Calibrage par la donnée (évolution future)</h2>
+    <p>Une fois un volume suffisant de commandes <code>CONFIRMED</code> accumulé, la table <code>price_history</code> (Doc 2) permet de remplacer les valeurs fixes ci-dessus par des marges calculées statistiquement, route par route.</p>
+
+    <h4>Méthode de calcul recommandée</h4>
+    <p>Pour chaque combinaison <code>(route, delay_bucket_minutes)</code>, calculer le <strong>percentile 95</strong> des écarts de prix observés (<code>delta_cents</code>). Cela signifie : la marge couvre 95% des cas réels de variation, en acceptant que 5% des commandes dépassent la marge (gérées par le mécanisme de gestion d'écart, section suivante).</p>
+
+    <pre><span class="comment">-- Requête déjà présente dans le Doc 2, rappelée ici pour contexte</span>
+<span class="kw">SELECT</span>
+  route, delay_bucket_minutes,
+  percentile_cont(<span class="num">0.95</span>) <span class="kw">WITHIN GROUP</span> (<span class="kw">ORDER BY</span> delta_cents) <span class="kw">AS</span> p95_delta_cents,
+  count(*) <span class="kw">AS</span> sample_size
+<span class="kw">FROM</span> price_history
+<span class="kw">WHERE</span> recorded_at > now() - <span class="kw">INTERVAL</span> <span class="str">'90 days'</span>
+<span class="kw">GROUP BY</span> route, delay_bucket_minutes
+<span class="kw">HAVING</span> count(*) >= <span class="num">30</span>;</pre>
+
+    <table>
+      <thead><tr><th>Condition</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Moins de 30 échantillons pour une route donnée</td><td>Conserver la marge fixe par défaut (table V1 ci-dessus)</td></tr>
+        <tr><td>30+ échantillons disponibles</td><td>Remplacer la marge fixe de cette route par le p95 calculé, recalculé chaque semaine</td></tr>
+        <tr><td>p95 calculé inférieur à la marge V1 actuelle</td><td>Réduire la marge — améliore la compétitivité du prix affiché</td></tr>
+        <tr><td>p95 calculé supérieur à la marge V1 actuelle</td><td>Augmenter la marge — réduit le risque de perte sur cette route</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div><strong>Recommandation d'implémentation</strong> Stocker ces marges calibrées dans une table <code>route_margin_overrides (route, delay_bucket, margin_cents, calculated_at)</code> plutôt que de modifier le code. Le calcul ci-dessus tourne en job hebdomadaire et met à jour cette table — la fonction <code>calculateSafetyMargin</code> consulte d'abord cette table avant de retomber sur la valeur par défaut.</div>
+    </div>
+  </section>
+
+  <!-- REFETCH -->
+  <section class="section" id="refetch">
+    <h2>Stratégie de re-fetch en cas d'offre expirée</h2>
+    <p>Les offres Duffel ont une durée de vie courte (<code>expires_at</code>, souvent &lt;30 minutes — Doc 3). Si le client déclare un délai long ("2h+"), l'offre sélectionnée en Phase 1 sera très probablement expirée au moment de l'achat réel en Phase 5.</p>
+
+    <h4>Algorithme</h4>
+    <pre><span class="kw">async function</span> <span class="fn">bookFlightWithFreshOffer</span>(orderId) {
+  <span class="kw">const</span> originalOffer = <span class="kw">await</span> db.flight_offers.findByOrderId(orderId);
+
+  <span class="kw">if</span> (originalOffer.offer_expires_at > now()) {
+    <span class="comment">// Offre encore valide, achat direct</span>
+    <span class="kw">return</span> bookWithOffer(originalOffer.duffel_offer_id);
+  }
+
+  <span class="comment">// Offre expirée : relancer une recherche identique</span>
+  <span class="kw">const</span> freshSearch = <span class="kw">await</span> duffelClient.post(<span class="str">'/air/offer_requests'</span>, {
+    slices: [{ origin: originalOffer.origin_iata, destination: originalOffer.destination_iata,
+               departure_date: originalOffer.departure_at }],
+    passengers: buildPassengerTypes(orderId)
+  });
+
+  <span class="kw">const</span> freshOffer = freshSearch.data.offers[<span class="num">0</span>]; <span class="comment">// le moins cher équivalent</span>
+  <span class="kw">const</span> priceDelta = freshOffer.total_amount - originalOffer.offer_price_cents / <span class="num">100</span>;
+
+  <span class="kw">if</span> (priceDelta * <span class="num">100</span> &lt;= order.margin_safety_cents) {
+    <span class="comment">// La marge de sécurité couvre l'écart : achat silencieux, sans surcoût client</span>
+    <span class="kw">return</span> bookWithOffer(freshOffer.id);
+  } <span class="kw">else</span> {
+    <span class="comment">// Écart trop important : échec contrôlé, voir section suivante</span>
+    <span class="kw">throw new</span> PriceDeltaExceededError(priceDelta, order.margin_safety_cents);
+  }
+}</pre>
+
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Vol non garanti après re-fetch</strong> Le vol obtenu après re-fetch peut différer légèrement du vol initialement montré au client (horaire décalé de quelques minutes, escale différente sur une route concurrente). Pour la V1, on accepte cet écart mineur ; une version future pourra contraindre le re-fetch au même <code>flight_number</code> exact si disponible.</div>
+    </div>
+  </section>
+
+  <!-- GESTION ÉCART -->
+  <section class="section" id="gestion-delta">
+    <h2>Gestion de l'écart final (PriceDeltaExceededError)</h2>
+    <p>Quand l'écart de prix dépasse la marge de sécurité prévue, trois options sont possibles. La politique retenue pour la V1 est la suivante :</p>
+
+    <table>
+      <thead><tr><th>Option</th><th>Description</th><th>Retenue en V1 ?</th></tr></thead>
+      <tbody>
+        <tr><td>A — PayEnCash absorbe la perte</td><td>L'achat se fait quand même au prix réel, la marge commerciale est réduite ou négative pour cette commande</td><td>✅ Oui, si écart ≤ marge fixe + 50%</td></tr>
+        <tr><td>B — Échec et remboursement intégral</td><td>La commande passe en <code>FAILED</code>, le client est remboursé par retour cash agent (D2), aucun vol n'est réservé</td><td>✅ Oui, si écart > marge fixe + 50%</td></tr>
+        <tr><td>C — Recontacter le client pour validation du nouveau prix</td><td>Pause du flux, SMS demandant confirmation du surcoût</td><td>❌ Non en V1 — ajoute de la friction, à évaluer en V2</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Implémentation (pseudo-code)</h4>
+    <pre><span class="kw">catch</span> (err) {
+  <span class="kw">if</span> (err <span class="kw">instanceof</span> PriceDeltaExceededError) {
+    <span class="kw">const</span> tolerance = order.margin_fixed_cents * <span class="num">1.5</span>;
+
+    <span class="kw">if</span> (err.priceDeltaCents &lt;= tolerance) {
+      <span class="comment">// Option A : on absorbe, on réserve quand même</span>
+      <span class="kw">await</span> bookWithOffer(err.freshOfferId, { acceptLoss: <span class="kw">true</span> });
+      <span class="kw">await</span> logMarginLoss(order.id, err.priceDeltaCents);
+    } <span class="kw">else</span> {
+      <span class="comment">// Option B : échec contrôlé + remboursement — le cash est déjà collecté (D2)</span>
+      <span class="kw">await</span> db.orders.update(order.id, { status: <span class="str">'FAILED'</span> });
+      <span class="kw">await</span> triggerCourierCashRefund(order.id);  <span class="comment">// tournée de retour agent (is_return) — cf. Doc 1 / Doc 7</span>
+      <span class="kw">await</span> notifyClient(order.id, <span class="str">'flight_unavailable'</span>);
+    }
+  }
+}</pre>
+
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Traçabilité obligatoire</strong> Toute absorption de perte (Option A) doit être journalisée dans <code>audit_log</code> avec le montant exact, pour permettre une revue comptable mensuelle et un ajustement futur des marges fixes si ces pertes deviennent fréquentes sur certaines routes.</div>
+    </div>
+  </section>
+
+  <!-- SCÉNARIOS -->
+  <section class="section" id="scenarios">
+    <h2>Scénarios complets chiffrés</h2>
+
+    <div class="scenario-card">
+      <div class="scenario-title">📗 Scénario 1 — Cas nominal, délai court</div>
+      <table>
+        <tr><td>Vol Marseille-Barcelone affiché</td><td>15,00 €</td></tr>
+        <tr><td>Marge fixe (15%, min 3€)</td><td>+ 3,00 €</td></tr>
+        <tr><td>Délai estimé jusqu'à collecte :30 min → marge sécurité</td><td>+ 0,00 €</td></tr>
+        <tr><td><strong>Sous-total exigé (base + marges)</strong></td><td><strong>18,00 €</strong></td></tr>
+        <tr><td>Prix réel Duffel à l'achat (30 min plus tard)</td><td>15,00 € (inchangé)</td></tr>
+        <tr><td>Résultat</td><td><span class="tag green">Marge pleine conservée : 3,00 €</span></td></tr>
+      </table>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-title">📙 Scénario 2 — Délai long, prix monte mais reste dans la marge</div>
+      <table>
+        <tr><td>Vol affiché</td><td>15,00 €</td></tr>
+        <tr><td>Marge fixe</td><td>+ 3,00 €</td></tr>
+        <tr><td>Délai estimé jusqu'à collecte :2h+ → marge sécurité (1 voyageur)</td><td>+ 2,00 €</td></tr>
+        <tr><td><strong>Sous-total exigé (base + marges)</strong></td><td><strong>20,00 €</strong></td></tr>
+        <tr><td>Prix réel Duffel à l'achat (re-fetch après 2h)</td><td>16,50 € (+1,50 €)</td></tr>
+        <tr><td>Résultat</td><td><span class="tag amber">Marge réduite à 1,50 € mais commande honorée sans perte</span></td></tr>
+      </table>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-title">📕 Scénario 3 — Écart dépasse la marge, remboursement</div>
+      <table>
+        <tr><td>Vol affiché</td><td>15,00 €</td></tr>
+        <tr><td>Marge fixe</td><td>+ 3,00 €</td></tr>
+        <tr><td>Délai estimé jusqu'à collecte :2h+ → marge sécurité</td><td>+ 2,00 €</td></tr>
+        <tr><td><strong>Sous-total exigé (base + marges)</strong></td><td><strong>20,00 €</strong></td></tr>
+        <tr><td>Prix réel Duffel à l'achat (vol presque complet)</td><td>24,00 € (+9,00 €)</td></tr>
+        <tr><td>Tolérance (marge fixe × 1.5)</td><td>4,50 €</td></tr>
+        <tr><td>Résultat</td><td><span class="tag coral">9€ > 4,50€ tolérance → commande FAILED, remboursement intégral par retour cash agent</span></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- PRICING HÉBERGEMENT -->
+  <section class="section" id="pricing-hebergement">
+    <h2>Particularités du pricing hébergement</h2>
+    <p>Contrairement aux vols, les tarifs d'hébergement Hotelbeds varient généralement moins sur des fenêtres de quelques heures (les prix changent plutôt jour par jour selon le taux de remplissage). C'est pourquoi la marge de sécurité hébergement (section précédente) est volontairement plus faible que celle des vols.</p>
+    <table>
+      <thead><tr><th>Cas</th><th>Comportement</th></tr></thead>
+      <tbody>
+        <tr><td>Chambre/dortoir toujours disponible au même tarif</td><td>Cas le plus fréquent — aucun écart, marge fixe intégralement conservée</td></tr>
+        <tr><td>Tarif légèrement supérieur (quelques euros)</td><td>Absorbé par la marge de sécurité hébergement, ou par la marge fixe si dépassement mineur</td></tr>
+        <tr><td>Établissement complet / tarif retiré</td><td>Vol confirmé indépendamment ; tentative sur un établissement équivalent dans un rayon proche ; si échec, remboursement de la seule portion hébergement (voir Doc 1, cas d'erreur)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- RÈGLES AFFICHAGE -->
+  <section class="section" id="regles-affichage">
+    <h2>Règles d'affichage client</h2>
+    <table>
+      <thead><tr><th>Écran</th><th>Ce qui est affiché</th><th>Ce qui est masqué</th></tr></thead>
+      <tbody>
+        <tr><td>Écran budget (Phase 1)</td><td>Prix TTC (marge fixe incluse) avec « dont TVA » estimée, "reste de poche" calculé sur ce prix TTC</td><td>Détail de la marge, marge de sécurité (pas encore connue)</td></tr>
+        <tr><td>Écran détails/hébergement (Phase 2)</td><td>Sous-total billet × voyageurs, sous-total hébergement, total</td><td>Décomposition prix brut fournisseur / marge</td></tr>
+        <tr><td>Écran récapitulatif + créneau (Phase 3)</td><td><strong>Devis proforma</strong> — Total TTC recalculé en direct selon la fenêtre de collecte estimée, avec la marge de sécurité et la ligne « dont TVA » visibles ; non définitif tant que l'encaissement n'a pas eu lieu</td><td>Aucune notion de "risque fournisseur" exposée en langage technique — formulé comme "petite marge pour garantir le prix"</td></tr>
+        <tr><td>Code de collecte (Phase 3, génération du code)</td><td>Montant TTC fixe à collecter (= montant du code interne), avec la ligne « dont TVA » ; un <strong>reçu numéroté</strong> remis par l'agent à l'encaissement détaille HT + TVA + TTC</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">🧾</span>
+      <div><strong>TVA visible partout</strong> Tous les montants présentés au client sont TTC. Chaque écran de prix affiche une ligne <strong>« dont TVA X € »</strong> (au taux <code>vat_rate</code>, 20% par défaut, assiette = marge seule), et le reçu numéroté remis à l'encaissement détaille HT + TVA + TTC — voir la section TVA ci-dessus, le Doc 1 (tunnel) et le Doc 10 (facture).</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">👗</span>
+      <div><strong>Ligne Mode — hors périmètre de ce document</strong> Ce document couvre uniquement la ligne <strong>Voyage</strong>. La ligne <strong>Mode</strong> (articles achetés fermement à un réseau de partenaires) a sa propre logique de prix (majoration ferme sur achat, pas de marge de sécurité liée à un délai de collecte fournisseur, régime de TVA standard ou marge selon provenance) — voir la note séparée <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html"><code>Étape 4 · flux F11/F12</code></a>.</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div><strong>Document suivant</strong> Le Doc 5 — Architecture technique précise la stack recommandée (backend, file d'attente asynchrone pour les déclenchements Duffel/Hotelbeds, job CRON de calibrage), les environnements (sandbox/production), et la politique de sécurité et conformité RGPD pour les données voyageurs chiffrées définies au Doc 2.</div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

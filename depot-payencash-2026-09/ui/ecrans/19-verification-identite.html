@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Vérification d'identité</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<!-- VÉRIFICATION D'IDENTITÉ — KYC (créée 28/08, fondatrice : « la page KYC
+     n'est pas faite ?? c'est ici qu'on soumet les demandes »). La page du FAIRE
+     (05-securite-confiance reste la vitrine du POURQUOI) :
+     · statut ACTUEL dérivé DU BUS (spec-kyc-verifications) : le NIVEAU découle
+       de la DÉCISION cliquée par la hotline — zéro état local, zéro bascule auto ;
+     · la JAUGE des seuils est RÉELLE : achats payés des 7 derniers jours (bus)
+       vs les paliers internes de ref.kyc (achats OU cumul € sur une fenêtre
+       glissante — dispositif anti-fractionnement) ;
+     (18/09, soir — pivot « avec un bon d’achat ») CE QUI DÉCLENCHE LA VÉRIFICATION A CHANGÉ DE SOURCE.
+     L'écran l'adossait au plafond légal du paiement d'une dette en espèces (D112-3 / L112-6 CMF), qui ne
+     visait que les billets comptés par l'agent de caisse mobile — abandonné. Le seuil qui compte désormais
+     est celui du BON D’ACHAT : bonsRef().plafondClientMois sur fenetrePlafondJours glissants (art. R561-16-1 CMF
+     raisonne en trente jours, pas en mois civil), au-delà duquel la loi demande de savoir qui paie. Les
+     paliers de ref.kyc restent la seconde porte. Tout est DÉRIVÉ, pas un chiffre écrit ici. -->
+     · la SOUMISSION : parcours pièce + selfie (simulé à l'écran, transmis en
+       réel au prestataire PVID — jamais stocké chez nous), consentement TRACÉ
+       (art. 6-1-c et 9 RGPD), demande visible de la hotline (bus) ;
+     · ZÉRO donnée en dur : tout vient du bus et du profil ; l'écran bascule
+       EN DIRECT (pec-bus) quand la hotline décide. -->
+<style>
+  .kv-card{background:var(--color-surface);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:13px 15px;margin-bottom:10px}
+  .kv-row{display:flex;align-items:flex-start;gap:11px}
+  .kv-ic{flex:none;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:12px;background:var(--color-mint);color:var(--color-primary-dark)}
+  .kv-t{font-size:13.5px;font-weight:800;color:var(--color-ink)}
+  .kv-s{font-size:11.5px;line-height:1.55;color:var(--color-muted);margin-top:3px}
+  .kv-jauge{height:9px;border-radius:999px;background:var(--color-segment);overflow:hidden;margin-top:7px}
+  .kv-jauge i{display:block;height:100%;border-radius:999px;background:var(--color-primary);transition:width .3s}
+  .kv-etape{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--color-sep)}
+  .kv-etape:last-child{border-bottom:0}
+  .kv-etape .n{flex:none;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;background:var(--color-bg);color:var(--color-muted);font-size:12px;font-weight:800}
+  .kv-etape.ok .n{background:var(--color-primary);color:#fff}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:0 16px 12px">
+
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 2px 4px">
+      <a href="10-compte.html" id="kv-retour" class="tap" aria-label="Retour au compte" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-chevron-left"/></svg></a>
+      <div style="min-width:0">
+        <div style="font-size:17px;font-weight:800;letter-spacing:-0.02em;color:var(--color-ink)">Vérification d'identité</div>
+        <div style="font-size:10.5px;font-weight:600;color:var(--color-muted)">Ton niveau, tes seuils — et la vérification renforcée quand il la faut.</div>
+      </div>
+    </div>
+
+    <!-- ① MON STATUT (dynamique) -->
+    <div class="kv-card" style="margin-top:8px">
+      <div class="kv-row">
+        <span class="kv-ic" id="st-ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-user"/></svg></span>
+        <div style="min-width:0;flex:1">
+          <div class="kv-t">Mon niveau : <span id="st-niveau">—</span></div>
+          <p class="kv-s" id="st-detail">—</p>
+        </div>
+        <span class="pec-pill" id="st-pill" style="flex:none">—</span>
+      </div>
+    </div>
+
+    <!-- ② MES SEUILS — la jauge RÉELLE des 7 derniers jours (bus) -->
+    <div class="kv-card">
+      <div class="kv-t" style="font-size:12.5px">Tes achats des <span data-kyc="jours">7</span> derniers jours</div>
+      <p class="kv-s">La vérification <b style="color:var(--color-ink)">Standard</b> couvre jusqu'à <b style="color:var(--color-ink)"><span data-kyc="achats">3</span> achats</b> ou <b style="color:var(--color-ink)"><span data-kyc="cumul">1 000 €</span> cumulés</b> sur <span data-kyc="jours">7</span> jours glissants. Au-delà, la vérification renforcée devient nécessaire : c'est le dispositif anti-fractionnement.</p>
+      <p class="kv-s" id="j-bon" style="margin-top:6px">—</p>
+      <div style="display:flex;justify-content:space-between;font-size:10.5px;font-weight:700;color:var(--color-muted);margin-top:10px"><span>Achats : <b style="color:var(--color-ink)" id="j-n">0</b> / <span data-kyc="achats">3</span></span><span>Cumul : <b style="color:var(--color-ink)" id="j-mnt">0 €</b> / <span data-kyc="cumul">1 000 €</span></span></div>
+      <div class="kv-jauge"><i id="j-barre" style="width:0%"></i></div>
+      <p class="kv-s" id="j-msg" style="margin-top:7px">—</p>
+    </div>
+
+    <!-- ③ SOUMETTRE LA VÉRIFICATION RENFORCÉE -->
+    <div class="kv-card" id="kv-soumission">
+      <div class="kv-row" style="margin-bottom:4px">
+        <span class="kv-ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-shield"/></svg></span>
+        <div style="min-width:0">
+          <div class="kv-t">Passer en vérification renforcée</div>
+          <p class="kv-s">Tu déposes ici <b style="color:var(--color-ink)">de vraies pièces</b> et tu enregistres une <b style="color:var(--color-ink)">courte vidéo</b>. Elles sont chiffrées dans ton coffre et lues uniquement par la hotline et le manager, qui décident — tu es prévenu ici. Conservation : <span data-kyc="conservation">—</span>.</p>
+        </div>
+      </div>
+      <div id="kv-etapes"></div>
+      <label style="display:flex;align-items:flex-start;gap:9px;margin-top:11px;font-size:10.5px;line-height:1.55;color:var(--color-muted)">
+        <input type="checkbox" id="kv-consent" style="flex:none;width:17px;height:17px;margin-top:1px;accent-color:var(--color-primary)">
+        <span>J'accepte que les pièces déposées ci-dessus soient <b style="color:var(--color-ink)">contrôlées par l'équipe PayEnCash</b> pour vérifier mon identité (obligation légale de vigilance, LCB-FT) — elles ne servent à rien d'autre.</span>
+      </label>
+      <button type="button" id="kv-envoyer" class="pec-cta pec-cta--tight tap" aria-disabled="true" style="display:block;width:100%;text-align:center;margin-top:11px;opacity:.45;pointer-events:none">Soumettre ma vérification</button>
+      <div id="kv-ok" hidden style="margin-top:9px;border-radius:12px;background:var(--color-mint);padding:11px 13px;font-size:12px;line-height:1.55;color:var(--color-mint-ink)"></div>
+    </div>
+
+    <!-- ④ POURQUOI — renvoi vitrine -->
+    <a href="05-securite-confiance.html" class="tap kv-card" style="display:flex;align-items:center;gap:11px;text-decoration:none">
+      <span class="kv-ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-info"/></svg></span>
+      <span style="min-width:0;flex:1"><span class="kv-t" style="display:block;font-size:12.5px">Pourquoi cette vérification ?</span><span class="kv-s" style="display:block">Sécurité &amp; confiance — le dispositif expliqué en clair.</span></span>
+      <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:15px;color:var(--color-primary-dark)"><use href="#i-chevron-right"/></svg>
+    </a>
+
+  <div id="fermeture-slot"></div>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('');})();</script>
+    <div style="height:10px"></div>
+  </div>
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" aria-current="page" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+(function () {
+  var D = window.PEC_DATA;
+  var MOI = (D.profil || {}).nomComplet || 'moi';
+  // Le dossier de pièces est indexé sur l'IDENTIFIANT du compte, jamais sur le nom :
+  // un nom change (rectification RGPD) et emporterait le dossier avec lui.
+  var MOI_ID = (D.clientActifGet && D.clientActifGet()) || null;
+  // PALIERS KYC = PEC_DATA.ref.kyc (audit 03/09) : achats / cumul € / fenêtre jours — plus de 3 / 1 000 / 7 écrits ici
+  var K = ((D.ref || {}).kyc || {}).paliers || {}, K_ACH = K.achats || 3, K_CUM = K.cumulEuros || 1000, K_J = K.fenetreJours || 7;
+  var I = D.infosPubliques ? D.infosPubliques() : {};
+  [].forEach.call(document.querySelectorAll('[data-kyc]'), function (el) { var k = el.getAttribute('data-kyc'); el.textContent = k === 'achats' ? K_ACH : k === 'cumul' ? D.eur(K_CUM) : k === 'jours' ? K_J : k === 'prestataire' ? ((D.ref.kyc || {}).prestataire || 'PVID') : k === 'conservation' ? (((D.ref.juridique || {}).conservation || {}).dossierVerification || 'le temps du contrôle réglementaire') : el.textContent; });
+
+  // MA vérification = la dernière du BUS pour ce compte (spec-kyc : zéro état
+  // local — le NIVEAU découle de la DÉCISION cliquée par la hotline)
+  function maVerif() {
+    var l = (window.PEC_BUS && PEC_BUS.verifications) ? PEC_BUS.verifications() : [];
+    var cid = (window.PEC_DATA && PEC_DATA.clientActifGet) ? PEC_DATA.clientActifGet() : null;   // (09/09 — lot 1 socle) par COMPTE, plus par nom
+    return l.filter(function (v) { return (v.clientId && cid) ? v.clientId === cid : (!v.clientId && v.client === MOI); })[0] || null;
+  }
+
+  // ① le statut — dérivé du bus, bascule EN DIRECT (pec-bus)
+  function majStatut() {
+    var v = maVerif();
+    var niv = document.getElementById('st-niveau'), det = document.getElementById('st-detail'), pill = document.getElementById('st-pill');
+    var soum = document.getElementById('kv-soumission');
+    if (v && v.statut === 'validee') {
+      niv.textContent = 'Renforcé'; pill.textContent = 'Renforcé ✓'; pill.className = 'pec-pill pec-pill--done';
+      /* (18/09, soir) LA PHRASE CITAIT LE PLAFOND LÉGAL DES ESPÈCES REMISES À L'AGENT (D.plafondEspecesVif) :
+         la fonction n'existe plus, et la règle non plus. Ce qui s'applique à un compte vérifié, ce sont les
+         plafonds du BON D’ACHAT — par bon d’achat, par jour, et sur la fenêtre glissante. */
+      var RB = D.bonsRef ? D.bonsRef() : null;
+      det.innerHTML = 'Identité contrôlée et <b style="color:var(--color-ink)">validée par notre équipe</b> (dossier ' + v.id + ')'
+        + (RB ? ' — restent les plafonds du ' + D.esc(RB.nom) + ' : <b style="color:var(--color-ink)">' + D.esc(D.eur(RB.plafondBon)) + '</b> par bon d’achat et <b style="color:var(--color-ink)">' + D.esc(D.eur(RB.plafondClientJour)) + '</b> par jour.' : '.');
+      soum.style.display = 'none';
+    } else if (v && (v.statut === 'a_controler' || v.statut === 'transmise_pvid')) {
+      niv.textContent = 'Renforcé — en contrôle'; pill.textContent = 'En contrôle'; pill.className = 'pec-pill pec-pill--wait';
+      det.innerHTML = 'Dossier <b style="color:var(--color-ink)">' + v.id + '</b> transmis — le prestataire a instruit, <b style="color:var(--color-ink)">notre équipe contrôle et décide</b>. Tu seras prévenu ici et dans tes notifications.';
+      soum.style.display = 'none';
+    } else if (v && v.statut === 'a_refaire') {
+      niv.textContent = 'Standard — capture à refaire'; pill.textContent = 'À refaire'; pill.className = 'pec-pill';
+      det.innerHTML = 'Notre équipe n\'a pas pu valider : <b style="color:var(--color-amber-text)">' + (v.motif || 'capture illisible') + '</b>. Refais les deux captures ci-dessous et resoumets.';
+      soum.style.display = '';
+    } else if (v && v.statut === 'refusee') {
+      niv.textContent = 'Standard — vérification refusée'; pill.textContent = 'Refusée'; pill.className = 'pec-pill';
+      det.innerHTML = 'Motif : <b style="color:var(--color-amber-text)">' + (v.motif || '—') + '</b>. Tu peux contester via l\'<a href="14-assistance.html" style="font-weight:800;color:var(--color-primary-dark)">Assistance</a> (réponse du manager sous ' + (I.managerDelai || '48 h') + ', médiateur ensuite).';
+      soum.style.display = 'none';
+    } else {
+      niv.textContent = 'Standard'; pill.textContent = 'Standard ✓'; pill.className = 'pec-pill pec-pill--done';
+      // le niveau Standard suppose un compte VÉRIFIÉ (SMS + e-mail) — lu dans l'état réel, jamais affirmé
+      var vc = D.compteVerifieComplet ? D.compteVerifieComplet() : true;
+      det.innerHTML = vc ? 'Ton compte est vérifié (SMS + e-mail) — c\'est le niveau <b style="color:var(--color-ink)">Standard</b>, suffisant pour commencer (les seuils sont dans la jauge ci-dessous).'
+        : 'Ton compte n\'est <b style="color:var(--color-amber-text)">pas encore vérifié</b> (SMS et/ou e-mail) — valide-le dans <a href="10-compte.html" style="font-weight:800;color:var(--color-primary-dark)">Compte</a> : c\'est le niveau Standard, indispensable avant la 1ʳᵉ commande.';
+      if (!vc) { pill.textContent = 'À vérifier'; pill.className = 'pec-pill pec-pill--wait'; }
+      soum.style.display = '';
+    }
+  }
+
+  // ② la jauge RÉELLE : les commandes payées des 7 derniers jours (bus)
+  function majJauge() {
+    var payees = (window.PEC_BUS ? PEC_BUS.commandes() : []).filter(function (c) {
+      return c.statut === 'paye' && (c.payeAt || 0) > Date.now() - K_J * 86400000;
+    });
+    var n = payees.length;
+    var tot = payees.reduce(function (s, c) { return s + (parseFloat(String(c.montant || '0').replace(',', '.')) || 0); }, 0);
+    document.getElementById('j-n').textContent = String(n);
+    document.getElementById('j-mnt').textContent = tot.toFixed(0) + ' €';
+    var pct = Math.min(100, Math.max(n / K_ACH, tot / K_CUM) * 100);
+    document.getElementById('j-barre').style.width = pct + '%';
+    document.getElementById('j-barre').style.background = pct >= 100 ? 'var(--color-amber)' : 'var(--color-primary)';
+    document.getElementById('j-msg').innerHTML = pct >= 100
+      ? '<b style="color:var(--color-amber-text)">Seuil atteint :</b> la vérification renforcée est nécessaire pour ta prochaine commande — soumets-la ci-dessous.'
+      : (n === 0 ? 'Aucun achat sur les ' + K_J + ' derniers jours — tu es large.' : 'Tu es sous les seuils — rien à faire pour l\'instant.');
+    /* (18/09, soir — pivot « avec un bon d’achat ») LA SECONDE PORTE, ET LA VRAIE : le plafond du BON D’ACHAT sur sa
+       fenêtre glissante (bonsRef.plafondClientMois / fenetrePlafondJours). Ce n'est pas un mur — le bon d’achat reste
+       valable — c'est le moment où la loi demande de savoir qui paie. Le consommé se LIT (bonsUtilisesPeriode). */
+    var bm = document.getElementById('j-bon'); if (!bm || !D.bonsRef) return;
+    var RB = D.bonsRef(), cid = D.clientActifGet ? D.clientActifGet() : null;
+    var used = (cid && D.bonsUtilisesPeriode) ? D.bonsUtilisesPeriode(cid) : 0;
+    bm.innerHTML = 'Bons d’achat utilisés : <b style="color:var(--color-ink)">' + D.esc(D.eur(used)) + '</b> sur '
+      + RB.fenetrePlafondJours + ' jours glissants, pour un plafond de <b style="color:var(--color-ink)">' + D.esc(D.eur(RB.plafondClientMois)) + '</b>. '
+      + (used >= RB.plafondClientMois
+         ? '<b style="color:var(--color-amber-text)">Plafond atteint</b> — ton bon d’achat reste intact, mais il faut vérifier ton identité pour continuer à l\'utiliser.'
+         : 'Au-delà, la loi impose de vérifier ton identité avant d\'utiliser un bon d’achat de plus.');
+  }
+
+  // ③ la soumission : 2 captures + consentement TRACÉ → VÉRIFICATION au bus
+  //    (la hotline la voit en direct et DÉCIDE d'un clic — spec-kyc §2)
+  // Le dossier RÉEL (PEC_DOCS) : dépôt de fichiers, vidéo enregistrée, CGU générées puis
+  // signées. Plus de « capture » simulée qui posait un ✓ sans rien déposer.
+  function majDossier() {
+    if (!window.PEC_DOCS || !MOI_ID) return;
+    PEC_DOCS.rendreDossier('kv-etapes', 'client', MOI_ID, { onChange: majEnvoyer });
+  }
+  function dossierPret() {
+    if (!window.PEC_DOCS || !MOI_ID) return false;
+    var e = PEC_DOCS.etat('client', MOI_ID);
+    return !e.manquantes.length && !e.refusees.length;
+  }
+  function majEnvoyer() {
+    var ok = dossierPret() && document.getElementById('kv-consent').checked;
+    var b = document.getElementById('kv-envoyer');
+    b.setAttribute('aria-disabled', String(!ok));
+    b.style.opacity = ok ? '1' : '.45';
+    b.style.pointerEvents = ok ? 'auto' : 'none';
+    b.textContent = dossierPret() ? 'Soumettre ma vérification' : 'Complète les pièces ci-dessus';
+  }
+  document.getElementById('kv-consent').addEventListener('change', majEnvoyer);
+  document.getElementById('kv-envoyer').addEventListener('click', function () {
+    if (!dossierPret()) return;
+    if (D.consentir) D.consentir('kyc-controle', 'Vérification renforcée — contrôle des pièces déposées par l\'équipe PayEnCash accepté');
+    // le dossier part dans la file de contrôle (dispatch auto + échéance du référentiel)
+    if (window.PEC_DOCS && MOI_ID) PEC_DOCS.soumettre('client', MOI_ID, {});
+    var v = PEC_BUS.ouvrirVerification({ client: MOI, tel: (D.profil || {}).tel || '' });
+    var ok = document.getElementById('kv-ok'); ok.hidden = false;
+    ok.innerHTML = '✓ <b style="color:var(--color-primary-dark)">Dossier ' + v.id + ' transmis.</b> Le prestataire a instruit — <b>notre équipe contrôle et te répond</b> ici et dans tes notifications. Le statut ci-dessus se met à jour tout seul.';
+    majStatut();
+  });
+
+  // écran PARTAGÉ Fly / Mode : le retour revient à l'app d'où l'on vient (?retour=)
+  (function () {
+    var r = new URLSearchParams(location.search).get('retour');
+    var a2 = document.getElementById('kv-retour');
+    if (r && a2 && /^[\w./-]+$/.test(r) && r.indexOf('//') === -1) a2.setAttribute('href', r);
+  })();
+  majDossier(); majStatut(); majJauge(); majEnvoyer();
+  // la décision de la HOTLINE bascule cet écran EN DIRECT
+  window.addEventListener('pec-bus', function () { majStatut(); majJauge(); majEnvoyer(); });
+  window.addEventListener('storage', function () { majStatut(); majJauge(); majEnvoyer(); });
+})();
+</script>
+</body>
+</html>

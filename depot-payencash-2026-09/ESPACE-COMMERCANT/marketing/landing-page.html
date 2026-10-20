@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>payencash.fr — PayEnCash Solution, grossiste en bons d’achat de marque</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../../ui/assets/logos/payencash-solution-blanc-64.png">
+<link rel="apple-touch-icon" href="../../ui/assets/logos/payencash-solution-blanc-180.png">
+<link rel="stylesheet" href="../../ui/assets/payencash-v2.css">
+<script src="../../ui/assets/payencash-icons.js"></script>
+<script>window.PEC_LOGOS_BASE = "../../ui/assets/logos/";   /* (23/09) la vitrine vit hors de /ui/ : elle le DIT plutôt que de laisser deviner le chemin */</script>
+<script src="../../ui/assets/payencash-data.js"></script>
+<link rel="stylesheet" href="../../ui/assets/vendor/maplibre-gl.css">
+<script src="../../ui/assets/vendor/maplibre-gl.js"></script>
+<link rel="stylesheet" href="../../ui/assets/payencash-comment-payer.css"><!-- .mk-pt : le marqueur des commerces du réseau, un seul dessin -->
+<!--
+  payencash.fr — LA VITRINE PUBLIQUE, DEVENUE LA PAGE PRINCIPALE (23/09, décisions fondatrice : « désormais tu
+  vas la représenter PayEnCash Solution », « reprends tout le look de la page accueil », « ce sera la page
+  principale »).
+  CE QU'ELLE REMPLACE : la vitrine v3 des DEUX APPS (FLY et MODE à télécharger, le concours mensuel, les quatre
+  entonnoirs grand public / fournisseurs / partenaires / équipe). Fly est sorti du périmètre le 21/09, et le
+  produit qui se vend aujourd'hui est PayEnCash Solution — la page dit donc ce que nous faisons maintenant, et
+  à qui. Les trois autres vitrines (fournisseurs, partenaires, équipe) restent en place : elles recrutent, elles
+  ne présentent pas le produit.
+  LE LOOK EST CELUI DE L'ACCUEIL MODE — esprit Zara × Vinted, et ce n'est pas un hasard : la page s'adresse à
+  des marques de mode. Elle emprunte à mode/01-accueil ses codes, un par un : hero éditorial plein cadre,
+  sections NUMÉROTÉES |01|-|05| comme les catégories, libellés en CAPITALES à .13em, grille photo-first en 3/4
+  avec de vraies photos (D.photoArticle — les mêmes que le catalogue), coins à 4 px, charte verte, chiffres
+  tabulaires. Une marque de streetwear doit reconnaître son monde en arrivant, pas une page de logiciel.
+  À QUI ELLE PARLE : jeunes marques de prêt-à-porter, créateurs indépendants de sneakers, marques de niche qui
+  vendent en ligne. PAS les grandes enseignes généralistes — et la page l'écrit.
+  CE QU'ELLE PROMET : nous ACHETONS leurs bons mono-enseigne et nous les REVENDONS à notre réseau. Jamais
+  « commission », jamais « nous reversons », jamais « droits à consommer ».
+  ZÉRO DUR : offres, taux, parts, forfaits, taille du réseau et cadre juridique sont LUS du data-layer.
+-->
+<style>
+  body{ margin:0; background:var(--color-surface); color:var(--color-ink);
+        font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+        font-variant-numeric:tabular-nums }
+  .caps{ letter-spacing:.13em; text-transform:uppercase }
+  .wrap{ max-width:1120px; margin:0 auto; padding:0 20px }
+  /* ── l'en-tête : les deux boutons ronds de l'accueil Mode, et la marque à gauche ── */
+  .hd{ display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 0 }
+  .hd .pec-marque{ display:inline-flex; align-items:center; gap:9px; text-decoration:none; color:inherit }
+  .hd nav{ display:flex; gap:9px; align-items:center; flex-wrap:wrap }
+  .lnk{ font-size:11px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; color:var(--color-ink);
+        text-decoration:none; padding:9px 2px }
+  .lnk:hover{ color:var(--color-primary-dark) }
+  .btn{ display:inline-flex; align-items:center; gap:8px; border:0; border-radius:9px; background:var(--color-ink); color:#fff;
+        font:inherit; font-size:11px; font-weight:800; letter-spacing:.13em; text-transform:uppercase;
+        padding:12px 17px; text-decoration:none; cursor:pointer }
+  .btn--v{ background:var(--color-primary) }
+  .btn--o{ background:transparent; color:#fff; box-shadow:inset 0 0 0 1px rgba(255,255,255,.4) }
+  /* ── le hero éditorial plein cadre ── */
+  .hero{ position:relative; border-radius:4px; overflow:hidden; background:var(--color-ink); min-height:clamp(420px,58vh,560px);
+         display:flex; align-items:flex-end }
+  .hero img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.46 }
+  .hero .in{ position:relative; padding:clamp(26px,4vw,52px); color:#fff; max-width:760px }
+  .hero .kick{ font-size:10.5px; font-weight:800; letter-spacing:.2em; text-transform:uppercase; color:var(--color-bright); margin:0 }
+  .hero h1{ font-size:clamp(30px,5.4vw,58px); line-height:1.04; letter-spacing:-.025em; font-weight:800; margin:14px 0 0; text-wrap:balance }
+  .hero p{ font-size:16.5px; line-height:1.6; color:#d5e6dd; margin:16px 0 0; max-width:54ch }
+  .hero .acts{ display:flex; gap:9px; flex-wrap:wrap; margin-top:24px }
+  /* ── la barre numérotée, calquée sur les catégories de l'accueil ── */
+  .catbar{ display:flex; gap:7px; overflow-x:auto; padding:16px 0 2px; scrollbar-width:none }
+  .catbar::-webkit-scrollbar{ display:none }
+  .catrow{ flex:none; display:inline-flex; align-items:baseline; gap:6px; padding:8px 13px; border-radius:999px;
+           background:var(--color-segment); text-decoration:none; color:inherit; white-space:nowrap }
+  .catrow .num{ font-size:9.5px; color:var(--color-muted-2); font-weight:700 }
+  .catrow .nm{ font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--color-ink) }
+  .catrow:hover{ background:var(--color-ink) } .catrow:hover .num{ color:var(--color-mint-soft) } .catrow:hover .nm{ color:#fff }
+  /* ── les sections ── */
+  section{ padding:46px 0 6px }
+  .sec-t{ display:flex; align-items:baseline; gap:10px; margin:0 0 6px }
+  .sec-t .n{ font-size:10.5px; font-weight:700; color:var(--color-muted-2) }
+  .sec-t h2{ font-size:11px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; margin:0 }
+  .sec-h{ font-size:clamp(22px,3vw,34px); line-height:1.12; letter-spacing:-.02em; margin:0 0 10px; max-width:24ch; text-wrap:balance }
+  .lede{ font-size:16px; line-height:1.62; color:var(--color-muted); margin:0 0 22px; max-width:64ch }
+  /* ── la grille photo-first, ratio 3/4, coins 4 px : celle de l'accueil ── */
+  .grille{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:22px 14px }
+  .pcard .ph{ position:relative; aspect-ratio:3/4; border-radius:4px; overflow:hidden;
+              background:linear-gradient(160deg,#eceae5,#d9d5ce) }
+  .pcard .ph img{ width:100%; height:100%; object-fit:cover; display:block }
+  .pcard .badge{ position:absolute; top:8px; left:8px; font-size:8.5px; font-weight:800; letter-spacing:.1em;
+                 text-transform:uppercase; border-radius:3px; padding:4px 7px; background:var(--color-mint); color:var(--color-primary-dark) }
+  .pcard .nm{ margin-top:10px; font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase }
+  .pcard .idl{ margin-top:4px; font-size:13px; line-height:1.55; color:var(--color-muted) }
+  /* ── les offres : la carte produit, avec le taux en prix ── */
+  .offres{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px }
+  .offre{ border:1px solid var(--color-sep); border-radius:4px; padding:20px; display:flex; flex-direction:column; gap:8px; background:var(--color-surface) }
+  .offre.reco{ background:var(--color-ink); border-color:var(--color-ink); color:#fff }
+  .offre .nm{ font-size:11px; font-weight:800; letter-spacing:.11em; text-transform:uppercase }
+  .offre .px{ font-size:34px; font-weight:800; letter-spacing:-.03em; line-height:1 }
+  .offre .d{ font-size:13px; line-height:1.55; color:var(--color-muted) }
+  .offre.reco .d{ color:#bcd6c9 }
+  .offre .tot{ margin-top:auto; padding-top:12px; border-top:1px solid var(--color-sep); font-size:13px; color:var(--color-muted) }
+  .offre.reco .tot{ border-top-color:rgba(255,255,255,.18); color:#bcd6c9 }
+  .offre .tot b{ font-size:17px; color:var(--color-ink) } .offre.reco .tot b{ color:#fff }
+  /* ── le reste ── */
+  .etapes{ counter-reset:e; display:grid; gap:0; border-top:1px solid var(--color-sep) }
+  .etapes li{ counter-increment:e; list-style:none; display:grid; grid-template-columns:64px 1fr; gap:18px;
+              padding:18px 2px; border-bottom:1px solid var(--color-sep); align-items:start }
+  .etapes li::before{ content:'|0' counter(e) '|'; font-size:10.5px; font-weight:700; color:var(--color-muted-2); padding-top:3px }
+  .etapes .t{ font-size:11px; font-weight:800; letter-spacing:.11em; text-transform:uppercase; margin-bottom:5px }
+  .etapes .s{ font-size:14.5px; line-height:1.62; color:var(--color-muted) }
+  .pas{ border-left:2px solid var(--color-amber-text); background:var(--color-amber-well); padding:15px 19px;
+        font-size:14px; line-height:1.62; color:var(--color-amber-text); border-radius:0 4px 4px 0; margin-top:18px }
+  .blocs{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px }
+  .bloc{ border:1px solid var(--color-sep); border-radius:4px; padding:18px 19px }
+  .bloc .t{ font-size:11px; font-weight:800; letter-spacing:.11em; text-transform:uppercase; margin-bottom:7px }
+  .bloc .s{ font-size:14px; line-height:1.6; color:var(--color-muted) }
+  .cite{ font-size:13px; line-height:1.68; color:var(--color-muted); margin-top:16px }
+  .cite b{ color:var(--color-ink) }
+  .foot{ border-top:1px solid var(--color-sep); margin-top:46px; padding:22px 0 42px; font-size:12.5px; line-height:1.7; color:var(--color-muted-2) }
+  .foot a{ color:var(--color-muted); text-decoration:none; font-weight:800; letter-spacing:.06em }
+  @media (max-width:640px){ .hero .in{ padding:22px } .etapes li{ grid-template-columns:44px 1fr; gap:12px } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="hd">
+    <a class="pec-marque" href="landing-page.html" id="lp-marque" aria-label="PayEnCash Solution"></a>
+    <nav>
+      <a class="lnk" href="#pour-qui">Pour qui</a>
+      <a class="lnk" href="#offres">Ce qu’on paie</a>
+      <a class="lnk" href="../../ui/tech/03-documentation.html">Documentation</a>
+      <a class="lnk" href="../../ui/tech/01-connexion.html">Connexion</a>
+      <a class="btn btn--v" href="../../ui/tech/00-inscription.html">Devenir partenaire</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <img id="lp-hero-img" alt="" loading="eager">
+    <div class="in">
+      <p class="kick">Grossiste en bons d’achat de marque</p>
+      <h1 id="lp-h1">—</h1>
+      <p id="lp-sub">—</p>
+      <div class="acts">
+        <a class="btn btn--v" href="../../ui/tech/00-inscription.html">Devenir marque partenaire</a>
+        <a class="btn btn--o" href="#offres">Voir ce que nous payons</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="catbar" id="lp-cats"></div>
+
+  <section id="pour-qui">
+    <div class="sec-t"><span class="n">|01|</span><h2>Pour qui</h2></div>
+    <p class="sec-h">Les marques qui ont une communauté, et pas de vitrine.</p>
+    <p class="lede">Nous ne distribuons pas les bons des grandes enseignes généralistes. Nous travaillons avec celles qui vendent en ligne, qui ont une identité forte, et à qui il manque le seul canal qu’on n’achète pas : la rue.</p>
+    <div class="grille" id="lp-qui"></div>
+    <div class="pas" id="lp-pas">—</div>
+  </section>
+
+  <section id="offres">
+    <div class="sec-t"><span class="n">|02|</span><h2>Ce que nous vous payons</h2></div>
+    <p class="sec-h">Nous achetons vos bons. Vous choisissez quand vous êtes payée.</p>
+    <p class="lede">Plus nous vous payons vite, plus la remise est forte. Vous changez d’offre quand vous voulez — les bons déjà vendus gardent le taux qu’ils portaient.</p>
+    <div class="offres" id="lp-offres"></div>
+    <p class="cite" id="lp-offres-note">—</p>
+  </section>
+
+  <section id="comment">
+    <div class="sec-t"><span class="n">|03|</span><h2>Comment ça se passe</h2></div>
+    <p class="sec-h">Cinq gestes, et aucun n’est de vous.</p>
+    <ol class="etapes" id="lp-etapes"></ol>
+  </section>
+
+  <!-- ══ (23/09, fondatrice : « dans la page vitrine, affiche le nombre de marques qui nous font confiance, et une
+       carte de nos points de vente — force de réseau ») LA PREUVE, PAS L'ARGUMENT ══════════════════════════════
+       Tout est COMPTÉ (marques vérifiées, commerces actifs, mandataires nomades, villes) et la carte porte les commerces
+       qui ont une adresse — jamais un nombre écrit pour faire joli : sur un appareil vide, la page dit que le réseau
+       ouvre ville par ville. Les nomades ne sont pas épinglés : ils n'ont pas d'adresse, on ne leur en invente pas. -->
+  <section id="reseau">
+    <div class="sec-t"><span class="n">|04|</span><h2>La force du réseau</h2></div>
+    <p class="sec-h" id="lp-res-h">—</p>
+    <p class="lede" id="lp-res-lede">—</p>
+    <div class="blocs" id="lp-res-kpi"></div>
+    <div id="lp-map-wrap" style="position:relative;margin-top:14px;border-radius:18px;overflow:hidden;height:min(420px,56vw);box-shadow:var(--shadow-card)">
+      <div id="lp-map" class="pec-map-canvas" style="position:absolute;inset:0"></div>
+    </div>
+    <p class="cite" id="lp-res-villes">—</p>
+  </section>
+
+  <!-- ══ (23/09, fondatrice : « ajoute que nous faisons la promotion de leurs articles à travers tout le réseau :
+       points physiques — affichage mural, dernières tendances, "pourquoi se faire plaisir" ; nomades — flyers et
+       animation des réseaux sociaux pour promouvoir leur marque ») LA PROMOTION, DITE ET MONTRÉE ═══════════════
+       Les deux canaux sont comptés (commerces, nomades) et le mur montre les DERNIERS visuels publiés par les marques
+       (techArticles) — la vitrine n'invente pas une tendance : elle expose ce que le réseau affiche vraiment. -->
+  <section id="promotion">
+    <div class="sec-t"><span class="n">|05|</span><h2>La promotion de vos articles</h2></div>
+    <p class="sec-h">Vos articles, affichés partout où vos bons se vendent.</p>
+    <p class="lede" id="lp-promo-lede">—</p>
+    <div class="blocs" id="lp-promo"></div>
+    <p class="sec-h" style="margin-top:26px">Le mur des dernières tendances</p>
+    <p class="lede">Ce que les commerces du réseau affichent en ce moment : les visuels que les marques publient depuis leur espace, avec le prix, la remise s’il y en a une — et l’invitation à se faire plaisir.</p>
+    <div class="grille" id="lp-mur"></div>
+  </section>
+
+  <section id="logiciel">
+    <div class="sec-t"><span class="n">|06|</span><h2>Le logiciel</h2></div>
+    <p class="sec-h">Vendu à part, et le premier forfait est inclus.</p>
+    <p class="lede">Émettre, suivre, décompter, être payée : le logiciel fait le travail. Il ne commande ni le prix auquel nous achetons vos bons, ni le délai auquel nous vous payons.</p>
+    <div class="offres" id="lp-formules"></div>
+  </section>
+
+  <section id="cadre">
+    <div class="sec-t"><span class="n">|07|</span><h2>Le cadre</h2></div>
+    <p class="sec-h">Pourquoi c’est légal, et pourquoi ça le reste.</p>
+    <div class="blocs" id="lp-cadre"></div>
+    <p class="cite" id="lp-droit">—</p>
+  </section>
+
+  <section>
+    <div class="hero" style="min-height:0">
+      <img id="lp-hero2" alt="" loading="lazy">
+      <div class="in" style="padding-top:clamp(30px,4vw,48px)">
+        <h1 style="font-size:clamp(22px,3.4vw,38px);max-width:20ch">Votre communauté est en ligne. Vos prochains clients ne le sont pas.</h1>
+        <p>Dites-nous qui vous êtes, ce que vous vendez et sur quel site vos bons seront utilisés. Nous revenons vers vous avec une proposition et le contrat de mandat.</p>
+        <div class="acts">
+          <a class="btn btn--v" href="../../ui/tech/00-inscription.html">Devenir marque partenaire</a>
+          <a class="btn btn--o" href="../../ui/tech/03-documentation.html">Lire la documentation</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <div id="lp-mentions">—</div>
+    <div style="margin-top:12px" class="caps" style="font-size:11px">
+      <a href="../../ui/tech/03-documentation.html">Documentation</a> ·
+      <a href="../../ui/tech/01-connexion.html">Espace partenaire</a> ·
+      <a href="../documents/analyse-juridique-reseau-commissionnaires.html">Cadre juridique</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var D = window.PEC_DATA, $ = function (i) { return document.getElementById(i); };
+  if (!D || !D.techRef) return;
+  var esc = function (v) { return D.esc(v); };
+  var pc = function (x) { return String(x).replace('.', ',') + ' %'; };
+
+  var R = D.techRef(), P = R.paiement, modes = D.techModes(), formules = D.techFormules();
+  var rapide = modes.slice().sort(function (a, b) { return (a.delaiHeures || 9999) - (b.delaiHeures || 9999); })[0];
+
+  $('lp-marque').innerHTML = D.marqueHTML('solution', { nom: R.nom.replace(/^PayEnCash\s*/i, ''), slogan: false });
+
+  /* ══ LES PHOTOS — les MÊMES que le catalogue Mode (D.photoArticle) : une marque de streetwear doit
+     reconnaître son monde en arrivant. Aucune image écrite en dur : la famille et la graine suffisent. ══ */
+  var photo = function (cat, sous, graine) { return D.photoArticle(cat, sous, graine); };
+  $('lp-hero-img').src = photo('sneakers', 'Lifestyle', 'solution-hero');
+  $('lp-hero2').src = photo('pap', 'Sweats & hoodies', 'solution-pied');
+
+  /* ══ LE HERO ══ */
+  $('lp-h1').textContent = 'Vos bons d’achat, vendus au comptoir, partout où vous n’avez pas de boutique.';
+  $('lp-sub').innerHTML = 'Nous sommes grossiste : nous vous <b style="color:#fff">achetons</b> vos bons d’achat et cartes cadeaux — utilisables uniquement sur votre site — '
+    + 'et nous les revendons dans notre réseau de commerces de quartier. Nous vous payons en '
+    + esc(rapide.court) + ', par virement, sans avoir ouvert une seule vitrine.';
+
+  /* ══ LA BARRE NUMÉROTÉE — les ancres de la page, aux codes des catégories de l'accueil ══ */
+  var cats = [['pour-qui', 'Pour qui'], ['offres', 'Ce qu’on paie'], ['comment', 'Comment'], ['logiciel', 'Le logiciel'], ['cadre', 'Le cadre']];
+  $('lp-cats').innerHTML = cats.map(function (c, i) {
+    return '<a class="catrow" href="#' + c[0] + '"><span class="num">|0' + (i + 1) + '|</span><span class="nm">' + esc(c[1]) + '</span></a>';
+  }).join('');
+
+  /* ══ |01| POUR QUI — trois cartes photo-first, comme une grille de pièces ══ */
+  var qui = [
+    ['sneakers', 'Éditions limitées', 'Créateurs de sneakers', 'Des séries courtes, une communauté qui attend les sorties, et du stock qui dort entre deux drops.'],
+    ['pap', 'Sweats & hoodies', 'Jeunes marques de prêt-à-porter', 'Une identité forte, une audience qui suit, des ventes en ligne qui tournent — et pas les millions qu’il faudrait pour ouvrir en France.'],
+    ['pap', 'Vestes & blousons', 'Marques de mode de niche', 'Vente directe au client, marges maîtrisées, besoin de clients physiques et de trésorerie — dans cet ordre.']
+  ];
+  $('lp-qui').innerHTML = qui.map(function (q, i) {
+    return '<div class="pcard"><div class="ph"><img src="' + esc(photo(q[0], q[1], 'qui' + i)) + '" alt="" loading="lazy">'
+      + '<span class="badge">|0' + (i + 1) + '|</span></div>'
+      + '<div class="nm">' + esc(q[2]) + '</div><div class="idl">' + esc(q[3]) + '</div></div>';
+  }).join('');
+  $('lp-pas').innerHTML = '<b>Ce que nous ne faisons pas.</b> Nous ne distribuons pas les bons des grandes enseignes généralistes, et nous ne mélangeons jamais les réseaux : '
+    + 'un bon acheté pour votre marque ne vaut que chez vous. C’est un choix commercial — c’est aussi ce qui tient tout le cadre juridique, plus bas.';
+
+  /* ══ |02| LES OFFRES — lues du référentiel : un taux changé en Configuration change cette page ══ */
+  $('lp-offres').innerHTML = modes.map(function (m) {
+    return '<div class="offre' + (m.defaut ? ' reco' : '') + '">'
+      + '<div class="nm">' + esc(m.libelle.replace(/^Paiement /, '')) + '</div>'
+      + '<div class="px">' + esc(pc(m.remisePct)) + '</div>'
+      + '<div class="d">' + esc(m.detail) + '</div>'
+      + '<div class="tot">Pour 100 € de bons vendus, vous touchez <b>' + esc(D.eur(100 - m.remisePct)) + '</b>.</div></div>';
+  }).join('');
+  var parts = modes.map(function (m) { return m.partPointPct; }).sort(function (x, y) { return x - y; });
+  $('lp-offres-note').innerHTML = 'La remise couvre la part du commerce qui vend vos bons (<b>' + esc(pc(parts[0])) + '</b> à <b>' + esc(pc(parts[parts.length - 1]))
+    + '</b> selon l’offre) et notre marge de grossiste. <b>Aucun autre prélèvement :</b> pas de frais d’entrée, pas de frais de dossier, pas de minimum de volume.';
+
+  /* ══ |03| LES CINQ GESTES — ceux de l'application, pas une histoire ══ */
+  var etapes = [
+    ['Vous signez le mandat', 'Un an, exclusivité de la distribution de vos bons, sans reconduction tacite. Vous choisissez votre offre de paiement et vous déposez le compte que nous virons.'],
+    ['Vos bons entrent dans le réseau', 'Les commerces sous contrat les voient dans leur application et peuvent les vendre au comptoir, à n’importe quel montant.'],
+    ['Un client achète', 'Le commerce encaisse son client comme il l’entend et lui remet un ticket avec le code. Le bon ne vaut que sur votre site, et il est valable ' + ((D.bonsRef ? D.bonsRef().validiteMois : 12)) + ' mois.'],
+    ['Le réseau nous règle ses achats', 'Chaque soir à ' + P.arreteHeure + ', les ventes de la journée sont arrêtées et prélevées sur le compte des commerces. Vous n’avez rien à réclamer à personne.'],
+    ['Nous vous virons', 'Au délai de l’offre que vous avez choisie, par virement depuis notre banque (' + P.banque + '). C’est nous qui portons le risque d’impayé, pas vous.']
+  ];
+  $('lp-etapes').innerHTML = etapes.map(function (e) {
+    return '<li><div><div class="t">' + esc(e[0]) + '</div><div class="s">' + esc(e[1]) + '</div></div></li>';
+  }).join('');
+
+  /* ══ |04| LES FORFAITS ══ */
+  $('lp-formules').innerHTML = formules.map(function (f) {
+    return '<div class="offre' + (f.defaut ? ' reco' : '') + '">'
+      + '<div class="nm">' + esc(f.nom) + '</div>'
+      + '<div class="px">' + (f.prix > 0 ? esc(D.eur(f.prix)) : 'Inclus') + '</div>'
+      + '<div class="d">' + esc(f.detail) + '</div>'
+      + '<div class="tot">' + (f.inclus || []).map(esc).join(' · ') + '</div></div>';
+  }).join('');
+
+  /* ══ |05| LE CADRE — cité, pas raconté ══ */
+  var F = R.fondement || {};
+  var cadre = [
+    ['Vos bons ne valent que chez vous', 'Chaque bon que nous distribuons est utilisable exclusivement sur le site de la marque qui l’a émis. Aucune mutualisation entre marques, aucun solde commun, aucune conversion : un émetteur, un accepteur.'],
+    ['Nous n’encaissons rien pour votre compte', 'Nous achetons vos bons pour notre propre compte et nous les revendons à notre réseau. À aucun moment nous ne détenons, ne transférons ni ne gérons vos fonds.'],
+    ['Ce que nous vous devons est daté', 'L’échéance de votre règlement est posée à l’arrêté du soir, pas laissée à notre convenance : vous la voyez dans votre espace, avec le détail des bons qu’elle couvre.']
+  ];
+  $('lp-cadre').innerHTML = cadre.map(function (c) {
+    return '<div class="bloc"><div class="t">' + esc(c[0]) + '</div><div class="s">' + esc(c[1]) + '</div></div>';
+  }).join('');
+  $('lp-droit').innerHTML = esc(F.exemption || '')
+    + ' <a href="../documents/analyse-juridique-reseau-commissionnaires.html" style="color:var(--color-primary-dark);font-weight:800">Le cadre complet, article par article.</a>';
+
+  /* ══ LA FORCE DU RÉSEAU — comptée, jamais écrite ═════════════════════════════════════════════════════════ */
+  var mapRes = null, mkRes = {};
+  function peindreReseau() {
+    var marques = D.techMarchands ? D.techMarchands({ statut: 'validated' }) : [];
+    var pts = D.pointsBons ? D.pointsBons({}) : [], mob = D.agentsMobiles ? D.agentsMobiles({}) : [];
+    var villes = {}; pts.forEach(function (p) { if (p.ville) villes[p.ville] = (villes[p.ville] || 0) + 1; });
+    var nv = Object.keys(villes).length, nb = D.bonsRef ? D.bonsRef().nom : 'Bon d’achat PayEnCash';
+    $('lp-res-h').textContent = marques.length
+      ? marques.length + ' marque' + (marques.length > 1 ? 's' : '') + ' nous ' + (marques.length > 1 ? 'font' : 'fait') + ' confiance. ' + pts.length + ' commerce' + (pts.length > 1 ? 's' : '') + ' vend' + (pts.length > 1 ? 'ent' : '') + ' leurs bons.'
+      : 'Un réseau de commerces, ville par ville.';
+    $('lp-res-lede').textContent = 'Vos bons d’achat se vendent au comptoir des commerces du réseau ' + nb + ', et par des mandataires qui se déplacent. '
+      + 'C’est nous qui tenons ce réseau et qui le faisons grandir : vous n’avez personne à recruter.';
+    $('lp-res-kpi').innerHTML = [
+      [String(marques.length), 'marque' + (marques.length > 1 ? 's' : '') + ' vérifiée' + (marques.length > 1 ? 's' : ''), 'dossier contrôlé, déclaration « réseau limité » validée'],
+      [String(pts.length), 'commerce' + (pts.length > 1 ? 's' : '') + ' actif' + (pts.length > 1 ? 's' : ''), 'des points de vente ouverts au public, avec une adresse'],
+      [String(mob.length), 'mandataire' + (mob.length > 1 ? 's' : '') + ' nomade' + (mob.length > 1 ? 's' : ''), 'des indépendants qui se déplacent jusqu’au client'],
+      [String(nv), 'ville' + (nv > 1 ? 's' : ''), 'le réseau ouvre ville par ville']
+    ].map(function (k) {
+      return '<div class="bloc"><div style="font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1">' + esc(k[0]) + '</div>'
+        + '<div style="font-size:13px;font-weight:800;margin-top:6px">' + esc(k[1]) + '</div><div style="font-size:12px;color:var(--color-muted);margin-top:3px;line-height:1.5">' + esc(k[2]) + '</div></div>';
+    }).join('');
+    var noms = Object.keys(villes).sort(function (a, b) { return villes[b] - villes[a]; });
+    $('lp-res-villes').innerHTML = noms.length
+      ? '<b>Où :</b> ' + noms.map(function (v) { return esc(v) + ' (' + villes[v] + ')'; }).join(' · ') + (mob.length ? ' — et ' + mob.length + ' mandataire(s) nomade(s), sans adresse fixe, non épinglé(s).' : '')
+      : 'Aucun commerce actif pour l’instant sur cet appareil : la carte se remplit à mesure que le réseau ouvre.';
+    var avecGeo = pts.filter(function (p) { return p.geo && isFinite(p.geo.lat) && isFinite(p.geo.lng); });
+    if (!avecGeo.length || typeof maplibregl === 'undefined' || !window.PEC_GEO) return;
+    if (!mapRes) { mapRes = PEC_GEO.carte('lp-map', { centre: avecGeo[0].geo, zoom: 11, cadre: $('lp-map-wrap'), interactive: true }); if (!mapRes) return; }
+    Object.keys(mkRes).forEach(function (k) { if (!avecGeo.some(function (p) { return p.id === k; })) { mkRes[k].remove(); delete mkRes[k]; } });
+    avecGeo.forEach(function (p) {
+      if (mkRes[p.id]) { mkRes[p.id].setLngLat([p.geo.lng, p.geo.lat]); return; }
+      var el = document.createElement('div'); el.className = 'mk-pt';
+      el.innerHTML = '<svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-store"/></svg>' + esc(p.enseigne);
+      mkRes[p.id] = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([p.geo.lng, p.geo.lat]).addTo(mapRes);
+    });
+    if (avecGeo.length === 1) { mapRes.setCenter([avecGeo[0].geo.lng, avecGeo[0].geo.lat]); mapRes.setZoom(12); return; }
+    var bb = new maplibregl.LngLatBounds([avecGeo[0].geo.lng, avecGeo[0].geo.lat], [avecGeo[0].geo.lng, avecGeo[0].geo.lat]);
+    avecGeo.forEach(function (p) { bb.extend([p.geo.lng, p.geo.lat]); });
+    try { mapRes.fitBounds(bb, { padding: 60, maxZoom: 12, duration: 0 }); } catch (e) {}
+  }
+  /* ══ LA PROMOTION — deux canaux comptés, un mur dérivé des articles publiés ═══════════════════════════════ */
+  function peindrePromo() {
+    var pts = D.pointsBons ? D.pointsBons({}) : [], mob = D.agentsMobiles ? D.agentsMobiles({}) : [];
+    var M2 = D.PARTENAIRE_MODES || {};
+    $('lp-promo-lede').textContent = 'Nous ne vendons pas seulement vos bons : nous faisons voir vos articles. Au comptoir des commerces comme sur les réseaux, chaque point du réseau porte votre marque — c’est compris dans la remise, sans budget de plus.';
+    $('lp-promo').innerHTML = [
+      ['Les points physiques', (M2.sedentaire || {}).lbl || 'Commerces', pts.length + ' commerce' + (pts.length > 1 ? 's' : '') + ' actif' + (pts.length > 1 ? 's' : ''),
+       'Un affichage mural « dernières tendances » au comptoir : vos visuels, vos prix, et l’invitation à se faire plaisir — à soi, ou à ses proches. Le client repart avec votre bon d’achat, au montant qu’il veut.'],
+      ['Le réseau nomade', (M2.mobile || {}).lbl || 'Mandataires', mob.length + ' mandataire' + (mob.length > 1 ? 's' : '') + ' nomade' + (mob.length > 1 ? 's' : ''),
+       'Des flyers à votre marque et l’animation de leurs réseaux sociaux : ils partagent vos visuels et vos vidéos, avec le lien qui mène à votre bon. Ils vont jusqu’au client.']
+    ].map(function (k) {
+      return '<div class="bloc"><div class="caps" style="font-size:11px;color:var(--color-muted)">' + esc(k[1]) + '</div>'
+        + '<div style="font-size:15px;font-weight:800;margin-top:4px">' + esc(k[0]) + ' — ' + esc(k[2]) + '</div>'
+        + '<div style="font-size:13px;color:var(--color-muted);margin-top:6px;line-height:1.6">' + esc(k[3]) + '</div></div>';
+    }).join('');
+    var arts = D.techArticles ? D.techArticles({}) : [];
+    var vis = arts.filter(function (a) { var m = D.techMarchand(a.marchandId); return m && m.statut === 'validated'; }).slice(0, 8);
+    $('lp-mur').innerHTML = vis.length ? vis.map(function (a) {
+      var net = Math.round((a.prix - (a.remise || 0)) * 100) / 100, st = D.techArticleStock ? D.techArticleStock(a) : null;
+      var src = a.photo ? (D.photoSrc ? D.photoSrc(a.photo) : a.photo) : '';
+      return '<a class="carte-mur" href="' + esc(D.techArticleUrl(a.slug)) + '" style="display:block;text-decoration:none;color:inherit">'
+        + '<div style="aspect-ratio:4/5;border-radius:6px;overflow:hidden;background:var(--color-ink)">' + (src ? '<img src="' + esc(src) + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover">' : '') + '</div>'
+        + '<div class="caps" style="font-size:10.5px;margin-top:8px;color:var(--color-primary-dark)">' + esc(a.marque) + '</div>'
+        + '<div style="font-size:14px;font-weight:800">' + esc(a.modele) + '</div>'
+        + '<div style="font-size:13px;margin-top:2px">' + (a.remise > 0 ? '<b>' + esc(D.eur(net)) + '</b> <s style="color:var(--color-muted)">' + esc(D.eur(a.prix)) + '</s> <span style="color:var(--color-primary-dark)">avec ce bon d’achat</span>' : '<b>' + esc(D.eur(a.prix)) + '</b> · <span style="color:var(--color-muted)">fais-toi plaisir, ou fais plaisir</span>') + '</div>'
+        + (st && st.tailles && st.tailles.length ? '<div style="font-size:11.5px;color:var(--color-muted);margin-top:2px">' + esc(st.tailles.filter(function (x) { return x.qte > 0; }).map(function (x) { return x.taille + ' (' + x.qte + ')'; }).join(' · ')) + '</div>' : '')
+        + '</a>';
+    }).join('') : '<p class="cite" style="margin:0">Les premiers visuels apparaîtront ici dès qu’une marque en publie depuis son espace.</p>';
+  }
+  peindrePromo();
+  window.addEventListener('pec-bus', peindrePromo);
+
+  peindreReseau();
+  window.addEventListener('pec-bus', peindreReseau);
+  window.addEventListener('storage', function (e) { if (!e.key || /^pec/.test(e.key)) peindreReseau(); });
+
+  $('lp-mentions').innerHTML = (R.mentions || []).slice(0, 3).map(esc).join('<br>');
+})();
+</script>
+</body>
+</html>

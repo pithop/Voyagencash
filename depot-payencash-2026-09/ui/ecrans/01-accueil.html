@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash FLY — Accueil</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-notif.js"></script>
+<!--
+  ACCUEIL (onglet « Rechercher ») — calqué sur l'app réelle : app/page.tsx + BudgetSearchForm.tsx.
+  Budget-first : panneau budget sombre + slider + paliers + segmented (Vol / Vol+Hôtel / Hôtel) +
+  départ/destination/dates/voyageurs (bottom sheets) + CTA « Voir N voyages » → tunnel.
+  Le funnel multi-étapes n'est PAS ici (il vit dans tunnel/). Contenu : modèle agent.
+-->
+<style>
+  /* Puits de champ (bouton départ/dest/dates) — h54 fond app, radius champ. */
+  .pec-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 54px;
+    padding: 0 13px;
+    border-radius: var(--radius-field);
+    background: var(--color-bg);
+    text-align: left;
+  }
+  .pec-field--sm { height: 52px; padding: 0 12px; justify-content: space-between; }
+  .pec-chip-mint {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border-radius: 9px;
+    background: var(--color-mint);
+    padding: 6px 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+  }
+  /* Bottom sheet générique (départ/dest/dates/voyageurs) */
+  .pec-sheet-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(15, 42, 36, 0.4);
+  }
+  .pec-sheet-scrim.on { display: flex; }
+  .pec-sheet {
+    width: 100%;
+    max-width: var(--frame-max);
+    max-height: 85vh;
+    overflow-y: auto;
+    background: var(--color-surface);
+    border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+    box-shadow: var(--shadow-sheet);
+    padding: 12px 18px 28px;
+  }
+  .pec-sheet-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    box-shadow: inset 0 -1px 0 var(--color-sep);
+    text-align: left;
+    width: 100%;
+    background: none;
+  }
+  .pec-sheet-row:last-child { box-shadow: none; }
+  /* Fondatrice 22/08 : actifs des sélecteurs (Vol · trajet) = même vert que le panneau budget */
+  .pec-segmented [role="tab"][aria-selected="true"],
+  #btn-trajet [role="tab"][aria-selected="true"] { background: linear-gradient(155deg, #0d3227 0%, #0e5e40 70%, #10a06a 135%) !important; color: #fff !important; }
+  /* Cadeau concours (haut droit) : balancement doux, élégant — jamais agressif */
+  @keyframes cadeauSwing { 0%, 74%, 100% { transform: rotate(0deg); } 78% { transform: rotate(-9deg); } 84% { transform: rotate(8deg); } 90% { transform: rotate(-5deg); } 95% { transform: rotate(3deg); } }
+  @keyframes cadeauSwing { 0%, 74%, 100% { transform: rotate(0deg); } 78% { transform: rotate(-9deg); } 84% { transform: rotate(8deg); } 90% { transform: rotate(-5deg); } 95% { transform: rotate(3deg); } }
+  /* Moyens de paiement : les médaillons flottent doucement, en décalé */
+  @keyframes mpFlotte { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  @media (prefers-reduced-motion: reduce) { .mp-med { animation: none !important; } }
+  @keyframes mpLive { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+  @keyframes capsuleShine { 0%, 62%, 100% { transform: translateX(-110%); } 78% { transform: translateX(110%); } }
+</style>
+</head>
+<body>
+
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <!-- Contenu scrollable (fond blanc) -->
+  <div style="flex:1;overflow-y:auto;background:var(--color-surface);padding-bottom:24px">
+
+    <!-- ===== HÉRO ===== -->
+    <div class="bg-hero" style="position:relative;overflow:hidden;padding-bottom:14px">
+      <div class="blob blob-primary" style="right:-30px;top:-40px;width:180px;height:180px"></div>
+      <div class="blob blob-bright" style="left:-50px;top:120px;width:160px;height:160px"></div>
+      <div class="blob blob-primary-soft" style="left:140px;top:30px;width:90px;height:90px"></div>
+
+      <div style="position:relative;z-index:1">
+        <div aria-hidden="true" style="position:absolute;z-index:0;right:-8px;top:90px;width:200px;pointer-events:none;-webkit-mask-image:linear-gradient(100deg,transparent 2%,rgba(0,0,0,.28) 20%,#000 48%);mask-image:linear-gradient(100deg,transparent 2%,rgba(0,0,0,.28) 20%,#000 48%)">
+          <img src="../assets/photos/hero-accueil.png" alt="" style="width:100%;height:auto;display:block">
+        </div>
+        <header style="display:flex;min-height:56px;align-items:center;justify-content:space-between;padding:6px 22px">
+          <!-- LOGO = le même que l'app MODE (fondatrice 23/08), écrit Fly — avec les 3 univers
+               en mini-vignettes photo : avion (vols), hôtel (séjours), maison (à domicile) -->
+          <!-- (21/09, fondatrice : « je veux le logo P, et garder "payEnCash Fly" dans le style de départ ») LE SYMBOLE DE
+               L'APP — le P à l'avion, fond transparent — accolé à son nom ÉCRIT, sur la ligne du nom : devant tout le
+               bloc, il prenait sa largeur à l'accroche. L'en-tête n'a plus une hauteur FIXE : à 56 px, le logo, les
+               vignettes et l'accroche débordaient de trois pixels. -->
+          <a href="04-comment-ca-marche.html" aria-label="Accueil PayEnCash" style="display:flex;flex-direction:column;min-width:0">
+            <span data-pec-marque="fly"></span>
+            <span style="display:flex;align-items:center;gap:6px;margin-top:5px">
+              <span style="display:flex">
+                <span title="Vols" style="width:23px;height:23px;border-radius:999px;background:var(--color-mint);border:2px solid var(--color-card);color:var(--color-primary-dark);display:inline-flex;align-items:center;justify-content:center"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px"><use href="#i-plane"/></svg></span>
+                <span title="Hôtels" style="width:23px;height:23px;border-radius:999px;background:var(--color-mint);border:2px solid var(--color-card);color:var(--color-primary-dark);display:inline-flex;align-items:center;justify-content:center;margin-left:-8px"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px"><use href="#i-bed"/></svg></span>
+                <span title="Réservation" style="width:23px;height:23px;border-radius:999px;background:var(--color-mint);border:2px solid var(--color-card);color:var(--color-primary-dark);display:inline-flex;align-items:center;justify-content:center;margin-left:-8px"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px"><use href="#i-booking"/></svg></span>
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:999px;background:var(--color-primary);border:1.5px solid var(--color-card);margin-left:-6px;font-size:8px;font-weight:800;color:#fff">+3</span>
+              </span>
+              <!-- (19/09, soir — passe écran par écran) cette accroche débordait de 55 px sur un téléphone de 375 px :
+                   `nowrap` lui interdisait le retour à la ligne, elle sortait donc du bloc de marque. -->
+              <!-- (21/09) « Le web se paie avec un bon d’achat » était une variante du slogan : le slogan unifié est dans le badge du
+                   héros, juste dessous — une fois par écran. Reste ce que l'app propose, que les vignettes illustrent. -->
+              <span style="font-size:9.5px;font-weight:600;line-height:1.35;color:var(--color-muted);min-width:0">Vols • Hôtels • Réservations</span>
+            </span>
+          </a>
+          <!-- Haut droit (fondatrice 27/08) : la promesse prix, DÉLICATE — une pilule
+               fine bordée orange, clic = défilement vers la bannière comparatif. -->
+          <a href="#cmp-opodo-accueil" onclick="document.getElementById('cmp-opodo-accueil').scrollIntoView({behavior:'smooth',block:'center'});return false" class="tap" id="cmp-opodo-capsule" style="flex:none;display:inline-flex;align-items:center;gap:5px;border-radius:999px;border:1.5px solid rgba(194,65,12,.30);background:rgba(242,111,33,.05);text-decoration:none;padding:8px 11px 8px 9px;margin-left:10px">
+            <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px;color:#E8602C"><use href="#i-map-pin"/></svg>
+            <span id="cmp-opodo-titre" style="font-size:10.5px;font-weight:800;letter-spacing:.01em;color:#E8602C;white-space:nowrap">Moins cher qu'Opodo</span>
+          </a>
+          </header>
+
+        <div style="padding:14px 22px 6px">
+          <p style="display:inline-flex;align-items:center;gap:6px;border-radius:10px;background:var(--color-mint);color:var(--color-primary-dark);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:8px 14px;margin-bottom:10px"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px"><use href="#i-shield"/></svg><span data-slogan>—</span></p>
+          <!-- HÉRO v3 (29/08) : titre à gauche, ILLUSTRATION recréée en SVG à droite —
+               le P payEnCash lancé et l'agent qui se déplace. Autonome, thème-aware, aucun asset externe.
+               (17/09 — pivot) Le tabac partenaire et la borne ont quitté l'accroche : on paie avec un bon d’achat —
+               (19/09, soir — passe écran par écran) L'ACCROCHE PROMETTAIT ENCORE UN AGENT QUI VIENT ENCAISSER
+               « à domicile ou au travail », et « des espèces remises à l'agent » : l'agent de caisse mobile est
+               supprimé depuis le 18/09 au soir. La première phrase que lit un visiteur promettait un service
+               qui n'existe plus. Les moyens sont DÉRIVÉS de PEC_DATA.moyensPaiementLabel (.js-moyens) — le repli
+               écrit en dur est désormais un tiret, pour qu'aucune liste périmée ne puisse réapparaître,
+               jamais écrits ici. -->
+          <h1 style="position:relative;z-index:3;font-size:28px;font-weight:800;line-height:1.12;letter-spacing:-0.04em;color:var(--color-ink);max-width:235px;text-wrap:pretty"><span style="white-space:nowrap">Commande en ligne,</span><br>paie <span style="color:var(--color-primary)">avec un bon d’achat</span></h1>
+          <p style="position:relative;z-index:3;margin-top:16px;max-width:248px;font-size:13.5px;font-weight:500;line-height:1.62;color:var(--color-muted)">Réserve ton vol ou ton séjour <b style="font-weight:700;color:var(--color-primary-dark)">au meilleur prix</b> et paie-le <b style="font-weight:700;color:var(--color-primary-dark)">avec un bon d’achat</b> : <span class="js-moyens">—</span> — en ligne tout de suite, ou avec un <b style="font-weight:700;color:var(--color-primary-dark)">bon d’achat acheté chez un commerçant</b> près de chez toi.</p>
+          <!-- Le jeu concours (fondatrice 27/08) : APERÇU DE LA STAR (tête d'affiche
+               PEC_DATA.egeries) + participation gratuite — clic = défilement vers le
+               bandeau concours des égéries. Pleine largeur sous le hero. -->
+          <a href="#egeries-sec" onclick="document.getElementById('egeries-concours').scrollIntoView({behavior:'smooth',block:'center'});return false" class="tap" id="cadeau-concours" aria-label="Le concours du mois — voir la section" style="display:flex;align-items:center;gap:10px;margin-top:13px;border-radius:18px;background:var(--color-card);box-shadow:0 1px 3px rgba(201,34,63,.14),0 8px 20px rgba(201,34,63,.16);text-decoration:none;padding:10px 8px;overflow:hidden;position:relative">
+            <span id="cadeau-stars" style="position:relative;flex:none;display:flex;align-items:center;padding-right:5px;padding-bottom:2px">
+              <img src="../assets/photos/avatar-tyson.jpg" alt="" style="width:28px;height:28px;border-radius:999px;object-fit:cover;object-position:50% 30%;box-shadow:0 0 0 2px var(--color-card);position:relative;z-index:4">
+              <img src="../assets/photos/avatar-aicha.jpg" alt="" style="width:28px;height:28px;border-radius:999px;object-fit:cover;box-shadow:0 0 0 2px var(--color-card);margin-left:-16px;position:relative;z-index:3">
+              <img src="../assets/photos/avatar-lina.jpg" alt="" style="width:28px;height:28px;border-radius:999px;object-fit:cover;box-shadow:0 0 0 2px var(--color-card);margin-left:-16px;position:relative;z-index:2">
+              <img src="../assets/photos/avatar-yanis.jpg" alt="" style="width:28px;height:28px;border-radius:999px;object-fit:cover;box-shadow:0 0 0 2px var(--color-card);margin-left:-16px;position:relative;z-index:1">
+              <span style="position:absolute;right:-2px;bottom:-4px;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:linear-gradient(120deg,#C9223F,#F23B57);box-shadow:0 0 0 2px var(--color-card);z-index:5">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:cadeauSwing 3.6s ease-in-out infinite;transform-origin:50% 20%"><rect x="4" y="10" width="16" height="10" rx="1.5"/><path d="M4 10h16M12 10v10M12 10s-.5-4-3.5-4a2 2 0 0 0 0 4M12 10s.5-4 3.5-4a2 2 0 0 1 0 4"/></svg>
+              </span>
+            </span>
+            <span style="min-width:0;flex:1;text-align:left;line-height:1.3">
+              <span id="cadeau-titre" style="display:block;font-size:11.5px;font-weight:800;color:#E11D48;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Participe <b>gratuitement</b> au jeu concours</span>
+              <span id="cadeau-sous" style="display:block;font-size:9.5px;font-weight:600;color:var(--color-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Avec <span id="cadeau-star-nom">Oiseau Tyson</span> <span id="cadeau-plus">+3</span> — <span id="cadeau-lot">—</span> • <span id="cadeau-jmoins" style="font-variant-numeric:tabular-nums">—</span> • sans achat</span>
+            </span>
+            <span style="flex:none;border-radius:999px;background:linear-gradient(120deg,#C9223F,#F23B57);color:#fff;font-size:12px;font-weight:800;padding:8px 13px">Jouer</span>
+            <span style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 42%,rgba(242,59,87,.14) 50%,transparent 58%);animation:capsuleShine 4.4s ease-in-out infinite"></span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- BANNIÈRE OPODO — fine, AU-DESSUS du budget (fondatrice 22/08 : échange des
+         emplacements avec le concours) ; code couleur Opodo = exception validée -->
+
+
+    <!-- ===== MODULE DE RECHERCHE BUDGET-FIRST ===== -->
+    <div style="margin-top:12px;padding:0 20px">
+      <div style="background:transparent;padding:0;box-shadow:none">
+
+        <!-- Panneau budget sombre -->
+        <div class="pec-budget-panel" style="position:relative;overflow:hidden;border-radius:22px;padding:20px 18px 22px">
+          <!-- Fond photo DISCRET (fondatrice 25/08 soir : « en fond, mais sans que ce soit
+               lourd ») : désaturé à 18 %, poussé à droite, noyé sous un voile vert qui garde le
+               texte parfaitement lisible. (18/09, soir) Le fichier s'appelait `photo-cm-domicile.jpg`
+               — un nom qui promettait une scène à domicile, alors que plus personne ne se déplace.
+               Renommé `photo-budget-fond.jpg` : c'est ce qu'il est, un fond pour la section budget. -->
+          <img id="budget-fond" src="../assets/photos/photo-budget-fond.jpg" alt="" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:78% 38%;opacity:.18;filter:saturate(.55) contrast(1.05);pointer-events:none">
+          <span aria-hidden="true" style="position:absolute;inset:0;background:linear-gradient(100deg,#0C3A2C 6%,rgba(12,58,44,.90) 34%,rgba(13,72,53,.62) 66%,rgba(14,94,64,.44) 100%);pointer-events:none"></span>
+          <div class="blob blob-bright-strong" style="right:-20px;top:-30px;width:140px;height:140px"></div>
+          <div style="position:relative;z-index:1">
+            <p style="display:inline-flex;align-items:center;gap:7px;margin-bottom:12px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-bright)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-banknote"/></svg>Mon budget</p>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <div style="min-width:0;flex:1">
+                <p style="display:flex;align-items:center;gap:7px;font-size:18px;font-weight:800;color:#fff">
+                  <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px;color:var(--color-bright)"><use href="#i-map-pin"/></svg>
+                  <span id="dest-txt">22 destinations</span>
+                </p>
+                <p id="budget-cities" style="margin-top:5px;font-size:13.5px;font-weight:500;color:rgba(255,255,255,0.62);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Alicante, Alger, Tunis…</p>
+                <p style="margin-top:4px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.45)">Offres réelles • plus de 200 compagnies aériennes</p>
+              </div>
+              <div style="flex-shrink:0;text-align:right">
+                <p style="display:flex;align-items:baseline;justify-content:flex-end;gap:4px;margin:0">
+                  <span id="bval" style="font-size:42px;font-weight:800;line-height:0.9;letter-spacing:-0.05em;color:#fff">100</span>
+                  <span style="font-size:18px;font-weight:700;color:var(--color-euro)">€</span>
+                </p>
+                <p style="margin:2px 0 0;font-size:11px;font-weight:600;color:rgba(255,255,255,0.6)">Mon budget</p>
+              </div>
+            </div>
+
+            <!-- slider -->
+            <div style="position:relative;margin-top:18px;display:flex;height:28px;align-items:center">
+              <div style="position:absolute;left:0;right:0;height:8px;border-radius:999px;background:rgba(255,255,255,0.14)"></div>
+              <div class="budget-fill" id="bfill" style="position:absolute;left:0;height:8px;border-radius:999px;width:19%"></div>
+              <div id="bknob" style="position:absolute;height:26px;width:26px;transform:translateX(-50%);border-radius:50%;background:var(--color-bright);box-shadow:var(--shadow-slider-knob);left:19%"></div>
+              <input type="range" min="10" max="500" step="10" value="100" id="slider" oninput="onBudget(this.value)" aria-label="Budget en euros" style="position:absolute;left:0;right:0;height:28px;width:100%;cursor:pointer;opacity:0;margin:0">
+            </div>
+
+            <!-- paliers + Autre -->
+            <div style="margin-top:16px;display:flex;gap:8px" id="paliers">
+              <button type="button" class="tap" data-p="10" onclick="setPalier(10)">10 €</button>
+              <button type="button" class="tap" data-p="30" onclick="setPalier(30)">30 €</button>
+              <button type="button" class="tap" data-p="50" onclick="setPalier(50)">50 €</button>
+              <button type="button" class="tap" data-p="100" onclick="setPalier(100)">100 €</button>
+              <input inputmode="numeric" placeholder="Autre" id="autre" oninput="onAutre(this.value)" aria-label="Autre budget" style="height:42px;width:0;min-width:0;flex:1;border:0;border-radius:999px;background:rgba(255,255,255,0.12);padding:0 6px;text-align:center;font-size:13.5px;font-weight:700;color:#fff;outline:none">
+            </div>
+          </div>
+        </div>
+
+        <!-- Contrôles -->
+        <div style="padding:14px 12px 12px">
+          <!-- segmented -->
+          <div class="pec-segmented" style="margin-bottom:11px;background:transparent;padding:0;gap:10px" role="tablist" aria-label="Type de voyage">
+            <button role="tab" aria-selected="true" data-mode="flight_only" onclick="setMode(this)" style="flex:1;height:56px;border-radius:16px;font-size:14.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--color-surface);color:var(--color-ink);box-shadow:0 6px 18px -12px rgba(15,42,36,.22),0 1px 3px rgba(15,42,36,.06)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:19px"><use href="#i-plane"/></svg>Billets d’avion</button>
+          </div>
+
+          <!-- trajet + voyageurs -->
+          <!-- CHOIX VISIBLE aller simple / aller-retour — PLEINE LARGEUR (fondatrice 22/08 :
+               « j'aime l'idée du bouton mais trop petit ») -->
+          <div id="btn-trajet" role="tablist" style="display:flex;gap:8px;margin-bottom:10px">
+            <button type="button" role="tab" aria-selected="false" onclick="setTrajet(false, this)" style="flex:1.05;height:52px;border-radius:15px;font-size:13.5px;font-weight:700;white-space:normal;line-height:1.15;text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:0;padding:0 8px;background:var(--color-surface);color:var(--color-ink);box-shadow:0 6px 18px -12px rgba(15,42,36,.22),0 1px 3px rgba(15,42,36,.06)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-arrow-right"/></svg>Aller simple</button>
+            <button type="button" role="tab" aria-selected="true" onclick="setTrajet(true, this)" style="flex:1.05;height:52px;border-radius:15px;font-size:13.5px;font-weight:700;white-space:normal;line-height:1.15;text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:0;padding:0 8px;color:#fff;box-shadow:0 8px 18px -10px rgba(15,42,36,.45)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-swap"/></svg>Aller-retour</button>
+            <button type="button" role="tab" aria-selected="false" onclick="setTrajetMulti(this)" style="flex:1.35;height:52px;border-radius:15px;font-size:13.5px;font-weight:700;white-space:normal;line-height:1.15;text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:0;padding:0 8px;background:var(--color-surface);color:var(--color-ink);box-shadow:0 6px 18px -12px rgba(15,42,36,.22),0 1px 3px rgba(15,42,36,.06)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-route"/></svg>Multi-destinations</button>
+          </div>
+          <div style="margin-bottom:10px">
+            <button type="button" class="tap" onclick="openSheet('voy')" style="width:100%;display:flex;align-items:center;gap:12px;border-radius:16px;background:var(--color-surface);padding:13px 16px;box-shadow:0 6px 18px -12px rgba(15,42,36,.22),0 1px 3px rgba(15,42,36,.06);border:none;text-align:left;cursor:pointer">
+              <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:22px;color:var(--color-ink)"><use href="#i-user"/></svg>
+              <span style="flex:1;min-width:0">
+                <span id="voy-lbl" style="display:block;font-size:15px;font-weight:700;color:var(--color-ink)">1 voyageur</span>
+                <span style="display:block;font-size:12px;font-weight:500;color:var(--color-muted)">Économique</span>
+              </span>
+              <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:19px;color:var(--color-muted-2)"><use href="#i-chevron-down"/></svg>
+            </button>
+          </div>
+
+          <!-- DÉPART ⇄ DESTINATION (29/08) : une seule rangée, plus lisible — ville +
+               rôle, bouton d'INVERSION au centre. ids/handlers conservés (dep-lbl,
+               dest-wrap, btn-depart, btn-dest) pour ne rien casser en aval. -->
+          <div id="od-row" style="display:flex;align-items:stretch;background:var(--color-card);border-radius:16px;box-shadow:0 6px 18px -12px rgba(15,42,36,.22),0 1px 3px rgba(15,42,36,.06);margin-bottom:9px">
+            <button type="button" class="tap" id="btn-depart" onclick="openSheet('dep')" style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;background:none;border:none;padding:11px 12px;text-align:left;cursor:pointer">
+              <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:22px;color:var(--color-primary)"><use href="#i-plane"/></svg>
+              <span style="min-width:0"><span id="dep-lbl" style="display:block;font-size:15px;font-weight:800;color:var(--color-primary-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Marseille (MRS)</span><span style="display:block;font-size:12px;font-weight:500;color:var(--color-muted)">France</span></span>
+            </button>
+            <button type="button" class="tap" id="btn-swap" onclick="swapDepDest()" aria-label="Inverser départ et destination" style="flex:none;align-self:center;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:999px;background:var(--color-surface);box-shadow:0 2px 8px rgba(15,42,36,.16);border:none;color:var(--color-primary);cursor:pointer;margin:0 -5px;position:relative;z-index:1">
+              <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-swap"/></svg>
+            </button>
+            <button type="button" class="tap" id="btn-dest" onclick="openSheet('dest')" style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;background:none;border:none;padding:11px 12px 11px 16px;text-align:left;cursor:pointer">
+              <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:22px;color:var(--color-ink)"><use href="#i-map-pin"/></svg>
+              <span style="min-width:0"><!-- (19/09, soir — passe écran par écran) « Où tu veux aller ? » ne tenait pas dans sa colonne et se coupait en
+                   plein mot : « Où tu veux a ». Deux corrections : l'invite est plus courte, et ce qui dépasse quand même
+                   (un nom de ville long) se termine par des points de suspension au lieu d'être tranché net. -->
+              <span id="dest-wrap" style="display:block;font-size:14.5px;font-weight:700;color:var(--color-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Où aller ?</span><span style="display:block;font-size:12px;font-weight:500;color:var(--color-muted-2)">Destination</span></span>
+            </button>
+          </div>
+          <!-- VILLES MULTIPLES (fondatrice 23/08, comme Ryanair / Duffel multi-slices) :
+               chaque tronçon = un « slice » Duffel {origin, destination, departure_date}.
+               Un seul dossier, un seul règlement à la fin. -->
+          <div id="multi-zone" style="display:none;margin-bottom:15px">
+            <div id="multi-slices"></div>
+            <button type="button" class="tap" onclick="addSlice()" style="display:flex;align-items:center;justify-content:center;gap:7px;width:100%;border:1.5px dashed var(--color-primary);border-radius:13px;background:transparent;padding:11px;font-size:12.5px;font-weight:800;color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px"><use href="#i-plus"/></svg> Ajouter un tronçon</button>
+            <datalist id="pec-places"></datalist>
+          </div>
+
+          <!-- dates -->
+          <button type="button" class="tap" id="btn-dates" onclick="openSheet('dates')" style="width:100%;display:flex;align-items:center;gap:12px;border-radius:16px;background:var(--color-surface);padding:13px 16px;box-shadow:0 6px 18px -12px rgba(15,42,36,.22),0 1px 3px rgba(15,42,36,.06);border:none;margin-bottom:15px;text-align:left;cursor:pointer">
+            <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:22px;color:var(--color-muted-2)"><use href="#i-calendar"/></svg>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font-size:15px;font-weight:800;color:var(--color-ink)"><span id="dates-lbl" style="color:var(--color-ink)">Choisis tes dates</span> <span style="font-size:11.5px;font-weight:800;color:var(--color-amber)">• obligatoire</span></span>
+              <span style="display:block;font-size:12px;font-weight:500;color:var(--color-muted)">Aller — Retour</span>
+            </span>
+            <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:19px;color:var(--color-muted-2)"><use href="#i-chevron-right"/></svg>
+          </button>
+
+          <!-- CTA -->
+          <a href="#" onclick="lancerRecherche(event)" class="pec-cta tap" id="cta" style="position:relative;height:62px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:16.5px;font-weight:800;color:#fff;background:linear-gradient(100deg,#0e7f56 0%,#10a06a 55%,#12b073 100%);box-shadow:0 14px 26px -12px rgba(16,160,106,.65)">
+            <svg class="pec-ico" viewBox="0 0 24 24" style="position:absolute;left:22px;font-size:20px;color:#bff3dc"><use href="#i-star"/></svg>
+            <span id="cta-lbl">Rechercher meilleurs prix</span>
+            <span style="position:absolute;right:12px;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:999px;background:#fff"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:19px;color:var(--color-primary)"><use href="#i-arrow-right"/></svg></span>
+          </a>
+          <!-- Compagnies (fondatrice 22/08 : vrais logos, jamais le nom du partenaire API — secret professionnel) -->
+          <div style="margin-top:13px;text-align:center">
+            <div style="font-size:9.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--color-muted-2)">Plus de 200 compagnies</div>
+            <div id="cies-row" style="display:flex;align-items:center;gap:10px;overflow-x:auto;scrollbar-width:none;padding:10px 2px 4px"></div>
+            <div style="margin-top:6px;font-size:10px;font-weight:600;color:var(--color-muted-2)">… et toutes les autres — chaque billet payable par bon d’achat*</div>
+            <div style="margin-top:3px;font-size:9px;font-weight:600;line-height:1.4;color:var(--color-muted-2);opacity:.9">* <span class="js-moyens">—</span> — au choix, à tout montant.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== COMMENT ÇA MARCHE ===== (17/09 — pivot) L'image « comment-ca-marche.png » annonçait un tabac
+         partenaire, une borne payEnCash et « +7 000 points » : un visuel faux depuis le pivot — retiré plutôt
+         que gardé. À sa place, les trois étapes en texte : durée du prix bloqué ([data-pb]) et moyens de payer
+         sans carte (.js-moyens) DÉRIVÉS de PEC_DATA, jamais écrits ici ; la page complète est 04-comment-ca-marche. -->
+    <div style="margin:20px 16px 0" id="ccm-sec">
+      <div style="border-radius:24px;background:var(--color-card);box-shadow:0 14px 34px rgba(15,42,36,.16);padding:16px 18px 14px">
+        <p style="font-size:9.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--color-primary-dark)">Comment ça marche</p>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+          <div style="display:flex;align-items:flex-start;gap:11px"><span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:12px;font-weight:800">1</span><p style="min-width:0;margin:0;font-size:12.5px;line-height:1.5;color:var(--color-muted)"><b style="color:var(--color-ink)">Tu réserves dans l'app</b> — vols et hôtels comparés, le meilleur prix retenu.</p></div>
+          <div style="display:flex;align-items:flex-start;gap:11px"><span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:12px;font-weight:800">2</span><p style="min-width:0;margin:0;font-size:12.5px;line-height:1.5;color:var(--color-muted)"><b style="color:var(--color-ink)">Ton prix est bloqué <span data-pb>1 h</span></b> — le temps de payer tranquillement, comme tu veux.</p></div>
+          <div style="display:flex;align-items:flex-start;gap:11px"><span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:12px;font-weight:800">3</span><p style="min-width:0;margin:0;font-size:12.5px;line-height:1.5;color:var(--color-muted)"><b style="color:var(--color-ink)">Tu paies avec un bon d’achat</b> — <span class="js-moyens">—</span>. Dès la confirmation, la compagnie émet ton billet.</p></div>
+        </div>
+        <a href="04-comment-ca-marche.html" class="tap pec-tap-confort" style="display:inline-flex;align-items:center;gap:5px;margin-top:12px;font-size:12px;font-weight:800;color:var(--color-primary-dark);text-decoration:none">Étape par étape, en détail <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px"><use href="#i-chevron-right"/></svg></a>
+      </div>
+    </div>
+
+    <!-- CONCOURS × INFLUENCEURS (fondatrice 27/08) : une seule carte — le VOYAGE à
+           gagner (photo, dates, valeur — PEC_DATA.concoursGet()) porté par les influenceurs
+           (« Fais comme Oiseau Tyson », pile d'avatars — PEC_DATA.egeries). Remplace
+           la section égéries (tête d'affiche + rangée + bandeau, jugée trop lourde). -->
+      <div id="egeries-sec" style="margin:22px 16px 0">
+        <div style="border-radius:24px;overflow:hidden;background:var(--color-card);box-shadow:0 14px 34px rgba(15,42,36,.16)">
+          <div style="position:relative;height:172px;overflow:hidden">
+            <img id="cx-photo" src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+            <span aria-hidden="true" style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,8,12,.14) 0%,transparent 34%,rgba(20,8,12,.52) 70%,rgba(20,8,12,.82) 100%)"></span>
+            <span style="position:absolute;left:14px;top:12px;display:inline-flex;align-items:center;gap:5px;border-radius:6px;background:linear-gradient(120deg,#C9223F,#F23B57);color:#fff;font-size:9px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;padding:5px 10px;box-shadow:0 2px 10px rgba(201,34,63,.4)">Concours — <span id="cx-mois">—</span></span>
+            <span id="cx-valeur" style="position:absolute;right:12px;top:12px;border-radius:999px;background:rgba(255,255,255,.94);color:var(--color-ink);font-size:10px;font-weight:800;padding:4px 10px">—</span>
+            <div style="position:absolute;left:15px;right:15px;bottom:11px">
+              <p id="cx-titre" style="font-size:18px;font-weight:800;letter-spacing:-0.02em;line-height:1.15;color:#fff;text-shadow:0 2px 14px rgba(20,8,12,.7)">—</p>
+              <p style="margin-top:4px;display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:rgba(255,255,255,.92)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px"><use href="#i-calendar"/></svg>Séjour <span id="cx-dates">—</span> · tirage <span id="cx-tirage">—</span></p>
+            </div>
+          </div>
+          <div style="padding:11px 13px 13px">
+            <div style="display:flex;align-items:center;gap:9px">
+              <span id="cx-stars" style="flex:none;display:flex;align-items:center"></span>
+              <p style="min-width:0;flex:1;font-size:11px;line-height:1.4;color:var(--color-muted)">Fais comme <b style="color:var(--color-ink)"><span id="cx-star-nom">Oiseau Tyson</span></b> <span id="cx-plus" style="font-weight:700">+3</span> — <b style="color:var(--color-ink)">participe gratuitement</b>, sans achat.</p>
+            </div>
+            <a id="egeries-concours" class="tap" href="../fly/03-jeu-concours.html" style="display:flex;align-items:center;justify-content:center;gap:7px;margin-top:11px;border-radius:14px;background:linear-gradient(120deg,#C9223F,#F23B57);box-shadow:0 8px 18px rgba(201,34,63,.3);color:#fff;font-size:12.5px;font-weight:800;padding:12px;text-decoration:none">Je participe au tirage<svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px"><use href="#i-arrow-right"/></svg></a>
+          </div>
+        </div>
+      </div>
+
+
+    <a id="cmp-opodo-accueil" class="tap" href="../fly/08-comparatif.html" style="display:block;position:relative;overflow:hidden;border-radius:16px;background:linear-gradient(115deg,#C2410C 0%,#F26F21 62%,#FF8A3C 100%);padding:18px 16px 16px;margin:14px 16px 0;text-decoration:none;box-shadow:0 14px 34px rgba(194,65,12,.35)">
+      <span style="position:absolute;right:-30px;top:-42px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,rgba(255,214,170,.5),transparent 65%);pointer-events:none"></span>
+      <!-- L'avion qui voyage (v2) : SMIL animateMotion — l'avion suit EXACTEMENT la
+           courbe de sa traînée, orienté par la tangente. Scène confinée au coin
+           haut-droit : elle ne croise ni le titre, ni le sous-titre, ni le CTA. -->
+      <span aria-hidden="true" style="position:absolute;top:10px;right:10px;width:172px;height:66px;pointer-events:none">
+        <svg viewBox="0 0 172 66" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">
+          <path id="cmp-route" d="M10 56 C 62 52, 106 34, 162 10" fill="none" stroke="none"/>
+          <path id="cmp-trainee" d="M10 56 C 62 52, 106 34, 162 10" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 8" pathLength="100" style="stroke-dashoffset:100">
+            <animate attributeName="stroke-dashoffset" values="100;0;0" keyTimes="0;.62;1" dur="7s" repeatCount="indefinite"/>
+          </path>
+          <circle cx="10" cy="56" r="3.2" fill="#fff" opacity=".9"/>
+          <circle cx="162" cy="10" r="3.2" fill="none" stroke="#fff" stroke-width="2" opacity=".9"/>
+          <g id="cmp-avion" opacity="0">
+            <path d="M2.2 0 L-8.5 5.2 L-5.4 0 L-8.5 -5.2 Z" fill="#fff" style="filter:drop-shadow(0 2px 5px rgba(140,40,0,.45))"/>
+            <animateMotion dur="7s" repeatCount="indefinite" rotate="auto" keyPoints="0;1;1" keyTimes="0;.62;1" calcMode="linear"><mpath href="#cmp-route"/></animateMotion>
+            <animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;.08;.56;.62;1" dur="7s" repeatCount="indefinite"/>
+          </g>
+        </svg>
+      </span>
+      <span style="position:relative;z-index:1;display:inline-block;border-radius:6px;background:#fff;color:#C2410C;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:4px 9px">Notre engagement prix</span>
+      <span style="position:relative;z-index:1;display:block;font-size:23px;font-weight:800;letter-spacing:-0.02em;line-height:1.05;color:#fff;margin-top:9px;text-transform:uppercase">Moins cher<br>qu'Opodo.<span style="color:#FFD9A8"> Point.</span></span>
+      <span style="position:relative;z-index:1;display:block;font-size:11.5px;font-weight:600;color:rgba(255,255,255,.78);margin-top:7px">On fait tout pour ça — et on le prouve, chaque matin.</span>
+      <span style="position:relative;z-index:1;display:inline-flex;align-items:center;gap:6px;margin-top:11px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);padding:7px 13px;font-size:11.5px;font-weight:800;color:#fff">Voir le comparatif du jour <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px"><use href="#i-arrow-right"/></svg></span>
+    </a>
+
+    
+
+
+
+
+
+
+
+
+
+
+        <!-- CONCOURS : la section a MIGRÉ vers Promos (fondatrice 25/08) — l'accueil garde
+         la capsule tirage en haut à droite, et l'onglet Promos porte la pastille
+         « non vu » (PEC_NOTIF) tant que le jeu n'a pas été découvert. -->
+
+
+
+
+
+
+
+
+      
+    <div id="fermeture-slot" style="padding:0 16px"></div>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('');})();</script>
+<script>
+  // (17/09 — pivot) Les moyens de régler (accroche, note des compagnies, « comment ça marche ») et la durée du
+  // prix bloqué viennent de PEC_DATA (moyensPaiementLabel, formulairesAppliquer) — l'accueil ne les écrit pas lui-même.
+  (function () {
+    var D = window.PEC_DATA; if (!D) return;
+    var t = D.moyensPaiementLabel ? D.moyensPaiementLabel() : '';
+    if (t) [].forEach.call(document.querySelectorAll('.js-moyens'), function (e) { e.textContent = t; });
+    if (D.formulairesAppliquer) D.formulairesAppliquer(document);
+  })();
+</script>
+    <div style="height:28px"></div>
+  </div>
+
+  <!-- BottomNav -->
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" aria-current="page" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+
+<!-- ===== BOTTOM SHEET GÉNÉRIQUE ===== -->
+<div class="pec-sheet-scrim" id="scrim" onclick="if(event.target===this)closeSheet()">
+  <div class="pec-sheet">
+    <div style="width:38px;height:5px;border-radius:999px;background:var(--color-handle);margin:0 auto 12px"></div>
+    <h2 id="sheet-title" style="font-size:20px;font-weight:800;letter-spacing:-0.02em;color:var(--color-ink);margin-bottom:14px">Titre</h2>
+    <div id="sheet-body"></div>
+  </div>
+</div>
+
+<script>
+  // ── ÉTAT ──
+  var state = { budget: 100, mode: 'flight_only', ar: true, voy: 1, dep: (window.PEC_DATA && PEC_DATA.aeroportDefautGet) ? PEC_DATA.aeroportDefautGet() : 'Marseille (MRS)', dest: null, dates: null, datesHotel: null };
+  var depLbl0 = document.getElementById('dep-lbl'); if (depLbl0) depLbl0.textContent = state.dep;   // le chip suit la PRÉFÉRENCE (28/08 — plus de dur)
+  // IDÉES de destinations (03/09) : plus AUCUN « dès 68 € » inventé — aucun tarif réel n'existe en page,
+  // le prix se découvre dans le tunnel (recherche réelle). Reste : un référentiel de prix d'appel (data-layer).
+  var DEST = [
+    { c: 'Alicante (ALC)' }, { c: 'Alger (ALG)' }, { c: 'Tunis (TUN)' },
+    { c: 'Casablanca (CMN)' }, { c: 'Barcelone (BCN)' }, { c: 'Madrid (MAD)' }
+  ];
+  var AIRPORTS = (window.PEC_DATA && PEC_DATA.aeroports) || ['Marseille (MRS)'];
+  var CITY_POOL = ['Alicante', 'Alger', 'Tunis', 'Casablanca', 'Barcelone', 'Madrid', 'Rome', 'Lisbonne'];
+
+  // ── BUDGET → nb destinations « accessibles » (illustratif) + promesse ──
+  // Couverture réelle Duffel (plus de 200 compagnies) : le nombre de destinations
+  // atteignables grimpe vite avec le budget — plus de 20 dès 100 €, ~160 au plafond.
+  function nbDest(b) { return Math.max(2, Math.min(160, Math.round(b / 4.5))); }
+
+  function renderBudget() {
+    var b = state.budget;
+    document.getElementById('bval').textContent = b;
+    var pct = Math.max(0, Math.min(100, (b - 10) / 490 * 100));
+    document.getElementById('bfill').style.width = pct + '%';
+    document.getElementById('bknob').style.left = pct + '%';
+    document.getElementById('slider').value = Math.min(b, 500);
+    var n = nbDest(b);
+    document.getElementById('dest-txt').textContent = n + ' destination' + (n > 1 ? 's' : '');
+    document.getElementById('budget-cities').textContent = CITY_POOL.slice(0, Math.min(4, n)).join(', ') + (n > 4 ? '…' : '');
+    // paliers actifs
+    document.querySelectorAll('#paliers [data-p]').forEach(function (btn) {
+      var on = +btn.getAttribute('data-p') === b;
+      btn.style.background = on ? 'var(--color-primary)' : 'rgba(255,255,255,0.12)';
+      btn.style.color = '#fff';
+      btn.style.boxShadow = on ? '0 8px 16px -8px rgba(16,160,106,.6)' : 'none';
+      btn.style.height = '42px'; btn.style.flex = '1'; btn.style.borderRadius = '999px';
+      btn.style.fontSize = '13.5px'; btn.style.fontWeight = '700';
+    });
+    renderCta();
+  }
+  function renderCta() {
+    var lbl = 'Rechercher mes billets d’avion';
+    document.getElementById('cta-lbl').textContent = lbl;
+    // le CTA suit le scénario choisi : Vol (Aller-retour ou Aller simple) ou Multi-destinations
+    document.getElementById('cta').setAttribute('href',
+      state.ar ? '../parcours/02-vol-aller-retour.html'
+      : '../parcours/01-vol-aller-simple.html');
+  }
+  function onBudget(v) { state.budget = parseInt(v); renderBudget(); }
+  function setPalier(p) { state.budget = p; document.getElementById('autre').value = ''; renderBudget(); }
+  function onAutre(v) { var d = v.replace(/[^0-9]/g, ''); if (d) { state.budget = Math.min(99999, parseInt(d)); renderBudget(); } }
+
+  // ── MODE (segmented) ──
+  function setMode(btn) {
+    document.querySelectorAll('.pec-segmented [role="tab"]').forEach(function (b) { b.setAttribute('aria-selected', 'false'); });
+    btn.setAttribute('aria-selected', 'true');
+    state.mode = btn.getAttribute('data-mode');
+    var hotel = state.mode === 'stay_only';
+    document.getElementById('btn-depart').style.display = hotel ? 'none' : ''; majSwap();
+    // trajet : SEULEMENT en vol seul (un séjour a ses dates arrivée→départ) ;
+    // restaurer avec 'flex' — '' effaçait le display:flex inline (boutons écrasés)
+    document.getElementById('btn-trajet').style.display = (state.mode === 'flight_only' || state.mode === 'flight_hotel') ? 'flex' : 'none';
+    var btnMulti = document.querySelectorAll('#btn-trajet [role="tab"]')[2];
+    if (btnMulti) btnMulti.style.display = state.mode === 'flight_only' ? '' : 'none';   // le multi-tronçons reste un parcours vol seul
+    majMultiZone();
+    // le champ dates change de nature : date de départ (vol) ↔ plage arrivée→départ (hôtel)
+    var dl = document.getElementById('dates-lbl');
+    if (state.mode !== 'flight_only') {
+      if (state.datesHotel) { dl.textContent = state.datesHotel.label + ' · ' + state.datesHotel.nuits + ' nuits'; dl.style.color = 'var(--color-ink)'; }
+      else { dl.textContent = 'Arrivée → départ ?'; dl.style.color = 'var(--color-muted-2)'; }
+} else if (state.dates) { dl.textContent = state.dates; dl.style.color = 'var(--color-ink)'; }
+else { dl.textContent = 'Choisis tes dates'; dl.style.color = 'var(--color-muted-2)'; }
+    renderCta();
+  }
+
+  // ── TRAJET ──
+  // API du banc de test (AC·33) : pilotée via window — ne pas supprimer même si
+  // aucun onclick de la page ne l'appelle.
+  function toggleTrajet() { setTrajet(!state.ar, document.querySelectorAll('#btn-trajet [role="tab"]')[state.ar ? 0 : 1]); }
+  function setTrajet(ar, btn) {
+    state.ar = ar; state.multi = false; majMultiZone();
+    document.querySelectorAll('#btn-trajet [role="tab"]').forEach(function (b) {
+      var actif = b === btn;
+      b.setAttribute('aria-selected', actif);
+      b.style.background = actif ? '' : 'var(--color-surface)';   // actif = règle verte du CSS ; inactif = carte blanche (§10)
+      b.style.color = actif ? '#fff' : 'var(--color-ink)';
+      b.style.boxShadow = actif ? '0 8px 18px -10px rgba(15,42,36,.45)' : '0 6px 18px -12px rgba(15,42,36,.22),0 1px 3px rgba(15,42,36,.06)';
+    });
+// PAS de dates par défaut (fondatrice 25/08 : ça pousse à l'erreur) — le champ
+// reste OBLIGATOIRE : changer de trajet efface un choix devenu incohérent.
+state.dates = null;
+var dlt = document.getElementById('dates-lbl');
+dlt.textContent = ar ? 'Choisis tes dates — aller et retour' : 'Choisis ta date de départ';
+dlt.style.color = 'var(--color-muted-2)';
+    renderCta();
+  }
+  // ── COMBOBOX destinations (schéma Duffel / villes Nuitée) ──
+  function comboRender(kind, q) {
+    var list = document.getElementById('combo-list'); if (!list) return;
+    var rows = '';
+    if (kind === 'dest' && state.mode === 'stay_only') {
+      // SÉJOUR : villes au schéma Nuitée (city, country)
+      var nrm = function (t) { return t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); };
+      var vs = window.PEC_DATA.nuiteeCities.filter(function (v) { return !q || nrm(v.city).indexOf(nrm(q)) === 0; }).slice(0, 8);
+      rows = vs.map(function (v) {
+        return sheetRow('i-bed', v.city, 'Séjour · ' + v.country, "pickDest('" + v.city + "')", state.dest === v.city);
+      }).join('');
+      if (!vs.length && q) rows = '<p style="padding:14px 4px;font-size:12.5px;color:var(--color-muted);text-align:center">Aucune ville trouvée — essaie un autre nom.</p>';
+    } else {
+      // RÈGLE (fondatrice 25/08) : la ville de DÉPART ne peut pas être proposée en
+      // DESTINATION (et inversement) — Marseille → Marseille n'existe pas en vol.
+      // SEULE exception : l'hébergement seul (branche stay_only ci-dessus), où
+      // beaucoup réservent un hôtel dans leur propre ville.
+      var villeDe = function (lbl) { return (lbl || '').split(' (')[0].toLowerCase(); };
+      var exclue = kind === 'dest' ? villeDe(state.dep) : villeDe(state.dest);
+      if (kind === 'dest' && !q) {
+        // liste TOUJOURS visible : d'abord des idées (aéroport · pays, depuis PEC_DATA.places — jamais un prix inventé)…
+        var idees = DEST.filter(function (d) { return villeDe(d.c) !== exclue; });
+        var infoDe = function (lbl) { var code = (lbl.match(/\(([A-Z]{3})\)/) || [])[1]; var pl = (window.PEC_DATA.places || []).filter(function (p) { return p.iata_code === code && p.type === 'airport'; })[0]; return pl ? pl.name + ' · ' + pl.iata_country_code : 'Idée de destination'; };
+        rows += '<p style="margin:2px 0 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--color-muted-2)">Idées de destinations</p>' +
+          idees.map(function (d) {
+            return sheetRow('i-map-pin', d.c, infoDe(d.c), "pickDest('" + d.c + "')", state.dest === d.c);
+          }).join('') +
+          '<p style="margin:10px 0 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--color-muted-2)">Toutes les destinations</p>';
+      }
+      var ps = window.PEC_DATA.chercherPlaces(q, kind === 'dep' ? 'airport' : null)
+        .filter(function (p) { return p.city_name.toLowerCase() !== exclue; });
+      if (!ps.length && q && exclue && villeDe(q + ' (') === exclue) {
+        rows += '<p style="padding:14px 4px;font-size:12.5px;color:var(--color-muted);text-align:center">Tu pars déjà de <b style="color:var(--color-ink)">' + q.replace(/</g, '&lt;') + '</b> — choisis une autre ' + (kind === 'dest' ? 'destination' : 'ville de départ') + '. (Un hôtel dans ta ville ? Passe en « Hôtel ».)</p>';
+      }
+      rows += ps.map(function (p) {
+        var lbl = p.city_name + ' (' + p.iata_code + ')';
+        var sub = p.type === 'city' ? 'Ville · tous ses aéroports' : p.name + ' · ' + p.iata_country_code;
+        var fn = (kind === 'dep' ? "pickDep('" : "pickDest('") + lbl + "')";
+        return sheetRow(p.type === 'city' ? 'i-map-pin' : 'i-plane', lbl, sub, fn, (kind === 'dep' ? state.dep : state.dest) === lbl);
+      }).join('');
+      if (!ps.length && q && !(exclue && villeDe(q + ' (') === exclue)) rows += '<p style="padding:14px 4px;font-size:12.5px;color:var(--color-muted);text-align:center">Aucune destination trouvée pour « ' + q.replace(/</g, '&lt;') + ' » — essaie un autre nom ou un code (BCN, ALG…).</p>';
+    }
+    list.innerHTML = rows;
+  }
+
+  // ── VILLES MULTIPLES — slices au schéma DUFFEL {origin, destination, departure_date} ──
+  var multiCible = null;
+  state.multi = false;
+  state.slices = [
+    { origin: state.dep, destination: null, departure_date: null },   // le départ = la préférence (aeroportDefautGet), plus « Marseille » figé
+    { origin: null, destination: null, departure_date: null }
+  ];
+  function setTrajetMulti(btn) {
+    state.multi = true;
+    document.querySelectorAll('#btn-trajet [role="tab"]').forEach(function (b) {
+      var actif = b === btn;
+      b.setAttribute('aria-selected', actif);
+      b.style.background = actif ? '' : 'var(--color-surface)';
+      b.style.color = actif ? '#fff' : 'var(--color-ink)';
+      b.style.boxShadow = actif ? '0 8px 18px -10px rgba(15,42,36,.45)' : '0 6px 18px -12px rgba(15,42,36,.22),0 1px 3px rgba(15,42,36,.06)';
+    });
+    majMultiZone(); renderCta();
+  }
+  function majMultiZone() {
+    var on = state.multi && state.mode === 'flight_only';
+    var mz = document.getElementById('multi-zone'); if (!mz) return;
+    mz.style.display = on ? 'block' : 'none';
+    document.getElementById('btn-dest').style.display = on ? 'none' : '';
+    document.getElementById('btn-dates').style.display = on ? 'none' : '';
+    document.getElementById('btn-depart').style.display = (on || state.mode === 'stay_only') ? 'none' : ''; majSwap();
+    if (on) { remplirDatalist(); renderSlices(); }
+  }
+  function remplirDatalist() {
+    var dl = document.getElementById('pec-places'); if (!dl || dl.children.length) return;
+    dl.innerHTML = window.PEC_DATA.places.map(function (p) {
+      return '<option value="' + p.city_name + ' (' + p.iata_code + ')">' + p.name + '</option>';
+    }).join('');
+  }
+  function renderSlices() {
+    var z = document.getElementById('multi-slices');
+    z.innerHTML = state.slices.map(function (sl, i) {
+      return '<div style="border-radius:14px;background:var(--color-bg);padding:11px 12px;margin-bottom:8px">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">' +
+          '<span style="font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--color-muted)">Tronçon ' + (i + 1) + '</span>' +
+          (state.slices.length > 2 ? '<button type="button" class="tap" onclick="rmSlice(' + i + ')" aria-label="Retirer le tronçon ' + (i + 1) + '" style="font-size:11px;font-weight:700;color:var(--color-muted);background:none;padding:0 2px">Retirer</button>' : '') +
+        '</div>' +
+        '<div style="display:flex;gap:7px;align-items:center">' +
+          '<input list="pec-places" value="' + (sl.origin || '') + '" placeholder="Départ" onchange="chgSlice(' + i + ",'origin'" + ',this.value)" style="min-width:0;flex:1;border:1.5px solid var(--color-sep);border-radius:11px;background:var(--color-card);padding:10px 10px;font:inherit;font-size:12.5px;font-weight:600;color:var(--color-ink);outline:none">' +
+          '<svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:14px;color:var(--color-muted)"><use href="#i-arrow-right"/></svg>' +
+          '<input list="pec-places" value="' + (sl.destination || '') + '" placeholder="Arrivée" onchange="chgSlice(' + i + ",'destination'" + ',this.value)" style="min-width:0;flex:1;border:1.5px solid var(--color-sep);border-radius:11px;background:var(--color-card);padding:10px 10px;font:inherit;font-size:12.5px;font-weight:600;color:var(--color-ink);outline:none">' +
+        '</div>' +
+        '<button type="button" class="tap" onclick="ouvrirCalTroncon(' + i + ')" style="display:flex;align-items:center;gap:7px;width:100%;margin-top:7px;border-radius:11px;background:var(--color-card);border:1.5px solid var(--color-sep);padding:10px 10px;font-size:12.5px;font-weight:600;color:' + (sl.departure_date ? 'var(--color-ink)' : 'var(--color-muted-2)') + '">' +
+          '<svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px;color:var(--color-muted-2)"><use href="#i-calendar"/></svg>' + (sl.departure_date || 'Date de départ') + '</button>' +
+      '</div>';
+    }).join('');
+  }
+  function chgSlice(i, champ, v) {
+    state.slices[i][champ] = v || null;
+    // enchaînement naturel : l'arrivée du tronçon N devient le départ du N+1 s'il est vide
+    if (champ === 'destination' && state.slices[i + 1] && !state.slices[i + 1].origin) { state.slices[i + 1].origin = v; renderSlices(); }
+  }
+  function addSlice() {
+    if (state.slices.length >= 4) return;
+    var prev = state.slices[state.slices.length - 1];
+    state.slices.push({ origin: prev.destination || null, destination: null, departure_date: null });
+    renderSlices();
+  }
+  function rmSlice(i) { state.slices.splice(i, 1); renderSlices(); }
+  function ouvrirCalTroncon(i) { multiCible = i; openSheet('dates'); }
+  function setSliceDate(i, jolie) { state.slices[i].departure_date = jolie; multiCible = null; closeSheet(); renderSlices(); }
+
+  // compat banc/scripts : l'ancien toggle existe toujours
+  var btnTrajetCompat = document.getElementById('btn-trajet');
+  if (btnTrajetCompat && !btnTrajetCompat.onclick) btnTrajetCompat.onclick = null;
+
+  // ── BOTTOM SHEET ──
+  function openSheet(kind) {
+    var title = '', body = '';
+    if (kind === 'dep' || kind === 'dest') {
+      // COMBOBOX (fondatrice 23/08) : on ÉCRIT et la LISTE suit en même temps —
+      // données au schéma DUFFEL Places (iata_code, city_name…) · séjour : villes Nuitée.
+      title = kind === 'dep' ? "D'où tu pars ?" : 'Où tu veux aller ?';
+      body = '<input id="combo-q" type="text" autocomplete="off" placeholder="' +
+        (kind === 'dep' ? 'Écris ta ville ou ton aéroport de départ…' : (state.mode === 'stay_only' ? 'Écris ta ville de séjour…' : 'Écris une ville, un aéroport, un code (BCN)…')) +
+        '" oninput="comboRender(\'' + kind + '\', this.value)" style="width:100%;border:1.5px solid var(--color-sep);border-radius:13px;background:var(--color-bg);padding:13px 14px;font:inherit;font-size:14.5px;font-weight:600;color:var(--color-ink);outline:none;margin-bottom:10px">' +
+        '<div id="combo-list"></div>';
+    } else if (kind === 'voy') {
+      title = 'Voyageurs';
+      body = '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0">' +
+        '<span style="font-size:15px;font-weight:700;color:var(--color-ink)">Voyageurs</span>' +
+        '<span style="display:flex;align-items:center;gap:16px">' +
+        '<button class="tap" onclick="chVoy(-1)" style="width:36px;height:36px;border-radius:999px;background:var(--color-bg);font-size:20px;color:var(--color-ink)">−</button>' +
+        '<span id="voy-n" style="font-size:17px;font-weight:800;min-width:20px;text-align:center">' + state.voy + '</span>' +
+        '<button class="tap" onclick="chVoy(1)" style="width:36px;height:36px;border-radius:999px;background:var(--color-primary);color:#fff;font-size:20px">+</button>' +
+        '</span></div>' +
+        '<button class="pec-cta tap" onclick="closeSheet()" style="margin-top:14px">Valider</button>';
+    } else if (kind === 'dates' && state.mode !== 'flight_only') {
+      // HÔTEL et VOL+HÔTEL : VRAI calendrier — on TAPE son arrivée puis son départ
+      cal.in = null; cal.out = null;   // repartir propre à chaque ouverture
+      calMono = false;
+      title = state.mode === 'flight_hotel' ? "Tes dates — vol ET hôtel ensemble" : "Tes dates — arrivée, puis départ";
+      body = '<p style="font-size:11.5px;font-weight:600;color:var(--color-muted);margin-bottom:8px">Touche ta date d\'<b style="color:var(--color-ink)">arrivée</b>, puis ta date de <b style="color:var(--color-ink)">départ</b>.' + (state.mode === 'flight_hotel' ? ' Ces deux dates valent pour <b style="color:var(--color-ink)">le vol ET l\'hôtel</b> : vol aller le jour d\'arrivée, vol retour le jour du départ — une seule saisie.' : '') + '</p>' +
+        '<div id="cal-zone">' + calHTML() + '</div>' +
+        '<div id="cal-recap" style="margin-top:10px;font-size:12.5px;font-weight:700;color:var(--color-primary-dark);text-align:center;min-height:18px"></div>' +
+        '<button class="pec-cta tap" id="cal-ok" onclick="calValider()" disabled style="margin-top:10px;opacity:.5">Choisis tes deux dates</button>';
+    } else if (kind === 'dates') {
+      // VOL : même CALENDRIER que l'hôtel (fondatrice 22/08) — 1 date en aller
+      // simple, 2 dates (aller + retour) en aller-retour. Fini les suggestions.
+      cal.in = null; cal.out = null;   // repartir propre à chaque ouverture
+      calMono = (multiCible !== null) ? true : !state.ar;
+      title = (multiCible !== null) ? 'Date du tronçon ' + (multiCible + 1) : (state.ar ? 'Tes dates — aller, puis retour' : 'Ta date de départ');
+      body = '<p style="font-size:11.5px;font-weight:600;color:var(--color-muted);margin-bottom:8px">' +
+        (state.ar ? 'Touche ta date d\'<b style="color:var(--color-ink)">aller</b>, puis ta date de <b style="color:var(--color-ink)">retour</b>.' : 'Touche ta date de <b style="color:var(--color-ink)">départ</b>.') + '</p>' +
+        '<div id="cal-zone">' + calHTML() + '</div>' +
+        '<div id="cal-recap" style="margin-top:10px;font-size:12.5px;font-weight:700;color:var(--color-primary-dark);text-align:center;min-height:18px"></div>' +
+        '<button class="pec-cta tap" id="cal-ok" onclick="calValider()" disabled style="margin-top:10px;opacity:.5">' + (state.ar ? 'Choisis tes deux dates' : 'Choisis ta date') + '</button>';
+    }
+    document.getElementById('sheet-title').textContent = title;
+    document.getElementById('sheet-body').innerHTML = body;
+    /* (11/09) FOCUS IMMÉDIAT, PAS DIFFÉRÉ. Un `setTimeout(60)` est allongé à une seconde ou plus dès que
+       l'onglet passe à l'arrière-plan : le curseur sautait dans la recherche longtemps après l'ouverture de la
+       feuille, parfois après que la personne avait déjà touché autre chose. Le champ est dans le DOM. */
+    if (kind === 'dep' || kind === 'dest') { comboRender(kind, ''); var cq = document.getElementById('combo-q'); if (cq) cq.focus(); }
+    document.getElementById('scrim').classList.add('on');
+  }
+  function sheetRow(icon, label, sub, onclick, sel) {
+    return '<button class="pec-sheet-row tap" onclick="' + onclick + '">' +
+      '<span style="display:flex;height:38px;width:38px;flex-shrink:0;align-items:center;justify-content:center;border-radius:11px;background:var(--color-sep);color:var(--color-ink)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:19px"><use href="#' + icon + '"/></svg></span>' +
+      '<span style="min-width:0;flex:1"><span style="display:block;font-size:15px;font-weight:700;color:var(--color-ink)">' + label + '</span>' +
+      (sub ? '<span style="display:block;font-size:12.5px;font-weight:700;color:var(--color-primary)">' + sub + '</span>' : '') + '</span>' +
+      '<span style="flex-shrink:0;color:' + (sel ? 'var(--color-primary)' : 'var(--color-primary-dark)') + '">' +
+      (sel ? '<svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-check"/></svg>' :
+        '<span style="display:flex;height:28px;width:28px;align-items:center;justify-content:center;border-radius:999px;background:var(--color-mint)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-plus"/></svg></span>') +
+      '</span></button>';
+  }
+  function closeSheet() { multiCible = null; document.getElementById('scrim').classList.remove('on'); }
+  function pickDep(a) { state.dep = a; document.getElementById('dep-lbl').textContent = a; if (window.PEC_DATA && PEC_DATA.aeroportDefautSet) PEC_DATA.aeroportDefautSet(a); closeSheet(); }   // le choix devient le défaut (une seule base)
+  // le bouton d'INVERSION n'apparaît que quand départ ET destination sont visibles
+  function majSwap() { var d1 = document.getElementById('btn-depart'), d2 = document.getElementById('btn-dest'), s = document.getElementById('btn-swap'); if (s) s.style.display = (d1 && d1.style.display !== 'none' && d2 && d2.style.display !== 'none') ? '' : 'none'; }
+  // INVERSER départ ↔ destination (29/08) : échange les libellés choisis. Sans
+  // destination choisie, rien à inverser (petit signal visuel).
+  window.swapDepDest = function () {
+    var s = document.getElementById('btn-swap');
+    if (!state.dest) { if (s) { s.style.transform = 'rotate(180deg)'; setTimeout(function () { s.style.transform = ''; }, 260); } document.getElementById('btn-dest').click(); return; }
+    var d = state.dep, t = state.dest;
+    state.dep = t; state.dest = d;
+    document.getElementById('dep-lbl').textContent = state.dep;
+    document.getElementById('dest-wrap').innerHTML = '<span class="pec-chip-mint">' + state.dest + '</span>';
+    if (s) { s.style.transition = 'transform .3s'; s.style.transform = 'rotate(180deg)'; setTimeout(function () { s.style.transform = ''; }, 320); }
+  };
+  function pickDest(c) {
+    state.dest = c;
+    document.getElementById('dest-wrap').innerHTML = '<span class="pec-chip-mint">' + c + '</span>';
+    closeSheet();
+  }
+  function chVoy(d) { state.voy = Math.max(1, Math.min(9, state.voy + d)); document.getElementById('voy-n').textContent = state.voy; document.getElementById('voy-lbl').textContent = state.voy + ' voyageur' + (state.voy > 1 ? 's' : ''); }
+  function pickDates(d) { state.dates = d; var e = document.getElementById('dates-lbl'); e.textContent = d; e.style.color = 'var(--color-ink)'; closeSheet(); }
+  // ── Calendrier hôtel : arrivée puis départ (fondatrice 22/08 : « comme vol,
+  // sélection date arrivée et départ » — plus de plages suggérées) ──
+  var cal = { in: null, out: null };
+  var calMono = false;   // vol aller simple : une seule date
+  var MOIS_FR = ['janv', 'févr', 'mars', 'avril', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc'];
+  // Jamais une date passée (fondatrice 27/08 : « on ne peut pas réserver à une
+  // date déjà passée ») : les mois se génèrent depuis AUJOURD'HUI, les jours
+  // écoulés sont verrouillés ; le jour même reste possible selon l'HORAIRE
+  // (vol : départ jusqu'à 18 h · séjour : arrivée jusqu'à 22 h), sinon demain.
+  function calIso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function calMinIso() {
+    var d = new Date(), lim = state.mode === 'flight_only' ? 18 : 22;
+    if (d.getHours() >= lim) d.setDate(d.getDate() + 1);
+    return calIso(d);
+  }
+  function calHTML() {
+    var html = '', auj = new Date(), min = calMinIso();
+    if (calIso(auj) < min) {
+      html += '<div style="display:flex;align-items:flex-start;gap:7px;border-radius:10px;background:var(--color-amber-bg,#FBF3E0);color:var(--color-amber-text,#8a6d1f);font-size:10.5px;line-height:1.5;font-weight:700;padding:8px 10px;margin-bottom:8px">⏰ ' +
+        (state.mode === 'flight_only' ? 'Après 18 h, plus de départ le jour même — première date possible : demain.' : 'Après 22 h, plus d\'arrivée le jour même — première date possible : demain.') + '</div>';
+    }
+    [[auj.getFullYear(), auj.getMonth()], [new Date(auj.getFullYear(), auj.getMonth() + 1, 1).getFullYear(), new Date(auj.getFullYear(), auj.getMonth() + 1, 1).getMonth()]].forEach(function (m0) {
+      var y = m0[0], m = m0[1];
+      var nbJours = new Date(y, m + 1, 0).getDate();
+      html += '<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:800;color:var(--color-ink);margin:6px 0 6px;text-transform:capitalize">' + MOIS_FR[m] + ' ' + y + '</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">';
+      var decal = (new Date(y, m, 1).getDay() + 6) % 7;   // lundi = 0
+      for (var v = 0; v < decal; v++) html += '<span></span>';
+      for (var j = 1; j <= nbJours; j++) {
+        var iso = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(j).padStart(2, '0');
+        if (iso < min) {   // passé (ou jour même hors horaire) : VERROUILLÉ
+          html += '<button type="button" disabled aria-disabled="true" style="height:34px;border-radius:9px;font-size:12.5px;font-weight:700;background:var(--color-bg);color:var(--color-muted-2);opacity:.4;text-decoration:line-through;cursor:default">' + j + '</button>';
+          continue;
+        }
+        var sel = iso === cal.in || iso === cal.out;
+        var entre = cal.in && cal.out && iso > cal.in && iso < cal.out;
+        html += '<button type="button" class="tap" onclick="calPick(\'' + iso + '\')" style="height:34px;border-radius:9px;font-size:12.5px;font-weight:700;' +
+          (sel ? 'background:var(--color-primary);color:#fff;box-shadow:var(--shadow-cta-tight)'
+               : entre ? 'background:var(--color-mint);color:var(--color-primary-dark)'
+               : 'background:var(--color-bg);color:var(--color-ink)') + '">' + j + '</button>';
+      }
+      html += '</div></div>';
+    });
+    return html;
+  }
+  function calJoli(iso) { var p = iso.split('-'); return parseInt(p[2], 10) + ' ' + MOIS_FR[parseInt(p[1], 10) - 1]; }
+  function calPick(iso) {
+    if (iso < calMinIso()) return;   // jamais une date passée — quoi qu'il arrive
+    if (calMono) { cal.in = iso; cal.out = null; }
+    else if (!cal.in || (cal.in && cal.out) || iso <= cal.in) { cal.in = iso; cal.out = null; }
+    else cal.out = iso;
+    document.getElementById('cal-zone').innerHTML = calHTML();
+    var ok = document.getElementById('cal-ok'), rec = document.getElementById('cal-recap');
+    if (calMono && cal.in) {
+      rec.textContent = 'Départ le ' + calJoli(cal.in);
+      ok.disabled = false; ok.style.opacity = '1'; ok.textContent = 'Valider — départ le ' + calJoli(cal.in);
+    } else if (cal.in && cal.out) {
+      var n = Math.round((new Date(cal.out) - new Date(cal.in)) / 86400000);
+      var unite = state.mode === 'flight_only' ? ' jour' + (n > 1 ? 's' : '') + ' sur place' : ' nuit' + (n > 1 ? 's' : '');
+      rec.textContent = calJoli(cal.in) + ' → ' + calJoli(cal.out) + ' · ' + n + unite;
+      ok.disabled = false; ok.style.opacity = '1'; ok.textContent = 'Valider — ' + n + ' nuit' + (n > 1 ? 's' : '');
+    } else {
+      rec.textContent = cal.in ? 'Arrivée le ' + calJoli(cal.in) + ' — touche ta date de départ' : '';
+      ok.disabled = true; ok.style.opacity = '.5'; ok.textContent = 'Choisis tes deux dates';
+    }
+  }
+  function calValider() {
+    if (multiCible !== null) { if (!cal.in) return; setSliceDate(multiCible, calJoli(cal.in)); return; }
+    if (state.mode === 'flight_only') {
+      // VOL : aller simple = 1 date · aller-retour = 2 dates (fondatrice 22/08)
+      if (calMono) { if (!cal.in) return; pickDates(calJoli(cal.in) + ' · aller simple'); return; }
+      if (!cal.in || !cal.out) return;
+      pickDates(calJoli(cal.in) + ' → ' + calJoli(cal.out) + ' · aller-retour');
+      return;
+    }
+    if (!cal.in || !cal.out) return;
+    var n = Math.round((new Date(cal.out) - new Date(cal.in)) / 86400000);
+    pickDatesHotel(calJoli(cal.in), calJoli(cal.out), n);
+  }
+  function pickDatesHotel(dIn, dOut, n) {
+    state.datesHotel = { in: dIn, out: dOut, nuits: n, label: dIn + ' → ' + dOut };
+    var e = document.getElementById('dates-lbl');
+    e.textContent = dIn + ' → ' + dOut + ' · ' + n + ' nuit' + (n > 1 ? 's' : '');
+    e.style.color = 'var(--color-ink)';
+    closeSheet();
+  }
+
+  renderBudget();
+
+  // Galerie compagnies — VRAIS logos (auto-hébergés, ui/assets/vendor/airlines)
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.compagnies) return;
+    document.getElementById('cies-row').innerHTML = D.compagnies.map(function (c) {
+      return '<span style="flex:none;display:inline-flex;align-items:center;justify-content:center;height:38px;padding:0 10px;border-radius:12px;background:var(--color-surface);box-shadow:var(--shadow-card)">' + D.logoLockup(c, 18) + '</span>';
+    }).join('');
+  })();
+</script>
+<script>
+  (function () { var e = document.getElementById('social-row'); if (e && window.PEC_DATA && PEC_DATA.socialHTML) e.innerHTML = PEC_DATA.socialHTML(); })();
+  /* Capsule tirage : J−x RÉEL (jamais de fausse urgence) + le LOT du mois publié par le marketing.
+     (10/09 — lot 8, constat D-38) Elle lisait `PEC_DATA.concours` — le lot du référentiel — et
+     re-décodait « 31 août » avec sa propre table de mois, avec un repli « le 30 du mois suivant »
+     quand la date était passée : trois façons différentes de lire une même date dans trois pages.
+     Une seule source : `concoursGet()` et `concoursTirageAt()`. */
+  (function () {
+    var e = document.getElementById('cadeau-jmoins'); if (!e) return;
+    var Cc = window.PEC_DATA && PEC_DATA.concoursGet && PEC_DATA.concoursGet();
+    if (!Cc) { e.textContent = ''; return; }                  // aucun lot publié : la capsule est masquée par le script du concours
+    if (window.PEC_DATA && PEC_DATA.concoursApresTirage && PEC_DATA.concoursApresTirage()) {
+      // Après le tirage : plus de compte à rebours — on annonce le résultat.
+      var titre = document.getElementById('cadeau-titre');
+      if (titre) titre.textContent = 'Tirage terminé !';
+      e.textContent = '';
+      var sous = document.getElementById('cadeau-sous');
+      if (sous) sous.textContent = 'Voir le résultat';
+      return;
+    }
+    var now = new Date(), tAt = PEC_DATA.concoursTirageAt ? PEC_DATA.concoursTirageAt(Cc) : null;
+    if (!tAt) { e.textContent = ''; return; }       // date inconnue : pas de faux compte à rebours
+    var j = Math.max(0, Math.ceil((tAt - now.getTime()) / 86400000));
+    e.textContent = j === 0 ? "aujourd'hui" : 'J−' + j;
+    var lot = document.getElementById('cadeau-lot');
+    if (lot) lot.textContent = String(Cc.lot.destination || '').split(',')[0];
+    // Les visages = TOUTES les égéries (pile chevauchée, tête d'affiche devant),
+    // régénérés depuis PEC_DATA.egeries — le badge cadeau reste au bout.
+    var Eg = window.PEC_DATA && window.PEC_DATA.egeries;
+    if (Eg && Eg.length) {
+      var tete = Eg.filter(function (x) { return x.principale; })[0] || Eg[0];
+      var pile = document.getElementById('cadeau-stars');
+      if (pile) {
+        var badge = pile.querySelector('span');
+        var ordre = [tete].concat(Eg.filter(function (x) { return x !== tete; }));
+        [].forEach.call(pile.querySelectorAll('img'), function (im) { im.remove(); });
+        ordre.forEach(function (x, i) {
+          var im = document.createElement('img');
+          im.src = '../assets/photos/' + x.photo; im.alt = '';
+          im.style.cssText = 'width:29px;height:29px;border-radius:999px;object-fit:cover;box-shadow:0 0 0 2px var(--color-card);position:relative;z-index:' + (ordre.length - i) + (i ? ';margin-left:-14px' : ';object-position:50% 30%');
+          pile.insertBefore(im, badge);
+        });
+      }
+      var sn = document.getElementById('cadeau-star-nom');
+      if (sn) sn.textContent = tete.nom;
+      var pl = document.getElementById('cadeau-plus');
+      if (pl) pl.textContent = Eg.length > 1 ? '+' + (Eg.length - 1) : '';
+    }
+  })();
+</script>
+<!-- RECHERCHE ANIMÉE (fondatrice 22/08 : « comme la recherche d'agent, mais qui
+     cherche les meilleurs prix de toutes les compagnies ») : chaque étape est
+     DÉTAILLÉE — compagnies interrogées (compteur), comparaison, meilleur prix. -->
+<div id="search-overlay" style="position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(15,42,36,.62);backdrop-filter:blur(4px)">
+  <div style="width:88%;max-width:330px;background:var(--color-surface);border-radius:22px;padding:24px 20px 20px;box-shadow:0 24px 60px rgba(15,42,36,.4);text-align:center">
+    <div style="width:38px;height:38px;border-radius:50%;border:3.5px solid var(--color-mint);border-top-color:var(--color-primary);animation:pecspin .8s linear infinite;margin:0 auto 14px"></div>
+    <div style="font-size:15px;font-weight:800;color:var(--color-ink)">On cherche ton meilleur prix</div>
+    <div id="se-route" style="font-size:11px;color:var(--color-muted);margin-top:2px">—</div>
+    <div style="margin-top:14px;text-align:left;font-size:12px;line-height:2;color:var(--color-muted)">
+      <div id="se1">◌ Interrogation des compagnies… <b id="se-nb" style="color:var(--color-ink)">0</b></div>
+      <div id="se2" style="opacity:.35">◌ Comparaison de tous les prix</div>
+      <div id="se3" style="opacity:.35">◌ Meilleur prix retenu</div>
+    </div>
+    <div id="se-res" style="display:none;margin-top:12px;border-radius:12px;background:var(--color-mint);padding:10px 12px;font-size:12.5px;font-weight:800;color:var(--color-primary-dark)">—</div>
+  </div>
+</div>
+<style>@keyframes pecspin{to{transform:rotate(360deg)}}</style>
+<script>
+function signaleChamp(champ, message) {
+  var err = document.getElementById('form-err');
+  champ.style.boxShadow = '0 0 0 2px var(--color-amber-text)';
+  if (!err) {
+    err = document.createElement('div');
+    err.id = 'form-err';
+    err.style.cssText = 'margin-top:8px;font-size:11.5px;font-weight:700;color:var(--color-amber-text);text-align:center';
+    var cta = document.getElementById('cta');
+    cta.parentNode.insertBefore(err, cta);
+  }
+  err.textContent = message;
+  champ.addEventListener('click', function une() { champ.style.boxShadow = ''; err.textContent = ''; champ.removeEventListener('click', une); });
+}
+// ROUTAGE PAR MODE (le bug « hôtel → je vois rien » : tout partait au tunnel vol)
+function cibleRecherche() {
+  // LA RECHERCHE TRANSMET TOUT (fondatrice 27/08 — fin du « je mets 600, ça
+  // affiche 350 ») : budget, voyageurs, destination, départ, dates.
+  var q = [];
+  if (state.budget) q.push('b=' + state.budget);
+  if (state.voy > 1) q.push('voy=' + state.voy);
+  if (state.dest) q.push('dest=' + encodeURIComponent(state.dest));
+  if (state.dep) q.push('dep=' + encodeURIComponent(state.dep));
+  if (state.mode !== 'flight_only' && state.datesHotel) { q.push('dates=' + encodeURIComponent(state.datesHotel.label)); q.push('nuits=' + state.datesHotel.nuits); }
+  else if (state.dates) q.push('dates=' + encodeURIComponent(state.dates));
+  if (state.mode === 'stay_only') q.push('mode=stay');
+  if (state.ar && state.mode !== 'stay_only') q.push('ar=1');
+  var qs = q.length ? '?' + q.join('&') : '';
+  if (state.mode === 'flight_only' && state.multi) return '../parcours/04-vol-multi.html' + qs;
+  return (state.mode === 'stay_only' || state.mode === 'flight_hotel' ? '../parcours/03-vol-hotel.html'
+    : state.ar ? '../parcours/02-vol-aller-retour.html'
+    : '../parcours/01-vol-aller-simple.html') + qs;
+}
+function lancerRecherche(e) {
+  e.preventDefault();
+  var avecHotel = state.mode !== 'flight_only';
+  // CHAMPS OBLIGATOIRES (fondatrice 22/08) : destination toujours ; à l'hôtel,
+  // une nuit a une ARRIVÉE et un DÉPART — pas de recherche sans la plage.
+  if (state.mode === 'flight_only' && state.multi) {
+    var incomplet = state.slices.some(function (sl) { return !sl.origin || !sl.destination || !sl.departure_date; });
+    if (incomplet) { signaleChamp(document.getElementById('multi-zone'), 'Complète chaque tronçon — départ, arrivée et date.'); return; }
+  } else if (!state.dest || (state.mode !== 'stay_only' && !state.dep)) {
+    signaleChamp(document.getElementById('dest-wrap').closest('button'), 'Choisis ta destination pour lancer la recherche.');
+    return;
+  }
+if (!avecHotel && !state.multi && !state.dates) {
+  signaleChamp(document.getElementById('dates-lbl').closest('button'), 'Choisis tes dates de voyage — le champ est obligatoire.');
+  return;
+}
+if (avecHotel && !state.datesHotel) {
+    signaleChamp(document.getElementById('dates-lbl').closest('button'), "Choisis tes dates — arrivée et départ de l'hôtel.");
+    return;
+  }
+  var errOk = document.getElementById('form-err'); if (errOk) errOk.textContent = '';
+  document.getElementById('dest-wrap').closest('button').style.boxShadow = '';
+  document.getElementById('dates-lbl').closest('button').style.boxShadow = '';
+  var quand = avecHotel ? state.datesHotel.label + ' · ' + state.datesHotel.nuits + ' nuits' : state.dates;
+  document.getElementById('se-route').textContent = (state.mode === 'stay_only' ? state.dest : state.dep + ' → ' + state.dest) + ' · ' + quand;
+  var ov = document.getElementById('search-overlay');
+  ov.style.display = 'flex';
+  // le compteur parle de ce qu'on cherche VRAIMENT : compagnies (vol) ou hôtels (séjour)
+  var hotelSeul = state.mode === 'stay_only';
+  // COMPTEURS SOURCÉS (fondatrice 31/08) : les nombres « comparés aujourd'hui » viennent
+  // du référentiel (plus de 213 / 1 250 / 62,35 en dur ici). Le marketing « plus de 200 »
+  // reste une copie éditoriale (claim de catalogue, testé au banc).
+  var _SC = (window.PEC_DATA && PEC_DATA.scenario) || {};
+  var NB_CIE = _SC.compagniesComparees || 213, NB_HOT = _SC.hotelsCompares || 1250;
+  var PRIX_MIN = (_SC.volPrix != null ? _SC.volPrix : 62.35).toFixed(2).replace('.', ',');
+  var fmtMil = function (n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); };
+  document.getElementById('se1').innerHTML = '◌ Interrogation des ' + (hotelSeul ? 'hôtels' : 'compagnies') + '… <b id="se-nb" style="color:var(--color-ink)">0</b>';
+  document.getElementById('se-res').textContent = hotelSeul
+    ? 'Meilleur prix retenu — ' + fmtMil(NB_HOT) + ' hôtels comparés ✓'
+    : 'Meilleur prix : ' + PRIX_MIN + ' € — ' + NB_CIE + ' compagnies comparées ✓';
+  var nb = 0, cible = hotelSeul ? NB_HOT : NB_CIE, pas = hotelSeul ? 97 : 17;
+  var it = setInterval(function () {
+    nb = Math.min(cible, nb + pas + Math.floor(nb / 9));
+    document.getElementById('se-nb').textContent = nb + (hotelSeul ? ' hôtels' : ' / plus de 200');
+    if (nb >= cible) {
+      clearInterval(it);
+      document.getElementById('se1').innerHTML = hotelSeul
+        ? '✓ <b style="color:var(--color-primary-dark)">' + fmtMil(NB_HOT) + ' hôtels</b> interrogés à ' + state.dest.replace(/ \(.*\)/, '')
+        : '✓ <b style="color:var(--color-primary-dark)">' + NB_CIE + ' compagnies</b> interrogées';
+      document.getElementById('se2').style.opacity = '1';
+      setTimeout(function () {
+        document.getElementById('se2').innerHTML = hotelSeul
+          ? '✓ Tous les prix comparés — <b style="color:var(--color-ink)">chaque hébergement</b> payable par bon d’achat'
+          : '✓ Tous les prix comparés — <b style="color:var(--color-ink)">chaque vol</b> payable par bon d’achat';
+        document.getElementById('se3').style.opacity = '1';
+        setTimeout(function () {
+          document.getElementById('se3').innerHTML = '✓ Meilleur prix retenu';
+          document.getElementById('se-res').style.display = 'block';
+          setTimeout(function () { location.href = cibleRecherche(); }, 850);
+        }, 500);
+      }, 550);
+    }
+  }, 90);
+}
+</script>
+<!-- Modale « Être rappelé·e » : ne s'ouvre QUE si le compte n'a pas de numéro (ou pour le changer) -->
+<!-- Modale « Appel gratuit » (header) : le numéro en grand OU être rappelé·e -->
+<script>
+// « Réduire les animations » : le SMIL de l'avion ne s'arrête pas en CSS — on retire
+// ses animations et on fige l'avion à mi-parcours de la traînée, dessinée en entier.
+(function () {
+  if (!window.matchMedia || !matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var sc = document.getElementById('cmp-route'); if (!sc) return;
+  var svg = sc.ownerSVGElement;
+  [].forEach.call(svg.querySelectorAll('animate, animateMotion'), function (a) { a.remove(); });
+  document.getElementById('cmp-trainee').style.strokeDashoffset = '0';
+  var g = document.getElementById('cmp-avion'), l = sc.getTotalLength(), p = sc.getPointAtLength(l * .55), p2 = sc.getPointAtLength(l * .58);
+  var ang = Math.atan2(p2.y - p.y, p2.x - p.x) * 180 / Math.PI;
+  g.setAttribute('transform', 'translate(' + p.x + ' ' + p.y + ') rotate(' + ang + ')');
+  g.setAttribute('opacity', '1');
+})();
+</script>
+<script>
+/* Concours × influenceurs — tout vient de PEC_DATA (le lot PUBLIÉ + egeries).
+   (10/09 — lot 8, constat D-38) La carte lisait `PEC_DATA.concours`, le lot de démonstration du
+   référentiel : le lot réellement publié par le cockpit n'arrivait jamais jusqu'à l'accueil, et la
+   valeur « 1 380 € » était même écrite dans le HTML. Sans lot publié, la carte s'efface — on
+   n'annonce pas un voyage qui n'existe pas. */
+(function () {
+  var Dt = window.PEC_DATA; if (!Dt) return;
+  var C = Dt.concoursGet && Dt.concoursGet();
+  var sec = document.getElementById('egeries-sec'), cap = document.getElementById('cadeau-concours');
+  if (!C) {
+    if (sec) sec.style.display = 'none';
+    if (cap) cap.style.display = 'none';
+    return;
+  }
+  if (sec) sec.style.display = '';
+  if (cap) cap.style.display = '';
+  var ph = String(C.lot.photo || '');
+  document.getElementById('cx-photo').src = /^(data:|https?:|\.\.?\/)/.test(ph) ? ph : '../assets/photos/' + ph;
+  document.getElementById('cx-mois').textContent = C.mois;
+  document.getElementById('cx-valeur').textContent = 'valeur ' + C.lot.valeur.toLocaleString('fr-FR') + ' €';
+  document.getElementById('cx-titre').textContent = 'Tente de gagner ' + C.lot.titre;
+  document.getElementById('cx-dates').textContent = C.lot.dates;
+  document.getElementById('cx-tirage').textContent = 'le ' + C.tirageLe;
+  var Eg = Dt.egeries;
+  if (Eg && Eg.length) {
+    var tete = Eg.filter(function (x) { return x.principale; })[0] || Eg[0];
+    var ordre = [tete].concat(Eg.filter(function (x) { return x !== tete; }));
+    document.getElementById('cx-stars').innerHTML = ordre.map(function (x, i) {
+      return '<img loading="lazy" decoding="async" src="../assets/photos/' + x.photo + '" alt="" style="width:30px;height:30px;border-radius:999px;object-fit:cover;box-shadow:0 0 0 2px var(--color-card);position:relative;z-index:' + (ordre.length - i) + (i ? ';margin-left:-11px' : ';object-position:50% 30%') + '">';
+    }).join('');
+    document.getElementById('cx-star-nom').textContent = tete.nom;
+    document.getElementById('cx-plus').textContent = Eg.length > 1 ? '+' + (Eg.length - 1) : '';
+  }
+})();
+</script>
+
+
+</body>
+</html>

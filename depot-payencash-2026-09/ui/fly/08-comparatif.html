@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash FLY — Le comparatif du jour</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-filters.js"></script><!-- (07/09) recherche · tri · pagination par convention -->
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<!-- LE COMPARATIF DU JOUR (fondatrice 22/08, benchmark Opodo) : publié CHAQUE MATIN —
+     relevés Opodo horodatés (captures conservées) vs prix PayEnCash, mêmes vol/date/
+     passagers. C'est ICI que la com des autres écrans renvoie : on ne dit JAMAIS
+     « ce billet est moins cher », on montre le tableau (pub comparative L122-1 :
+     objective, vérifiable, datée — cadrage avocat au registre). -->
+<style>
+  .caps{letter-spacing:.13em;text-transform:uppercase}
+  .lignes{background:var(--color-surface);border-radius:18px;box-shadow:var(--shadow-card);overflow:hidden;margin-top:12px}
+  .lg{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--color-sep)}
+  .lg:last-child{border-bottom:none}
+  .lg .rt{min-width:0;flex:1}
+  .lg .rt b{display:block;font-size:12.5px;color:var(--color-ink)}
+  .lg .rt span{display:block;font-size:10px;color:var(--color-muted);margin-top:1px}
+  .lg .px{flex:none;text-align:right;font-size:11px;color:var(--color-muted);line-height:1.6}
+  .lg .px b{color:var(--color-ink)}
+  .lg .eco{flex:none;min-width:58px;text-align:center;border-radius:999px;padding:5px 8px;font-size:10.5px;font-weight:800;background:var(--color-mint);color:var(--color-primary-dark)}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device" style="background:var(--color-bg)">
+
+  <div class="pec-statusbar" style="background:#0F2A24;color:#fff">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:0 0 10px">
+
+    <div style="background:linear-gradient(160deg,#0F2A24 0%,#0C7F54 130%);padding:14px 18px 20px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="pec-marque--mini pec-marque--sombre" data-pec-marque="fly"></span><!-- (21/09) la marque avec son P -->
+        <a href="../ecrans/01-accueil.html" class="tap" aria-label="Retour" style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff">
+          <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-chevron-left"/></svg>
+        </a>
+      </div>
+      <h1 style="font-size:21px;font-weight:800;letter-spacing:-0.02em;color:#fff;margin-top:12px">Le comparatif du jour</h1>
+      <div style="font-size:11.5px;color:rgba(255,255,255,.65);margin-top:3px">Publié chaque matin — <b style="color:#fff" id="cmp-date">—</b> · mêmes vols, mêmes dates, mêmes passagers.</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-top:12px">
+        <span style="font-size:34px;font-weight:800;letter-spacing:-0.02em;color:var(--color-bright)">−<span id="cmp-moy">—</span> %</span>
+        <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.75)">en moyenne vs Opodo,<br>sur les vols comparés ce jour</span>
+      </div>
+    </div>
+
+    <div style="padding:0 18px">
+      <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+      <input class="pec-search" type="search" data-fsearch="#cmp-lignes > *" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+      <div class="meta" data-fvide="#cmp-lignes > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+      <div id="cmp-lignes" data-fpage="15" class="lignes"></div>
+
+      <div class="pec-reassure" style="margin-top:12px">
+        <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-info"/></svg>
+        <p><b>La méthode :</b> relevés opodo.fr <b>horodatés chaque matin</b> (captures conservées), mêmes vol, dates et nombre de passagers, prix standard hors abonnement. Un comparatif est une photographie du jour — les prix bougent : la vérité, c'est le tableau, pas une promesse.</p>
+      </div>
+
+      <a class="pec-cta tap" href="../parcours/01-vol-aller-simple.html" style="display:block;text-align:center;margin:14px 0 6px">Chercher mon vol</a>
+      <!-- (17/09 — pivot) « près de chez toi » renvoyait au réseau de points : la promesse tient désormais sur
+           les moyens eux-mêmes (moyensPaiementLabel), sans jamais citer un lieu où aller payer. -->
+      <div style="text-align:center;font-size:10.5px;color:var(--color-muted);margin-bottom:14px" id="cmp-sans-carte">Payé <b>avec un bon d’achat</b> — aucun numéro de carte chez nous.</div>
+      <script>(function(){var D=window.PEC_DATA,z=document.getElementById('cmp-sans-carte');if(!D||!z||!D.moyensPaiementLabel)return;z.innerHTML='Payé <b>avec un bon d’achat</b> — '+D.esc(D.moyensPaiementLabel())+' · aucun num\u00e9ro de carte chez nous.';})();</script>
+    </div>
+
+  </div><!-- /pec-body -->
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" aria-current="page" href="06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="../ecrans/03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="../ecrans/01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="../ecrans/14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" href="../ecrans/10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+  (function () {
+    var D = window.PEC_DATA;
+    var mois = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+    var d = new Date();
+    // la date affichée est celle du RELEVÉ horodaté (PEC_DATA.opodoReleve.date) — jamais une heure écrite ici
+    // (05/09) la page se titre « le comparatif DU JOUR » : si le relevé date d'avant aujourd'hui,
+    // on le dit au lieu de le laisser passer pour frais (enjeu de publicité comparative, L122-1).
+    var _rd = (D.opodoReleve && D.opodoReleve.date) ? D.opodoReleve.date : null;
+    var _rdD = (_rd && D.dateDepuisTexte) ? D.dateDepuisTexte(_rd) : null;
+    var _vieux = _rdD && _rdD < new Date(new Date().toDateString());
+    document.getElementById('cmp-date').textContent = _rd
+      ? ((_vieux ? 'dernier relevé — ' : 'relevé du ') + _rd)
+      : (d.getDate() + ' ' + mois[d.getMonth()]);
+    document.getElementById('cmp-moy').textContent = String(D.comparatifMoyenne()).replace('.', ',');
+    document.getElementById('cmp-lignes').innerHTML = D.comparatifJour.map(function (l) {
+      var eco = Math.round((l.opodo - l.nous) * 100) / 100;
+      return '<div class="lg">' +
+        '<div class="rt"><b>' + l.route + '</b><span>' + l.detail + '</span></div>' +
+        '<div class="px">Opodo <b>' + String(l.opodo).replace('.', ',') + ' €</b><br>PayEnCash <b style="color:var(--color-primary-dark)">' + String(l.nous).replace('.', ',') + ' €</b></div>' +
+        '<span class="eco">−' + String(eco).replace('.', ',') + ' €</span>' +
+        '</div>';
+    }).join('');
+  })();
+</script>
+</body>
+</html>

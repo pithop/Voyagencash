@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash FLY — Moins cher</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-notif.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<!-- PROMOS (onglet tabbar) — SANS CODE EN DUR : modes et offres rendus depuis PEC_DATA
+     (source unique partagée avec le récap 07). Règle : commande à 45 jours minimum du départ — tout est édité à J−21 minimum,
+     4 modes de voyage, chaque promo TOUJOURS moins chère que le prix « en normal ». -->
+<style>
+  .h1{font-size:23px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;color:var(--color-ink);margin:14px 0 6px}
+  .h1 em{font-style:normal;color:var(--color-primary)}
+  .lead{font-size:13.5px;font-weight:500;line-height:1.55;color:var(--color-muted);margin:0 0 12px}
+  .jmin{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;border-radius:999px;padding:3px 9px;background:var(--color-amber-well);color:var(--color-amber-text)}
+  .eco{display:inline-flex;font-size:10px;font-weight:800;border-radius:999px;padding:3px 9px;background:var(--color-mint);color:var(--color-primary-dark)}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:0 0 8px">
+
+    <!-- HÉRO × OFFRE fusionnés (fondatrice 27/08) : la photo porte la promesse ET
+         l'offre — le bandeau vert de la carte a été absorbé ici. -->
+    <div style="position:relative;height:212px;overflow:hidden">
+      <img src="../assets/photos/photo-lisbonne.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,50,39,.12) 0%,rgba(13,50,39,.42) 45%,rgba(13,50,39,.88) 100%)"></div>
+      <div style="position:absolute;left:20px;right:20px;bottom:13px">
+        <span style="display:inline-flex;align-items:baseline;gap:5px;border-radius:6px;background:#fff;padding:4px 9px"><span style="font-size:10.5px;font-weight:800;letter-spacing:-0.02em;color:var(--color-ink)">pay<span style="color:var(--color-primary)">En</span>Cash</span><span style="font-size:9px;font-weight:800;letter-spacing:.14em;color:var(--color-primary-dark)">MOINS CHER</span></span>
+        <h1 class="h1" style="color:#fff;margin:7px 0 0">Moins cher,<br><em style="color:var(--color-bright)">en s'y prenant tôt.</em></h1>
+        <p style="margin-top:6px;font-size:13px;font-weight:800;letter-spacing:-0.01em;color:#fff">Jusqu'à <span style="color:var(--color-bright)" id="ov-max">&minus;— %</span> en réservant à l'avance</p>
+        <p style="margin-top:2px;font-size:10.5px;font-weight:600;line-height:1.45;color:rgba(255,255,255,.85)"><b style="color:#fff">Tu choisis ton vol et ton hôtel</b> — <b style="color:#fff">l'hôtel est en option</b>, rien n'est imposé. <span style="color:rgba(255,255,255,.6)">Idées de prix indicatifs selon ta date, ton budget et ta gamme — pas des offres fermes.</span></p>
+      </div>
+    </div>
+
+    <div style="padding:12px 20px 0">
+
+    <!-- OFFRE VOYAGE (v16) : la liste des 10 destinations, prix moyen barré vs prix
+         PayEnCash, en 2 formules. Les pourcentages affichés sont CALCULÉS, jamais
+         arrondis à la hausse. -->
+    <div style="margin-top:16px;border-radius:20px;background:var(--color-card);box-shadow:var(--shadow-card);overflow:hidden" id="offre-voyage">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:12px 14px 0" id="form-seg">
+        <button type="button" class="tap" data-form="pack" aria-pressed="true" style="border-radius:13px;padding:9px 6px;text-align:center;background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));color:#fff;box-shadow:0 6px 16px rgba(16,160,106,.26)">
+          <span style="display:block;font-size:12.5px;font-weight:800">Avec hébergement*</span>
+          <span style="display:block;font-size:9.5px;font-weight:700;margin-top:1px;opacity:.9">vol A/R + nuits</span>
+        </button>
+        <button type="button" class="tap" data-form="vol" aria-pressed="false" style="border-radius:13px;padding:9px 6px;text-align:center;background:var(--color-bg);color:var(--color-muted)">
+          <span style="display:block;font-size:12.5px;font-weight:800">Vol seul</span>
+          <span style="display:block;font-size:9.5px;font-weight:700;margin-top:1px;opacity:.9">aller-retour</span>
+        </button>
+      </div>
+      <!-- FILTRES (fondatrice 27/08) : départ de l'utilisateur + recherche + gammes -->
+      <div style="padding:10px 14px 0">
+        <div style="display:flex;gap:7px">
+          <label style="flex:none;position:relative;display:inline-flex;align-items:center;gap:6px;border-radius:12px;background:var(--color-bg);padding:0 10px">
+            <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px;color:var(--color-primary-dark)"><use href="#i-plane-departure"/></svg>
+            <select id="ov-dep" aria-label="Aéroport de départ" style="appearance:none;-webkit-appearance:none;border:0;background:transparent;font-size:11px;font-weight:800;color:var(--color-ink);padding:9px 14px 9px 0;max-width:118px"></select>
+            <svg class="pec-ico" viewBox="0 0 24 24" style="position:absolute;right:7px;font-size:11px;color:var(--color-muted);pointer-events:none"><use href="#i-chevron-down"/></svg>
+          </label>
+          <label style="flex:1;display:inline-flex;align-items:center;gap:7px;border-radius:12px;background:var(--color-bg);padding:0 11px">
+            <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:13px;color:var(--color-muted)"><use href="#i-search"/></svg>
+            <input id="ov-q" type="search" placeholder="Cherche ta destination…" aria-label="Chercher une destination" style="min-width:0;flex:1;border:0;background:transparent;font-size:11.5px;font-weight:600;color:var(--color-ink);padding:9px 0;outline:none">
+          </label>
+        </div>
+        <div id="ov-gammes" style="display:flex;gap:6px;margin-top:8px;overflow-x:auto;scrollbar-width:none"></div>
+        <div style="display:flex;gap:7px;margin-top:8px;align-items:center">
+          <div id="ov-budget" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none"></div>
+          <label style="flex:none;display:inline-flex;align-items:center;gap:6px;border-radius:12px;background:var(--color-bg);padding:0 10px;margin-left:auto">
+            <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px;color:var(--color-primary-dark)"><use href="#i-calendar"/></svg>
+            <input id="ov-date" type="date" aria-label="Départ à partir de" style="border:0;background:transparent;font-size:10.5px;font-weight:800;color:var(--color-ink);padding:8px 0;outline:none;max-width:118px">
+          </label>
+        </div>
+      </div>
+      <div id="offre-liste" data-fpage="15" style="padding:4px 14px 0"></div>
+      <div style="display:flex;align-items:flex-start;gap:9px;border-top:1px solid var(--color-sep);margin-top:12px;padding:12px 15px 14px">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:15px;color:var(--color-primary-dark)"><use href="#i-calendar"/></svg>
+        <p style="font-size:10.5px;line-height:1.55;color:var(--color-muted)"><b style="color:var(--color-ink)">Commande au minimum 45 jours avant le départ.</b> Le prix varie selon la date que tu choisis : le montant est <b style="color:var(--color-ink)">ajusté et affiché avant la validation</b> de ta commande — tu ne valides jamais un prix que tu n'as pas vu.<span style="display:block;margin-top:8px;font-size:9.5px;line-height:1.5;color:var(--color-muted)"><b>* « Avec hébergement »</b> : tu choisis toi-même ton vol <b>et</b> ton hébergement, réservés séparément auprès de nos partenaires. PayEnCash n'est pas une agence de voyage et ne vend pas de forfait : on te met simplement en relation avec la compagnie et l'hôtel — tu réserves et tu règles toi-même ce que tu veux.</span></p>
+      </div>
+    </div>
+
+    <!-- CONCOURS DU MOIS — migré de l'accueil (fondatrice 25/08) et AMÉLIORÉ :
+         le lot CONCRET (photo, valeur) + J−x réel + CTA. Vu ici = la pastille
+         « Promos » de la tabbar s'éteint (PEC_NOTIF). -->
+    <a href="03-jeu-concours.html" class="tap" id="draw-banner" style="display:block;position:relative;overflow:hidden;border-radius:20px;margin:16px 0 0;text-decoration:none;box-shadow:0 16px 36px rgba(201,34,63,.3)">
+      <img id="draw-photo" src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+      <span style="position:absolute;inset:0;background:linear-gradient(115deg,rgba(143,20,40,.92) 0%,rgba(201,34,63,.82) 45%,rgba(242,59,87,.55) 100%)"></span>
+      <span style="position:relative;display:block;padding:16px 16px 14px">
+        <span style="display:flex;align-items:flex-start;gap:12px">
+          <span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:15px;background:rgba(255,255,255,.16)">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="animation:cadeauSwing2 3.6s ease-in-out infinite;transform-origin:50% 20%"><rect x="4" y="10" width="16" height="10" rx="1.5"/><path d="M4 10h16M12 10v10M12 10s-.5-4-3.5-4a2 2 0 0 0 0 4M12 10s.5-4 3.5-4a2 2 0 0 1 0 4"/></svg>
+          </span>
+          <span style="min-width:0;flex:1">
+            <span style="display:block;font-size:16px;font-weight:800;letter-spacing:-0.01em;line-height:1.2;color:#fff">Et ce mois-ci, un voyage à gagner :<br><span id="draw-titre" style="color:#B9C4FF">—</span></span>
+            <span style="display:block;font-size:11px;font-weight:600;line-height:1.5;color:rgba(255,255,255,.85);margin-top:4px">Valeur <b id="draw-valeur" style="color:#fff">—</b> · gratuit, sans obligation d'achat — chaque commande donne un ticket bonus.</span>
+          </span>
+        </span>
+        <span style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.18)">
+          <span style="display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:#B9C4FF"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px"><use href="#i-clock"/></svg>Tirage <b id="draw-cd" style="color:#fff;font-variant-numeric:tabular-nums">J−7</b></span>
+          <span style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#fff;color:#C9223F;padding:8px 14px;font-size:12px;font-weight:800"><span id="draw-cta">Je tente ma chance</span> <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px"><use href="#i-arrow-right"/></svg></span>
+        </span>
+      </span>
+    </a>
+    <style>@keyframes cadeauSwing2{0%,74%,100%{transform:rotate(0)}78%{transform:rotate(-9deg)}84%{transform:rotate(8deg)}90%{transform:rotate(-5deg)}95%{transform:rotate(3deg)}}</style>
+
+    <!-- ASTUCES & CODES (fondatrice 28/08 : fly/11 était orpheline depuis le retrait
+         de la rangée Compte — le point d'entrée naturel, c'est ICI, l'onglet Promos) -->
+    <a class="tap" href="11-promos-astuces.html" style="display:flex;align-items:center;gap:12px;background:var(--color-card);border:1px solid var(--color-sep);border-radius:16px;padding:14px 16px;margin-top:16px;text-decoration:none;color:inherit">
+      <span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:13px;background:var(--color-mint)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:19px;color:var(--color-primary-dark)"><use href="#i-bulb"/></svg></span>
+      <span style="min-width:0;flex:1">
+        <span style="display:block;font-size:13.5px;font-weight:800;color:var(--color-ink)">Astuces &amp; codes promo</span>
+        <span style="display:block;font-size:11px;color:var(--color-muted);margin-top:2px">Les bons plans par mode de voyage, à 45&nbsp;jours minimum du départ</span>
+      </span>
+      <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:15px;color:var(--color-muted)"><use href="#i-arrow-right"/></svg>
+    </a>
+
+    <!-- SUIVRE PAYENCASH v2 (fondatrice 27/08) : UN bloc lié — le titre reprend le
+         LOGO (pay·En·Cash), badges réseaux + rangée WhatsApp fusionnés dans la même
+         carte, charte maison (le gros bandeau vert WhatsApp séparé a été retiré). -->
+    <div id="fermeture-slot"></div>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('../ecrans/');})();</script>
+
+    </div><!-- /padding -->
+
+  </div><!-- /pec-body -->
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" aria-current="page" href="06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="../ecrans/03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="../ecrans/01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="../ecrans/14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" href="../ecrans/10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<style>@keyframes pecspin2{to{transform:rotate(360deg)}}</style>
+<script>
+  (function(){
+    var D = window.PEC_DATA;
+    // OFFRE VOYAGE — dynamique (fondatrice 27/08) : départ utilisateur + recherche
+    // + gammes. Les promos partent de Marseille : un autre départ = état vide honnête.
+    var FORMULE = 'pack', Q = '', GAMME = '', BUDGET = null, DATE_MIN = null, DEP = (D.aeroportDefautGet ? D.aeroportDefautGet() : D.depDefaut) || (D.aeroportBaseLibelle ? D.aeroportBaseLibelle() : 'Marseille (MRS)');
+    /* (11/09 — constat C39 du 09/09, resté ouvert) « MRS → » était tapé EN DUR sur chaque offre. C'est le
+       départ de L'OFFRE qu'il faut montrer — pas la préférence du client, qui ferait dire à une offre au
+       départ de Marseille qu'elle part de Lyon. Une donnée du réseau (D.aeroportBase), surchargeable par
+       l'offre le jour où le catalogue s'ouvrira à d'autres départs. */
+    var depOffre = function (v) { return D.promoAeroport ? D.promoAeroport({ vol: v }) : ((v && v.dep) || 'MRS'); };
+    function pct(p, n) { return Math.round((1 - p / n) * 100); }
+    // la promesse du héro = le MEILLEUR rabais réellement au catalogue (offres actives, pack ou vol seul)
+    (function () {
+      var mx = 0;
+      D.promosActives().forEach(function (p) {
+        if (p.normal) mx = Math.max(mx, pct(p.prix, p.normal));
+        if (p.volSeul && p.volSeulNormal) mx = Math.max(mx, pct(p.volSeul, p.volSeulNormal));
+      });
+      var e = document.getElementById('ov-max'); if (e && mx > 0) e.textContent = '\u2212' + mx + ' %';
+    })();
+    function norm(s) { return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+    function rendreOffres() {
+      var vol = FORMULE === 'vol';
+      /* (11/09 — C39) c'est la BASE DU RÉSEAU qu'on compare, plus un « MRS » recopié. */
+      if (DEP.indexOf(D.aeroportBase || 'MRS') === -1) {
+        document.getElementById('offre-liste').innerHTML =
+          '<p style="padding:14px 2px 10px;font-size:11.5px;line-height:1.55;color:var(--color-muted)">Pas encore d\'offres au départ de <b style="color:var(--color-ink)">' + DEP + '</b> — nos promos décollent de Marseille pour l\'instant. <button type="button" class="tap" id="ov-retour-mrs" style="color:var(--color-primary-dark);font-weight:800">Revenir à Marseille</button></p>';
+        var r = document.getElementById('ov-retour-mrs');
+        if (r) r.addEventListener('click', function () { DEP = D.aeroportBaseLibelle ? D.aeroportBaseLibelle() : 'Marseille (MRS)'; document.getElementById('ov-dep').value = DEP; rendreOffres(); });
+        return;
+      }
+      var liste = D.promosActives()
+        .filter(function (p) { if (!DATE_MIN) return true; var d = D.promoDepart ? D.promoDepart(p) : null; return d && d >= DATE_MIN; })
+        .filter(function (p) { return !vol || p.volSeul; })
+        .filter(function (p) { return !horsGamme(p); })
+        .map(function (p) {
+          var prix = vol ? p.volSeul : p.prix, norme = vol ? p.volSeulNormal : p.normal;
+          var m = D.promosModes.filter(function (x) { return x.id === p.mode; })[0];
+          return { p: p, prix: prix, norm: norme, remise: pct(prix, norme), gamme: m ? m.nom : '' };
+        })
+        .filter(function (o) {
+          if (!Q) return true;
+          var v = o.p.vol || {};
+          return norm(o.p.titre + ' ' + (v.arr || '') + ' ' + (v.aero || '') + ' ' + (o.p.det || '')).indexOf(norm(Q)) > -1;
+        })
+        .filter(function (o) { return !BUDGET || o.prix <= BUDGET; })
+        .sort(function (a, b) { return a.prix - b.prix; })
+        .slice(0, 10);
+      function horsGamme(p) { return GAMME && p.mode !== GAMME; }
+      if (!liste.length) {
+        document.getElementById('offre-liste').innerHTML = Q
+          ? '<p style="padding:14px 2px 10px;font-size:11.5px;line-height:1.55;color:var(--color-muted)">Aucune destination ne correspond à <b style="color:var(--color-ink)">« ' + Q + ' »</b>' + (GAMME ? ' en ' + GAMME : '') + '. Essaie un autre nom — ou efface la recherche.</p>'
+          : '<p style="padding:14px 2px 10px;font-size:11.5px;line-height:1.55;color:var(--color-muted)">Aucune destination avec ces filtres — <b style="color:var(--color-ink)">élargis ton budget, ta date ou ta gamme</b>.</p>';
+        return;
+      }
+      document.getElementById('offre-liste').innerHTML = liste.map(function (o) {
+        var v = o.p.vol || {}, ville = o.p.titre.split(' ')[0].replace(/[,;:]$/, '');
+        return '<a class="tap offre-l" href="07-promo-recap.html?o=' + o.p.id + '&f=' + FORMULE + '" ' +
+          'style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--color-sep);text-decoration:none">' +
+          (v.photo ? '<img loading="lazy" decoding="async" src="../assets/photos/' + v.photo + '" alt="" style="flex:none;width:44px;height:44px;border-radius:12px;object-fit:cover">' : '') +
+          '<span style="min-width:0;flex:1">' +
+            '<span style="display:block;font-size:12.5px;font-weight:800;color:var(--color-ink);line-height:1.25">' + ville +
+              ' <span style="font-weight:600;font-size:10.5px;color:var(--color-muted)">' + depOffre(v) + ' → ' + (v.arr || '') + '</span></span>' +
+            '<span style="display:flex;align-items:center;gap:5px;margin-top:3px">' +
+              (v.cie ? '<img loading="lazy" decoding="async" src="../assets/vendor/airlines/' + v.cie + '.png" alt="" style="flex:none;width:16px;height:16px;border-radius:4px;object-fit:contain;background:#fff">' : '') +
+              '<span style="border-radius:999px;background:' + ({ spartiate: 'var(--color-ink)', fute: 'var(--color-mint)', confort: 'linear-gradient(135deg,var(--color-primary),var(--color-primary-dark))', luxe: 'linear-gradient(135deg,#2B2B2B,#0E0E0E)' }[o.p.mode] || 'var(--color-mint)') + ';color:' + ({ spartiate: '#fff', fute: 'var(--color-primary-dark)', confort: '#fff', luxe: '#F1C933' }[o.p.mode] || 'var(--color-primary-dark)') + ';font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2.5px 8px">' + o.gamme + '</span>' +
+              '<span style="font-size:9.5px;font-weight:600;color:var(--color-muted-2)">' + (FORMULE === 'vol' ? 'vol A/R seul' : o.p.nuits + ' nuits incluses') + '</span>' +
+            '</span>' +
+          '</span>' +
+          '<span style="flex:none;text-align:right">' +
+            '<span style="display:block;font-size:10.5px;font-weight:600;color:var(--color-muted);text-decoration:line-through">' + o.norm + ' €</span>' +
+            '<span style="display:block;font-size:15px;font-weight:800;letter-spacing:-0.02em;color:var(--color-primary-dark)">' + o.prix + ' €</span>' +
+            '<span style="display:inline-block;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:9px;font-weight:800;padding:2px 6px;margin-top:2px">&minus;' + o.remise + ' %</span>' +
+          '</span></a>';
+      }).join('');
+    }
+    document.getElementById('form-seg').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-form]'); if (!b) return;
+      FORMULE = b.getAttribute('data-form');
+      [].forEach.call(document.querySelectorAll('#form-seg [data-form]'), function (x) {
+        var on = x.getAttribute('data-form') === FORMULE;
+        x.setAttribute('aria-pressed', on ? 'true' : 'false');
+        x.style.background = on ? 'linear-gradient(135deg,var(--color-primary),var(--color-primary-dark))' : 'var(--color-bg)';
+        x.style.color = on ? '#fff' : 'var(--color-muted)';
+        x.style.boxShadow = on ? '0 6px 16px rgba(16,160,106,.26)' : 'none';
+      });
+      rendreOffres();
+
+    });
+    rendreOffres();
+    // les contrôles (fondatrice 27/08)
+    (function () {
+      // arrivée depuis l'accueil : #spartiate / #fute / #confort / #luxe
+      var h = (location.hash || '').replace('#', '');
+      if (h && D.promosModes.some(function (m) { return m.id === h; })) GAMME = h;
+      var sel = document.getElementById('ov-dep');
+      sel.innerHTML = (D.aeroports || [DEP]).map(function (a) {
+        return '<option value="' + a + '"' + (a === DEP ? ' selected' : '') + '>' + a.replace(' (', ' · ').replace(')', '') + '</option>';
+      }).join('');
+      sel.addEventListener('change', function () { DEP = this.value; rendreOffres(); });
+      document.getElementById('ov-q').addEventListener('input', function () { Q = this.value.trim(); rendreOffres(); });
+      var G = [{ id: '', nom: 'Toutes' }].concat(D.promosModes.map(function (m) { return { id: m.id, nom: m.nom }; }));
+      var gz = document.getElementById('ov-gammes');
+      gz.innerHTML = G.map(function (g) {
+        return '<button type="button" class="tap" data-g="' + g.id + '" aria-pressed="' + (g.id === GAMME) + '" style="flex:none;border-radius:999px;padding:6px 12px;font-size:10.5px;font-weight:800;background:' + (g.id === GAMME ? 'var(--color-ink)' : 'var(--color-bg)') + ';color:' + (g.id === GAMME ? '#fff' : 'var(--color-muted)') + '">' + g.nom + '</button>';
+      }).join('');
+      if (GAMME) rendreOffres();
+      // BUDGET (fondatrice 29/08 : « dans un budget ») — chips, filtre le prix
+      var BUD = [{ b: null, l: 'Tout budget' }, { b: 150, l: '≤ 150 €' }, { b: 300, l: '≤ 300 €' }, { b: 600, l: '≤ 600 €' }];
+      var bz = document.getElementById('ov-budget');
+      function paintBudget() { bz.innerHTML = BUD.map(function (x) { var on = x.b === BUDGET; return '<button type="button" class="tap" data-b="' + (x.b == null ? '' : x.b) + '" aria-pressed="' + on + '" style="flex:none;border-radius:999px;padding:6px 11px;font-size:10.5px;font-weight:800;background:' + (on ? 'var(--color-primary-dark)' : 'var(--color-bg)') + ';color:' + (on ? '#fff' : 'var(--color-muted)') + '">' + x.l + '</button>'; }).join(''); }
+      paintBudget();
+      bz.addEventListener('click', function (e) { var b = e.target.closest('[data-b]'); if (!b) return; var v = b.getAttribute('data-b'); BUDGET = v ? parseInt(v, 10) : null; paintBudget(); rendreOffres(); });
+      // DATE « départ à partir de » (fondatrice 29/08 : « filtre sur date à l'avance ») — min = J+45
+      var di = document.getElementById('ov-date');
+      if (di) {
+        var min45 = new Date(); min45.setDate(min45.getDate() + 45);
+        var iso = function (d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); };
+        di.min = iso(min45);
+        di.addEventListener('change', function () { DATE_MIN = this.value ? new Date(this.value + 'T00:00:00') : null; rendreOffres(); });
+      }
+      gz.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-g]'); if (!b) return;
+        GAMME = b.getAttribute('data-g');
+        [].forEach.call(gz.querySelectorAll('[data-g]'), function (x) {
+          var on = x.getAttribute('data-g') === GAMME;
+          x.setAttribute('aria-pressed', on);
+          x.style.background = on ? 'var(--color-ink)' : 'var(--color-bg)';
+          x.style.color = on ? '#fff' : 'var(--color-muted)';
+        });
+        rendreOffres();
+      });
+    })();
+
+    var sav = document.getElementById('sav');
+    if (sav && !sav.closest('#social-sec')) sav.innerHTML = D.savHTML();   // la carte de fermeture rend déjà la sienne
+    var sr = document.getElementById('social-row');
+    if (sr && D.socialHTML) sr.innerHTML = D.socialHTML();
+    /* CONCOURS : le lot PUBLIÉ par le cockpit marketing + J−x RÉEL.
+       (10/09 — lot 8, constat D-38) Cette bannière lisait `D.concours` — le lot de démonstration du
+       référentiel — et non `concoursGet()` : le lot réellement publié depuis le cockpit n'apparaissait
+       NULLE PART côté Promos, seule fly/03 le voyait. Et le J−x re-décodait le libellé du tirage avec sa
+       propre table de mois, à côté de celle du data-layer. Une seule source, ici comme ailleurs.
+       Sans lot publié, la bannière ne s'affiche pas : on n'annonce pas un voyage qui n'existe pas. */
+    (function () {
+      var b = document.getElementById('draw-banner'); if (!b) return;
+      var C = D.concoursGet && D.concoursGet();
+      if (!C) { b.style.display = 'none'; return; }
+      b.style.display = '';
+      var ph = String(C.lot.photo || '');
+      document.getElementById('draw-photo').src = /^(data:|https?:|\.\.?\/)/.test(ph) ? ph : '../assets/photos/' + ph;
+      document.getElementById('draw-titre').textContent = C.lot.titre;
+      document.getElementById('draw-valeur').textContent = C.lot.valeur.toLocaleString('fr-FR') + ' €';
+      if (D.concoursApresTirage && D.concoursApresTirage()) {
+        document.getElementById('draw-cd').textContent = 'terminé — voir le résultat';
+        var _cta = document.getElementById('draw-cta'); if (_cta) _cta.textContent = 'Voir le résultat';   // le tirage est passé : on n'invite plus à jouer
+        return;
+      }
+      var now = new Date(), tAt = D.concoursTirageAt ? D.concoursTirageAt(C) : null, tirage = tAt ? new Date(tAt) : null;
+      if (!tirage) { document.getElementById('draw-cd').textContent = 'date non fixée'; return; }
+      var j = Math.max(0, Math.ceil((tirage - now) / 86400000));
+      document.getElementById('draw-cd').textContent = j === 0 ? "aujourd'hui" : 'J−' + j;
+    })();
+  })();
+</script>
+</body>
+</html>

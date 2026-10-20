@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Tunnel vol + hôtel</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<link rel="stylesheet" href="../assets/vendor/maplibre-gl.css">
+<script src="../assets/vendor/maplibre-gl.js"></script>
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-verif.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<!--
+  TUNNEL C — VOL + HÔTEL (package) et HÔTEL SEUL (stay_only, D12). Calqué sur l'app réelle :
+    lib/tunnel-steps.ts  → flow `flight_oneway_stay` = [Aller simple · Hébergement · Récap · Encaissement]
+                           flow `stay_only`         = [Hébergement · Récap · Encaissement]
+    app/(tunnel)/sejour/sejour-client.tsx → étape Hébergement : stepper (porte le budget) + header
+                           « Hébergement » SANS sous-titre + filtres Prix / Dans mon budget / Petit-déj
+                           + cartes StayCard. (La bande sombre « il te reste X € » a été RETIRÉE.)
+    app/(tunnel)/recap/page.tsx → section Hébergement : carte + Modifier + retrait, bouton menthe
+                           « Ajouter un hébergement ».
+  Hôtel seul : ouvrir avec ?mode=stay (ou appeler setMode('stay_only') en console).
+  Nuitée est POST-PAYÉ (D3) : booking confirmé et réglé dès la validation de l’encaissement.
+-->
+<style>
+  .screen { display:none; flex-direction:column; flex:1; min-height:0; }
+  .screen.active { display:flex; }
+  .tf-field { display:flex; flex-direction:column; gap:4px; flex:1; min-width:0; }
+  .tf-label { font-size:11px; font-weight:500; color:var(--color-muted-2); }
+  .tf-input { width:100%; border-radius:12px; background:var(--color-surface); padding:12px 13px;
+    font-size:14px; font-weight:600; color:var(--color-ink); border:none; outline:none; }
+  .tf-input::placeholder { font-weight:400; color:var(--color-muted-2); }
+  .sheet-scrim { position:fixed; inset:0; z-index:50; display:none; align-items:flex-end; justify-content:center; background:rgba(15,42,36,0.4); }
+  .sheet-scrim.on { display:flex; }
+  .sheet { display:flex; flex-direction:column; width:100%; max-width:var(--frame-max); max-height:85vh;
+    background:var(--color-surface); border-radius:28px 28px 0 0; box-shadow:var(--shadow-sheet); }
+  .sheet-head { flex-shrink:0; padding:8px 16px 12px; }
+  .sheet-head h2 { margin-top:6px; padding:0 4px; font-size:18px; font-weight:800; color:var(--color-ink); }
+  .sheet-body { min-height:0; overflow-y:auto; padding:0 16px 28px; }
+  #loading { position:fixed; inset:0; z-index:60; display:none; align-items:center; justify-content:center;
+    background:rgba(15,42,36,0.55); backdrop-filter:blur(3px); }
+  #loading.show { display:flex; }
+  .spin { width:34px; height:34px; border-radius:50%; border:3px solid rgba(255,255,255,0.25);
+    border-top-color:var(--color-bright); animation:spin .8s linear infinite; margin:0 auto 12px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+<style>/* bandeau tunnel v2 — épuré (points + barre fine), clair, sans numéros */
+.pec-tstepper{background:var(--color-card);border-bottom:1px solid var(--color-sep)}
+.pec-tstep--done,.pec-tstep--current{background:transparent;box-shadow:none}
+.pec-tstep{flex-direction:row;justify-content:center;align-items:center;gap:7px;padding:13px 6px 11px;position:relative}
+.pec-tstep .pec-ico{display:none}
+.pec-tstep .sub{display:none}
+.pec-tstep .lbl{font-size:11.5px;color:var(--color-muted);font-weight:600;letter-spacing:.01em}
+.pec-tstep::before{content:"";width:7px;height:7px;border-radius:999px;background:#C2CBC5;flex:none}
+.pec-tstep::after{content:"";position:absolute;left:10%;right:10%;bottom:0;height:3px;border-radius:2px;background:transparent}
+.pec-tstep--done::before{background:var(--color-primary)}
+.pec-tstep--done .lbl{color:var(--color-primary-dark)}
+.pec-tstep--current::before{background:var(--color-primary);box-shadow:0 0 0 4px rgba(16,160,106,.16)}
+.pec-tstep--current .lbl{color:var(--color-ink);font-weight:800}
+.pec-tstep--current::after{background:var(--color-bright)}
+.pec-tbanner{background:var(--color-mint);padding:8px 14px;display:flex;gap:12px;align-items:baseline;justify-content:space-between}
+.pec-tbanner .t{margin:0;font-size:12px;color:var(--color-primary-dark);font-weight:700;white-space:nowrap}
+.pec-tbanner .t b{color:var(--color-ink)}
+.pec-tbanner .s{margin:0;font-size:10.5px;color:var(--color-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head>
+<body>
+
+<div class="pec-scene">
+<div class="pec-device" style="height:100dvh;overflow:hidden">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-tstepper">
+    <div class="pec-tstepper-row" id="stepper-row"></div>
+    <div class="pec-tbanner">
+      <p class="t" id="banner-t" style="display:none"></p>
+      <p class="t" id="banner-s" style="white-space:normal;overflow:visible;text-overflow:clip"></p>
+    </div>
+  </div>
+
+  <!-- ══════════ ÉCRAN 1 — VOL ALLER (masqué en hôtel seul) ══════════ -->
+  <div class="screen active" id="screen-1">
+    <div class="pec-header">
+      <a class="pec-back tap" href="../ecrans/01-accueil.html" aria-label="Retour à l'accueil"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-chevron-left"/></svg></a>
+      <div class="pec-header-title"><div class="t" id="hdr-vol"></div></div>
+    </div>
+    <div id="trajet03" role="tablist" style="display:flex;flex-shrink:0;gap:3px;background:var(--color-surface);padding:0 16px 10px">
+      <button type="button" role="tab" aria-selected="true" onclick="setTrajet03(false, this)" style="flex:1;border-radius:11px;padding:9px 4px;font-size:12px;font-weight:700;background:var(--color-ink);color:#fff">→ Aller simple</button>
+      <button type="button" role="tab" aria-selected="false" onclick="setTrajet03(true, this)" style="flex:1;border-radius:11px;padding:9px 4px;font-size:12px;font-weight:700;background:transparent;color:var(--color-ink)">⇄ Aller-retour</button>
+    </div>
+    <div class="no-scrollbar" style="display:flex;flex-shrink:0;gap:8px;overflow-x:auto;background:var(--color-surface);padding:0 16px 12px">
+      <span class="pec-filter" aria-pressed="true" style="gap:6px;flex:none"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-coin"/></svg> Budget <button type="button" class="tap" onclick="chgBudget(-25)" aria-label="Baisser le budget" style="display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:999px;background:rgba(255,255,255,.25);color:inherit;font-weight:800;font-size:12px">−</button><b id="budget-val">350 €</b><button type="button" class="tap" onclick="chgBudget(25)" aria-label="Augmenter le budget" style="display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:999px;background:rgba(255,255,255,.25);color:inherit;font-weight:800;font-size:12px">+</button></span>
+      <button type="button" class="pec-filter tap" aria-pressed="false" data-f="prix" onclick="toggleFilter(this)"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-coin"/></svg> Prix croissant</button>
+      <button type="button" class="pec-filter tap" aria-pressed="false" data-f="direct" onclick="toggleFilter(this)"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-arrow-right"/></svg> Vol direct</button>
+      <button type="button" class="pec-filter tap" aria-pressed="false" data-f="horaires" onclick="toggleFilter(this)"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-clock"/></svg> Horaires</button>
+    </div>
+    <div style="flex:1;min-height:0;overflow-y:auto;padding:12px 16px 16px">
+      <p style="font-size:13px;font-weight:600;color:var(--color-muted-2);margin-bottom:12px">
+        <span id="nb-vols" style="font-size:20px;font-weight:800;letter-spacing:-0.4px;color:var(--color-ink)">—</span> payables par bon d’achat
+      </p>
+      <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+      <input class="pec-search" type="search" data-fsearch="#list-out > *" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+      <div class="meta" data-fvide="#list-out > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+      <ul id="list-out" data-fpage="15" style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px"></ul>
+    </div>
+    <div class="pec-sticky">
+      <button class="pec-cta tap" id="cta-out" onclick="goStay()" disabled style="opacity:.5">Sélectionne un vol</button>
+    </div>
+  </div>
+
+  <!-- ══════════ ÉCRAN 2 — HÉBERGEMENT ══════════ -->
+  <div class="screen" id="screen-2">
+    <div class="pec-header">
+      <button class="pec-back tap" onclick="backFromStay()" aria-label="Retour"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-chevron-left"/></svg></button>
+      <div class="pec-header-title"><div class="t">Hébergement</div></div>
+    </div>
+    <p style="margin:0 16px 10px;font-size:10px;line-height:1.5;color:var(--color-muted)"><span style="color:#E23B57">♥</span> Mets tes hébergements préférés de côté — gardés sur cet appareil, ils remontent en tête. Les vols, eux, ne se mettent pas en favoris : leurs prix et leurs places bougent en permanence.</p>
+    <div class="no-scrollbar" style="display:flex;flex-shrink:0;gap:8px;overflow-x:auto;background:var(--color-surface);padding:0 16px 12px">
+      <span class="pec-filter" aria-pressed="true" style="gap:6px;flex:none"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-coin"/></svg> Budget <button type="button" class="tap" onclick="chgBudget(-25)" aria-label="Baisser le budget" style="display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:999px;background:rgba(255,255,255,.25);color:inherit;font-weight:800;font-size:12px">−</button><b class="budget-val">350 €</b><button type="button" class="tap" onclick="chgBudget(25)" aria-label="Augmenter le budget" style="display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:999px;background:rgba(255,255,255,.25);color:inherit;font-weight:800;font-size:12px">+</button></span>
+      <button type="button" class="pec-filter tap" aria-pressed="false" data-hf="prix" onclick="filtreHotel(this)"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-coin"/></svg> Prix croissant</button>
+      <button type="button" class="pec-filter tap" aria-pressed="false" data-hf="budget" onclick="filtreHotel(this)"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-check"/></svg> Dans mon budget</button>
+      <button type="button" class="pec-filter tap" aria-pressed="false" data-hf="petitdej" onclick="filtreHotel(this)"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-briefcase"/></svg> Petit-déj</button>
+    </div>
+    <div style="flex:1;min-height:0;overflow-y:auto;padding:12px 16px 16px">
+      <p style="font-size:13px;font-weight:600;color:var(--color-muted-2);margin-bottom:12px">
+        <span id="nb-heb" style="font-size:20px;font-weight:800;letter-spacing:-0.4px;color:var(--color-ink)">—</span> pour <span id="nb-nuits">—</span> nuits
+      </p>
+      <div id="hotels" style="display:flex;flex-direction:column;gap:14px"></div>
+    </div>
+    <div class="pec-sticky">
+      <button class="pec-cta tap" id="cta-stay" onclick="goRecap()" disabled style="opacity:.5">Sélectionne un hébergement</button>
+    </div>
+  </div>
+
+  <!-- ══════════ ÉCRAN 3 — RÉCAPITULATIF ══════════ -->
+  <div class="screen" id="screen-3">
+    <div class="pec-header">
+      <button class="pec-back tap" onclick="goToScreen(2)" aria-label="Retour"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-chevron-left"/></svg></button>
+      <div class="pec-header-title"><div class="t">Vérifie — avant de payer</div><div class="s">Récap avant l'encaissement — ta référence est émise à la confirmation</div></div>
+    </div>
+    <div style="flex:1;min-height:0;overflow-y:auto;padding:16px" id="recap-scroll">
+
+      <!-- TON VOL (masqué en hôtel seul) -->
+      <section style="margin-bottom:18px" id="sec-flight">
+        <div class="pec-section-head">
+          <span class="pec-section-label" style="margin:0"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px;color:var(--color-primary);vertical-align:-1px;margin-right:4px"><use href="#i-plane"/></svg>Ton vol</span>
+          <button type="button" onclick="goToScreen(1)">Modifier</button>
+        </div>
+        <div id="recap-flight"></div>
+      </section>
+
+      <!-- HÉBERGEMENT -->
+      <section style="margin-bottom:18px">
+        <p class="pec-section-label" id="stay-section-label"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px;color:var(--color-primary);vertical-align:-1px;margin-right:4px"><use href="#i-bed"/></svg>Hébergement</p>
+        <div class="pec-card" style="display:flex;align-items:center;gap:10px;padding:15px">
+          <span style="display:flex;height:26px;width:26px;flex-shrink:0;align-items:center;justify-content:center;border-radius:8px;background:var(--color-primary);color:#fff"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px"><use href="#i-bed"/></svg></span>
+          <div style="min-width:0;flex:1">
+            <p style="font-size:15px;font-weight:800;color:var(--color-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="r-hotel-name">—</p>
+            <p style="font-size:11.5px;font-weight:500;color:var(--color-muted-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="r-hotel-dates">—</p>
+          </div>
+          <button type="button" onclick="goToScreen(2)" class="tap" style="flex-shrink:0;font-size:12.5px;font-weight:700;color:var(--color-primary)">Modifier</button>
+        </div>
+        <!-- LE DÉTAIL RICHE (fondatrice 27/08) : photos, note, avis — comme le récap promo -->
+        <div class="pec-card" id="r-hotel-riche" style="margin-top:8px;padding:12px 14px"></div>
+        <p hidden style="margin-top:8px" id="r-ratekey"><!-- identifiant technique du tarif (rate_id) : conservé pour le serveur, JAMAIS montré au client --></p>
+        <button type="button" onclick="goToScreen(2)" class="tap" style="margin-top:10px;display:flex;height:50px;width:100%;align-items:center;justify-content:center;gap:8px;border-radius:14px;background:var(--color-mint);font-size:14.5px;font-weight:800;color:var(--color-primary-dark)">
+          <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-refresh"/></svg> Changer d'hébergement
+        </button>
+      </section>
+
+      <!-- VOYAGEURS NOMINATIFS (fondatrice 23/08 · audit 03/09) : UNE carte par voyageur de la recherche,
+           SON Modifier — voyageur 1 = titulaire (profil vivant), les suivants = fiches du carnet, sinon « À compléter ». -->
+      <section style="margin-bottom:18px">
+        <p class="pec-section-label" id="voy-label">Voyageurs</p>
+        <div id="voyageurs-cards"></div>
+      </section>
+
+      <!-- DÉTAIL DU PRIX -->
+      <section style="margin-bottom:18px">
+      <!-- TON NIVEAU D'ANNULATION (fondatrice 27/08) : le choix se fait ICI, au
+           récap — adossé aux tarifs remboursables de la compagnie (jamais une
+           promesse à nous : le tarif choisi COUVRE la promesse du pack). -->
+      <section style="margin-bottom:18px">
+        <p class="pec-section-label">Annulation &amp; flexibilité — choisis maintenant</p>
+        <div id="packs" style="display:flex;flex-direction:column;gap:8px"></div>
+      </section>
+
+        <p class="pec-section-label">Détail du prix</p>
+        <div style="overflow:hidden;border-radius:var(--radius-card);background:var(--color-surface);box-shadow:var(--shadow-card)">
+          <div style="display:flex;flex-direction:column;gap:11px;padding:15px" id="price-rows"></div>
+          <div class="pec-total-dark">
+            <div><p class="t">Total — tous les voyageurs</p><p class="s">À régler, tout compris · TTC</p></div>
+            <p class="amt"><span class="n" id="p-total">—</span><span class="e">€</span></p>
+            <p id="p-parpax" style="font-size:10.5px;color:var(--color-muted);margin-top:2px">soit — € par voyageur</p>
+          </div>
+          <div style="padding:7px 15px 10px;font-size:10px;color:var(--color-muted)">Prix TTC — TVA sur la marge (art. 297 A) : non détaillée · prix bloqué <span class="pec-bloque">—</span> · conditions d'annulation affichées avant l'achat.</div>
+        </div>
+      </section>
+
+
+    </div>
+    <div class="pec-sticky">
+      <button class="pec-cta tap" onclick="confirmerCommande()">Confirmer — <span id="cta3-total">—</span> <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-arrow-right"/></svg></button>
+      <p style="margin-top:7px;text-align:center;font-size:9.5px;line-height:1.5;color:var(--color-muted)">En confirmant, tu acceptes nos <a href="../ecrans/18-informations-legales.html#cgv" style="color:var(--color-primary-dark);font-weight:700">CGV</a>, les <b>conditions de transport de la compagnie</b> et les <b>conditions du tarif</b> affichées ci-dessus.</p>
+
+    </div>
+  </div>
+
+  <!-- ══════════ ÉCRAN 4 — ENCAISSEMENT ══════════ -->
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="../ecrans/03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="../ecrans/01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="../ecrans/14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" href="../ecrans/10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+  
+
+</div>
+</div>
+
+<!-- ===== BOTTOM SHEET VOYAGEURS ===== -->
+<div class="sheet-scrim" id="scrim" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet">
+    <div class="sheet-head">
+      <button type="button" class="tap" aria-label="Fermer" onclick="closeSheet()" style="display:block;margin:0 auto;padding:6px 0"><span style="display:block;height:5px;width:38px;border-radius:999px;background:var(--color-handle)"></span></button>
+      <h2>Voyageurs</h2>
+    </div>
+    <div class="sheet-body">
+      <p style="margin-bottom:12px;padding:0 4px;font-size:12.5px;font-weight:500;color:var(--color-muted-2)">Les noms doivent correspondre exactement à la pièce d'identité.</p>
+      <div style="margin-bottom:12px;display:flex;flex-direction:column;gap:8px;border-radius:13px;background:var(--color-bg);padding:12px">
+        <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-muted-2)">Depuis ton carnet</p>
+        <div id="carnet-chips" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      </div>
+      <!-- QUEL VOYAGEUR ? (audit 03/09) : une fiche par voyageur de la recherche — la feuille édite celui choisi -->
+      <div id="sh-voys" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+      <div style="margin-bottom:10px;border-radius:16px;background:var(--color-bg);padding:14px">
+        <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px">
+          <span style="display:flex;height:34px;width:34px;flex-shrink:0;align-items:center;justify-content:center;border-radius:11px;background:var(--color-mint);font-size:15px;font-weight:800;color:var(--color-primary-dark)" id="sh-initial">1</span>
+          <span style="min-width:0;flex:1;font-size:14.5px;font-weight:800;color:var(--color-ink)" id="sh-title">Voyageur 1</span>
+          <span id="sh-principal" style="border-radius:999px;background:var(--color-mint);padding:4px 9px;font-size:10px;font-weight:800;color:var(--color-primary-dark)">Principal</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:8px">
+            <label class="tf-field"><span class="tf-label">Civilité</span><select class="tf-input" id="f-civ"><option value="">Choisir…</option><option>M.</option><option>Mme</option><option>Mlle</option><option>Dr</option></select></label>
+            <label class="tf-field"><span class="tf-label">Genre</span><select class="tf-input" id="f-genre"><option value="">Choisir…</option><option>Masculin</option><option>Féminin</option></select></label>
+          </div>
+          <div style="display:flex;gap:8px">
+            <label class="tf-field"><span class="tf-label">Prénom</span><input class="tf-input" type="text" id="f-given" placeholder="Prénom"></label>
+            <label class="tf-field"><span class="tf-label">Nom</span><input class="tf-input" type="text" id="f-family" placeholder="Nom"></label>
+          </div>
+          <!-- Date de naissance en LISTES (fondatrice 22/08 : « système trop lent,
+               on doit fournir les listes ») — 3 selects, zéro clavier, zéro calendrier -->
+          <div class="tf-field"><span class="tf-label">Date de naissance</span>
+            <div style="display:flex;gap:6px">
+              <select class="tf-input" id="n-jour" aria-label="Jour" style="flex:1"><option value="">Jour</option></select>
+              <select class="tf-input" id="n-mois" aria-label="Mois" style="flex:1.4"><option value="">Mois</option></select>
+              <select class="tf-input" id="n-annee" aria-label="Année" style="flex:1.2"><option value="">Année</option></select>
+            </div>
+          </div>
+          <!-- remplissage commun (07/09) : PEC_DATA.formulairesAppliquer, au chargement -->
+          <label class="tf-field"><span class="tf-label">Email</span><input class="tf-input" type="email" id="f-email" placeholder="email@exemple.fr"></label>
+          <label class="tf-field"><span class="tf-label">Téléphone</span>
+            <span style="display:flex;align-items:center;gap:8px;border-radius:12px;background:var(--color-surface);padding:0 13px">
+              <span style="display:flex;flex-shrink:0;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--color-muted-2)">FR <span style="color:var(--color-ink)">+33</span></span>
+              <input class="tf-input" type="tel" id="f-tel" placeholder="6 12 34 56 78" style="padding-left:0;background:transparent">
+            </span>
+          </label>
+        </div>
+      </div>
+      <p style="margin-bottom:6px;padding:0 4px;text-align:center;font-size:11.5px;font-weight:500;color:var(--color-muted-2)">Le nombre de voyageurs correspond à ta recherche — modifie-le depuis la recherche.</p>
+      <button type="button" class="tap" onclick="saveTravelers()" style="margin-top:4px;display:flex;height:54px;width:100%;align-items:center;justify-content:center;border-radius:15px;background:var(--color-primary);font-size:16px;font-weight:800;color:#fff;box-shadow:var(--shadow-cta)">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+  // ── Mode : package (vol + hôtel) ou stay_only (hôtel seul, D12) ──
+  var MODE = new URLSearchParams(location.search).get('mode') === 'stay' ? 'stay_only' : 'package';
+  var STEPS_PACKAGE = [
+    { icon: 'i-plane-departure', label: 'Aller simple', sub: 'Choisis ton vol' },
+    { icon: 'i-bed', label: 'Hébergement', sub: 'Choisis ton hôtel' },
+    { icon: 'i-file', label: 'Récap', sub: 'Vérifie ta commande' },
+    { icon: 'i-banknote', label: 'Paiement', sub: "Choisis comment payer" }   // (18/09, soir) plus de scooter : personne ne se déplace
+  ];
+  var STEPS_STAY = [
+    { icon: 'i-bed', label: 'Hébergement', sub: 'Choisis ton hôtel' },
+    { icon: 'i-file', label: 'Récap', sub: 'Vérifie ta commande' },
+    { icon: 'i-banknote', label: 'Paiement', sub: "Choisis comment payer" }   // (18/09, soir) plus de scooter : personne ne se déplace
+  ];
+  function steps() { return MODE === 'stay_only' ? STEPS_STAY : STEPS_PACKAGE; }
+  // Index d'étape pour un écran donné (screen 1 = vol, 2 = hôtel, 3 = récap, 4 = encaissement)
+  function stepIndexFor(screen) { return MODE === 'stay_only' ? screen - 2 : screen - 1; }
+  function stepWindow(total, current, size) {
+    size = size || 3;
+    if (total <= size) return { start: 0, end: total };
+    var start = Math.min(Math.max(current - 1, 0), total - size);
+    return { start: start, end: start + size };
+  }
+  function renderStepper(current) {
+    var S = steps(), w = stepWindow(S.length, current), html = '';
+    for (var i = w.start; i < w.end; i++) {
+      var st = i < current ? ' pec-tstep--done' : i === current ? ' pec-tstep--current' : '';
+      html += '<div class="pec-tstep' + st + '"' + (i === current ? ' aria-current="step"' : '') + '>' +
+        '<svg class="pec-ico" viewBox="0 0 24 24"><use href="#' + S[i].icon + '"/></svg>' +
+        '<span class="lbl">' + S[i].label + '</span><span class="sub">' + S[i].sub + '</span></div>';
+    }
+    document.getElementById('stepper-row').innerHTML = html;
+  }
+
+  // ── Données ──
+  var D = window.PEC_DATA;
+  /* (17/09 — pivot) CE QUE LE CLIENT LIT SUR LE TOTAL : « avec un bon d’achat — <moyens dérivés> ».
+     (18/09, soir — l'agent de caisse mobile est abandonné, puis pivot de positionnement) LA FONCTION PRENAIT
+     LA RÉPARTITION D'UN RÈGLEMENT À L'AGENT (D.montantARegler : « X € en espèces au plus, Y € par carte sur
+     son terminal ») — plus d'agent, plus de terminal, plus de complément carte : la fonction n'existe plus et
+     la phrase non plus. Ce qui reste est la promesse, et elle tient en une ligne : avec un bon d’achat. */
+  function reglerTxt() {
+    return 'avec un bon d’achat' + ((D && D.moyensPaiementLabel) ? ' — ' + D.moyensPaiementLabel() : '');
+  }
+  // ── LIEUX depuis le référentiel D.places (audit 03/09) : « Ville (IATA) » ou « Ville » → fiche
+  //    aéroport (code, ville, nom) — plus de « MRS » / « Alger Houari-Boumediene » / « Algérie » posés en dur.
+  function placeDe(lbl) {
+    var P = (D && D.places) || [], s = String(lbl || '');
+    // « Marseille (MRS) », « Paris CDG » (libellés D.aeroports) ou « Barcelone » (accueil) sont tous compris
+    var m = s.match(/\(([A-Z]{3})\)/) || s.match(/\b([A-Z]{3})\b/), ville = s.replace(/\s*\(?[A-Z]{3}\)?\s*$/, '').trim();
+    var norm = function (t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); };
+    var p = null;
+    if (m) p = P.filter(function (x) { return x.iata_code === m[1] && x.type === 'airport'; })[0] || P.filter(function (x) { return x.iata_code === m[1]; })[0];
+    if (!p && ville) p = P.filter(function (x) { return x.type === 'airport' && norm(x.city_name) === norm(ville); })[0] || P.filter(function (x) { return norm(x.city_name) === norm(ville); })[0];
+    if (p && (!ville || m)) ville = p.city_name;
+    return { iata: m ? m[1] : (p ? p.iata_code : ''), ville: ville, nom: (p && p.type === 'airport') ? p.name : ville };
+  }
+  // Durée DÉRIVÉE des horaires (jamais un « 2h45 » figé) : '09h30','12h15' → '2h45'
+  function dureeVol(dep, arr) {
+    var a = String(dep || '').match(/(\d{1,2})h(\d{2})/), b = String(arr || '').match(/(\d{1,2})h(\d{2})/); if (!a || !b) return '';
+    var d = (+b[1] * 60 + +b[2]) - (+a[1] * 60 + +a[2]); if (d < 0) d += 1440;
+    return Math.floor(d / 60) + 'h' + ('0' + d % 60).slice(-2);
+  }
+  // Le CONTEXTE DE RECHERCHE prime sur les défauts (fondatrice 27/08)
+  var QS = new URLSearchParams(location.search);
+  // LE DÉPART vient de ?dep sinon de LA PRÉFÉRENCE du compte (D.aeroportDefautGet) — plus de « Marseille » en dur
+  var DEP_LBL = QS.get('dep') || ((D && D.aeroportDefautGet) ? D.aeroportDefautGet() : ''), DEP = placeDe(DEP_LBL);
+  var DEP_IATA = DEP.iata || '—', DEP_VILLE = DEP.ville || '—';
+  // LA DESTINATION vient de ?dest — défaut = le séjour canonique de ce canal (Alger)
+  var DEST_LBL = QS.get('dest') || 'Alger (ALG)', DEST = placeDe(DEST_LBL);
+  var DEST_IATA = DEST.iata || '—', DEST_VILLE = DEST.ville || '—';
+  // (05/09) les dates par défaut étaient écrites en dur et déjà passées. On les DÉRIVE :
+  // aujourd'hui + le délai de réservation du référentiel (promosRegleJmoins), au format court.
+  function _dateFr(d) { return d.getDate() + ' ' + ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][d.getMonth()]; }
+  function _datesDefaut(nuits) {
+    var j = ((window.PEC_DATA && PEC_DATA.scenario && PEC_DATA.scenario.promosRegleJmoins) || 45);
+    var a = new Date(Date.now() + j * 86400000);
+    if (!nuits) return _dateFr(a);
+    return _dateFr(a) + ' → ' + _dateFr(new Date(a.getTime() + nuits * 86400000));
+  }
+  // DATES : ?dates (l'accueil transmet la plage « 15 août → 22 août ») — arrivée / départ dérivés ;
+  // défaut = les dates du séjour canonique de ce canal.
+  var DATES = String(QS.get('dates') || '').replace(/\s*·\s*aller[- ](simple|retour)\s*$/i, '').trim() || _datesDefaut(7);
+  var DATE_A = DATES.split('→')[0].trim(), DATE_R = (DATES.split('→')[1] || '').trim();
+  // GRILLE : D.fiscalite.tvaTauxNeuf (plus de 0.20 en dur). SERVICE_FEE (14,50 €) et DELIVERY_FEE (3,96 €) =
+  // frais de service package et part fixe des « taxes » de la maquette : aucun référentiel ne les porte encore.
+  var BUDGET = parseInt(QS.get('b'), 10) || 350, NUITS = parseInt(QS.get('nuits'), 10) || 7, PAX = Math.max(1, Math.min(9, parseInt(QS.get('voy'), 10) || 2));
+  var VAT = ((D && D.tvaTauxNeufVif && D.tvaTauxNeufVif()) || 20) / 100, SERVICE_FEE = 1450, DELIVERY_FEE = 396;   // (11/09) taux VIF
+// Budget AJUSTABLE en plein tunnel — tout recalcule (jauges, filtres « dans mon budget »)
+function chgBudget(d) {
+  BUDGET = Math.max(50, Math.min(2000, BUDGET + d));
+  document.querySelectorAll('#budget-val, .budget-val').forEach(function (e) { e.textContent = BUDGET + ' €'; });
+  if (typeof renderLists === 'function') renderLists();
+  if (typeof renderRecap === 'function') try { renderRecap(); } catch (err) {}
+}
+  var FLIGHTS = [
+    { id: 'f1', carrier: 'Air Algérie', price: 8900, dep: '09h30', arr: '12h15', best: true },
+    { id: 'f2', carrier: 'Vueling', price: 9450, dep: '14h05', arr: '16h50', best: false },
+    { id: 'f3', carrier: 'Transavia', price: 10200, dep: '18h20', arr: '21h05', best: false }
+  ];
+  var HOTELS = [
+    { id: 'h1', resa: 4, name: 'Hôtel Méditerranée', star: 3, nuit: 22, score: '8,4', label: 'Très bien', refundable: true,
+      loc: 'Centre-ville · Place de la Grande Poste · à 300 m du centre', tags: ['Petit-déj inclus', 'WiFi gratuit', 'Climatisation'],
+      rateKey: 'rate_2mYQ7fKk3Zp',
+      desc: "Chambre double climatisée au cœur du centre, literie neuve, réception 24 h/24 — le petit-déjeuner se prend face à la Grande Poste.", photo: 'photo-hotel-chambre.jpg', images: ['photo-hotel-chambre.jpg', 'photo-hotel-baie.jpg', 'photo-hotel-riad.jpg'],
+      maxPers: 2, arrivee: 'dès 14 h', depart: 'avant 12 h',
+      consignes: ['Pièce d\'identité demandée à l\'arrivée', 'Chambres non-fumeurs', 'Animaux non admis'],
+      comprend: ['Chambre double climatisée', 'Petit-déjeuner buffet', 'WiFi'],
+      pasCompris: ['Taxe de séjour (≈ 1,50 €/pers/nuit, à régler sur place)'],
+      politique: [['Jusqu\'au 12 août 23 h 59', 'Annulation GRATUITE — remboursement intégral'], ['Du 13 au 14 août', '1 nuit retenue'], ['Après le 14 août ou non-présentation', 'Non remboursable']],
+      avis: [['Nadia', 'France', 'juil. 2026', 8.6, 'Impeccable pour le centre', 'Literie neuve, personnel adorable', 'Rue un peu bruyante côté avenue', 'photo-hotel-chambre.jpg'], ['Karim', 'Belgique', 'juin 2026', 8.1, 'Très bon rapport qualité-prix', 'Petit-déj copieux, check-in rapide', 'Douche un peu petite']] },
+    { id: 'h2', resa: 7, prefere: true, name: 'Riad El Djazair', star: 4, nuit: 35, score: '8,9', label: 'Superbe', refundable: true,
+      loc: 'Casbah · Rue Ahmed Bouzrina · à 1,2 km du centre', tags: ['Petit-déj inclus', 'Piscine', 'WiFi gratuit'],
+      rateKey: 'rate_9Ht5RwNc1Vd',
+      desc: "Riad rénové de la Casbah : patio, piscine sur le toit, chambres calmes côté cour — l'adresse de charme du quartier historique.", photo: 'photo-hotel-riad.jpg', images: ['photo-hotel-riad.jpg', 'photo-hotel-chambre.jpg', 'photo-dest-marrakech.jpg'],
+      maxPers: 3, arrivee: 'dès 15 h', depart: 'avant 11 h',
+      consignes: ['Arrivée après 22 h : prévenir la réception', 'Caution 50 € rendue au départ', 'Piscine 8 h–20 h'],
+      comprend: ['Chambre côté patio', 'Petit-déjeuner', 'Piscine sur le toit', 'WiFi'],
+      pasCompris: ['Taxe de séjour (≈ 2 €/pers/nuit, sur place)'],
+      politique: [['Jusqu\'au 10 août 23 h 59', 'Annulation GRATUITE — remboursement intégral'], ['Après le 10 août', 'Non remboursable']],
+      avis: [['Sofia', 'Espagne', 'juil. 2026', 9.2, 'Le charme absolu', 'Patio magnifique, calme total', 'Escaliers raides avec de grosses valises', 'photo-hotel-riad.jpg']] },
+    { id: 'h3', name: 'Résidence Les Oliviers', star: 3, nuit: 28, score: '8,1', label: 'Très bien', refundable: false,
+      loc: 'Hydra · Boulevard Colonel Bougara · à 3,4 km du centre', tags: ['Cuisine équipée', 'WiFi gratuit'],
+      rateKey: 'rate_4Kp8ZsMj6Qb',
+      desc: "Face à la baie, chambres lumineuses avec balcon — navette plage et parking gratuits.", photo: 'photo-hotel-baie.jpg', images: ['photo-hotel-baie.jpg', 'photo-hotel-chambre.jpg', 'photo-plage.jpg'],
+      maxPers: 4, arrivee: 'dès 14 h', depart: 'avant 12 h',
+      consignes: ['Navette plage : réserver la veille', 'Parking gratuit sur place'],
+      comprend: ['Chambre avec balcon vue baie', 'Navette plage', 'Parking', 'WiFi'],
+      pasCompris: ['Petit-déjeuner (+6 €/pers/jour, en option)', 'Taxe de séjour (sur place)'],
+      politique: [['Jusqu\'au 11 août 23 h 59', 'Annulation GRATUITE — remboursement intégral'], ['Après le 11 août', '50 % retenus'], ['Non-présentation', 'Non remboursable']],
+      avis: [['Yanis', 'France', 'août 2026', 8.0, 'La vue vaut tout', 'Balcon superbe, navette pratique', 'Petit-déj payant en plus']] },
+    { id: 'h4', resa: 2, name: 'Grand Hôtel Alger', star: 5, nuit: 48, score: '9,2', label: 'Exceptionnel', refundable: true,
+      loc: 'Front de mer · Boulevard Zighoud Youcef · à 800 m du centre', tags: ['Spa', 'Vue mer'],   // (05/09) « Petit-déj inclus » retiré : il est dans pasCompris
+      rateKey: 'rate_7Vb3XnTq5Ws',
+      desc: "Petit hôtel familial, chambres simples et impeccables — le meilleur rapport qualité-prix du quartier.", photo: 'photo-lisbonne.jpg', images: ['photo-lisbonne.jpg', 'photo-hotel-chambre.jpg', 'photo-hotel-baie.jpg'],
+      maxPers: 2, arrivee: 'dès 13 h', depart: 'avant 11 h',
+      consignes: ['Réception fermée 22 h–7 h (code d\'accès envoyé par SMS)'],
+      comprend: ['Chambre double', 'WiFi'],
+      pasCompris: ['Petit-déjeuner (café en libre-service offert)', 'Taxe de séjour (sur place)'],
+      politique: [['Tarif NON REMBOURSABLE', 'C\'est ce qui le rend si bas — aucune exception, dit AVANT l\'achat']],
+      avis: [['Mounir', 'France', 'juil. 2026', 7.8, 'Simple et propre', 'Prix imbattable, literie correcte', 'Pas d\'ascenseur']] }
+  ];
+  // VOL RETOUR (fondatrice 23/08 : en vol+hôtel aussi, on choisit ALLER SIMPLE ou ALLER-RETOUR)
+  var RETOURS = [
+    { id: 'r1', carrier: 'Air Algérie', price: 8600, dep: '13h10', arr: '15h55', best: true },
+    { id: 'r2', carrier: 'Vueling', price: 9150, dep: '17h40', arr: '20h25', best: false },
+    { id: 'r3', carrier: 'Transavia', price: 9900, dep: '20h30', arr: '23h15', best: false }
+  ];
+  var arMode = false, retourId = null, phase = 'out';
+  // Bagage soute = un SERVICE PAR SEGMENT chez Duffel — un choix PAR SENS.
+  var bagOut = false, bagRet = false, BAG_PRIX = 2000, BAG_KG = 23;
+  function toggleBag(sens) { if (sens === 'out') bagOut = !bagOut; else bagRet = !bagRet; renderRecap(); }
+  // L'accueil transmet le choix fait AVANT d'entrer (?ar=1) — comme chez les
+  // concurrents où le package est A/R par défaut, ici le client choisit et le
+  // tunnel arrive PRÉ-RÉGLÉ (zéro re-saisie, zéro trou de process).
+  if (/[?&]ar=1/.test(location.search)) {
+    document.addEventListener('DOMContentLoaded', function () {
+      var b = document.querySelectorAll('#trajet03 [role="tab"]')[1];
+      if (b) setTrajet03(true, b);
+      // Le choix est DÉJÀ fait à la recherche : on ne le repropose pas — un rappel
+      // discret le confirme, « Modifier » ré-affiche le sélecteur (rien n'est perdu).
+      var z = document.getElementById('trajet03');
+      z.style.display = 'none';
+      var r = document.createElement('div');
+      r.id = 'trajet03-rappel';
+      r.setAttribute('style', 'display:flex;align-items:center;gap:8px;background:var(--color-surface);padding:0 16px 10px');
+      r.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:11.5px;font-weight:800;padding:6px 12px">⇄ Aller-retour <span style="font-weight:600;color:var(--color-mint-ink)">· choisi à la recherche</span></span>' +
+        '<button type="button" class="tap" style="background:none;font-size:11px;font-weight:800;color:var(--color-muted);text-decoration:underline" onclick="document.getElementById(\'trajet03\').style.display=\'flex\';this.parentNode.remove()">Modifier</button>';
+      z.parentNode.insertBefore(r, z);
+    });
+  }
+  var flightId = null, hotelId = null, safetyCents = 0;
+  function retour() { return RETOURS.find(function (f) { return f.id === retourId; }); }
+  function setTrajet03(ar, btn) {
+    arMode = ar; retourId = null; phase = 'out';
+    STEPS_PACKAGE[0].label = ar ? 'Aller-retour' : 'Aller simple';
+    STEPS_PACKAGE[0].sub = ar ? 'Choisis aller et retour' : 'Choisis ton vol';
+    renderStepper(stepIndexFor(1));
+    document.querySelectorAll('#trajet03 [role="tab"]').forEach(function (b) {
+      var actif = b === btn;
+      b.setAttribute('aria-selected', actif);
+      b.style.background = actif ? 'var(--color-ink)' : 'transparent';
+      b.style.color = actif ? '#fff' : 'var(--color-ink)';
+    });
+    renderLists(); majCtaVol();
+  }
+  function majCtaVol() {
+    var cta = document.getElementById('cta-out'); if (!cta) return;
+    var pret = phase === 'out' ? !!flightId : !!retourId;
+    cta.disabled = !pret; cta.style.opacity = pret ? '1' : '.5';
+    cta.textContent = phase === 'ret'
+      ? (retourId ? 'Continuer — hébergement' : 'Sélectionne ton vol retour')
+      : (!flightId ? 'Sélectionne un vol' : (arMode ? 'Choisir le vol retour' : 'Continuer — hébergement'));
+  }
+
+  function eur(c) { return (c / 100).toFixed(2).replace('.', ',') + ' €'; }
+  function flight() { return FLIGHTS.find(function (f) { return f.id === flightId; }); }
+  function hotel() { return HOTELS.find(function (h) { return h.id === hotelId; }); }
+  function flightCents() { if (MODE === 'stay_only') return 0; var c = flight() ? flight().price : 0; if (arMode && retour()) c += retour().price; return c; }
+  function hotelCents() { return hotel() ? hotel().nuit * NUITS * 100 : 0; }
+  function totals() {
+    var base = flightCents() + hotelCents();
+    var ht = base + SERVICE_FEE + safetyCents + DELIVERY_FEE;
+    var tva = Math.round(ht * VAT);
+    // le bagage soute = le prix du SERVICE compagnie (total_amount Duffel), tel quel
+    var bags = MODE !== 'stay_only' ? (bagOut ? BAG_PRIX : 0) + (arMode && retour() && bagRet ? BAG_PRIX : 0) : 0;
+    var pack = (MODE !== 'stay_only' && typeof packSel === 'function' ? packSel().plus : 0) * 100;
+    return { base: base, ht: ht, tva: tva, bags: bags, pack: pack, ttc: ht + tva + bags + pack };
+  }
+  function remainingForHotel() { return Math.max(0, BUDGET * 100 - flightCents()); }
+  // Le VRAI total à payer si CET hôtel était choisi — tout compris (vol éventuel +
+  // chambre + service + livraison + TVA + bagages + tarif). C'est le montant du bouton
+  // « Continuer » et celui réglé (par bon d’achat) : la jauge budget se cale dessus (fondatrice
+  // 30/08 : « il y a un vrai problème de calcul » — la jauge ignorait frais + TVA).
+  function ttcWithHotel(h) {
+    var base = flightCents() + (h ? h.nuit * NUITS * 100 : 0);
+    var ht = base + SERVICE_FEE + safetyCents + DELIVERY_FEE;
+    var tva = Math.round(ht * VAT);
+    var bags = MODE !== 'stay_only' ? (bagOut ? BAG_PRIX : 0) + (arMode && retour() && bagRet ? BAG_PRIX : 0) : 0;
+    var pack = (MODE !== 'stay_only' && typeof packSel === 'function' ? packSel().plus : 0) * 100;
+    return ht + tva + bags + pack;
+  }
+
+  // ── Cartes vol ──
+  function flightCard(o) {
+    var sel = (phase === 'ret' ? retourId : flightId) === o.id;
+    var htC = o.price + SERVICE_FEE + DELIVERY_FEE, spent = Math.round((htC + Math.round(htC * VAT)) / 100);
+    var pct = Math.min(100, Math.round(spent / BUDGET * 100));
+    var rest = Math.max(0, BUDGET - spent);
+    // en phase RETOUR la carte va de la destination vers le départ (la liste affichait MRS → ALG dans les deux sens)
+    var de = phase === 'ret' ? DEST : DEP, vers = phase === 'ret' ? DEP : DEST;
+    return '<li><div role="button" tabindex="0" onclick="selectFlight(\'' + o.id + '\')" aria-pressed="' + sel + '" class="tap" ' +
+      'style="width:100%;cursor:pointer;border-radius:18px;background:var(--color-surface);padding:15px 15px 14px;text-align:left;box-shadow:' + (sel ? 'var(--shadow-selected)' : 'var(--shadow-card)') + '">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+        '<div style="display:flex;min-width:0;align-items:center;gap:8px">' +
+          window.PEC_DATA.logoCompagnie(o.carrier, 26) +
+          '<div style="min-width:0"><p style="font-size:15px;font-weight:800;letter-spacing:-0.2px;color:var(--color-ink)">' + (vers.ville || '—') + '</p>' +
+          '<p style="font-size:11.5px;font-weight:500;color:var(--color-muted-2)">' + o.carrier + ' · ' + (vers.nom || vers.ville || '—') + '</p></div></div>' +
+        (o.best ? '<span style="display:flex;flex-shrink:0;align-items:center;gap:4px;white-space:nowrap;border-radius:999px;background:linear-gradient(115deg,#C2410C,#F26F21);padding:4px 9px;font-size:10px;font-weight:800;color:#fff;box-shadow:0 3px 8px rgba(194,65,12,.3)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:10px"><use href="#i-star-filled"/></svg> Le moins cher de cette recherche</span>' : '') +
+      '</div>' +
+      '<div style="margin-top:13px"><div class="pec-leg">' +
+        '<div class="pec-leg-side"><div class="h">' + o.dep + '</div><div class="c">' + (de.iata || '—') + '</div><div class="n">' + (de.nom || de.ville || '—') + '</div></div>' +
+        '<div class="pec-leg-mid"><span class="d">' + dureeVol(o.dep, o.arr) + '</span><div class="pec-leg-line-row"><span class="pec-leg-dot"></span><span class="pec-leg-line"></span><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px;color:var(--color-disabled)"><use href="#i-plane"/></svg><span class="pec-leg-line"></span><span class="pec-leg-dot"></span></div><span class="s">Direct</span></div>' +
+        '<div class="pec-leg-side"><div class="h">' + o.arr + '</div><div class="c">' + (vers.iata || '—') + '</div><div class="n">' + (vers.nom || vers.ville || '—') + '</div></div>' +
+      '</div></div>' +
+      '<div class="pec-mint-banner"><div class="row"><div style="min-width:0">' +
+        '<p class="lbl">À régler</p><p class="sub">Vol · ' + PAX + ' voyageurs</p></div>' +
+        '<p class="amt"><span class="n">' + (o.price / 100).toFixed(2).replace('.', ',') + '</span><span class="e">€</span></p></div></div>' +
+      '<div style="margin-top:10px"><div class="pec-budget-bar"><div class="budget-bar-fill" style="height:100%;border-radius:999px;width:' + pct + '%"></div></div>' +
+        '<p style="display:inline-flex;align-items:center;gap:5px;margin-top:7px;border-radius:999px;background:var(--color-mint);padding:4px 11px;font-size:11.5px;font-weight:700;color:var(--color-mint-ink)">' + (sel ? 'Budget restant : ' : pct + '% du budget · reste ') + '<b style="font-size:13.5px;color:var(--color-primary-dark)">' + rest + ' €</b></p></div>' +
+      '</div></li>';
+  }
+
+  // ── Cartes hôtel (StayCard.tsx) ──
+  // FAVORIS HÔTEL (fondatrice 23/08) : cœur sur la carte — table user_favorites (kind 'hotel'),
+  // retrouvables dans Compte → Mes favoris (commun MODE + hôtels).
+  function stayCard(h) {
+    var sel = hotelId === h.id;
+    var total = h.nuit * NUITS * 100;                 // prix de la chambre (affiché « Total N nuits »)
+    var grand = ttcWithHotel(h);                       // le VRAI dû tout compris (= bouton Continuer)
+    var budgetC = BUDGET * 100;
+    var within = grand <= budgetC;
+    var pct = budgetC > 0 ? Math.min(100, Math.round(grand / budgetC * 100)) : 0;
+    var fit = within ? 'Dans ton budget · il te resterait ' + Math.round((budgetC - grand) / 100) + ' € (tout compris)'
+                     : 'Dépasse de ' + Math.round((grand - budgetC) / 100) + ' € ton budget (tout compris)';
+    var chips = h.tags.slice(0, 3).map(function (t) {
+      return '<span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;background:var(--color-mint);padding:3px 8px;font-size:10.5px;font-weight:600;color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:10px"><use href="#i-check"/></svg> ' + t + '</span>';
+    }).join('');
+    var fav = window.PEC_DATA && PEC_DATA.favorisHebHas && PEC_DATA.favorisHebHas(h.id);
+    return '<div style="position:relative">' +
+      '<button type="button" data-fav="' + h.id + '" data-fav-meta="' + encodeURIComponent(JSON.stringify({ id: h.id, nom: h.name, etoiles: h.star, note: h.score, label: h.label, quartier: h.loc, nuit: h.nuit, photo: h.photo })) + '" aria-label="' + (fav ? 'Retirer des favoris' : 'Mettre en favori') + '" aria-pressed="' + !!fav + '" class="tap" style="position:absolute;right:10px;top:10px;z-index:2;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:999px;background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(9,32,26,.25);color:' + (fav ? '#E23B57' : 'var(--color-muted)') + '"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px;' + (fav ? 'fill:#E23B57' : '') + '"><use href="#i-heart"/></svg></button>' +
+      '<div role="button" tabindex="0" onclick="selectHotel(\'' + h.id + '\')" aria-pressed="' + sel + '" class="tap" style="width:100%;cursor:pointer;overflow:hidden;border-radius:18px;background:var(--color-surface);text-align:left;box-shadow:' + (sel ? 'var(--shadow-selected)' : 'var(--shadow-card)') + '">' +
+        '<div class="stay-photo" data-lb-set data-photos="' + (h.images || [h.photo]).map(function (ph) { return '../assets/photos/' + ph; }).join('|') + '" style="position:relative;height:132px;overflow:hidden">' +
+          ((h.images || []).length > 1 ? '<span style="position:absolute;right:9px;bottom:9px;z-index:2;border-radius:999px;background:rgba(6,14,11,.72);color:#fff;font-size:9.5px;font-weight:800;padding:3px 8px;pointer-events:none">+' + ((h.images || []).length - 1) + ' photos</span>' : '') +
+          (h.photo ? '<img loading="lazy" decoding="async" data-lb data-src="../assets/photos/' + h.photo + '" src="../assets/photos/' + h.photo + '" alt="" style="cursor:pointer;position:absolute;inset:0;width:100%;height:100%;object-fit:cover">' : '') +
+          '<div class="stay-photo-scrim" style="position:absolute;inset:0"></div>' +
+          (h.prefere ? '<span style="position:absolute;left:11px;bottom:44px;display:inline-flex;align-items:center;gap:4px;border-radius:999px;background:var(--color-ink);color:#fff;padding:4px 10px;font-size:10.5px;font-weight:800"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:11px;color:var(--color-bright)"><use href="#i-star-filled"/></svg> Préféré des voyageurs</span>' : '') +
+          '<span style="position:absolute;left:11px;top:11px;display:inline-flex;align-items:center;gap:5px;border-radius:9px;background:rgba(255,255,255,0.95);padding:4px 8px">' +
+            '<span style="font-size:12.5px;font-weight:800;color:var(--color-ink)">' + h.score + '</span>' +
+            '<span style="font-size:11px;font-weight:600;color:var(--color-muted)">' + h.label + '</span></span>' +
+          (h.refundable ? '<span style="position:absolute;bottom:11px;left:11px;display:inline-flex;align-items:center;gap:4px;border-radius:999px;background:rgba(255,255,255,0.95);padding:4px 10px;font-size:11px;font-weight:700;color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px;color:var(--color-primary)"><use href="#i-shield"/></svg> Annulation gratuite</span>' : '') +
+        '</div>' +
+        '<div style="padding:14px 15px 15px">' +
+          '<div style="margin-bottom:2px;display:flex;align-items:center;gap:6px">' +
+            '<span style="font-size:15.5px;font-weight:800;letter-spacing:-0.2px;color:var(--color-ink)">' + h.name + '</span>' +
+            '<span style="flex-shrink:0;font-size:11px;font-weight:700;color:var(--color-star)">' + '★'.repeat(h.star) + '</span></div>' +
+          '<p style="margin-bottom:8px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--color-muted-2)"><svg class="pec-ico" viewBox="0 0 24 24" style="flex-shrink:0;font-size:13px"><use href="#i-map-pin"/></svg> ' + h.loc + '</p>' +
+          (h.resa ? '<p style="display:flex;align-items:center;gap:5px;margin:-3px 0 8px;font-size:10.5px;font-weight:800;color:var(--color-amber-text)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px"><use href="#i-flame"/></svg> Réservé ' + h.resa + ' fois cette semaine</p>' : '') + '<div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px">' + chips + '</div>' +
+          '<details onclick="event.stopPropagation()" style="margin:-2px 0 12px">' +
+          '<summary class="tap" style="list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;border-radius:13px;background:var(--color-mint);padding:12px;font-size:13.5px;font-weight:800;color:var(--color-primary-dark)">Tout voir — détails, conditions, avis <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-chevron-down"/></svg></summary>' +
+          '<div style="margin-top:12px">' +
+            '<p style="font-size:13px;font-weight:500;line-height:1.6;color:var(--color-muted)">' + (h.desc || '') + '</p>' +
+            (h.images ? '<p class="pec-section-label" style="margin:12px 0 7px">La chambre en photos <span style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--color-muted)">— touche une photo pour l\'agrandir</span></p><div class="no-scrollbar" data-lb-set data-photos="' + h.images.map(function (im) { return '../assets/photos/' + im; }).join('|') + '" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:2px">' + h.images.map(function (im, ix) { return '<img loading="lazy" decoding="async" data-lb data-src="../assets/photos/' + im + '" src="../assets/photos/' + im + '" alt="' + h.name + ' — photo ' + (ix + 1) + '" style="flex:none;width:118px;height:82px;border-radius:11px;object-fit:cover;cursor:pointer">'; }).join('') + '</div>' : '') +
+            '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;text-align:center">' +
+              '<span style="border-radius:12px;background:var(--color-bg);padding:10px 4px"><b style="display:block;font-size:14px;color:var(--color-ink)">' + h.maxPers + ' pers.</b><span style="font-size:10.5px;color:var(--color-muted)">max — règle du logement</span></span>' +
+              '<span style="border-radius:12px;background:var(--color-bg);padding:10px 4px"><b style="display:block;font-size:14px;color:var(--color-ink)">' + h.arrivee + '</b><span style="font-size:10.5px;color:var(--color-muted)">arrivée</span></span>' +
+              '<span style="border-radius:12px;background:var(--color-bg);padding:10px 4px"><b style="display:block;font-size:14px;color:var(--color-ink)">' + h.depart + '</b><span style="font-size:10.5px;color:var(--color-muted)">départ</span></span>' +
+            '</div>' +
+            '<p class="pec-section-label" style="margin:16px 0 7px">Ce que ton offre comprend</p>' +
+            '<div style="font-size:13px;font-weight:500;line-height:1.75;color:var(--color-muted)">' +
+              h.comprend.map(function (x) { return '<span style="display:block">✓ ' + x + '</span>'; }).join('') +
+              (MODE === 'stay_only' ? '<span style="display:block;color:var(--color-amber-text);font-weight:700">✗ Vol NON inclus — séjour seul</span>' : '<span style="display:block;color:var(--color-primary-dark);font-weight:700">✓ Vol inclus</span>') + '</div>' +
+            '<p class="pec-section-label" style="margin:14px 0 7px">Non compris</p>' +
+            '<div style="font-size:13px;font-weight:500;line-height:1.75;color:var(--color-muted)">' + h.pasCompris.map(function (x) { return '<span style="display:block">· ' + x + '</span>'; }).join('') + '</div>' +
+            '<p class="pec-section-label" style="margin:14px 0 7px">Consignes du logement</p>' +
+            '<div style="font-size:13px;font-weight:500;line-height:1.75;color:var(--color-muted)">' + h.consignes.map(function (x) { return '<span style="display:block">· ' + x + '</span>'; }).join('') + '</div>' +
+            '<p class="pec-section-label" style="margin:14px 0 7px">Remboursement — la vraie politique, datée</p>' +
+            h.politique.map(function (p) { return '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--color-sep);font-size:13px"><span style="color:var(--color-muted)">' + p[0] + '</span><b style="color:var(--color-ink);text-align:right">' + p[1] + '</b></div>'; }).join('') +
+            '<p class="pec-section-label" style="margin:14px 0 7px">Avis vérifiés — voyageurs ayant séjourné</p>' +
+            h.avis.map(function (a) { return '<div style="margin-top:7px;border-radius:13px;background:var(--color-bg);padding:11px 13px"><div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:13px;color:var(--color-ink)">' + a[4] + '</b><span style="flex:none;border-radius:7px;background:var(--color-ink);color:#fff;font-size:12px;font-weight:800;padding:2px 8px">' + String(a[3]).replace('.', ',') + '</span></div><div style="font-size:12.5px;color:var(--color-muted);margin-top:4px">＋ ' + a[5] + '</div><div style="font-size:12.5px;color:var(--color-muted-2)">− ' + a[6] + '</div>' + (a[7] ? '<span data-lb-set data-photos="../assets/photos/' + a[7] + '"><img data-lb data-src="../assets/photos/' + a[7] + '" src="../assets/photos/' + a[7] + '" alt="Photo du séjour de ' + a[4] + '" style="margin-top:7px;width:74px;height:52px;border-radius:9px;object-fit:cover;cursor:pointer"></span>' : '') + '<div style="font-size:11px;color:var(--color-muted-2);margin-top:4px">' + a[0] + ' · ' + a[1] + ' · ' + a[2] + ' · avis payé et prouvé</div></div>'; }).join('') +
+            '<p style="margin-top:11px;font-size:11px;color:var(--color-muted-2)">Données réelles transmises par la centrale de réservation — jamais retouchées, revalidées au blocage du prix.</p>' +
+          '</div></details>' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:13px;background:var(--color-mint);padding:11px 13px">' +
+            '<div style="min-width:0"><p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--color-primary-dark)">Total ' + NUITS + ' nuits</p>' +
+            '<p style="margin-top:1px;font-size:11.5px;font-weight:500;color:var(--color-mint-ink)">' + h.nuit + ' € × ' + NUITS + ' nuits</p></div>' +
+            '<p style="display:flex;flex-shrink:0;align-items:baseline;gap:2px;line-height:1;color:var(--color-primary-dark)"><span style="font-size:25px;font-weight:800;letter-spacing:-0.6px">' + Math.round(total / 100) + '</span><span style="font-size:14px;font-weight:700">€</span></p></div>' +
+          '<div style="margin-top:10px"><div class="pec-budget-bar"><div class="' + (within ? 'budget-bar-fill' : '') + '" style="height:100%;border-radius:999px;width:' + pct + '%;' + (within ? '' : 'background:var(--color-star)') + '"></div></div>' +
+            '<p style="margin-top:6px;font-size:11px;font-weight:700;color:' + (within ? 'var(--color-primary-dark)' : 'var(--color-amber-text)') + '">' + fit + '</p></div>' +
+        '</div></div>' +
+    '</div>';
+  }
+
+  // FILTRES VOL VIVANTS (audit 03/09 : Prix / Vol direct / Horaires ne faisaient que basculer aria-pressed) —
+  // Prix = tri croissant · Vol direct = seuls les directs (tous le sont : rien n'est masqué) · Horaires = tri par départ.
+  var FILTRES = { prix: false, direct: false, horaires: false };
+  function volsVisibles() {
+    var l = (phase === 'ret' ? RETOURS : FLIGHTS).slice();
+    if (FILTRES.direct) l = l.filter(function (o) { return !o.escales; });
+    if (FILTRES.prix) l.sort(function (a, b) { return a.price - b.price; });
+    if (FILTRES.horaires) l.sort(function (a, b) { return +String(a.dep).replace('h', '') - +String(b.dep).replace('h', ''); });
+    return l;
+  }
+  // (05/09) SOURCE UNIQUE de la liste d'hébergements : les puces filtraient dans leur coin et
+  // le rendu suivant remettait tout. « Petit-déj » se lit dans les données (comprend/pasCompris),
+  // plus dans une chip d'affichage.
+  var hFiltres = window.hFiltres || (window.hFiltres = { prix: false, budget: false, petitdej: false });
+  function petitDejInclus(h) {
+    if ((h.pasCompris || []).some(function (t) { return /petit-d[ée]j/i.test(t); })) return false;
+    return (h.comprend || []).some(function (t) { return /petit-d[ée]j/i.test(t); })
+        || (h.tags || []).some(function (t) { return /petit-d[ée]j/i.test(t); });
+  }
+  function hotelsVisibles() {
+    var l = HOTELS.slice();
+    if (hFiltres.budget) l = l.filter(function (h) { return ttcWithHotel(h) <= BUDGET * 100; });
+    if (hFiltres.petitdej) l = l.filter(petitDejInclus);
+    l.sort(function (a, b2) {
+      var fa = PEC_DATA.favorisHebHas(a.id) ? 0 : 1, fb = PEC_DATA.favorisHebHas(b2.id) ? 0 : 1;
+      if (fa !== fb) return fa - fb;
+      return hFiltres.prix ? (a.nuit - b2.nuit) : 0;
+    });
+    return l;
+  }
+  function renderLists() {
+    var vv = volsVisibles();
+    document.getElementById('list-out').innerHTML = vv.map(flightCard).join('');
+    var nb = document.getElementById('nb-vols'); if (nb) nb.textContent = vv.length + ' vol' + (vv.length > 1 ? 's' : '');
+    var nh = document.getElementById('nb-heb');
+    var nn = document.getElementById('nb-nuits'); if (nn) nn.textContent = NUITS;
+    var hs = hotelsVisibles();
+    document.getElementById('hotels').innerHTML = hs.length ? hs.map(stayCard).join('')
+      : '<p style="padding:14px 2px;font-size:12.5px;color:var(--color-muted)">Aucun hébergement avec ces filtres — retire-en un.</p>';
+    if (nh) nh.textContent = hs.length + ' hébergement' + (hs.length > 1 ? 's' : '');
+  }
+  function selectFlight(id) {
+    if (phase === 'ret') { retourId = id; } else { flightId = id; }
+    renderLists(); majCtaVol();
+  }
+  window.surFavori = function () { renderLists(); };
+  function selectHotel(id) {
+    hotelId = id; renderLists();
+    var c = document.getElementById('cta-stay');
+    c.disabled = false; c.style.opacity = '1'; c.textContent = 'Continuer — ' + eur(totals().ttc);
+  }
+  // FILTRES HÔTEL VIVANTS (fondatrice 23/08 : « pourquoi les filtres ne fonctionnent pas ») :
+  // Prix = tri croissant · Dans mon budget = seuls ceux qui rentrent · Petit-déj = inclus seulement.
+  // hFiltres est déclaré plus haut (source unique du filtrage)
+  function filtreHotel(b) {
+    var k = b.getAttribute('data-hf');
+    hFiltres[k] = !hFiltres[k];
+    b.setAttribute('aria-pressed', hFiltres[k]);
+    var liste = hotelsVisibles();
+    document.getElementById('hotels').innerHTML = liste.length
+      ? liste.map(stayCard).join('')
+      : '<div style="text-align:center;padding:24px 14px;font-size:13px;color:var(--color-muted)">Aucun hébergement ne correspond — retire un filtre, ou ajuste ton budget.</div>';
+  }
+  function toggleFilter(b) {
+    var k = b.getAttribute('data-f'); if (k) FILTRES[k] = !FILTRES[k];
+    b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+    renderLists();
+  }
+
+  // ── Récap ──
+  function priceRow(l, v, green) {
+    return '<div style="display:flex;align-items:center;justify-content:space-between">' +
+      '<span style="font-size:13.5px;font-weight:500;color:var(--color-muted)">' + l + '</span>' +
+      '<span style="font-size:13.5px;font-weight:700;color:' + (green ? 'var(--color-primary-dark)' : 'var(--color-ink)') + '">' + v + '</span></div>';
+  }
+  function renderRecap() {
+    var h = hotel(), t = totals();
+    if (MODE !== 'stay_only') {
+      var f = flight();
+      // RÉCAP VOL CLAIR (fondatrice 24/08) : un volet PAR SENS — date, heures, aéroports
+      function volLeg(cie, dateTxt, hDep, hArr, cDep, nDep, cArr, nArr, badge) {
+        return '<div style="border-radius:14px;background:var(--color-bg);padding:11px 14px;margin-bottom:8px">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">' +
+            '<span style="flex:none;border-radius:7px;background:var(--color-mint);color:var(--color-primary-dark);font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px">' + badge + '</span>' +
+            window.PEC_DATA.logoCompagnie(cie, 20) +
+            '<span style="font-size:11.5px;font-weight:700;color:var(--color-ink)">' + cie + '</span>' +
+            '<span style="margin-left:auto;font-size:11px;font-weight:600;color:var(--color-muted)">' + dateTxt + '</span></div>' +
+          '<div class="pec-leg">' +
+            '<div class="pec-leg-side"><div class="h">' + hDep + '</div><div class="c">' + cDep + '</div><div class="n">' + nDep + '</div></div>' +
+            '<div class="pec-leg-mid"><span class="d">' + dureeVol(hDep, hArr) + '</span><div class="pec-leg-line-row"><span class="pec-leg-dot"></span><span class="pec-leg-line"></span><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px;color:var(--color-disabled)"><use href="#i-plane"/></svg><span class="pec-leg-line"></span><span class="pec-leg-dot"></span></div><span class="s">Direct</span></div>' +
+            '<div class="pec-leg-side"><div class="h">' + hArr + '</div><div class="c">' + cArr + '</div><div class="n">' + nArr + '</div></div>' +
+          '</div></div>';
+      }
+      document.getElementById('recap-flight').innerHTML =
+        '<div class="pec-card" style="padding:15px">' +
+          '<div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+            '<p style="font-size:15px;font-weight:800;color:var(--color-ink)">' + DEP_VILLE + ' ' + (arMode && retour() ? '⇄' : '→') + ' ' + DEST_VILLE + ' <span style="font-size:11.5px;font-weight:600;color:var(--color-muted)">· ' + (arMode && retour() ? 'aller-retour' : 'aller simple') + '</span></p></div>' +
+          volLeg(f.carrier, DATE_A, f.dep, f.arr, DEP_IATA, DEP.nom || DEP_VILLE, DEST_IATA, DEST.nom || DEST_VILLE, 'Aller') +
+          (arMode && retour() ? volLeg(retour().carrier, DATE_R || DATE_A, retour().dep, retour().arr, DEST_IATA, DEST.nom || DEST_VILLE, DEP_IATA, DEP.nom || DEP_VILLE, 'Retour') : '') +
+          (function () {
+            function bagRow(sens, lbl, on) {
+              return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px">' +
+                '<span style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--color-ink)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px;color:var(--color-primary)"><use href="#i-luggage"/></svg> Soute ' + lbl + ' · jusqu’à ' + BAG_KG + ' kg <span style="font-weight:800">+20,00 €</span></span>' +
+                '<button type="button" onclick="toggleBag(\'' + sens + '\')" aria-pressed="' + on + '" class="tap" style="display:inline-flex;flex-shrink:0;align-items:center;gap:4px;border-radius:999px;padding:5px 11px;font-size:11px;font-weight:700;' +
+                (on ? 'background:var(--color-mint);color:var(--color-primary-dark);box-shadow:var(--shadow-card)' : 'background:var(--color-primary);color:#fff;box-shadow:var(--shadow-cta-tight)') + '">' +
+                '<svg class="pec-ico" viewBox="0 0 24 24" style="font-size:11px"><use href="#i-' + (on ? 'check' : 'plus') + '"/></svg> ' + (on ? 'Ajouté' : 'ajouter') + '</button></div>';
+            }
+            return '<div style="border-radius:12px;background:var(--color-bg);padding:10px 12px;margin-bottom:8px">' +
+              '<p style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted-2)">Bagages</p>' +
+              '<p style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--color-muted);margin-top:4px"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px;color:var(--color-primary)"><use href="#i-briefcase"/></svg> Bagage cabine inclus <span style="font-size:9.5px;color:var(--color-muted-2)">· selon l’offre ' + f.carrier + '</span></p>' +
+              bagRow('out', 'aller', bagOut) + (arMode && retour() ? bagRow('ret', 'retour', bagRet) : '') +
+              '<p style="font-size:9px;color:var(--color-muted-2);margin-top:5px">Prix et poids fixés par la compagnie — ajouté à ta réservation au moment de l’émission.</p></div>';
+          })() +
+          '<div style="margin-top:4px;display:flex;align-items:flex-start;gap:10px;border-radius:12px;background:var(--color-mint);padding:10px 12px">' +
+            '<svg class="pec-ico" viewBox="0 0 24 24" style="margin-top:1px;flex-shrink:0;font-size:16px;color:var(--color-primary)"><use href="#i-info"/></svg>' +
+            '<p style="font-size:12px;font-weight:500;color:var(--color-mint-ink)"><span style="font-weight:700;color:var(--color-primary-dark)">' + f.carrier + '</span> gère ton enregistrement — tes informations voyageur sont transmises directement à la compagnie.</p>' +
+          '</div></div>';
+    }
+    document.getElementById('r-hotel-name').textContent = h.name + ' ' + '★'.repeat(h.star);
+    document.getElementById('r-hotel-dates').textContent = DATE_A + (DATE_R ? ' – ' + DATE_R : '') + ' · ' + NUITS + ' nuits · ' + h.nuit + ' €/nuit';
+    // Le détail riche : les données HOTELS servent enfin le récap (27/08)
+    (function () {
+      var z = document.getElementById('r-hotel-riche'); if (!z) return;
+      var toutes = h.images || (h.photo ? [h.photo] : []);
+      var reste = Math.max(0, toutes.length - 2);
+      var imgs = toutes.slice(0, 2).map(function (ph, i) {
+        var badge = (i === 1 && reste > 0) ? '<span style="position:absolute;right:6px;bottom:6px;border-radius:999px;background:rgba(6,14,11,.72);color:#fff;font-size:9.5px;font-weight:800;padding:3px 8px;pointer-events:none">+' + reste + ' photos</span>' : '';
+        return '<span style="position:relative;flex:1;min-width:0"><img data-lb data-src="../assets/photos/' + ph + '" src="../assets/photos/' + ph + '" alt="" style="width:100%;height:86px;border-radius:11px;object-fit:cover;cursor:pointer">' + badge + '</span>';
+      }).join('');
+      var avis = (h.avis || []).map(function (a) {
+        return '<div style="margin-top:7px;border-left:2.5px solid var(--color-mint);padding-left:9px">'
+          + '<div style="display:flex;align-items:center;gap:6px"><span style="border-radius:6px 6px 6px 2px;background:var(--color-primary-dark);color:#fff;font-size:9px;font-weight:800;padding:2px 5px">' + String(a[3]).replace('.', ',') + '</span><b style="font-size:10.5px;color:var(--color-ink)">' + a[4] + '</b></div>'
+          + '<div style="font-size:10px;line-height:1.5;color:var(--color-muted);margin-top:2px">+ ' + a[5] + (a[6] ? '<br>− ' + a[6] : '') + '</div>'
+          + '<div style="font-size:9.5px;font-weight:700;color:var(--color-muted);margin-top:2px">' + a[0] + ' · ' + a[1] + ' · ' + a[2] + '</div></div>';
+      }).join('');
+      z.setAttribute('data-lb-set', ''); z.setAttribute('data-photos', toutes.map(function (ph) { return '../assets/photos/' + ph; }).join('|'));
+      z.innerHTML = '<div style="display:flex;align-items:center;gap:9px">'
+        + '<span style="min-width:0;flex:1"><span style="display:block;font-size:11px;font-weight:600;color:var(--color-muted)">' + (h.loc || '') + '</span></span>'
+        + '<span style="flex:none;display:inline-flex;align-items:center;gap:5px"><span style="border-radius:7px 7px 7px 2px;background:var(--color-primary-dark);color:#fff;font-size:10.5px;font-weight:800;padding:3px 6px">' + h.score + '</span><span style="font-size:9px;font-weight:800;color:var(--color-ink)">' + h.label + '<span style="display:block;font-weight:600;color:var(--color-muted)">' + (h.avis || []).length + ' avis récents</span></span></span></div>'
+        + (imgs ? '<div style="display:flex;gap:6px;margin-top:9px">' + imgs + '</div>' : '')
+        + '<details style="margin-top:8px"><summary class="tap" style="cursor:pointer;list-style:none;font-size:10.5px;font-weight:800;color:var(--color-primary-dark)">Voir le logement & les avis →</summary>'
+        + '<div style="margin-top:7px;border-radius:11px;background:var(--color-bg);padding:9px 11px;font-size:10.5px;line-height:1.6;color:var(--color-muted)">'
+        + (h.desc ? '<div style="color:var(--color-ink)">' + h.desc + '</div>' : '')
+        + (h.comprend ? '<div style="margin-top:6px"><b style="color:var(--color-ink)">Compris :</b> ' + h.comprend.join(' · ') + '</div>' : '')
+        + (h.pasCompris ? '<div><b style="color:var(--color-ink)">Non compris :</b> ' + h.pasCompris.join(' · ') + '</div>' : '')
+        + (h.arrivee ? '<div><b style="color:var(--color-ink)">Arrivée :</b> ' + h.arrivee + ' · <b style="color:var(--color-ink)">départ :</b> ' + h.depart + '</div>' : '')
+        + (h.consignes ? '<div><b style="color:var(--color-ink)">À savoir :</b> ' + h.consignes.join(' · ') + '</div>' : '')
+        + (avis ? '<div style="margin-top:8px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted)">Ce qu\'ils en disent</div>' + avis : '')
+        + '</div></details>';
+    })();
+    document.getElementById('r-ratekey').textContent = 'rateKey ' + h.rateKey;
+    var rows = '';
+    if (MODE !== 'stay_only') rows += priceRow('Vol ' + DEP_VILLE + ' → ' + DEST_VILLE + ' (×' + PAX + ')', eur(flightCents()));
+    if (MODE !== 'stay_only' && bagOut) rows += priceRow('Bagage soute · aller (jusqu’à ' + BAG_KG + ' kg)', eur(BAG_PRIX));
+    if (MODE !== 'stay_only' && arMode && retour() && bagRet) rows += priceRow('Bagage soute · retour (jusqu’à ' + BAG_KG + ' kg)', eur(BAG_PRIX));
+    if (t.pack) rows += priceRow('Tarif ' + packSel().nom + ' — annulation & flexibilité', eur(t.pack));
+    rows += priceRow('Hébergement · ' + NUITS + ' nuits', eur(hotelCents())) +
+      priceRow('Frais de service & taxes — tout compris', eur(t.ttc - (MODE !== 'stay_only' ? flightCents() : 0) - hotelCents() - t.bags - t.pack));
+    document.getElementById('price-rows').innerHTML = rows;
+    document.getElementById('p-total').textContent = (t.ttc / 100).toFixed(2).replace('.', ',');
+    // Prix PAR VOYAGEUR affiché sous le total ×2 (fondatrice 22/08 — jamais la
+    // faille Opodo inverse : le TOTAL reste dominant, le par-personne informe)
+    var pp = document.getElementById('p-parpax');
+    pp.hidden = PAX < 2;
+    pp.textContent = 'soit ' + (t.ttc / PAX / 100).toFixed(2).replace('.', ',') + ' € par voyageur (×' + PAX + ')';
+    document.getElementById('cta3-total').textContent = (t.ttc / 100).toFixed(2).replace('.', ',') + ' €';
+    // (18/09, soir) LE MONTANT EST UN, et son titre ne dépend plus d'un canal : « À régler », point.
+    document.getElementById('banner-t').style.display = ''; document.getElementById('banner-t').innerHTML = 'À régler : <b>' + (t.ttc / 100).toFixed(2).replace('.', ',') + ' €</b> · ' + reglerTxt();
+    var _ps = document.querySelector('#screen-3 .pec-total-dark .s'); if (_ps) _ps.textContent = 'À régler, tout compris · TTC · ' + reglerTxt();
+    document.getElementById('banner-s').textContent = (MODE === 'stay_only' ? 'Séjour à ' + DEST_VILLE : DEP_VILLE + ' → ' + DEST_VILLE + ' + hôtel') + ' · ' + PAX + ' voyageur' + (PAX > 1 ? 's' : '');
+  }
+
+  // ── VOYAGEURS (audit 03/09) : PAX fiches, JAMAIS un nom en dur. Voyageur 1 = titulaire (profil vivant,
+  //    D.voyageurParDefaut) ; les suivants = fiches du carnet dans l'ordre (D.voyageursCarnet), « À compléter »
+  //    au-delà. Chaque carte a SON Modifier → la feuille édite CE voyageur (voyCur).
+  var VOYAGEURS = [], voyCur = 0;
+  (function () {
+    var V = (D && D.voyageurParDefaut) ? D.voyageurParDefaut() : {};
+    var carnet = (D && D.voyageursCarnet) ? D.voyageursCarnet() : [];
+    var t0 = carnet.filter(function (v) { return v.titulaire; })[0] || {};
+    var autres = carnet.filter(function (v) { return !v.titulaire; });
+    for (var i = 0; i < PAX; i++) {
+      if (i === 0) VOYAGEURS.push(Object.assign({}, t0, { prenom: V.prenom || '', nom: V.nom || '', email: V.email || t0.email || '', tel: V.telComplet || t0.tel || '', telAff: V.tel || '' }));
+      else VOYAGEURS.push(autres[i - 1] ? Object.assign({}, autres[i - 1]) : { prenom: '', nom: '' });
+    }
+  })();
+  function esc(s) { return (window.PEC_DATA && PEC_DATA.esc) ? PEC_DATA.esc(s) : String(s == null ? '' : s); }
+  function nomDe(v) { return ((v.prenom || '') + ' ' + (v.nom || '')).trim(); }
+  function initialesDe(n) { return n ? n.split(/\s+/).map(function (x) { return x.charAt(0); }).join('').slice(0, 2).toUpperCase() : '?'; }
+  function renderVoyageurs() {
+    var z = document.getElementById('voyageurs-cards'); if (!z) return;
+    var lbl = document.getElementById('voy-label'); if (lbl) lbl.textContent = PAX + ' voyageur' + (PAX > 1 ? 's' : '');
+    z.innerHTML = VOYAGEURS.map(function (v, i) {
+      var n = nomDe(v), piece = (v.cniNum || v.passNum) ? ' · pièce d\'identité enregistrée' : '';
+      return '<div class="pec-card" style="display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:8px">' +
+        '<span style="display:flex;height:42px;width:42px;flex-shrink:0;align-items:center;justify-content:center;border-radius:13px;background:var(--color-mint);font-size:17px;font-weight:800;text-transform:uppercase;color:var(--color-primary-dark)">' + esc(initialesDe(n)) + '</span>' +
+        '<div style="min-width:0;flex:1">' +
+          '<p style="font-size:14.5px;font-weight:700;color:var(--color-ink)"' + (i === 0 ? ' id="r-name"' : ' data-voy-nom') + '>' + (n ? esc(n) : 'À compléter') + '</p>' +
+          '<p style="font-size:11.5px;font-weight:500;color:var(--color-muted-2)"' + (i === 0 ? ' id="r-sub"' : '') + '>Voyageur ' + (i + 1) + (i === 0 ? ' · adulte' + (v.telAff ? ' · ' + esc(v.telAff) : '') : '') + piece + '</p></div>' +
+        '<button type="button" onclick="openSheet(' + i + ')" class="tap" style="flex-shrink:0;font-size:12.5px;font-weight:700;color:var(--color-primary)">Modifier</button></div>';
+    }).join('');
+  }
+  // ── Sheet ──
+  function openSheet(i) {
+    voyCur = (typeof i === 'number' && i >= 0 && i < PAX) ? i : 0;
+    var v = VOYAGEURS[voyCur] || {};
+    document.getElementById('f-given').value = v.prenom || ''; document.getElementById('f-family').value = v.nom || '';
+    remplirFiche(v);
+    document.getElementById('sh-initial').textContent = (v.prenom || '').charAt(0).toUpperCase() || String(voyCur + 1);
+    document.getElementById('sh-title').textContent = 'Voyageur ' + (voyCur + 1) + (voyCur === 0 ? ' · toi' : '');
+    document.getElementById('sh-principal').hidden = voyCur !== 0;
+    var tabs = document.getElementById('sh-voys');
+    if (tabs) tabs.innerHTML = VOYAGEURS.map(function (x, k) {
+      var on = k === voyCur;
+      return '<button type="button" class="tap" onclick="openSheet(' + k + ')" aria-pressed="' + on + '" style="border-radius:999px;padding:6px 11px;font-size:11.5px;font-weight:800;background:' + (on ? 'var(--color-ink)' : 'var(--color-bg)') + ';color:' + (on ? '#fff' : 'var(--color-ink)') + '">' + (k + 1) + ' · ' + (nomDe(x) ? esc(nomDe(x).split(/\s+/)[0]) : 'à compléter') + '</button>';
+    }).join('');
+    document.getElementById('scrim').classList.add('on');
+  }
+  function closeSheet() { document.getElementById('scrim').classList.remove('on'); }
+  function pickSaved(g, f) {
+    document.getElementById('f-given').value = g; document.getElementById('f-family').value = f;
+    document.getElementById('sh-initial').textContent = g.charAt(0).toUpperCase();
+    // la fiche du carnet (civilité, genre, naissance, e-mail, téléphone) pré-remplit le reste — zéro ressaisie
+    var fiche = ((D && D.voyageursCarnet) ? D.voyageursCarnet() : []).filter(function (v) { return v.prenom === g && v.nom === f; })[0];
+    remplirFiche(fiche || {});
+  }
+  function remplirFiche(v) {
+    var set = function (id, val) { var e = document.getElementById(id); if (e) e.value = val || ''; };
+    set('f-civ', v.civ === 'mr' ? 'M.' : v.civ === 'ms' ? 'Mme' : (v.civ && v.civ.length <= 4 ? v.civ : ''));
+    set('f-genre', v.genre === 'm' ? 'Masculin' : v.genre === 'f' ? 'Féminin' : (v.genre === 'Masculin' || v.genre === 'Féminin' ? v.genre : ''));
+    set('f-email', v.email); set('f-tel', v.tel || v.telComplet);
+    var n = String(v.naissance || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    set('n-jour', n ? String(+n[1]) : ''); set('n-mois', n ? String(+n[2]) : ''); set('n-annee', n ? n[3] : '');
+  }
+  // Le FORMULAIRE est LU en entier (civilité, genre, naissance, e-mail, téléphone) — il suit la commande.
+  function lireVoyageur() {
+    var v = function (id) { var e = document.getElementById(id); return e ? String(e.value || '').trim() : ''; };
+    var j = v('n-jour'), m = v('n-mois'), a = v('n-annee');
+    return { civ: v('f-civ'), genre: v('f-genre'), prenom: v('f-given'), nom: v('f-family'),
+      naissance: (j && m && a) ? (('0' + j).slice(-2) + '/' + ('0' + m).slice(-2) + '/' + a) : '', email: v('f-email'), tel: v('f-tel') };
+  }
+  // CARNET DE VOYAGEURS RÉEL (fondatrice 30/08) : titulaire du compte + fiches
+  // enregistrées (PEC_DATA.voyageursCarnet) — plus aucun « Thomas Biemont » en dur.
+  (function () {
+    var z = document.getElementById('carnet-chips');
+    if (!z || !window.PEC_DATA || !PEC_DATA.voyageursCarnet) return;
+    z.innerHTML = PEC_DATA.voyageursCarnet().map(function (v) {
+      var label = esc((v.prenom || '') + ' ' + (v.nom || '')) + (v.titulaire ? ' <span style="font-weight:700;color:var(--color-primary-dark)">· toi</span>' : '');
+      return '<button type="button" class="tap" data-pr="' + esc(v.prenom || '') + '" data-nm="' + esc(v.nom || '') + '" style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:var(--color-surface);padding:8px 12px;font-size:12.5px;font-weight:600;color:var(--color-ink);box-shadow:var(--shadow-card)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px;color:var(--color-primary)"><use href="#i-user"/></svg> ' + label + '</button>';
+    }).join('');
+    z.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-pr]'); if (!b) return;
+      if (typeof pickSaved === 'function') pickSaved(b.getAttribute('data-pr'), b.getAttribute('data-nm'));
+    });
+  })();
+  function saveTravelers() {
+    var eg = document.getElementById('f-given'), ef = document.getElementById('f-family');
+    var g = eg.value.trim(), f = ef.value.trim();
+    // prénom ET nom obligatoires — la feuille reste ouverte tant que c'est incomplet
+    eg.style.borderColor = g ? '' : 'var(--color-amber-text)';
+    ef.style.borderColor = f ? '' : 'var(--color-amber-text)';
+    if (!g || !f) return;
+    var lu = lireVoyageur(), prev = VOYAGEURS[voyCur] || {};
+    VOYAGEURS[voyCur] = Object.assign({}, prev, lu, { telAff: voyCur === 0 ? prev.telAff : undefined });
+    renderVoyageurs();
+    closeSheet();
+  }
+  renderVoyageurs();
+  // prix bloqué : la durée vient de D.scenario.prixBloqueMinutes (plus de « 1 h » écrit dans la copie)
+  function bloqueTxt() { var m = (D && D.scenario && D.scenario.prixBloqueMinutes) || 60; return m >= 60 ? (m / 60) + ' h' : m + ' min'; }
+  document.querySelectorAll('.pec-bloque').forEach(function (e) { e.textContent = bloqueTxt(); });
+
+  // ── Navigation ──
+  function goToScreen(n) {
+    document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('active'); });
+    document.getElementById('screen-' + n).classList.add('active');
+    renderStepper(stepIndexFor(n));
+    if (n <= 2) {
+      document.getElementById('banner-t').style.display = 'none'; document.getElementById('banner-t').innerHTML = 'Ton budget : <b>' +
+        (n === 2 ? Math.round(remainingForHotel() / 100) : BUDGET) + ' €</b>';
+      majBanniereRecherche(n);
+    }
+  }
+  function goStay() {
+    if (phase === 'out') {
+      if (!flightId) return;
+      if (arMode) { phase = 'ret'; renderLists(); majCtaVol(); document.querySelector('#screen-1 .pec-header-title .t').textContent = DEST_VILLE + ' → ' + DEP_VILLE + ' · retour'; return; }
+      goToScreen(2); return;
+    }
+    if (!retourId) return; goToScreen(2);
+  }
+  function backFromStay() {
+    if (MODE !== 'stay_only' && arMode) { phase = 'ret'; renderLists(); majCtaVol(); }
+    else if (MODE !== 'stay_only') { phase = 'out'; document.querySelector('#screen-1 .pec-header-title .t').textContent = DEP_VILLE + ' → ' + DEST_VILLE; }
+    goToScreen(MODE === 'stay_only' ? 2 : 1);
+  }
+  function goRecap() { if (!hotelId) return; renderRecap(); goToScreen(3); chargementRecap(etapesRecap()); }
+  // Les étapes du chargement sont des FAITS de la commande (audit 03/09 — rien d'affirmé sans donnée) :
+  // vol / hébergement retenus, durée réelle du prix bloqué (D.scenario), état réel des voyageurs.
+  function etapesRecap() {
+    var f = flight(), hh = hotel() || {};
+    var nb = VOYAGEURS.filter(function (v) { return nomDe(v).split(/\s+/).length >= 2; }).length;
+    return [(MODE !== 'stay_only' && f ? 'Vol ' + f.carrier + ' et ' : '') + (hh.name || 'hébergement') + ' retenu' + (MODE !== 'stay_only' && f ? 's' : ''),
+      'Prix bloqué ' + bloqueTxt() + ' — payable par bon d’achat',
+      nb + ' voyageur' + (nb > 1 ? 's' : '') + ' sur ' + PAX + ' renseigné' + (nb > 1 ? 's' : '') + (nb < PAX ? ' — à compléter' : '')];
+  }
+  // « On réunit tes informations » (fondatrice 24/08) : un chargement RAPIDE avant le
+  // récap — l'esprit « on récapitule tout avant confirmation et réservation ».
+  function chargementRecap(etapes) {
+    var ov = document.getElementById('recapload');
+    if (!ov) {
+      ov = document.createElement('div'); ov.id = 'recapload';
+      ov.setAttribute('style', 'position:fixed;inset:0;z-index:85;display:none;align-items:center;justify-content:center;background:rgba(15,42,36,.62);backdrop-filter:blur(4px)');
+      ov.innerHTML = '<div style="width:88%;max-width:330px;background:var(--color-surface);border-radius:22px;padding:24px 20px 20px;box-shadow:0 24px 60px rgba(15,42,36,.4);text-align:center">' +
+        '<div style="width:38px;height:38px;border-radius:50%;border:3.5px solid var(--color-mint);border-top-color:var(--color-primary);animation:pecspin3 .8s linear infinite;margin:0 auto 14px"></div>' +
+        '<div style="font-size:15px;font-weight:800;color:var(--color-ink)">On réunit tes informations</div>' +
+        '<div style="font-size:11px;color:var(--color-muted);margin-top:2px">On récapitule tout avant confirmation et réservation</div>' +
+        '<div style="margin-top:14px;text-align:left;font-size:12px;line-height:2;color:var(--color-muted)"><div id="rl1"></div><div id="rl2" style="opacity:.35"></div><div id="rl3" style="opacity:.35"></div></div></div>';
+      document.body.appendChild(ov);
+      var st = document.createElement('style'); st.textContent = '@keyframes pecspin3{to{transform:rotate(360deg)}}'; document.head.appendChild(st);
+    }
+    ['rl1', 'rl2', 'rl3'].forEach(function (id, i) { var e = document.getElementById(id); e.textContent = '◌ ' + etapes[i]; e.style.opacity = i ? '.35' : '1'; });
+    ov.style.display = 'flex';
+    function coche(i) { var e = document.getElementById('rl' + i); e.innerHTML = '✓ <b style="color:var(--color-primary-dark)">' + etapes[i - 1] + '</b>'; if (i < 3) document.getElementById('rl' + (i + 1)).style.opacity = '1'; }
+    setTimeout(function () { coche(1); }, 420);
+    setTimeout(function () { coche(2); }, 850);
+    setTimeout(function () { coche(3); }, 1250);
+    setTimeout(function () { ov.style.display = 'none'; }, 1650);
+  }
+
+
+  // ── Application du mode (package / stay_only) ──
+  //
+  // CONTRAT BACKEND — en `stay_only`, sauter l'écran vol ne suffit PAS.
+  // Le client doit déclarer « sans vol » explicitement : `POST /orders/{id}/flight/none`,
+  // qui écrit `orders.flight_declined_at` (Doc 2, D12). Sans cet appel, la commande est
+  // indistinguable d'un tunnel vol simplement abandonné avant la sélection — et la
+  // catégorie de marge n'est pas calculable (Doc 4). C'est le symétrique exact de
+  // `POST /orders/{id}/stay/none` du parcours vol seul.
+  //
+  //     if (stay) await api.post('/orders/' + orderId + '/flight/none');
+  //
+  function setMode(m) {
+    MODE = m;
+    var stay = m === 'stay_only';
+    document.getElementById('sec-flight').hidden = stay;
+    goToScreen(stay ? 2 : 1);
+    renderLists();
+  }
+
+  // Le bandeau et l'en-tête reflètent TA recherche (fondatrice 27/08) — plus de « Marseille → Alger » figé.
+  function majBanniereRecherche(n) {
+    document.querySelectorAll('#budget-val, .budget-val').forEach(function (e) { e.textContent = BUDGET + ' €'; });   // le chip suit le budget transmis (?b=)
+    var b = document.getElementById('banner-s'); if (!b) return;
+    var nv = PAX + ' voyageur' + (PAX > 1 ? 's' : ''), nn = NUITS + ' nuit' + (NUITS > 1 ? 's' : '');
+    b.textContent = (n === 2 || MODE === 'stay_only')
+      ? DEST_VILLE + ' · ' + DATES + ' · ' + nn + ' · ' + nv
+      : DEP_VILLE + ' → ' + DEST_VILLE + ' · ' + DATES + ' · ' + nv + ' · ' + nn;
+  }
+  (function () { var hv = document.getElementById('hdr-vol'); if (hv) hv.textContent = DEP_VILLE + ' → ' + DEST_VILLE; })();
+  setMode(MODE);
+
+// Confirmer (fondatrice 27/08) : la COMMANDE COMPLÈTE est déposée pour le flux de
+// paiement — le détail de réservation saura TOUT (trajet, hôtel, voyageurs).
+  var packId = 'basique';
+  function packSel() { return (window.PEC_DATA.packs.find(function (p) { return p.id === packId; })) || window.PEC_DATA.packs[0]; }
+  function renderPacks() {
+    var z = document.getElementById('packs'); if (!z) return;
+    z.innerHTML = window.PEC_DATA.packs.map(function (p) {
+      var on = p.id === packId;
+      return '<button type="button" class="tap" data-pack="' + p.id + '" aria-pressed="' + on + '" style="position:relative;text-align:left;border-radius:var(--radius-card);background:var(--color-surface);box-shadow:' + (on ? '0 0 0 2px var(--color-primary), var(--shadow-card)' : 'var(--shadow-card)') + ';padding:12px 14px">' +
+        (p.reco ? '<span style="position:absolute;top:-7px;right:12px;border-radius:6px;background:var(--color-primary);color:#fff;font-size:8.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px">Recommandé</span>' : '') +
+        '<span style="display:flex;align-items:center;justify-content:space-between"><b style="font-size:14px;color:var(--color-ink)">' + p.nom + '</b><b style="font-size:13.5px;color:var(--color-primary-dark)">' + (p.plus ? '+ ' + p.plus + ',00 €' : 'Inclus') + '</b></span>' +
+        p.lignes.map(function (l) { return '<span style="display:block;font-size:11px;line-height:1.5;color:var(--color-muted);margin-top:3px">' + (on ? '✓' : '·') + ' ' + l + '</span>'; }).join('') +
+        '<details style="margin-top:7px" onclick="event.stopPropagation()"><summary class="tap" style="list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;color:var(--color-primary-dark)"><span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:var(--color-mint);font-size:9px">i</span> Les conditions complètes</summary>' +
+        '<span style="display:block;font-size:10px;line-height:1.55;color:var(--color-muted);margin-top:5px;border-left:2.5px solid var(--color-mint);padding-left:8px">' + (p.info || '') + '</span></details>' +
+        '</button>';
+    }).join('');
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-pack]');
+    if (b) { packId = b.getAttribute('data-pack'); renderPacks(); renderRecap(); }
+  });
+  renderPacks();
+function voyageurComplet() {
+  var n = ((document.getElementById('r-name') || {}).textContent || '').trim();
+  return n !== '' && !/compléter/i.test(n) && n.split(/\s+/).length >= 2;
+}
+function confirmerCommande() {
+  // DONNÉE OBLIGATOIRE (29/08) : le voyageur (prénom + nom) doit être complet avant
+  // de confirmer — comme dans les tunnels vol seul / aller-retour.
+  if (!voyageurComplet()) {
+    var c0 = document.getElementById('r-name').closest('.pec-card');
+    if (c0) { c0.style.outline = '2px solid var(--color-amber-text)'; setTimeout(function () { c0.style.outline = ''; }, 1600); c0.scrollIntoView({ block: 'center' }); }
+    openSheet(0); return;
+  }
+  // TOUS les voyageurs de la recherche doivent être nommés (le billet et la chambre sont nominatifs) :
+  // la feuille s'ouvre sur le premier incomplet.
+  var manque = -1;
+  [].forEach.call(document.querySelectorAll('#voyageurs-cards [data-voy-nom]'), function (p, k) {
+    var n = (p.textContent || '').trim();
+    if (manque < 0 && (n === '' || /compléter/i.test(n) || n.split(/\s+/).length < 2)) manque = k + 1;
+  });
+  if (manque > 0) { openSheet(manque); return; }
+  // COMPTE VÉRIFIÉ OBLIGATOIRE (fondatrice 30/08) : SMS + e-mail avant le récap.
+  if (window.PEC_VERIF && !PEC_VERIF.complet()) { PEC_VERIF.exiger(function () { confirmerCommande(); }); return; }
+  var cents = Math.round(parseFloat((document.getElementById('cta3-total').textContent.match(/[\d]+[,.]?[\d]*/) || ['62'])[0].replace(',', '.')) * 100);
+  try {
+    var f = flight(), h = hotel();
+    PEC_DATA.consentir && PEC_DATA.consentir('cgv-commande', 'Confirmation de commande — CGV, conditions de transport et conditions du tarif acceptées');
+      PEC_DATA.commandeEnCoursSet({
+      totalCents: cents, type: MODE === 'stay_only' ? 'HOTEL' : 'FLY',
+      trajet: MODE === 'stay_only' ? DEST_VILLE : (DEP_VILLE + ' → ' + DEST_VILLE + (arMode ? ' · aller-retour' : '')),
+      dates: DATES,
+      voyageurs: PAX,
+      // les fiches voyageurs telles que renseignées (nom, naissance, e-mail, téléphone) suivent la commande
+      voyageursFiches: VOYAGEURS.map(function (v) { return { civ: v.civ, prenom: v.prenom, nom: v.nom, naissance: v.naissance, email: v.email, tel: v.tel }; }),
+      // critères mémorisés pour « Relancer » (vol+hôtel : on repré-remplit la
+      // recherche — l'hébergement se rechoisit) — fondatrice 30/08
+      recherche: { t: '03-vol-hotel', dep: DEP_LBL, dest: DEST_LBL, dates: DATES, voy: PAX, nuits: NUITS, mode: MODE === 'stay_only' ? 'stay' : null },
+      bagages: MODE !== 'stay_only' ? '1 cabine incl. par vol' + (bagOut ? ' · soute aller ' + BAG_KG + ' kg' : '') + (arMode && retour() && bagRet ? ' · soute retour ' + BAG_KG + ' kg' : '') : null,
+      pack: MODE !== 'stay_only' ? packSel().nom : null,
+      // le DÉTAIL DU PRIX tel qu'affiché — l'ordre de paiement le réaffiche à l'identique
+      detailPrix: (function () {
+        var zone = document.getElementById('price-rows') || (document.getElementById('p-vol') && document.getElementById('p-vol').closest('div[style*="flex-direction:column"]'));
+        if (!zone) return null;
+        return [].map.call(zone.children, function (r) {
+          if (r.hidden || r.style.display === 'none' || r.children.length < 2) return null;
+          return [r.children[0].textContent.trim(), r.children[r.children.length - 1].textContent.trim()];
+        }).filter(Boolean);
+      })(),
+      compagnie: f ? (arMode && retour() && retour().carrier !== f.carrier ? f.carrier + ' + ' + retour().carrier : f.carrier) : null,
+      vols: (MODE !== 'stay_only' && f) ? [{ sens: 'Aller', compagnie: f.carrier, date: DATE_A, heures: (f.dep && f.arr) ? f.dep + ' → ' + f.arr : null }].concat(arMode && retour() ? [{ sens: 'Retour', compagnie: retour().carrier, date: DATE_R || null, heures: (retour().dep && retour().arr) ? retour().dep + ' → ' + retour().arr : null }] : []) : null,
+      heb: h ? { nom: h.name, etoiles: h.star, nuits: NUITS, note: h.score, label: h.label,
+        quartier: h.loc, chambre: (h.comprend || [])[0] || '', regime: (h.tags || [])[0] || '',
+        photos: h.images || (h.photo ? [h.photo] : []) } : null
+    });
+    // « Qui voyage » de l'ordre de paiement (D.voyageursHTML lit D.voyageursGet(ref), voyageurs 2..N) :
+    // les noms déjà saisis ici sont transmis — plus de ressaisie sur l'ordre de paiement.
+    var enC = PEC_DATA.commandeEnCoursGet ? PEC_DATA.commandeEnCoursGet(cents) : null;
+    if (enC && enC.ref && PEC_DATA.voyageursSet) VOYAGEURS.forEach(function (v, i) { if (i > 0 && nomDe(v)) PEC_DATA.voyageursSet(enC.ref, i + 1, nomDe(v)); });
+  } catch (e) {}
+  location.href = '../fly/01-ou-payer.html?m=' + cents;
+}
+</script>
+</body>
+</html>

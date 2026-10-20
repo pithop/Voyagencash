@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AJEK Manager — Clients MODE</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-p-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-p-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<link rel="stylesheet" href="../assets/payencash-manager.css">
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-filters.js"></script><!-- (07/09) recherche · tri · pagination par convention -->
+<script src="../assets/payencash-bus.js"></script><!-- (07/09) le journal des gestes manager passe par le bus : sans lui, rien n'était tracé -->
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-manager-nav.js"></script>
+<!--
+  CLIENTS MODE — comptes utilisateurs (fondatrice 02/09 : « crée des comptes utilisateur avec des commandes, 30
+  utilisateurs avec des favoris, commandes… accès depuis le manager, pas de dur »).
+  TOUT est dérivé de PEC_DATA.clientsGet() (référentiel `mode.clients`, miroir users · favorites · orders ·
+  loyalty_ledger) : KPI, tableau, fiche détaillée. Actions : suspendre / réactiver (persisté `pec-clients-statut`),
+  « Ouvrir l'app Mode en tant que » (pose la session `pec-client-actif` → l'app Mode hydrate profil, favoris,
+  commandes, fidélité de CE compte). La recherche support (téléphone / e-mail / réf) reste sur 18-fiche-client.
+-->
+<style>
+  .cl-row{cursor:pointer}
+  .cl-row.on td{background:var(--color-mint)}
+  .fav-list,.cmd-list{list-style:none;margin:0;padding:0}
+  .fav-list li,.cmd-list li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--color-sep);font-size:12.5px}
+  .fav-list li:last-child,.cmd-list li:last-child{border-bottom:none}
+  .meta{font-size:11px;color:var(--color-muted)}
+  .kv{display:grid;grid-template-columns:120px 1fr;gap:4px 10px;font-size:12.5px;margin-top:6px}
+  .kv span:nth-child(odd){color:var(--color-muted)}
+</style>
+</head>
+<body>
+<!-- (07/09 — audit manager « connexion table / donnée ») tables du schéma reflétées par cet écran : `users`, `accounts`, `orders`, `consents` — miroir server/db/schema.sql (partie 6) -->
+<div class="pec-admin">
+  <aside class="pec-aside" data-pec-nav></aside>
+  <main class="pec-main">
+    <div class="pec-topbar">
+      <div>
+        <h1>Clients MODE — comptes utilisateurs</h1>
+        <p class="sub">Chaque compte porte ses favoris, ses commandes et sa fidélité : c'est ce que l'app Mode affiche quand ce client est connecté. Suspendre un compte bloque la commande ; « Ouvrir l'app » ouvre PayEnCash Mode dans la peau de ce client.</p>
+      </div>
+      <div class="pec-topbar-actions"><a class="pec-btn pec-btn--sm tap" href="18-fiche-client.html">Recherche support (tél · e-mail · réf)</a></div>
+    </div>
+
+    <div class="pec-grid pec-grid--4" style="margin-bottom:22px" id="kpis"></div>
+
+    <div class="pec-grid pec-grid--2" style="grid-template-columns:1.6fr 1fr;align-items:start">
+      <div class="pec-panel">
+        <div class="pec-panel-head"><div><h2>Comptes</h2><p class="s" id="cl-sub">—</p></div>
+          <div><input id="cl-q" type="search" placeholder="Nom, ville, e-mail, réf…" style="border:1px solid var(--color-sep);border-radius:999px;padding:7px 12px;font:inherit;font-size:12.5px;min-width:220px"></div></div>
+        <div class="pec-panel-body">
+          <table data-fsortable class="pec-table">
+            <thead><tr><th>Client</th><th>Ville · inscrit</th><th>Vérifié</th><th class="num">Favoris</th><th class="num">Commandes</th><th class="num">CA réglé</th><th class="num">Points</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody id="clients-rows" data-fpage="15"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="pec-panel" id="detail-panel">
+        <div class="pec-panel-head"><div><h2 id="d-nom">Fiche</h2><p class="s" id="d-sub">Clique un compte pour voir ses favoris, ses commandes et sa fidélité.</p></div></div>
+        <div class="pec-panel-body" id="d-body"><p class="meta">Aucun compte sélectionné.</p></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.clientsGet) return;
+    var rows = document.getElementById('clients-rows'), sel = null, q = '';
+    function pill(txt, cls, style) { return '<span class="pec-pill' + (cls ? ' ' + cls : '') + '"' + (style ? ' style="' + style + '"' : '') + '>' + txt + '</span>'; }
+    function stPill(st) { return st === 'actif' ? pill('Actif', 'pec-pill--done') : pill('Suspendu', '', 'background:var(--color-amber-well);color:var(--color-amber-text)'); }
+    function statutLbl(s) { return { a_payer: 'À payer', en_cours: 'En livraison', livree: 'Réglée · retirée', remboursee: 'Remboursée', annulee: 'Annulée' }[s] || s; }
+    function match(c) {
+      if (!q) return true; var h = (c.nomComplet + ' ' + c.prenom + ' ' + c.nom + ' ' + c.ville + ' ' + c.email + ' ' + (c.commandes || []).map(function (x) { return x.ref; }).join(' ')).toLowerCase();
+      return h.indexOf(q) !== -1;
+    }
+    function kpis(list) {
+      var actifs = list.filter(function (c) { return c.statut === 'actif'; }).length;
+      var verif = list.filter(function (c) { return c.verif && c.verif.sms && c.verif.email; }).length;
+      var ca = 0, cmds = 0, fav = 0; list.forEach(function (c) { var k = D.clientKpis(c); ca += k.ca; cmds += k.commandes; fav += k.favoris; });
+      document.getElementById('kpis').innerHTML =
+        '<div class="pec-kpi"><div class="lbl">Comptes</div><div class="val">' + list.length + '</div><div class="hint">' + actifs + ' actifs · ' + (list.length - actifs) + ' suspendu' + (list.length - actifs > 1 ? 's' : '') + '</div></div>' +
+        '<div class="pec-kpi"><div class="lbl">Vérifiés (SMS + e-mail)</div><div class="val">' + verif + '</div><div class="hint">' + (list.length - verif) + ' e-mail non confirmé</div></div>' +
+        '<div class="pec-kpi"><div class="lbl">Commandes</div><div class="val">' + cmds + '</div><div class="hint">' + fav + ' favoris posés</div></div>' +
+        '<div class="pec-kpi"><div class="lbl">CA réglé</div><div class="val">' + D.eur(ca) + '</div><div class="hint">commandes réglées ou en livraison</div></div>';
+    }
+    function render() {
+      var list = D.clientsGet(), vis = list.filter(match), actif = D.clientActifGet();
+      kpis(list);
+      document.getElementById('cl-sub').textContent = vis.length + ' compte' + (vis.length > 1 ? 's' : '') + (q ? ' (filtre « ' + q + ' »)' : '') + ' · session Mode ouverte : ' + ((D.client(actif) || {}).nomComplet || actif);
+      rows.innerHTML = vis.map(function (c) {
+        var k = D.clientKpis(c), ok = c.verif && c.verif.sms && c.verif.email;
+        return '<tr class="cl-row' + (sel === c.id ? ' on' : '') + '" data-id="' + c.id + '">' +
+          '<td><b>' + c.nomComplet + '</b>' + (c.id === actif ? ' ' + pill('session Mode', 'pec-pill--done') : '') + (c.compteId ? ' ' + pill('inscrit via l\'app', '', 'background:var(--color-mint);color:var(--color-primary-dark)') : '') + '<br><span class="meta">' + c.email + ' · ' + c.tel + '</span></td>' +
+          '<td>' + c.ville + '<br><span class="meta">inscrit le ' + c.inscrit + '</span></td>' +
+          '<td>' + (ok ? pill('Vérifié', 'pec-pill--done') : pill('E-mail à confirmer')) + '</td>' +
+          '<td class="num">' + k.favoris + '</td><td class="num">' + k.commandes + '</td><td class="num">' + D.eur(k.ca) + '</td><td class="num">' + k.points + '</td>' +
+          '<td>' + stPill(c.statut) + '</td>' +
+          '<td><button class="pec-btn-sm" data-statut="' + (c.statut === 'actif' ? 'suspendu' : 'actif') + '" data-id="' + c.id + '">' + (c.statut === 'actif' ? 'Suspendre' : 'Réactiver') + '</button> ' +
+          '<button class="pec-btn-sm" data-open="' + c.id + '"' + (c.statut !== 'actif' ? ' disabled title="compte suspendu"' : '') + '>Ouvrir l\'app</button>' +
+          (c.compteId ? ' <a class="pec-btn-sm" href="40-comptes.html?id=' + c.compteId + '" title="Compte ' + c.compteId + ' — protocole comptes (vérifications, journal)" style="text-decoration:none;display:inline-block">Compte</a>' : '') + '</td></tr>';
+      }).join('');
+      detail();
+    }
+    function detail() {
+      var c = sel ? D.client(sel) : null, body = document.getElementById('d-body');
+      if (!c) { document.getElementById('d-nom').textContent = 'Fiche'; document.getElementById('d-sub').textContent = 'Clique un compte pour voir ses favoris, ses commandes et sa fidélité.'; body.innerHTML = '<p class="meta">Aucun compte sélectionné.</p>'; return; }
+      var k = D.clientKpis(c);
+      document.getElementById('d-nom').textContent = c.civilite + ' ' + c.prenom + ' ' + c.nom;
+      document.getElementById('d-sub').textContent = c.id.toUpperCase() + ' · ' + stPillTxt(c.statut) + ' · inscrit le ' + c.inscrit + (c.compteId ? ' · inscrit via l\'app (compte ' + c.compteId + ')' : ' · compte de démo');
+      var favs = (c.favoris || []).map(function (id) { var a = D.article(id); return a ? '<li><span>' + a.nom + ' <span class="meta">' + (a.marque || '') + ' · T. ' + (a.taille || '—') + '</span></span><b>' + D.eur(a.prix) + '</b></li>' : ''; }).join('') || '<li><span class="meta">Aucun favori.</span></li>';
+      var cmds = (c.commandes || []).map(function (x) { var a = D.article(x.articleId) || {}; return '<li><span><b>' + x.ref + '</b> · ' + (a.nom || x.articleId) + '<br><span class="meta">' + statutLbl(x.statut) + (x.date ? ' · ' + x.date : '') + (x.relais ? ' · ' + x.relais : '') + (x.pointNom ? ' · ' + x.pointNom : '') + '</span></span><b>' + D.eur(x.paye || 0) + '</b></li>'; }).join('') || '<li><span class="meta">Aucune commande.</span></li>';
+      var fid = (c.fidelite || []).map(function (x) { return '<li><span>' + x.label + ' <span class="meta">' + (x.date || '') + '</span></span><b>+' + x.points + ' pts</b></li>'; }).join('') || '<li><span class="meta">Aucun mouvement.</span></li>';
+      body.innerHTML =
+        '<div class="kv"><span>Téléphone</span><span>' + c.tel + '</span><span>E-mail</span><span>' + c.email + (c.verif && c.verif.email ? ' ✓' : ' <span class="meta">(non confirmé)</span>') + '</span><span>Adresse</span><span>' + c.adresse + '</span><span>Relais habituel</span><span>' + (c.relais || '—') + '</span><span>Tailles</span><span>prêt-à-porter ' + c.tailles.pap + ' · sneakers ' + c.tailles.sneakers + '</span><span>Cagnotte Fly</span><span>' + (c.cagnotte || 0) + ' pts</span></div>' +
+        '<h3 style="font-size:12px;margin:14px 0 4px">Favoris (' + k.favoris + ')</h3><ul class="fav-list">' + favs + '</ul>' +
+        '<h3 style="font-size:12px;margin:14px 0 4px">Commandes (' + k.commandes + ') · CA réglé ' + D.eur(k.ca) + '</h3><ul class="cmd-list">' + cmds + '</ul>' +
+        '<h3 style="font-size:12px;margin:14px 0 4px">Fidélité Mode · ' + k.points + ' pts</h3><ul class="cmd-list">' + fid + '</ul>';
+    }
+    function stPillTxt(s) { return s === 'actif' ? 'actif' : 'suspendu'; }
+    rows.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-statut]'); if (b) { D.clientStatutSet(b.getAttribute('data-id'), b.getAttribute('data-statut')); render(); return; }
+      var o = e.target.closest('[data-open]'); if (o) { if (o.disabled) return; D.clientActifSet(o.getAttribute('data-open')); D._journal('client_session_manager', o.getAttribute('data-open'), {}); window.open('../mode/08-compte.html', '_blank'); render(); return; }   // (07/09) accès aux données d'un client : journalisé avec son auteur
+      var tr = e.target.closest('tr[data-id]'); if (tr) { sel = tr.getAttribute('data-id'); render(); }
+    });
+    document.getElementById('cl-q').addEventListener('input', function () { q = this.value.trim().toLowerCase(); render(); });
+    if (!document.getElementById('pec-btn-sm-css')) { var st = document.createElement('style'); st.id = 'pec-btn-sm-css'; st.textContent = '.pec-btn-sm{border:1px solid var(--color-sep);background:var(--color-surface);border-radius:999px;padding:6px 11px;font:inherit;font-size:11.5px;font-weight:700;color:var(--color-ink);cursor:pointer}.pec-btn-sm[disabled]{opacity:.45;cursor:not-allowed}'; document.head.appendChild(st); }
+    render();
+    // (05/09 — audit 360°) l'écran SUIT les événements : une action faite ailleurs
+    // (autre onglet ou même page) le rafraîchit, au lieu d'attendre un rechargement.
+    window.addEventListener('storage', render);
+    window.addEventListener('pec-bus', render);
+  })();
+</script>
+</body>
+</html>

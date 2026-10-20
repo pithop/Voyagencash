@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash Manager — Suivi financier</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-p-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-p-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<link rel="stylesheet" href="../assets/payencash-manager.css">
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-filters.js"></script><!-- (07/09) recherche · tri · pagination par convention -->
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-manager-nav.js"></script>
+<!--
+  SUIVI FINANCIER — route `/finance`.
+  Maquette relevée sur l'écran réel (`FinanceFigures` + `WalletTopup` + `FinanceJournals`),
+  dans son ORDRE réel : bénéfice net réalisé, encaissé du jour, trésorerie, comptes
+  fournisseurs, bénéfice potentiel, détail jour par jour, wallets, puis les deux journaux.
+
+  Le coût et l'en-transit du prestataire d'encaissement ne sont pas repris ici : le modèle
+  cible les remplace par les poches de trésorerie. Le compte Nuitée y devient
+  POST-PAYÉ, sans solde ni recharge : la facture est réglée après la réservation (aligné sur
+  13-solde-fournisseur). Seul Duffel garde une avance prépayée.
+-->
+</head>
+<body>
+<!-- (07/09 — audit manager « connexion table / donnée ») tables du schéma reflétées par cet écran : `payments`, `ledger_entries`, `vat_collected_by_period` — miroir server/db/schema.sql (partie 6) -->
+
+<div class="pec-admin">
+
+  <aside class="pec-aside" data-pec-nav></aside>
+
+  <main class="pec-main">
+    <div class="pec-topbar">
+      <div>
+        <h1>Suivi financier — <span id="fi-periode">—</span></h1>
+        <p class="sub">Ce qui est acquis, ce qui ne l’est pas encore, et ce qui n’est pas à nous.</p>
+      </div>
+      <div class="pec-topbar-actions"></div>
+    </div>
+
+    <!-- Bandeau vert : le seul chiffre sur lequel on peut s'engager. -->
+    <div class="pec-pocket pec-pocket--payable" style="margin-bottom:16px">
+      <div class="step">COMMANDES ABOUTIES</div>
+      <h3>Bénéfice net réalisé</h3>
+      <div class="val" id="fi-benef">0,00 €</div>
+      <div class="s" id="fi-benef-s">Marges (grille) encaissées sur des commandes abouties. Hors TVA encaissée, hors potentiel.</div>
+    </div>
+
+    <div class="pec-grid pec-grid--2" style="margin-bottom:22px">
+      <div class="pec-kpi">
+        <div class="lbl"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-coin"/></svg> Encaissé brut aujourd’hui</div>
+        <div class="val" id="fi-brut">0<span class="u">,00 €</span></div>
+        <div class="hint">Tout ce qui a été réglé aujourd’hui, Bon d’achat et paiement en ligne confondus — base fournisseur et TVA comprises.</div><!-- (18/09, soir) « remis aux agents » : plus personne ne reçoit d'espèces de la main du client -->
+      </div>
+      <div class="pec-kpi">
+        <div class="lbl"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-file"/></svg> TVA encaissée (période)</div>
+        <div class="val">0<span class="u">,00 €</span></div>
+        <div class="hint">Dette envers l’État — <a href="14-comptabilite.html">suivie sur l’écran comptabilité</a>.</div>
+      </div>
+    </div>
+
+    <h2 class="pec-h2" style="margin-bottom:12px">Trésorerie</h2>
+    <div class="pec-grid pec-grid--3" style="margin-bottom:22px">
+      <div class="pec-kpi">
+        <div class="lbl">Net confirmé</div>
+        <div class="val">0<span class="u">,00 €</span></div>
+        <div class="hint">Acquis, hors TVA.</div>
+      </div>
+      <div class="pec-kpi">
+        <div class="lbl">Soldes fournisseurs</div>
+        <div class="val" id="fi-soldes">0<span class="u">,00 €</span></div>
+        <div class="hint" id="fi-soldes-hint">Avance immobilisée chez Duffel — aucune recharge déclarée.</div>
+      </div>
+      <div class="pec-kpi">
+        <!-- (18/09, soir — l'agent de caisse mobile est abandonné) « en transit » comptait l'encours des agents
+             plus les dépôts non rapprochés — des billets qui voyageaient. Il compte maintenant ce que les deux
+             prestataires détiennent pour nous : prélèvements sur la carte des commerces et transactions
+             acceptées en ligne, tant qu'ils ne les ont pas versés sur le compte. -->
+        <div class="lbl">En transit</div>
+        <div class="val" id="fi-transit">0<span class="u">,00 €</span></div>
+        <div class="hint">Détenu par les prestataires, pas encore versé sur le compte.</div>
+      </div>
+    </div>
+
+    <h2 class="pec-h2" style="margin-bottom:12px">Comptes fournisseurs</h2>
+    <div class="pec-grid pec-grid--2" style="margin-bottom:22px">
+      <div class="pec-kpi">
+        <div class="lbl" id="fi-duffel-lbl">Duffel (vols)</div>
+        <div class="val" id="fi-duffel">0<span class="u">,00 €</span></div>
+        <div class="hint">Seuil : <span id="fi-duffel-seuil">—</span></div>
+      </div>
+      <div class="pec-kpi">
+        <div class="lbl"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-bed"/></svg> <span id="fi-nuitee-lbl">Nuitée (hôtels) — post-payé</span></div>
+        <div class="val" style="font-size:19px" id="fi-nuitee-val">Aucun solde</div>
+        <div class="hint" id="fi-nuitee-hint">Facture réglée après réservation — ni seuil, ni recharge</div>
+      </div>
+    </div>
+
+    <h2 class="pec-h2" style="margin-bottom:12px">Bénéfice potentiel (jamais additionné au net)</h2>
+    <div class="pec-grid pec-grid--2" style="margin-bottom:16px">
+      <div class="pec-kpi">
+        <div class="lbl">PENDING — fiabilité élevée</div>
+        <div class="val">0<span class="u">,00 €</span></div>
+        <div class="hint">Règlement engagé, pas encore abouti.</div>
+      </div>
+      <div class="pec-kpi">
+        <div class="lbl">DRAFT — fiabilité faible</div>
+        <div class="val">0<span class="u">,00 €</span></div>
+        <div class="hint">Panier non figé, abandonnable à tout moment.</div>
+      </div>
+    </div>
+
+    <div class="pec-notice" style="margin-bottom:22px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-alert"/></svg>
+      <div><b>Le potentiel n’est jamais additionné au réalisé.</b> Un panier <code>DRAFT</code> peut être abandonné, un encaissement peut échouer. Les cumuler donnerait un bénéfice qu’on n’a pas encaissé — et sur lequel on dimensionnerait l’avance Duffel.</div>
+    </div>
+
+    <div class="pec-panel" style="margin-bottom:16px">
+      <div class="pec-panel-head">
+        <div><h2>Détail jour par jour (<span id="fi-periode-prec">—</span>)</h2><p class="s">Brut encaissé, coût fournisseur, net dégagé.</p></div>
+      </div>
+      <div class="pec-panel-body">
+        <table class="pec-table">
+          <thead><tr><th>Jour</th><th class="num">Brut</th><th class="num">Coût</th><th class="num">Net</th></tr></thead>
+          <tbody>
+            <!-- audit 28/08 : les 4 journées de démo (3 180/2 940/4 120/2 470 €) étaient inventées -->
+            <tr><td colspan="4" class="meta" style="text-align:center;padding:18px">Aucune journée close pour l'instant — chaque jour d'activité réelle s'écrira ici (brut, coût fournisseur, net).</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="pec-panel" style="margin-bottom:16px">
+      <div class="pec-panel-head">
+        <div><h2>Soldes &amp; recharge fournisseurs</h2><p class="s">Seul Duffel est <b>prépayé</b> : « Recharger » <b>déclare</b> un rechargement déjà effectué — réservé au propriétaire, tracé au journal. Nuitée est post-payé, sans solde à porter.</p></div>
+        <div style="display:flex;gap:10px"><a class="pec-btn pec-btn--ghost pec-btn--sm tap" href="13-solde-fournisseur.html">Voir le détail</a></div>
+      </div>
+      <div class="pec-panel-body">
+        <div class="pec-setting">
+          <div><div class="t">Duffel (vols)</div><div class="s" id="fi-duffel-s">Solde prépayé : — — aucune recharge déclarée</div></div>
+          <!-- (03/09) « Recharger » est RÉEL : D.fournisseurVoyageRecharger('duffel', montant, PEC_MGR.acteur()) — journalisé au bus -->
+          <div class="pec-setting-control" style="gap:10px">
+            <input class="pec-search" id="fi-recharge-montant" style="max-width:120px;background:var(--color-bg)" type="text" inputmode="decimal" placeholder="Montant €" aria-label="Montant de recharge Duffel">
+            <button class="pec-btn pec-btn--sm tap" id="fi-recharger">Recharger</button>
+          </div>
+        </div>
+        <div class="s" id="fi-recharge-msg" style="min-height:16px;padding:0 0 8px;font-weight:700"></div>
+        <div class="pec-setting">
+          <div><div class="t">Nuitée (hôtels)</div><div class="s" id="fi-nuitee-s">Post-payé — facture réglée après réservation. Aucun solde, aucune recharge.</div></div>
+          <div class="pec-setting-control"><span class="pec-pill pec-pill--off">Post-payé</span></div>
+        </div>
+        <div class="pec-setting" style="display:block">
+          <div class="t" style="margin-bottom:6px">Derniers mouvements des comptes fournisseurs</div>
+          <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+          <input class="pec-search" type="search" data-fsearch="#fi-mouvements tr" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+          <div class="meta" data-fvide="#fi-mouvements tr" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+          <table data-fsortable class="pec-table">
+            <thead><tr><th>Horodatage</th><th>Fournisseur</th><th>Nature</th><th>Commande</th><th>Par</th><th class="num">Montant</th></tr></thead>
+            <tbody id="fi-mouvements" data-fpage="15"><tr><td colspan="6" class="meta" style="text-align:center;padding:14px">Aucun mouvement — chaque commande Fly payée débite le compte du fournisseur, chaque recharge le crédite.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="pec-panel" style="margin-bottom:16px">
+      <div class="pec-panel-head">
+        <div><h2>Revenus par taux de marge (mois en cours)</h2><p class="s">Le taux affiché est celui appliqué aujourd’hui, réglable dans la configuration.</p></div>
+        <div style="display:flex;gap:10px"><a class="pec-btn pec-btn--ghost pec-btn--sm tap" href="10-configuration.html">Régler les marges</a></div>
+      </div>
+      <div class="pec-panel-body">
+        <table class="pec-table">
+          <thead><tr><th>Catégorie</th><th class="num">Taux actuel</th><th class="num">Commandes</th><th class="num">Revenu (marge)</th></tr></thead>
+          <tbody>
+            <!-- les TAUX sont des paramètres (config) — les volumes/revenus, de l'ACTIVITÉ : à zéro (audit 28/08).
+                 (03/09) taux DÉRIVÉS de D.ref.marges + scenario.grilleMode ; volumes = commandes réglées du bus par type -->
+            <tr><td>Vol seul</td><td class="num" id="fi-tx-vol">—</td><td class="num" id="fi-n-vol">0</td><td class="num" id="fi-rev-vol">0,00 €</td></tr>
+            <tr><td>Séjour seul</td><td class="num" id="fi-tx-sejour">—</td><td class="num" id="fi-n-sejour">0</td><td class="num" id="fi-rev-sejour">0,00 €</td></tr>
+            <tr><td>Package</td><td class="num" id="fi-tx-package">—</td><td class="num" id="fi-n-package">0</td><td class="num" id="fi-rev-package">0,00 €</td></tr>
+            <tr><td>Mode <span class="meta">(ligne à part)</span></td><td class="num" id="fi-tx-mode">—</td><td class="num" id="fi-n-mode">0</td><td class="num" id="fi-rev-mode">0,00 €</td></tr>
+          </tbody>
+        </table>
+        <p class="s" style="margin-top:10px">La ligne <b>mode</b> a sa propre formation de prix (marge <span id="fi-mode-coef">—</span>, livraison Mondial Relay et contrôle atelier refacturés au client en sus — la marge ne les absorbe plus depuis le 12/09/2026 ; le revenu affiché retire la tranche de poids ≤ 1 kg, le bus ne portant pas le poids du colis) et son régime de TVA propre — voir l'Étape 4 du fil rouge (<a href="../../ESPACE-COMMERCANT/documents/partie-4-flux.html">flux F11/F12</a>). Elle partage l’encaissement cash et le circuit de dépôt, pas la logique produit.</p>
+      </div>
+    </div>
+
+    <div class="pec-panel">
+      <div class="pec-panel-head">
+        <div><h2>Journal des dépenses fournisseurs</h2><p class="s">Chaque mouvement de solde, son sens et le solde qui en résulte.</p></div>
+      </div>
+      <div class="pec-panel-body">
+        <table class="pec-table">
+          <thead><tr><th>Date</th><th>Fournisseur</th><th>Commande</th><th>Sens</th><th class="num">Montant</th><th class="num">Solde après</th></tr></thead>
+          <tbody><tr><td colspan="6" class="meta" style="text-align:center;padding:18px">Aucun mouvement pour l’instant — les débits fournisseurs apparaîtront à l’émission des billets et des séjours.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="pec-notice pec-notice--info" style="margin-top:16px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-info"/></svg>
+      <div>Le coût et l’en-transit du prestataire d’encaissement ne sont pas repris ici : la cible les remplace par les quatre poches de trésorerie (Doc 8), et le compte Nuitée y devient <b>post-payé</b>, sans solde à porter. Ce sont des écarts <b>attendus</b> — la doc décrit la cible, l’application décrit le présent.</div>
+    </div>
+  </main>
+
+</div>
+
+<script src="../assets/payencash-bus.js"></script>
+<script>
+  // l'ENCAISSÉ BRUT du jour et l'EN-TRANSIT viennent du bus (audit 28/08 —
+  // le reste attend le branchement des coûts fournisseurs : jamais un chiffre posé)
+  (function () {
+    if (!window.PEC_BUS) return;
+    function eur(n) { var f = n.toFixed(2).replace('.', ','); var e = f.split(','); return e[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + '<span class="u">,' + e[1] + ' €</span>'; }
+    var D = window.PEC_DATA || null;
+    // PÉRIODE, SEUILS ET TAUX DÉRIVÉS (03/09 — zéro-dur) : periodeCourante(), D.ref.fournisseursVoyage, D.ref.marges
+    if (D) {
+      var per = D.periodeCourante ? D.periodeCourante() : null;
+      if (per) { document.getElementById('fi-periode').textContent = per.mois; document.getElementById('fi-periode-prec').textContent = per.moisPrecedent; }
+      var fv = (D.ref && D.ref.fournisseursVoyage) || {};
+      var eurTxt = function (n) { return n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' €'; };
+      var esc = function (v) { return (window.PEC_DATA && PEC_DATA.esc) ? PEC_DATA.esc(v) : String(v == null ? '' : v); };
+      // ── SOLDES VIVANTS (03/09) : D.soldeVoyage() = référentiel + recharges − achats (D.achatsVoyage),
+      //    au lieu du seul chiffre figé du référentiel. Alerte quand le compte prépayé passe sous le seuil.
+      function majSoldes() {
+        var duf = D.soldeVoyage ? D.soldeVoyage('duffel') : Object.assign({ achats: 0, recharges: 0 }, fv.duffel || {});
+        var nui = D.soldeVoyage ? D.soldeVoyage('nuitee') : Object.assign({ achats: 0, recharges: 0 }, fv.nuitee || {});
+        if (duf.nom) document.getElementById('fi-duffel-lbl').textContent = duf.nom + ' (vols)' + (duf.mode ? ' — ' + duf.mode : '');
+        if (nui.nom) document.getElementById('fi-nuitee-lbl').textContent = nui.nom + ' (hôtels)' + (nui.mode ? ' — ' + nui.mode : '');
+        document.getElementById('fi-duffel').innerHTML = eur(duf.solde || 0);
+        document.getElementById('fi-duffel').closest('.pec-kpi').classList.toggle('pec-kpi--alert', !!duf.sousSeuil);
+        document.getElementById('fi-duffel-seuil').textContent = (typeof duf.seuilAlerte === 'number' ? eurTxt(duf.seuilAlerte) : '—') + (duf.sousSeuil ? ' · ⚠ sous le seuil' : '');
+        document.getElementById('fi-duffel-s').textContent = 'Solde prépayé : ' + eurTxt(duf.solde || 0) + ' — ' +
+          (duf.recharges ? eurTxt(duf.recharges) + ' rechargés' : 'aucune recharge déclarée') + ' · ' + (duf.achats ? eurTxt(duf.achats) + ' d’achats' : 'aucun achat');
+        document.getElementById('fi-soldes').innerHTML = eur(duf.solde || 0);
+        document.getElementById('fi-soldes-hint').textContent = 'Avance immobilisée chez ' + (duf.nom || 'Duffel') + ' — ' +
+          (duf.recharges || duf.achats ? eurTxt(duf.solde || 0) + ' après ' + eurTxt(duf.recharges || 0) + ' de recharges et ' + eurTxt(duf.achats || 0) + ' d’achats' : 'aucune recharge déclarée') + '.';
+        var dette = Math.abs(nui.solde || 0);
+        document.getElementById('fi-nuitee-val').textContent = nui.achats ? eurTxt(dette) : 'Aucun solde';
+        document.getElementById('fi-nuitee-hint').textContent = nui.achats
+          ? 'Dette post-payée — ' + eurTxt(nui.achats) + ' de réservations à régler après facture'
+          : 'Facture réglée après réservation — ni seuil, ni recharge';
+        document.getElementById('fi-nuitee-s').textContent = nui.achats
+          ? 'Post-payé — ' + eurTxt(dette) + ' dus après facture. Aucun solde à avancer, aucune recharge.'
+          : 'Post-payé — facture réglée après réservation. Aucun solde, aucune recharge.';
+        // ── derniers mouvements des comptes fournisseurs (D.achatsVoyage)
+        var mvt = (D.achatsVoyage ? D.achatsVoyage() : []).slice(0, 12);
+        document.getElementById('fi-mouvements').innerHTML = mvt.length ? mvt.map(function (a) {
+          var nom = (fv[a.fournisseur] || {}).nom || a.fournisseur;
+          return '<tr><td class="meta">' + new Date(a.at).toLocaleString('fr-FR') + '</td><td>' + esc(nom) + '</td><td>' +
+            (a.type === 'recharge' ? '<span class="pec-pill pec-pill--done">Recharge</span>' : '<span class="pec-pill pec-pill--wait">Achat</span>') +
+            '</td><td class="ref">' + esc(a.ref) + '</td><td class="meta">' + esc(a.par || 'système') + '</td><td class="num">' + (a.type === 'recharge' ? '+ ' : '− ') + eurTxt(a.montant || 0) + '</td></tr>';
+        }).join('') : '<tr><td colspan="6" class="meta" style="text-align:center;padding:14px">Aucun mouvement — chaque commande Fly payée débite le compte du fournisseur, chaque recharge le crédite.</td></tr>';
+      }
+      majSoldes();
+      // ── RECHARGE RÉELLE : montant > 0 contrôlé, acteur tracé (PEC_MGR.acteur), journalisée au bus
+      var msgR = document.getElementById('fi-recharge-msg');
+      document.getElementById('fi-recharger').addEventListener('click', function () {
+        var champ = document.getElementById('fi-recharge-montant');
+        var m = parseFloat(String(champ.value || '').replace(/\s/g, '').replace(',', '.'));
+        if (!isFinite(m) || m <= 0) { msgR.textContent = '✗ Montant invalide : saisis un montant en euros supérieur à zéro — aucune recharge enregistrée.'; msgR.style.color = 'var(--color-danger)'; return; }
+        var par = (window.PEC_MGR && PEC_MGR.acteur) ? PEC_MGR.acteur() : 'manager (démo)';
+        var r = D.fournisseurVoyageRecharger ? D.fournisseurVoyageRecharger('duffel', m, par) : null;
+        if (!r || !r.ok) { msgR.textContent = '✗ ' + ((r && r.motif) || 'Recharge non enregistrée') + '.'; msgR.style.color = 'var(--color-danger)'; return; }
+        champ.value = '';
+        majSoldes();
+        msgR.textContent = '✓ Recharge de ' + eurTxt(m) + ' déclarée sur le compte ' + r.solde.nom + ' par ' + par + ' — nouveau solde ' + eurTxt(r.solde.solde) + (r.solde.sousSeuil ? ' (toujours sous le seuil d’alerte)' : '') + '.';
+        msgR.style.color = 'var(--color-primary-dark)';
+      });
+      window.addEventListener('pec-bus', majSoldes); window.addEventListener('storage', majSoldes);
+      var mg = D.margesVives ? D.margesVives() : ((D.ref && D.ref.marges) || {});   // (09/09 — lot 1 socle) valeurs VIVES (10-configuration)
+      var pct = function (v) { return typeof v === 'number' ? v.toLocaleString('fr-FR') + ' %' : '—'; };
+      document.getElementById('fi-tx-vol').textContent = pct(mg.volSeul);
+      document.getElementById('fi-tx-sejour').textContent = pct(mg.sejourSeul);
+      document.getElementById('fi-tx-package').textContent = pct(mg.package);
+      /* (12/09) LE TAUX MODE EST CELUI DE LA MARGE, PAS D'UNE MAJORATION. Il se lisait
+         « coef − 1 » = +12 %, une majoration qui contenait la livraison et l'atelier.
+         La grille est additive : la marge vaut 7 % du PRIX D'ACHAT, les frais sont
+         refacturés à côté. */
+      var Gm = D.grilleModeVive ? D.grilleModeVive() : (D.scenario && D.scenario.grilleMode);
+      var modePct = (Gm && Gm.marge != null) ? Number(Gm.marge) : null;   // (12/09) déjà en %, et VIVE
+      document.getElementById('fi-tx-mode').textContent = modePct != null ? pct(modePct) : '—';
+      document.getElementById('fi-mode-coef').textContent = modePct != null ? pct(modePct) + ' du prix d\'achat' : '—';
+    }
+    function maj() {
+      var j0 = new Date(); j0.setHours(0, 0, 0, 0);
+      // volumes par catégorie = commandes RÉGLÉES du bus, par type (FLY = vol seul, SEJOUR, PACK, MODE)
+      var n = { vol: 0, sejour: 0, package: 0, mode: 0 }, rev = { vol: 0, sejour: 0, package: 0, mode: 0 };
+      // (04/09 — front/back) le REVENU par ligne dérive commande par commande : TTC du bus, puis le taux de
+      // la grille (D.ref.marges / coef Mode).
+      // (18/09, soir — l'agent de caisse mobile est abandonné) les frais de déplacement ne sont plus retirés du
+      // TTC : ils facturaient au client la venue de l'agent chez lui, et ils entraient ensuite dans le bénéfice.
+      var Rm = D.margesVives ? D.margesVives() : ((D.ref && D.ref.marges) || {});
+      PEC_BUS.commandes().forEach(function (c) {
+        if (c.statut !== 'paye') return;
+        var t = String(c.type || '').toUpperCase();
+        var ttc = parseFloat(String(c.montant || '0').replace(/\s/g, '').replace(',', '.')) || 0;
+        // (12/09) la marge Mode se RECONSTITUE : on retire d'abord les frais refacturés
+        // (livraison, atelier), puis on prend 7/107 du reste. `ttc − ttc / 1,12` comptait
+        // la livraison et l'atelier comme du revenu — la ligne Mode était surévaluée.
+        // (19/09) la remise d'un lien partagé se retranche : c'est de la marge abandonnée, pas du revenu
+        if (t === 'MODE') { n.mode++; rev.mode += (D.margeCommandeMode ? (D.margeCommandeMode(ttc, null, c.remisePartage) || 0) : 0); }
+        else if (/PACK/.test(t) || c.heb && c.vols) { n.package++; rev.package += ttc * (Rm.package || 0) / 100; }
+        else if (/SEJ|HEB|STAY/.test(t) || c.heb) { n.sejour++; rev.sejour += ttc * (Rm.sejourSeul || 0) / 100; }
+        else { n.vol++; rev.vol += ttc * (Rm.volSeul || 0) / 100; }
+      });
+      ['vol', 'sejour', 'package', 'mode'].forEach(function (k) {
+        document.getElementById('fi-n-' + k).textContent = String(n[k]);
+        document.getElementById('fi-rev-' + k).textContent = eurTxt(Math.round(rev[k] * 100) / 100);
+      });
+      var benef = rev.vol + rev.sejour + rev.package + rev.mode;
+      document.getElementById('fi-benef').innerHTML = eur(Math.round(benef * 100) / 100);
+      document.getElementById('fi-benef-s').textContent = (n.vol + n.sejour + n.package + n.mode)
+        ? 'Dérivé du bus : marges de la grille ' + eurTxt(Math.round(benef * 100) / 100) + ' — hors TVA encaissée, hors potentiel, hors charges (compte de résultat).'
+        : 'Marges (grille) encaissées sur des commandes abouties. Aucune commande aboutie — rien de réalisé.';
+      var brut = PEC_BUS.commandes().filter(function (c) { return c.statut === 'paye' && (c.payeAt || 0) >= j0.getTime(); })
+        .reduce(function (s2, c) { return s2 + (parseFloat(String(c.montant || '0').replace(',', '.')) || 0); }, 0);
+      document.getElementById('fi-brut').innerHTML = eur(brut);
+      // (18/09, soir ; 20/09) EN TRANSIT = ce que LE prestataire détient : les prélèvements acceptés sur la carte
+      // des commerces. Rien de cela n'est encore sur le compte. (Le rail en ligne, qui s'ajoutait ici, n'existe plus.)
+      var transit = (D.prelevementsGet ? D.prelevementsGet() : []).filter(function (x) { return x.statut === 'accepte'; }).reduce(function (s2, x) { return s2 + (x.montant || 0); }, 0);
+      document.getElementById('fi-transit').innerHTML = eur(transit);
+    }
+    maj();
+    window.addEventListener('pec-bus', maj);
+    window.addEventListener('storage', maj);
+  })();
+</script>
+
+</body>
+</html>

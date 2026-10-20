@@ -1,0 +1,9 @@
+PayEnCash Fly et la documentation Duffel — archive du 07/10/2026
+
+Contenu : tout ce qui, dans l'ancien dépôt ajek172025-a11y/payencash (dernier état, commit 543b6ec), concerne PayEnCash Fly ou l'API Duffel :
+les dossiers ui/fly, ui/parcours (les parcours de vol), ui/ecrans (l'app cliente de l'époque), server/services/voyage (le service Duffel),
+les logos Fly, et chaque fichier dont le nom ou le contenu cite Fly ou Duffel (documentation docs/, ESPACE-COMMERCANT, notes, schémas, tests, les deux PDF),
+plus les audits des 24 et 25/09 du dépôt grossiste (ils citent Fly, Duffel et l'ancien périmètre) et la simulation de réservation
+« Flybet » (ui/titres/demo-commande.html), retirés du dépôt grossiste par le nettoyage du 08/10. Les fichiers sont tels quels, non modifiés ; aucune clé réelle (relevé avant l'archivage :
+le guide de démarrage ne porte qu'un gabarit de variable).
+Le dépôt grossiste ne contient plus rien de Fly ni de Duffel après le nettoyage du 07/10.

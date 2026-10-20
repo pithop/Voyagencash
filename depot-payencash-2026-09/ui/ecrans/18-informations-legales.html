@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PayEnCash — Informations légales</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<!-- INFORMATIONS LÉGALES v3 — POSITION INTERMÉDIAIRE (fondatrice 29/08 : tant que
+     la garantie Atout France n'est pas obtenue, PayEnCash n'est PAS une agence de
+     voyage — objet social NAF 7990Z : intermédiation de services de voyage et de
+     tourisme + intermédiation à la vente de biens et services). Le client choisit
+     et contracte DIRECTEMENT avec la compagnie et l'hôtel ; PayEnCash met en relation
+     et rend le paiement possible AVEC UN BON D’ACHAT (titres prépayés : Bon d’achat PayEnCash
+     vendu par des commerçants partenaires et des distributeurs mobiles, sous
+     paiement). On NE revendique donc PAS : immatriculation
+     opérateur de voyages, garantie financière, régime du forfait, responsabilité de
+     plein droit — ce serait faux. Textes utiles conservés : C. conso L221-28 (pas de
+     rétractation date fixe), L612-1 (médiation), règlement CE 261/2004 (droits
+     passagers) — ils s'appliquent aux prestataires.
+     ⚠ À FAIRE VALIDER PAR UN PRO : encaisser le paiement peut relever de la
+     « prestation de voyage liée » (protection insolvabilité).
+     (20/09) Plus de prestataire de paiement en ligne : le bon d’achat règle, et le
+     prestataire ref.psp (nom DÉRIVÉ, [data-psp]). Aucune restitution en espèces (LCB-FT).
+     (18/09, soir — l'agent de caisse mobile est abandonné, puis pivot de positionnement) L'ARTICLE 3 A PERDU
+     SON TROISIÈME MOYEN : « en espèces auprès d'un agent salarié d'AJEK, à domicile », son plafond légal
+     (art. L112-6 et D112-3 CMF) et son complément carte OBLIGATOIRE sur le terminal de l'agent. Ces clauses
+     décrivaient un service abandonné, et le plafond qu'elles citaient ne visait que des billets comptés en
+     main propre. La promesse contractuelle est désormais : paiement avec un bon d’achat — par titres prépayés, dont les plafonds sont ceux du Bon d’achat ([data-bon] ← bonsRef).
+     (18/09 — Bon d’achat PayEnCash) Le BON D’ACHAT PAYENCASH — bon d'achat prépayé vendu par des commerçants partenaires
+     (qui vendent le bon d’achat et n'encaissent aucune commande), accepté par AJEK seule : titre à usage limité (art. L521-3
+     I 1° CMF), hors monnaie électronique (art. L315-1), bon d’achat à usages multiples (art. 256 ter CGI). Sa clause aux CGV,
+     le volet « Conditions du Bon d’achat PayEnCash » (#bon) — mentions, fondement, avertissement — et les plafonds ([data-bon])
+     viennent de bonsRef() : le texte contractuel ne porte aucun chiffre recopié. Document complet :
+     ESPACE-COMMERCANT/documents/conditions-bon-payencash.html. -->
+<style>
+  .lg-card{background:var(--color-surface);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:4px 15px;margin-bottom:10px}
+  /* (19/09, soir) le titre le plus long (« Mentions légales — qui nous sommes ») poussait le chevron hors du
+     résumé : sans `min-width:0`, un enfant flex refuse de rétrécir sous la largeur de son texte. */
+  .lg-card summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;padding:10px 0;min-width:0}
+  .lg-card summary > *{min-width:0}
+  .lg-card summary::-webkit-details-marker{display:none}
+  .lg-card .ic{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:11px;background:var(--color-mint);color:var(--color-primary-dark)}
+  .lg-card summary b{min-width:0;flex:1;font-size:13px;color:var(--color-ink)}
+  .lg-card summary .ch{flex:none;font-size:13px;color:var(--color-muted);transition:transform .15s}
+  .lg-card[open] summary .ch{transform:rotate(90deg)}
+  .lg-body{padding:0 0 12px}
+  .lg-art{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--color-primary-dark);margin:10px 0 3px}
+  .lg-art:first-child{margin-top:2px}
+  .lg-li{display:flex;gap:8px;font-size:11.5px;line-height:1.6;color:var(--color-muted);margin-top:5px}
+  .lg-li b{color:var(--color-ink)}
+  .lg-li .p{flex:none;color:var(--color-primary-dark);font-weight:800}
+  .lg-mint{border-radius:11px;background:var(--color-mint);padding:9px 11px;margin-top:9px;font-size:11px;line-height:1.55;color:var(--color-mint-ink)}
+  .lg-mint b{color:var(--color-primary-dark)}
+  .lg-form{border:1.5px solid var(--color-sep);border-radius:11px;padding:10px 12px;margin-top:8px;font-size:10.5px;line-height:1.6;color:var(--color-muted)}
+  .lg-form .fh{font-size:11px;font-weight:800;color:var(--color-ink);margin-bottom:4px}
+  .lg-form b{color:var(--color-ink)}
+</style>
+</head>
+<body>
+
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:0 16px 12px">
+
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 2px 4px">
+      <a href="10-compte.html" class="tap" aria-label="Retour au compte" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-chevron-left"/></svg></a>
+      <div style="min-width:0">
+        <div style="font-size:17px;font-weight:800;letter-spacing:-0.02em;color:var(--color-ink)">Informations légales</div>
+        <div style="font-size:10.5px;font-weight:600;color:var(--color-muted)">Qui nous sommes, ce qui t'engage, ce qui te protège.</div>
+      </div>
+    </div>
+
+    <!-- ① MENTIONS LÉGALES (LCEN art. 6) -->
+    <details class="lg-card" id="editeur" style="margin-top:8px">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-info"/></svg></span><b>Mentions légales — qui nous sommes</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-li"><span class="p">·</span><span><b>Éditeur :</b> <b data-soc="nom">AJEK</b>, <span data-soc="formeLongue">société par actions simplifiée</span> au capital de <span data-soc="capital">1 000 €</span>, immatriculée au <b>RCS d'Aix-en-Provence</b> sous le n° <b>107 398 448</b> — TVA intracommunautaire FR59107398448 — siège social : <b data-soc="siege">16 route de la Plage, 13700 Marignane</b>. <b>PayEnCash</b> est sa marque. Présidente et directrice de la publication : <b data-soc="presidente">Emilie Ruiz</b>.</span></div>
+        <div class="lg-li"><span class="p">·</span><span><b>Activité :</b> <b>intermédiation</b> de services en matière de voyage et de tourisme et intermédiation à la vente de biens et services (code <b>NAF 7990Z</b>). AJEK <b>met en relation</b> ses clients avec des compagnies aériennes et des hôtels — que le client <b>choisit librement et séparément</b> — et <b>facilite le paiement par bon d’achat</b> : par un <b>Bon d’achat PayEnCash</b> (bon d'achat prépayé vendu par des commerçants partenaires — <a href="#bon" style="font-weight:800;color:var(--color-primary-dark)">conditions</a>), ou par le Bon d’achat PayEnCash. AJEK <b>ne vend pas de forfait</b>, n'agit pas comme opérateur/agence de voyages et <b>n'est pas immatriculé</b> au registre des opérateurs de voyages et de séjours (Atout France).</span></div>
+        <div class="lg-li"><span class="p">·</span><span>Les prestations de <b>transport</b> et d'<b>hébergement</b> sont fournies et contractées <b>directement</b> avec la compagnie aérienne et l'hôtel concernés, selon leurs <b>propres conditions</b>. La facture PayEnCash porte sur l'<b>intermédiation et l'encaissement</b> ; le titre de transport et la réservation d'hôtel émanent des prestataires.</span></div>
+        <div class="lg-li"><span class="p">·</span><span><b>Nous joindre :</b> <b id="lg-tel">—</b> (appel gratuit) · <b>assistance@payencash.fr</b>. Réclamations : voir « Litiges &amp; médiation » ci-dessous.</span></div>
+      </div>
+    </details>
+
+    <!-- ② CGV — VENTE DE VOYAGES (rédaction en articles, à la manière des CGV du secteur) -->
+    <details class="lg-card" id="cgv">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-receipt"/></svg></span><b>Conditions générales de vente</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-art">Art. 1 — Objet et qualité de PayEnCash</div>
+        <div class="lg-li"><span class="p">·</span><span>AJEK (marque <b>PayEnCash</b>) agit en <b>intermédiaire</b> : mise en relation avec des compagnies aériennes et des hôtels, et <b>facilitation du paiement par bon d’achat</b> — par titres prépayés (Bon d’achat PayEnCash) ou en ligne via un prestataire de paiement. AJEK <b>ne vend pas de voyage ni de forfait</b> et n'est pas une agence de voyage immatriculée. Le client <b>choisit lui-même et séparément</b> son vol et son hôtel : le <b>contrat de transport</b> est conclu avec la <b>compagnie</b>, le <b>contrat d'hébergement</b> avec l'<b>hôtel</b>, chacun selon ses propres conditions. Les prestations restent <b>indépendantes</b> — ce ne sont pas des offres fermes packagées.</span></div>
+        <div class="lg-art">Art. 2 — Information précontractuelle</div>
+        <div class="lg-li"><span class="p">·</span><span>Avant tout engagement, l'app affiche les <b>caractéristiques essentielles</b> (trajets, horaires, compagnie, hébergement, bagages) et le <b>prix total</b>. Le <b>formulaire d'information standard</b> (arrêté du 1ᵉʳ mars 2018) t'est présenté avant l'achat — son contenu est reproduit ci-dessous, volet « Tes droits — formulaire officiel ».</span></div>
+        <div class="lg-li"><span class="p">·</span><span><b>Assurance voyage :</b> aucune assurance (annulation, bagages, frais médicaux, rapatriement sanitaire) n'est incluse dans le prix. Nous te <b>recommandons vivement d'en souscrire une</b> — en particulier pour les circonstances qui t'obligeraient à modifier ou annuler ton voyage.</span></div>
+        <div class="lg-art">Art. 3 — Prix et paiement</div>
+        <div class="lg-li"><span class="p">·</span><span>Le prix affiché est <b>total, toutes taxes et frais de service compris</b> — rien ne s'ajoute après. La réservation bloque ce prix <b data-prixbloque>1 h</b>, gratuitement ; <b>aucune somme n'est due tant que tu n'as pas payé</b> : sans paiement dans le délai, la réservation expire sans frais ni pénalité.</span></div>
+        <!-- (18/09 — Bon d’achat PayEnCash) la clause du Bon d’achat : plafonds et validité DÉRIVÉS ([data-bon] ← bonsRef), conditions au volet #bon -->
+        <div class="lg-li"><span class="p">·</span><span>Paiement <b>avec un bon d’achat</b> : <b>un bon d’achat suffit</b> du client — ni numéro de carte, ni mandat de prélèvement. Au choix : par un <b>Bon d’achat PayEnCash</b> — bon d'achat prépayé émis par AJEK, acquis auprès d'un commerçant partenaire (ou reçu en cadeau), d'au plus <b><span data-bon="plafondBon">—</span></b> par bon d’achat, utilisable sur payencash.fr en une ou plusieurs fois dans la limite de <b><span data-bon="plafondClientJour">—</span></b> de bons d’achat par jour et par client et de <b><span data-bon="plafondClientMois">—</span></b> sur <b><span data-bon="fenetrePlafondJours">—</span> jours</b> glissants (au-delà, l'utilisation est subordonnée à la vérification de l'identité du titulaire — obligation de vigilance LCB-FT), valable <b><span data-bon="validiteMois">—</span> mois</b>, ni échangeable ni remboursable en espèces (le remboursement d'une commande réglée par bon d’achat est re-crédité sur le bon d’achat — volet « Conditions du Bon d’achat PayEnCash ») — ; le code du bon se saisit dans l’app et la commande est réglée immédiatement. Une <b>facture</b> est remise pour chaque commande.</span></div>
+        <div class="lg-art">Art. 4 — Conclusion du contrat</div>
+        <div class="lg-li"><span class="p">·</span><span>La vente est <b>ferme au paiement intégral</b>. La compagnie émet alors le billet (PNR et e-billet transmis par SMS et email) ; l'hébergement est confirmé par un code de confirmation. Un billet ne se « télécharge » pas dans l'app : il est émis par le transporteur et te parvient directement.</span></div>
+        <div class="lg-art">Art. 5 — Conditions des prestataires (chaîne contractuelle)</div>
+        <div class="lg-li"><span class="p">·</span><span>Font <b>partie intégrante du contrat</b> : les <b>conditions de transport de la compagnie</b> et les <b>règles de ton tarif</b> (bagages, modification, remboursement — les « conditions tarifaires »), ainsi que les <b>conditions du tarif hôtelier</b> (fenêtre d'annulation, régime). Elles te sont <b>présentées avant l'achat</b> et tu les <b>acceptes en confirmant ta commande</b> — la mention figure sous le bouton de confirmation.</span></div>
+        <div class="lg-li"><span class="p">·</span><span>Toute demande d'annulation ou de modification passe <b>par PayEnCash</b> (l'app ou l'Assistance) — jamais directement auprès de la compagnie ou de l'hôtel : c'est la condition pour que ta demande soit traitée et tracée.</span></div>
+        <div class="lg-art">Art. 6 — Absence de droit de rétractation</div>
+        <div class="lg-li"><span class="p">·</span><span>Conformément à l'article <b>L221-28, 12°</b> du code de la consommation, les prestations de transport, d'hébergement et de loisirs fournies à une <b>date déterminée</b> n'ouvrent pas droit à rétractation. Ce sont les <b>conditions d'annulation de ton tarif et de ton pack</b> — affichées avant l'achat — qui s'appliquent.</span></div>
+        <div class="lg-art">Art. 7 — Annulation et modification par le voyageur</div>
+        <div class="lg-li"><span class="p">·</span><span>Les règles complètes, cas par cas (packs, fenêtres hôtel, montants restitués), figurent sur <a href="17-politiques.html" style="font-weight:800;color:var(--color-primary-dark)">Nos politiques</a> — une seule page, opposable à tous. <b>PayEnCash n'ajoute aucun frais d'annulation</b> ; le montant exact remboursable t'est confirmé par écrit <b>avant</b> toute annulation ferme. La restitution intervient <b>après confirmation du remboursement par le prestataire</b> (compagnie, hôtel) — les délais affichés sont indicatifs et courent de cette confirmation. Aucune restitution n'est faite en espèces (LCB-FT) : elle <b>emprunte le moyen du règlement initial</b> — le re-crédit du Bon d’achat PayEnCash pour un règlement par bon d’achat, un avoir ou un virement sur un RIB au nom du client pour un règlement à l'agent.</span></div>
+        <div class="lg-art">Art. 8 — Modification du fait d'AJEK avant le départ</div>
+        <div class="lg-li"><span class="p">·</span><span>Avant le départ, AJEK ne peut modifier <b>unilatéralement</b> que des éléments <b>mineurs</b> du contrat, de bonne foi, en t'en informant clairement. Si une modification touche un <b>élément essentiel</b> (horaires significatifs, hébergement, prix au-delà du cadre légal), tu choisis dans le délai raisonnable indiqué : <b>accepter</b>, accepter un <b>voyage de substitution</b> s'il est proposé, ou <b>résoudre sans frais</b> avec remboursement intégral sous 14 jours. <b>Sans réponse de ta part, tu n'es jamais réputé avoir accepté</b> : la résolution et le remboursement s'appliquent.</span></div>
+        <div class="lg-art">Art. 9 — Titres nominatifs et changement de voyageur</div>
+        <div class="lg-li"><span class="p">·</span><span>Un <b>billet d'avion est nominatif</b> et suit les règles de sa <b>compagnie</b> ; une <b>réservation d'hôtel</b> suit les conditions de l'<b>établissement</b>. Le changement de nom ou de voyageur, quand il est possible, relève donc du prestataire concerné (pack Super Flex : PayEnCash prend en charge la démarche). PayEnCash ne peut garantir une cession que le prestataire n'autorise pas.</span></div>
+        <div class="lg-art">Art. 10 — Prix non révisable</div>
+        <div class="lg-li"><span class="p">·</span><span><b>Après ton paiement, ton prix ne bouge plus</b> — jamais, ni carburant, ni taxes, ni change. Le montant que tu règles est celui confirmé au moment de la réservation auprès du prestataire.</span></div>
+        <div class="lg-art">Art. 11 — Responsabilité</div>
+        <div class="lg-li"><span class="p">·</span><span>PayEnCash agit en <b>intermédiaire</b> : chaque <b>prestataire</b> (compagnie aérienne, hôtel) est <b>responsable de sa propre prestation</b>, selon ses conditions et le droit qui lui est applicable (dont les conventions internationales — Montréal, Athènes…). PayEnCash répond, lui, de la <b>bonne exécution de son intermédiation et de l'encaissement</b> (réservation conforme à ton choix, transmission au prestataire, facture, restitution des sommes dues) et t'<b>assiste</b> dans tes démarches auprès des prestataires.</span></div>
+        <div class="lg-li"><span class="p">·</span><span><b>Signale tout problème sans retard</b> à l'Assistance : c'est ce qui nous permet de t'aider et de relayer auprès du prestataire concerné.</span></div>
+        <div class="lg-li"><span class="p">·</span><span>Dans tous les cas, AJEK fournit une <b>assistance appropriée</b> au voyageur en difficulté, sans retard excessif.</span></div>
+        <div class="lg-art">Art. 12 — Circonstances exceptionnelles</div>
+        <div class="lg-li"><span class="p">·</span><span>En cas de <b>circonstances exceptionnelles et inévitables</b> (événement grave à destination, annulation par la compagnie…), les possibilités d'annulation et de remboursement relèvent des <b>conditions de chaque prestataire</b> et du droit applicable (ex. règlement UE 261/2004 pour un vol annulé). PayEnCash t'accompagne dans ces démarches et te restitue sans délai les sommes qu'il détient encore pour ton compte.</span></div>
+        <div class="lg-art">Art. 13 — Preuve, droit applicable, langue</div>
+        <div class="lg-li"><span class="p">·</span><span>Les registres informatiques d'AJEK et de ses prestataires, conservés dans des conditions raisonnables de sécurité, font <b>preuve</b> des commandes et paiements. Les présentes sont soumises au <b>droit français</b> ; elles sont rédigées en <b>français</b>. Tout litige relève des juridictions compétentes dans les conditions du droit commun — après la voie amiable du volet « Litiges &amp; médiation ». Toute modification des présentes ne vaut que <b>pour les réservations futures</b> : ta commande reste régie par la version en vigueur au jour de l'achat, qui t'est remise avec ta confirmation.</span></div>
+        <div class="lg-mint"><b>Les textes de référence</b> (articles R211-3 à R211-11 du code du tourisme) sont communiqués avec chaque confirmation de commande et consultables sur payencash.fr. Version des présentes en vigueur : <b data-cgv-version>—</b> (celle acceptée à chaque commande est horodatée avec ton consentement).</div>
+      </div>
+    </details>
+
+    <!-- (18/09 — Bon d’achat PayEnCash) ②ter CONDITIONS DU BON D’ACHAT PAYENCASH — mentions consommateur (ref.bons.mentions), fondement (ref.bons.fondement :
+         exemption L521-3, TVA 256 ter) et avertissement « à valider par l'avocat » : tout vient de bonsRef(), rien n'est recopié. -->
+    <details class="lg-card" id="bon">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-ticket"/></svg></span><b>Conditions du Bon d’achat PayEnCash</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-art">Ce qu'est le Bon d’achat</div>
+        <div class="lg-li"><span class="p">·</span><span>Un <b>bon d'achat prépayé</b> à montant libre (de <b><span data-bon="minimum">5 €</span></b> à <b><span data-bon="plafondBon">250 €</span></b>), émis par AJEK, vendu au comptoir d'un <b>commerçant partenaire</b> (ticket imprimé portant un code à 12 caractères) ou remis en cadeau. Le commerçant partenaire <b>vend le bon d’achat</b> ; il n'encaisse <b>aucune commande</b> pour le compte d'AJEK. Le bon d’achat n'est accepté que par AJEK, sur payencash.fr (Fly et Mode) ; il ne peut servir <b>que dans la limite de <span data-bon="plafondClientJour">—</span></b> de bons d’achat par jour et par client, et de <b><span data-bon="plafondClientMois">—</span></b> sur <b><span data-bon="fenetrePlafondJours">—</span> jours</b> glissants — au-delà, l'identité du titulaire doit être vérifiée (LCB-FT).</span></div>
+        <div class="lg-art">Mentions du ticket</div>
+        <div id="lg-bon-mentions"></div>
+        <div class="lg-art">Fondement</div>
+        <div class="lg-li"><span class="p">·</span><span id="lg-bon-exemption">—</span></div>
+        <div class="lg-li"><span class="p">·</span><span id="lg-bon-tva">—</span></div>
+        <div class="lg-mint" id="lg-bon-avert">—</div>
+        <div class="lg-li" style="margin-top:8px"><span class="p">·</span><span><a href="../../ESPACE-COMMERCANT/documents/conditions-bon-payencash.html" style="font-weight:800;color:var(--color-primary-dark)">Les conditions complètes du Bon d’achat PayEnCash</a> (document de référence, versionné) · <a href="25-ou-acheter-un-bon.html" style="font-weight:800;color:var(--color-primary-dark)">Où acheter un Bon d’achat</a>.</span></div>
+      </div>
+    </details>
+
+    <!-- ②bis CE QUE TU ACHÈTES — intermédiation, pas de forfait -->
+    <details class="lg-card" id="droits">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-shield"/></svg></span><b>Ce que tu achètes — vol et hôtel choisis, pas un forfait</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-li"><span class="p">·</span><span><b>Ce n'est pas un forfait.</b> PayEnCash (AJEK) est un <b>intermédiaire</b> : tu <b>choisis toi-même et séparément</b> ton vol et ton hôtel. Le <b>contrat de transport</b> te lie à la <b>compagnie aérienne</b>, le <b>contrat d'hébergement</b> à l'<b>hôtel</b> — chacun responsable de sa propre prestation, selon ses <b>conditions</b> (disponibilité, annulation, modification, bagages…).</span></div>
+        <div class="lg-li"><span class="p">·</span><span>PayEnCash <b>ne vend pas de voyage</b> et n'agit pas comme opérateur/agence de voyages immatriculé. Le <b>régime du forfait</b> (directive UE 2015/2302 / code du tourisme) <b>ne s'applique pas</b> : le rôle de PayEnCash est la <b>mise en relation</b> et la <b>facilitation du paiement par bon d’achat</b> (par titres prépayés, ou en ligne via un prestataire de paiement), avec facture.</span></div>
+        <div class="lg-li"><span class="p">·</span><span>Avant tout paiement, l'app affiche les <b>caractéristiques essentielles</b> de chaque prestation (compagnie, horaires, hôtel, bagages) et le <b>prix total</b>. Chaque offre reste <b>soumise à disponibilité</b> chez le prestataire jusqu'à confirmation ; en cas d'erreur de prix manifeste, la commande peut être annulée avant émission et remboursée.</span></div>
+      </div>
+    </details>
+
+    <!-- ③ CGU — L'APPLICATION -->
+    <details class="lg-card" id="cgu">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-phone"/></svg></span><b>Conditions d'utilisation de l'app</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-art">Art. 1 — Accès et compte</div>
+        <div class="lg-li"><span class="p">·</span><span>L'app est <b>gratuite</b>. La recherche est libre ; un compte (inscription par SMS, sans mot de passe) est requis pour réserver. Le compte est <b>personnel</b> : tu réponds des actions menées avec lui, et tu nous signales sans délai tout usage non autorisé.</span></div>
+        <div class="lg-art">Art. 2 — Exactitude des informations</div>
+        <div class="lg-li"><span class="p">·</span><span>Tu garantis l'exactitude des informations fournies — en particulier le nom des voyageurs, <b>exactement comme sur la pièce d'identité</b> : un billet est nominatif, une erreur peut interdire l'embarquement sans remboursement.</span></div>
+        <div class="lg-art">Art. 3 — Disponibilité des offres</div>
+        <div class="lg-li"><span class="p">·</span><span>Les offres proviennent en temps réel des compagnies et établissements : toute offre reste <b>soumise à disponibilité</b> jusqu'à la confirmation. En cas d'erreur de prix manifeste, la commande peut être annulée avant émission, remboursée intégralement.</span></div>
+        <div class="lg-art">Art. 4 — Usage licite</div>
+        <div class="lg-li"><span class="p">·</span><span>L'app s'utilise pour des <b>réservations personnelles</b> — pas de revente, pas d'extraction automatisée, pas d'usage frauduleux. Les contenus (marque, textes, visuels, code) restent la propriété d'AJEK ou de ses partenaires.</span></div>
+        <div class="lg-art">Art. 5 — Fin du compte</div>
+        <div class="lg-li"><span class="p">·</span><span>Tu peux <b>supprimer ton compte</b> à tout moment (Compte → Actions, confirmation par code SMS) : tes données personnelles sont effacées ; les factures des voyages passés sont conservées la durée que la loi impose. AJEK peut suspendre un compte en cas de fraude, après information.</span></div>
+      </div>
+    </details>
+
+    <!-- ④ CONDITIONS DE TRANSPORT -->
+    <details class="lg-card" id="transport">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-plane"/></svg></span><b>Conditions de transport</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-li"><span class="p">·</span><span>Ton transport est exécuté par <b>la compagnie aérienne</b>, sous ses conditions de transport — remises avant l'achat, rappelées sur ton billet. L'<b>identité du transporteur effectif</b> t'est communiquée (règlement CE 2111/2005) ; aucune compagnie sous interdiction d'exploitation européenne n'est proposée.</span></div>
+        <div class="lg-li"><span class="p">·</span><span><b>Présentation et enregistrement :</b> l'enregistrement se fait <b>chez la compagnie</b> (en ligne, généralement dès J−2, avec ton PNR). Présente-toi dans les délais qu'elle indique — à défaut d'indication : <b>120 min avant un vol international, 90 min avant un vol intérieur</b>. Les correspondances d'un même billet sont protégées par la compagnie ; deux billets séparés ne le sont pas.</span></div>
+        <div class="lg-li"><span class="p">·</span><span><b>Bagages :</b> franchises et suppléments selon la compagnie (détaillés sur ta réservation) ; les marchandises dangereuses (IATA) sont interdites. Bagage perdu, abîmé ou retardé : fais établir un <b>constat d'irrégularité (PIR)</b> à l'aéroport, puis transmets-le à la compagnie sous <b>7 jours</b> (dommage) ou <b>21 jours</b> (retard) — au-delà, les conventions internationales permettent le refus d'indemnisation.</span></div>
+        <div class="lg-li"><span class="p">·</span><span><b>Papiers :</b> pièce d'identité <b>au nom exact du billet</b> — CNI acceptée en Europe (Schengen), passeport selon la destination, visa selon le pays. La conformité administrative (validité, visa, santé, vaccins) relève du voyageur ; on te signale les exigences connues au moment de l'achat, et le site officiel <b>diplomatie.gouv.fr</b> (« Je pars à l'étranger ») donne les exigences par pays.</span></div>
+        <div class="lg-li"><span class="p">·</span><span><b>Mobilité réduite :</b> l'assistance en aéroport et à bord est un droit (règlement CE 1107/2006) — signale ton besoin à la réservation ou au plus tard 48 h avant, on transmet à la compagnie. Femmes enceintes et jeunes enfants : chaque compagnie a ses règles d'admission — dis-le-nous, on vérifie avant l'achat.</span></div>
+        <div class="lg-li"><span class="p">·</span><span><b>Hébergement :</b> arrivée généralement dès <b>15 h</b>, départ jusqu'à <b>11 h</b> (précisé sur ta fiche) ; une <b>arrivée tardive se signale</b> (l'Assistance transmet) — ta chambre reste réservée. Les <b>transferts</b> aéroport ↔ hôtel ne sont pas inclus, sauf mention contraire ; les <b>frais réglés sur place</b> (taxe de séjour selon destination, parking, minibar, prestations optionnelles) ne sont pas compris dans le prix. La réservation est établie <b>au nom exact</b> du voyageur ; une modification d'hébergement = <b>annulation dans ta fenêtre puis re-réservation</b> (les établissements n'acceptent qu'une modification par dossier, au mieux). Un souci pendant le séjour se signale <b>immédiatement</b> à la réception ET à l'Assistance — au plus tard <b>10 jours après le départ</b> pour être instruit auprès de l'établissement.</span></div>
+        <div class="lg-li"><span class="p">·</span><span><b>Vol retardé, annulé, surbooké :</b> le <b>règlement (CE) 261/2004</b> te protège — prise en charge, réacheminement ou remboursement, et selon les cas une indemnisation due par la compagnie. On t'accompagne dans la démarche, sans frais.</span></div>
+      </div>
+    </details>
+
+    <!-- ⑤ CONFIDENTIALITÉ (RGPD) -->
+    <details class="lg-card" id="confidentialite">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-shield"/></svg></span><b>Politique de confidentialité</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-art">Responsable et finalités</div>
+        <div class="lg-li"><span class="p">·</span><span><b>Responsable de traitement :</b> AJEK (coordonnées au volet Mentions légales). <b>Finalités et bases légales :</b> exécuter ta réservation et émettre tes billets (<b>exécution du contrat</b>) ; facturation et lutte anti-fraude, dont le plafond espèces (<b>obligation légale</b>) ; assistance et qualité de service (<b>intérêt légitime</b>) ; offres et bons plans (<b>consentement</b> — l'interrupteur « Communications » du Compte).</span></div>
+        <div class="lg-art">Données et destinataires</div>
+        <div class="lg-li"><span class="p">·</span><span><b>Encaissées :</b> identité des voyageurs (celle qu'exigent les compagnies), coordonnées, réservations et règlements. <b>Aucune donnée de paiement chez nous</b> — aucun numéro de carte ni RIB ne nous est demandé pour commander, et rien ne nous transmet que sa confirmation et une référence de transaction. Aucun numéro de carte, aucun RIB de prélèvement ne nous est jamais demandé. Les données voyageurs sont <b>transmises à la compagnie ou à l'établissement</b> — c'est nécessaire au contrat. Un vol ou séjour <b>hors Union européenne</b> implique un transfert vers ce transporteur ou cet hôtel, encadré par les garanties appropriées du RGPD (art. 46 et 49-1-b). Nos <b>partenaires techniques de billetterie et de réservation hôtelière</b> agissent, pour l'émission et la gestion des réservations, en <b>responsables de traitement indépendants</b> — les compagnies et établissements également, comme le prestataire de paiement pour les données du paiement en ligne.</span></div>
+        <div class="lg-art">Sécurité et durées</div>
+        <div class="lg-li"><span class="p">·</span><span>Données <b>chiffrées (<span data-rgpd="chiffrement">AES-256</span>)</b>, jamais revendues, jamais utilisées pour la publicité de tiers, aucune décision entièrement automatisée produisant des effets juridiques. <b>Durées :</b> le temps de ton compte (supprimé = effacé) ; les <b>factures <span data-rgpd="facturesAns">10</span> ans</b> (obligation comptable) ; les journaux techniques au plus 12 mois.</span></div>
+        <div class="lg-art">Tes droits</div>
+        <div class="lg-li"><span class="p">·</span><span>Accès, rectification, effacement, portabilité, limitation, opposition — et directives post-mortem : écris à <b>assistance@payencash.fr</b> (réponse sous <span data-rgpd="reponseJours">30</span> jours ; une pièce d'identité peut être demandée en cas de doute). Dans l'app : rectification via « Modifier vos informations de compte » (Compte), export via « Exporter mes données » (délai : <span data-rgpd="exportDelaiH">48</span> h), effacement via « Supprimer mon compte ». Recours : la <b>CNIL</b> (cnil.fr).</span></div>
+      </div>
+    </details>
+
+    <!-- ⑥ COOKIES -->
+    <details class="lg-card" id="cookies">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-lock"/></svg></span><b>Cookies &amp; préférences</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-li"><span class="p">·</span><span>L'app n'utilise que le <b>strict nécessaire</b> au fonctionnement : ta session, et tes préférences gardées <b>sur ton appareil</b> (favoris, choix d'affichage). Ces traceurs strictement nécessaires sont <b>exemptés de consentement</b> (art. 82 de la loi Informatique et libertés, lignes directrices CNIL) — c'est pourquoi il n'y a pas de bandeau à chaque ouverture.</span></div>
+        <div class="lg-li"><span class="p">·</span><span><b>Aucun cookie publicitaire, aucun traceur de tiers, aucune mesure d'audience tierce.</b> Si cela changeait, ton consentement serait recueilli avant tout dépôt.</span></div>
+        <div class="lg-li"><span class="p">·</span><span><button type="button" class="tap" data-cookies-open style="font-weight:800;color:var(--color-primary-dark);background:none;padding:0">Gérer mes préférences</button> — tout est désactivable, sauf ce qui fait marcher l'app.</span></div>
+      </div>
+    </details>
+
+    <!-- ⑦ MÉDIATION -->
+    <details class="lg-card" id="mediation">
+      <summary class="tap"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-headset"/></svg></span><b>Litiges &amp; médiation</b><span class="ch">›</span></summary>
+      <div class="lg-body">
+        <div class="lg-li"><span class="p">1</span><span>D'abord l'<b>Assistance</b> : une vraie personne répond au <b id="lg-tel2">—</b> (gratuit), <b data-esc="hote">réponse sous 2 h ouvrées</b> ; toute réclamation écrite est enregistrée avec un numéro de suivi (visible dans l'app).</span></div>
+        <div class="lg-li"><span class="p">2</span><span>Non résolu → <b>le manager reprend le dossier</b>, <span data-esc="manager">résolution sous 48 h — sinon geste commercial proposé</span>.</span></div>
+        <div class="lg-li"><span class="p">3</span><span>Réponse insatisfaisante ou <b><span data-info="mediateurDelai">60 jours</span></b> sans solution → tu peux saisir <b>gratuitement</b> le <b data-esc="mediateurNom">Médiateur du Tourisme et du Voyage</b> (art. L612-1 du code de la consommation), dans les <b>12 mois</b> suivant ta réclamation écrite : <b>MTV Médiation Tourisme Voyage — BP 80303, 75823 Paris Cedex 17</b> · <b data-esc="mediateurSite">mtv.travel</b> (saisine en ligne).</span></div>
+        <div class="lg-li"><span class="p">·</span><span>La plateforme européenne de <b>règlement en ligne des litiges</b> reste accessible : ec.europa.eu/consumers/odr. La médiation est une faculté : tu restes libre de saisir les tribunaux.</span></div>
+        <div class="lg-mint">Le chemin complet d'une réclamation (délais, étapes, suivi dans l'app) est détaillé sur <a href="17-politiques.html" style="font-weight:800;color:var(--color-primary-dark)">Nos politiques</a>.</div>
+      </div>
+    </details>
+
+    <a class="pec-btn-secondary tap" href="17-politiques.html" style="display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:4px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-shield"/></svg> Nos politiques — réserver, annuler, être remboursé</a>
+
+  <div id="fermeture-slot"></div>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('');})();</script>
+    <div style="height:10px"></div>
+  </div>
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" aria-current="page" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+  (function () {
+    var D = window.PEC_DATA; if (!D) return;
+    // le téléphone vient du data-layer — jamais recopié en dur
+    ['lg-tel', 'lg-tel2'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el && D.serviceClient) el.textContent = D.serviceClient.tel;
+    });
+    // SOCIÉTÉ, RGPD, ESCALADE, VERSION CGV, PRIX BLOQUÉ — depuis PEC_DATA.ref.societe / ref.rgpd / assistance.escalade /
+    // CGV_VERSION / prixBloque (audit 03/09 : le texte légal ne porte plus aucune valeur recopiée). Le plafond passe par [data-info].
+    var soc = (D.ref && D.ref.societe) || {}, rg = (D.ref && D.ref.rgpd) || {}, esc = (D.assistance && D.assistance.escalade) || {};
+    var FORMES = { SAS: 'société par actions simplifiée', SASU: 'société par actions simplifiée unipersonnelle', SARL: 'société à responsabilité limitée' };
+    [].forEach.call(document.querySelectorAll('[data-soc]'), function (el) { var k = el.getAttribute('data-soc'); var v = k === 'formeLongue' ? (FORMES[soc.forme] || soc.forme) : soc[k]; if (v) el.textContent = v; });
+    [].forEach.call(document.querySelectorAll('[data-rgpd]'), function (el) { var v = rg[el.getAttribute('data-rgpd')]; if (v != null) el.textContent = String(v); });
+    [].forEach.call(document.querySelectorAll('[data-esc]'), function (el) { var k = el.getAttribute('data-esc'), v = k === 'mediateurNom' ? (esc.mediateur || {}).nom : k === 'mediateurSite' ? (esc.mediateur || {}).site : esc[k]; if (v) el.textContent = v; });
+    var cv = document.querySelector('[data-cgv-version]'); if (cv && D.CGV_VERSION) cv.textContent = D.CGV_VERSION;
+    // (17/09 — pivot) le prestataire de paiement, les moyens en ligne proposés ici et le plafond du ticket anonyme sont DÉRIVÉS
+    // (moyensPaiement) — le texte contractuel ne porte aucun nom ni chiffre recopié
+    var psp = (D.ref && D.ref.psp) || {};
+    if (psp.nom) [].forEach.call(document.querySelectorAll('[data-psp="nom"]'), function (el) { el.textContent = psp.nom; });
+    if (D.moyensPaiement && D.libelleMoyen) { var lp = D.moyensPaiement().filter(function (m) { return m.type === 'psp'; }).map(function (m) { return D.libelleMoyen(m.k); }); if (lp.length) [].forEach.call(document.querySelectorAll('.js-moyens-psp'), function (el) { el.textContent = lp.length > 1 ? lp.slice(0, -1).join(', ') + ' ou ' + lp[lp.length - 1] : lp[0]; }); }
+    if (neo && neo.plafondAnonyme && D.eur) [].forEach.call(document.querySelectorAll('[data-neo-plafond]'), function (el) { el.textContent = D.eur(neo.plafondAnonyme); });
+    var PB = D.prixBloque || {}; if (PB.dureeMin) [].forEach.call(document.querySelectorAll('[data-prixbloque]'), function (el) { el.textContent = PB.dureeMin % 60 === 0 ? (PB.dureeMin / 60) + ' h' : PB.dureeMin + ' min'; });
+    /* (18/09 — Bon d’achat PayEnCash) LE BON D’ACHAT : plafonds et validité ([data-bon]), mentions du ticket, fondement et avertissement — bonsRef()
+       (valeurs vives : le manager règle bons d’achat.* en configuration). La page ÉCOUTE : un plafond modifié se relit sans recharger. */
+    function peindreBon() {
+      if (!D.bonsRef) return;
+      var R = D.bonsRef(), F = R.fondement || {}, e = function (t) { return D.esc ? D.esc(t) : String(t == null ? '' : t); };
+      // (18/09, soir) la fenêtre glissante et son plafond entrent au contrat : ils déclenchent la vérification d'identité
+      var vals = { plafondBon: D.eur(R.plafondBon), plafondClientJour: D.eur(R.plafondClientJour), plafondClientMois: D.eur(R.plafondClientMois), fenetrePlafondJours: String(R.fenetrePlafondJours), minimum: D.eur(R.minimum), validiteMois: String(R.validiteMois) };
+      [].forEach.call(document.querySelectorAll('[data-bon]'), function (el) { var v = vals[el.getAttribute('data-bon')]; if (v != null) el.textContent = v; });
+      var m = document.getElementById('lg-bon-mentions');
+      if (m) m.innerHTML = (R.mentions || []).map(function (t) { return '<div class="lg-li"><span class="p">·</span><span>' + e(t) + '</span></div>'; }).join('') || '<div class="lg-li"><span class="p">·</span><span>Mentions non renseignées.</span></div>';
+      var ex = document.getElementById('lg-bon-exemption'); if (ex) ex.innerHTML = '<b>Titre à usage limité :</b> ' + e(F.exemption || '—') + (F.horsMonnaieElectronique ? ' · ' + e(F.horsMonnaieElectronique) : '') + (F.declarationAcpr ? ' · ' + e(F.declarationAcpr) : '');
+      var tv = document.getElementById('lg-bon-tva'); if (tv) tv.innerHTML = '<b>TVA :</b> ' + e(F.tva || '—');
+      var av = document.getElementById('lg-bon-avert'); if (av) av.innerHTML = '<b>À valider par un avocat.</b> ' + e(F.avertissement || '');
+    }
+    peindreBon();
+    window.addEventListener('pec-bus', peindreBon);
+    window.addEventListener('storage', function (ev) { if (!ev.key || /^pec-param|^pec_bus_/.test(ev.key)) peindreBon(); });
+    // arrivée dirigée : #cgv, #bon, #droits, #cgu, #transport, #confidentialite,
+    // #cookies, #editeur, #mediation → la section s'ouvre et se présente
+    var cible = (location.hash || '').replace('#', '');
+    if (cible) {
+      var d = document.getElementById(cible);
+      if (d && d.tagName === 'DETAILS') { d.open = true; setTimeout(function () { d.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60); }
+    } else {
+      var prem = document.getElementById('editeur');
+      if (prem) prem.open = true;
+    }
+  })();
+</script>
+</body>
+</html>

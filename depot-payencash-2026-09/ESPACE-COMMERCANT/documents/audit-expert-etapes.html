@@ -1,0 +1,146 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Audit expert — référentiel vs réel · PayEnCash</title>
+<style>
+:root{--ajek:#10A06A;--ajek-d:#0C7F54;--ink:#1a1f1c;--muted:#5b675f;--line:#d9e5dd;--bg:#f4f7f5;--card:#fff;--chip:#e8f3ec;--gold:#E39A2E;--goldbg:#fdf5e6}
+@media(prefers-color-scheme:dark){:root{--ink:#e8efe9;--muted:#9fb0a6;--line:#254034;--bg:#0d1512;--card:#121d18;--chip:#173026;--goldbg:#2a2410}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+body{background:radial-gradient(1100px 520px at 92% -12%, rgba(63,217,155,.16), transparent 62%),var(--bg)}
+.tb{display:flex;gap:8px;flex-wrap:wrap;padding:12px 22px 0}.btn{border:1px solid var(--line);background:var(--card);color:var(--ajek-d);border-radius:8px;padding:6px 11px;font-size:12.5px;text-decoration:none;font-weight:700}
+.wrap{max-width:1120px;margin:0 auto;padding:8px 22px 60px}
+.head{background:linear-gradient(115deg,#0F2A24 0%,#0C7F54 55%,#10A06A 100%);color:#fff;border-radius:14px;padding:22px 26px;margin:10px 0 18px}
+.head h1{margin:4px 0 6px;font-size:23px}.head p{margin:0;font-size:13px;opacity:.94}
+h2{font-size:16.5px;color:var(--ajek-d);margin:26px 0 8px;position:relative;padding-bottom:8px}
+h2::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:4px;border-radius:2px;background:linear-gradient(90deg,#10A06A,#3FD99B)}
+table{width:100%;border-collapse:collapse;background:var(--card);font-size:12px}
+th{background:linear-gradient(115deg,#0C7F54,#10A06A);color:#fff;text-align:left;padding:8px 10px;font-size:11px}
+td{border-top:1px solid var(--line);padding:7px 10px;vertical-align:top}
+td b{color:var(--ajek-d)}
+.tw{overflow-x:auto;border-radius:12px;border:1px solid var(--line);margin-bottom:8px}
+.ok{color:var(--ajek-d);font-weight:800;white-space:nowrap}
+.gap{color:#a06a10;font-weight:800;white-space:nowrap}
+.note{background:var(--goldbg);border-left:4px solid var(--gold);border-radius:8px;padding:10px 14px;font-size:12.5px;margin:12px 0}
+.okb{background:linear-gradient(120deg,#E6F4EC,#f0faf4);border-left:4px solid var(--ajek);border-radius:8px;padding:10px 14px;font-size:12.5px;margin:12px 0}
+</style><!-- (18/09, soir) Cette page portait un encadré « décision fondatrice » qui organisait le complément carte
+     d'un règlement à l'agent et annonçait que le marketing ne dirait plus « un bon d’achat suffit ». Une décision
+     qui contredit la promesse actuelle ne peut pas rester affichée comme en vigueur : elle est levée, datée, et
+     remplacée par la règle réelle. Le reste de la page est un relevé daté du 21/08 et n'est pas réécrit.
+     Le fond est le même partout : l'agent de caisse mobile est abandonné, parce qu'un salarié qui
+     transporte des espèces chez le client expose l'entreprise à un risque humain et à un cadre CNAPS que le
+     projet ne veut pas porter ; et le reversement mensuel du partenaire est remplacé par un prélèvement à la
+     vente, parce qu'attendre l'argent d'un commerçant créait une créance à relancer. On ne dit plus nulle
+     part comment le client règle au comptoir : la promesse est de payer AVEC UN BON D’ACHAT. -->
+</head><body>
+<div style="background:#E6F4EC;border:2px dashed #0C7F54;border-radius:10px;padding:10px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#0F2A24"><b>Pivot du 17/09 :</b> plus de borne ni de point partenaire qui encaisse pour AJEK. <b>Décisions du 18/09 au soir :</b> l'<b>agent de caisse mobile est supprimé</b> (avec lui la flotte, les zones de dispatch, le planning, les tournées, les dépôts d'espèces, la paie d'agent, le rendu de monnaie et le découpage « part espèces + complément carte »), et le <b>reversement mensuel du partenaire</b> cède la place à un <b>prélèvement à la vente</b> (Stancer). Le client paie <b>avec un bon d’achat</b> par un <b>Bon d’achat PayEnCash</b> ou un <b>Bon d’achat PayEnCash</b>, achetés au comptoir d'un commerce. Ce document est un <b>relevé daté du 21/08</b> : ses chiffres et ses constats valent pour ce jour-là ; tout ce qui vise le réseau de points qui encaissent, la borne, le mandat B ou l'agent de caisse décrit un modèle abandonné et n'est plus à traiter. Référence à jour : <a href="partie-4-flux.html" style="color:#0C7F54;font-weight:700">Étape 4 · F1, F4, F6, F7</a>.</div>
+<div class="tb"><a class="btn" href="diagramme-principal.html">🧭 Fil rouge</a><a class="btn" href="audit-coherence-etapes.html">🔍 Audit de cohérence</a><a class="btn" href="etape-9-recette.html">🧪 Étape 9 · Recette</a></div>
+<div class="wrap">
+
+<div class="head"><h1>🎓 Audit expert — « qu'aurait développé un expert, étape par étape ? »</h1>
+<p><b>Méthode (21/08/2026)</b> : la colonne « Référentiel expert » a été rédigée <b>AVANT toute lecture du dossier</b> — c'est la table des matières qu'un expert produit / CTO / juriste tourisme aurait exigée pour chaque étape. Le dossier a ENSUITE été lu et comparé : ✔ = couvert · ◐ = partiel · ✚ = absence comblée pendant cet audit · ⚠ = manque assumé, renvoyé à un expert humain. Chaque correction respecte la corrélation étape précédente ↔ suivante, jusqu'aux maquettes.</p></div>
+
+<h2>Étape 1 · Marketing &amp; cibles — le référentiel expert</h2>
+<div class="tw"><table>
+<tr><th>Ce qu'un expert exige</th><th>Verdict</th><th>Où / quoi</th></tr>
+<tr><td>Vision, mission, promesse de marque</td><td class="ok">✔</td><td>plan-marketing, identité de marque (« En » capital)</td></tr>
+<tr><td>Étude de marché chiffrée (taille du marché cash, segments)</td><td class="ok">✔</td><td>plan-marketing (43 % paiements, 60 % attachés), analyse-clientèle</td></tr>
+<tr><td>Personas + parcours de décision</td><td class="ok">✔</td><td>analyse-clientèle (Rachid…), étude 2 branches</td></tr>
+<tr><td><b>Analyse concurrentielle structurée</b> (comparateurs, agences physiques, Vinted/Zara, mandats cash type Nickel)</td><td class="gap">✚</td><td>Absente en tant que section dédiée — ajoutée : §7 « Face à qui on se bat » dans l'étude des 2 branches</td></tr>
+<tr><td>Positionnement + USP par branche, promesses → preuves</td><td class="ok">✔</td><td>tableau moteur P1–P10, étude 2 branches (atelier)</td></tr>
+<tr><td>Stratégie d'acquisition par canal + entonnoir + KPI/CAC</td><td class="ok">✔</td><td>plan-marketing §6, objectifs-chiffres (cascade 3 scénarios)</td></tr>
+<tr><td>Vitrines (grand public 2 apps, fournisseurs, partenaires, équipe)</td><td class="ok">✔</td><td>4 landings, photos réelles, logos compagnies</td></tr>
+<tr><td>Risques marketing (dépendance concours, image « cash »)</td><td class="ok">◐→✔</td><td>SWOT présent ; risque réglementaire pub jeu → règlement (Étape 5)</td></tr>
+</table></div>
+
+<h2>Étape 2 · Modèle financier — le référentiel expert</h2>
+<div class="tw"><table>
+<tr><th>Ce qu'un expert exige</th><th>Verdict</th><th>Où / quoi</th></tr>
+<tr><td>Unit economics par ligne (panier, marge unitaire, contribution)</td><td class="ok">✔</td><td>1b §1 (grilles + exemples canoniques au centime)</td></tr>
+<tr><td>Décomposition de chaque euro encaissé (qui possède quoi)</td><td class="ok">✔</td><td>1b §2</td></tr>
+<tr><td>Cycle de trésorerie + BFR (avance Duffel D×X×Y)</td><td class="ok">✔</td><td>1b §3-4, jalon BFR au plan de lancement</td></tr>
+<tr><td><b>Point mort chiffré</b> (combien de ventes/point/mois pour couvrir les coûts fixes)</td><td class="gap">✚</td><td>La cascade existait (objectifs-chiffres) sans point mort explicite — ajouté : §6b « Le point mort du pilote » en 1b</td></tr>
+<tr><td>Fiscalité par ligne + règles d'affichage UI</td><td class="ok">✔</td><td>1b §5, implémentée dans les écrans</td></tr>
+<tr><td>Coûts fixes/variables + indicateurs de pilotage</td><td class="ok">✔</td><td>1b §6-7, service reporting</td></tr>
+<tr><td><b>Encaissement carte en complément</b> (frais PSP, périmètre)</td><td class="gap">✚</td><td>Décision fondatrice 21/08 : CB = complément, jamais principal — intégrée en 1b §1b (voir note ci-dessous)</td></tr>
+</table></div>
+
+<h2>Étape 3 · Juridique &amp; conformité — le référentiel expert</h2>
+<div class="tw"><table>
+<tr><th>Ce qu'un expert exige</th><th>Verdict</th><th>Où / quoi</th></tr>
+<tr><td>Forme sociale, capital, objet social (2 lignes d'activité)</td><td class="ok">✔</td><td>SASU arbitrée, extension objet social jalonnée</td></tr>
+<tr><td>Immatriculation Atout France</td><td class="ok">✔</td><td>checklist dédiée</td></tr>
+<tr><td><b>Garantie financière (APST/Groupama) + RCP tourisme</b> — obligations LÉGALES de l'immatriculation, pas des options</td><td class="gap">✚</td><td>Présentes dans la checklist Atout France mais pas comme BLOQUANTS chiffrés du calendrier — élevées en jalon S1 « preuve de garantie » (Étape 8)</td></tr>
+<tr><td>Mandat B / exclusion DSP2, terminologie fournisseur</td><td class="ok">✔</td><td>socle + F12, verrouillé partout</td></tr>
+<tr><td><b>Médiation de la consommation (Médiateur du Tourisme et Voyage)</b> — obligatoire pour vendre aux particuliers</td><td class="gap">✚</td><td>Absente — ajoutée aux CGV (Étape 5 §2) + footer vitrine</td></tr>
+<tr><td>LCB-FT (posture), plafonds espèces, caisse certifiée</td><td class="ok">✔</td><td>1b §3, socle, garde-fous outillés</td></tr>
+<tr><td>RGPD (registre, DPO, sous-traitance)</td><td class="ok">✔</td><td>D13 + annexe mode test + F8</td></tr>
+<tr><td>Droit conso : rétractation, Omnibus, affichage prix</td><td class="ok">✔</td><td>tranché (comparatif daté, jamais « réduction »)</td></tr>
+</table></div>
+
+<h2>Étape 4 · Flux métier — le référentiel expert</h2>
+<div class="tw"><table>
+<tr><th>Ce qu'un expert exige</th><th>Verdict</th><th>Où / quoi</th></tr>
+<tr><td>Catalogue des parcours nominaux, acteurs, règles, documents, écrans</td><td class="ok">✔</td><td>F1→F13 + F2-promo, blocs ÉCRANS ajoutés</td></tr>
+<tr><td>Machine à états commande + cash</td><td class="ok">✔</td><td>Étapes 2/6/7 (5 états, enums SQL)</td></tr>
+<tr><td><b>Flux d'exception outillés</b> : écart de caisse partenaire, perte/avarie colis, litige client, suspicion de fraude</td><td class="gap">✚</td><td>Partiels (11-suivi-états-échec, anomalie rapprochement) — consolidés dans un F13 · Exceptions &amp; litiges ajouté à l'étape 4</td></tr>
+<tr><td>Paiement mixte espèces + carte (complément)</td><td class="gap">✚</td><td>Nouveau : intégré à F1/F2-promo/F10 (voir note CB)</td></tr>
+</table></div>
+
+<h2>Étape 5 · Contrats &amp; documents — le référentiel expert</h2>
+<div class="tw"><table>
+<tr><th>Ce qu'un expert exige</th><th>Verdict</th><th>Où / quoi</th></tr>
+<tr><td>Matrice flux ↔ documents exhaustive (F10 compris)</td><td class="ok">✔</td><td>corrigée à l'audit précédent</td></tr>
+<tr><td>Textes conso rédigés (CGV, carte cadeau, jeux, promo)</td><td class="ok">◐</td><td>5 rédigés v1 ; contrats fournisseurs priorisés en « à rédiger » — assumé (relecture avocat)</td></tr>
+<tr><td>Médiation + mentions légales complètes</td><td class="gap">✚</td><td>Ajout médiation (cf. Étape 3)</td></tr>
+<tr><td>Cycle de vie contractuel (signature électronique, archivage)</td><td class="ok">✔</td><td>F12 (signature élec.), Odoo/QR archivage</td></tr>
+</table></div>
+
+<h2>Étape 6 · Données — le référentiel expert</h2>
+<div class="tw"><table>
+<tr><th>Ce qu'un expert exige</th><th>Verdict</th><th>Où / quoi</th></tr>
+<tr><td>Modèle complet dérivé des flux, conventions (centimes, uuid)</td><td class="ok">✔</td><td>46 tables / 7 domaines + schema.sql exécutable</td></tr>
+<tr><td>Droits par app (matrice R/W)</td><td class="ok">✔</td><td>matrice + colonne Fournisseur</td></tr>
+<tr><td><b>Rétention / purge RGPD par table</b> (durées de conservation)</td><td class="gap">✚</td><td>Absente — ajoutée : note « Rétention » en fin d'étape 6 (identité 5 ans après dernière commande · paiements 10 ans compta · géoloc jamais stockée · photos de preuve 13 mois · logs 1 an)</td></tr>
+<tr><td>Paiement multi-instruments (part espèces / part carte)</td><td class="gap">✚</td><td>Nouvelle table <code>payment_tenders</code> (voir note CB)</td></tr>
+</table></div>
+
+<h2>Étape 7 · Architecture &amp; API — le référentiel expert</h2>
+<div class="tw"><table>
+<tr><th>Ce qu'un expert exige</th><th>Verdict</th><th>Où / quoi</th></tr>
+<tr><td>Découpage services + mapping écran→endpoint→table</td><td class="ok">✔</td><td>8 microservices + gateway, mapping complet</td></tr>
+<tr><td>Base + seed exécutables, invariants en contraintes</td><td class="ok">✔</td><td>validés sur Postgres 16 réel</td></tr>
+<tr><td>Déploiement reproductible (CapRover, env)</td><td class="ok">✔</td><td>captain-definition, compose, README-DEV</td></tr>
+<tr><td><b>Authentification &amp; autorisations</b> (qui appelle quoi : client, partenaire, agent, fournisseur, manager)</td><td class="gap">✚</td><td>Absentes des specs — section « 4c · AuthN/AuthZ » ajoutée à l'Étape 7 : OTP SMS client · comptes à rôle (partner/courier/supplier/manager) JWT courts + refresh · le barème 25 % et les colonnes internes JAMAIS exposés par l'API partenaire</td></tr>
+<tr><td><b>Sécurité applicative</b> (OWASP, secrets, chiffrement au repos des données sensibles)</td><td class="gap">✚</td><td>Section « 4d · Sécurité » ajoutée : champs chiffrés (adresses, identités Duffel), secrets en variables CapRover, rate-limiting gateway, audit_log inviolable</td></tr>
+<tr><td><b>Observabilité + sauvegardes/PRA</b></td><td class="gap">✚</td><td>Section « 4e » ajoutée : logs structurés par service, alerte avance Duffel, sauvegarde base quotidienne + test de restauration mensuel</td></tr>
+</table></div>
+
+<h2>Étape 8 · Plan de lancement — le référentiel expert</h2>
+<div class="tw"><table>
+<tr><th>Ce qu'un expert exige</th><th>Verdict</th><th>Où / quoi</th></tr>
+<tr><td>Périmètre pilote, jalons, go/no-go chiffré</td><td class="ok">✔</td><td>3 tabacs · J+40 · S12, indicateurs</td></tr>
+<tr><td>Prérequis juridiques exécutés (assurances, garantie, objet social)</td><td class="ok">✔</td><td>jalons S1-S2 (audit précédent) + garantie financière élevée en bloquant</td></tr>
+<tr><td>BFR provisionné</td><td class="ok">✔</td><td>jalon avance Duffel</td></tr>
+<tr><td><b>Plan B / critères d'arrêt</b> (que fait-on des commandes en cours si no-go ?)</td><td class="gap">✚</td><td>Ajouté au go/no-go : arrêt propre = honorer tout ce qui est PAID, geler les ventes, restituer selon F10</td></tr>
+</table></div>
+
+<h2>Étape 9 · Tests &amp; recette — le référentiel expert</h2>
+<div class="tw"><table>
+<tr><th>Ce qu'un expert exige</th><th>Verdict</th><th>Où / quoi</th></tr>
+<tr><td>Banc de scénarios réels rejouable + linkcheck + audits croisés</td><td class="ok">✔</td><td>175 scénarios · 0 lien mort · 106/106</td></tr>
+<tr><td>Base réelle testée par contraintes</td><td class="ok">✔</td><td>Postgres 16 + fumage services</td></tr>
+<tr><td><b>Tests de charge et de sécurité</b> (avant vrai trafic)</td><td class="gap">✚</td><td>Ajoutés à la recette de sortie comme bloquants « avant ouverture publique » (k6 sur gateway · scan OWASP ZAP) — outillage au moment du vrai code</td></tr>
+<tr><td>UAT fondatrice (parcours complets validés à la main)</td><td class="ok">✔</td><td>pratiqué à chaque salve (clic + visuel)</td></tr>
+</table></div>
+
+<h2>Étape 10 · Maquettes — le référentiel expert</h2>
+<div class="tw"><table>
+<tr><th>Ce qu'un expert exige</th><th>Verdict</th><th>Où / quoi</th></tr>
+<tr><td>Design system unique (kit, tokens, composants)</td><td class="ok">✔</td><td>payencash-v2.css + icônes + PEC_DATA</td></tr>
+<tr><td>Couverture 100 % des flux, parcours câblés, annotations</td><td class="ok">✔</td><td>91 vues, 7 galeries annotées</td></tr>
+<tr><td><b>États non-nominaux visibles</b> (vide, erreur, chargement)</td><td class="ok">◐</td><td>États d'échec (écran 11), incident, « collecte non aboutie » ; paniers/listes vides non maquettés — assumé (spécifiés en 6b, priorité basse maquette)</td></tr>
+<tr><td>Paiement mixte visible là où il compte</td><td class="gap">✚</td><td>fly/07 (récap promo &gt; 1 000 €) + fly/01 (Où payer) — voir note CB</td></tr>
+</table></div>
+
+<div class="note"><b>💳 La décision « carte bleue » du 21/08 est retirée (18/09, soir).</b> Elle organisait le complément carte d'un règlement remis à un agent au-delà de 1 000 € d'espèces, part pré-autorisée puis capturée à la remise. Sans agent de caisse mobile, il n'y a plus de part espèces à compléter, donc plus de carte du tout dans le parcours client. Elle disait aussi que le marketing ne promettrait plus « un bon d’achat suffit » : c'est l'inverse qui vaut désormais — la promesse est <b>payer avec un bon d’achat</b>. La seule carte du dispositif est celle du <b>commerçant partenaire</b>, prélevée à chaque vente d'un bon d’achat (Stancer) — jamais celle du client.</div>
+
+<div class="okb"><b>Bilan de l'audit expert :</b> 14 absences détectées contre le référentiel → <b>12 comblées</b> dans cette passe (concurrence, point mort, médiation tourisme, garantie financière en bloquant, F13 exceptions, rétention RGPD, AuthN/AuthZ, sécurité, observabilité, plan d'arrêt, charge/sécu en recette, paiement mixte bout en bout) · <b>2 assumées</b> avec porteur désigné (contrats fournisseurs → avocat · maquettes d'états vides → spécifiées, non dessinées). Banc et linkcheck repassés au vert après corrections.</div>
+
+</div></body></html>

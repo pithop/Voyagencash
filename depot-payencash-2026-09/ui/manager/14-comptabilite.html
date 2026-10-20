@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash Manager — Comptabilité &amp; TVA</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-p-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-p-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<link rel="stylesheet" href="../assets/payencash-manager.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-filters.js"></script><!-- (07/09) recherche · tri · pagination par convention -->
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-manager-nav.js"></script>
+<!--
+  COMPTABILITÉ & TVA — écran CIBLE, route `/comptabilite`. N'existe pas encore.
+
+  Il porte une obligation que la Doc 8 énonce et qu'aucun écran ne tenait : suivre la
+  TVA encaissée (∑ `orders.vat_amount_cents` sur PAID / CONFIRMED), la METTRE DE CÔTÉ
+  pour reversement, et cadrer la périodicité déclarative avec l'expert-comptable.
+
+  Le pendant de l'écran Trésorerie : celui-là répond à « où est notre argent ? »,
+  celui-ci à « combien, là-dedans, n'est pas à nous ? ». Deux poches distinctes de la
+  même caisse — les confondre gonfle le bénéfice net et surdimensionne l'avance Duffel.
+-->
+</head>
+<body>
+<!-- (07/09 — audit manager « connexion table / donnée ») tables du schéma reflétées par cet écran : `ledger_entries`, `vat_collected_by_period`, `payments` — miroir server/db/schema.sql (partie 6) -->
+
+<div class="pec-admin">
+
+  <aside class="pec-aside" data-pec-nav></aside>
+
+  <main class="pec-main">
+    <div class="pec-topbar">
+      <div>
+        <h1>Comptabilité &amp; TVA</h1>
+        <p class="sub">Ce qu’on encaisse pour l’État, et ce qu’on doit pouvoir prouver. <span class="pec-pill pec-pill--off">Cible — écran à créer</span></p>
+      </div>
+      <div class="pec-topbar-actions">
+        <div class="pec-controlbar">
+          <label>
+            Période
+            <input class="pec-search" style="max-width:140px" type="month" id="ca-periode" aria-label="Période comptable">
+          </label>
+        </div>
+        <button class="pec-btn tap" data-export="ventes"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-download"/></svg> Exporter la période</button>
+      </div>
+    </div>
+
+    <div class="pec-grid pec-grid--3" style="margin-bottom:16px">
+      <div class="pec-pocket">
+        <div class="step">DETTE · COMMANDES PAYÉES / ABOUTIES</div>
+        <h3>TVA encaissée</h3>
+        <div class="val" id="ca-tva-encaissee">0,00 €</div>
+        <p class="s" id="ca-tva-encaissee-s">Encaissée du client pour le compte de l’État. Ni revenu, ni trésorerie disponible.</p>
+      </div>
+      <div class="pec-pocket">
+        <div class="step">CRÉANCE · ACHATS &amp; CHARGES</div>
+        <h3>TVA déductible</h3>
+        <div class="val" id="ca-tva-deductible">0,00 €</div>
+        <p class="s" id="ca-tva-deductible-s">Payée sur les achats et charges fournisseurs assujettis (mode, frais généraux, commission des commerces partenaires). Récupérable — ce n’est pas une charge.</p><!-- (18/09, soir) « flotte » est retiré : les véhicules des agents n'existent plus -->
+      </div>
+      <div class="pec-pocket pec-pocket--payable">
+        <div class="step">SEUL MONTANT RÉELLEMENT DÛ</div>
+        <h3>TVA nette à reverser</h3>
+        <div class="val" id="ca-tva-nette">0,00 €</div>
+        <p class="s" id="ca-tva-nette-s">Encaissée − déductible. C’est sur ce montant que se calcule la provision.</p>
+      </div>
+    </div>
+
+    <div class="pec-grid pec-grid--2" style="margin-bottom:16px">
+      <div class="pec-pocket">
+        <div class="step">PROVISIONNÉ</div>
+        <h3>Mise de côté</h3>
+        <div class="val" id="ca-prov">0,00 €</div>
+        <p class="s" id="ca-prov-s">Isolée du cash exploitable dès le rapprochement bancaire.</p>
+      </div>
+      <div class="pec-pocket pec-pocket--gap">
+        <div class="step">ÉCART À TRAITER</div>
+        <h3>Non provisionné</h3>
+        <div class="val" id="ca-prov-gap">0,00 €</div>
+        <p class="s">Encaissé, pas encore mis de côté. À résorber avant la déclaration — rien à traiter tant qu'aucun encaissement n'est rapproché.</p>
+      </div>
+    </div>
+
+    <div class="pec-notice" style="margin-bottom:16px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-alert"/></svg>
+      <div><b>Deux TVA de sens opposé — ne jamais les fondre en un seul chiffre.</b> La encaissée est une <b>dette</b> : encaissée du client, due à l’État. La déductible est une <b>créance</b> : payée sur les achats et charges fournisseurs assujettis, récupérable. On ne reverse que la différence. Ne suivre que la encaissée immobilise une trésorerie qu’on ne doit pas.</div>
+    </div>
+
+    <div class="pec-notice" style="margin-bottom:22px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-alert"/></svg>
+      <div><b>La TVA encaissée n’est jamais du revenu.</b> Le cash déposé en banque contient le prix fournisseur, nos marges, les frais de service — et cette dette envers l’État. Le bénéfice net (Doc 9) et le dimensionnement de l’avance Duffel doivent l’exclure, sans quoi on finance des billets avec l’argent du Trésor.</div>
+    </div>
+
+    <div class="pec-panel" style="margin-bottom:16px">
+      <div class="pec-panel-head">
+        <div><h2>Décomposition du cash encaissé (<span class="ca-mois">—</span>)</h2><p class="s">Ce qui rentre, et à qui ça appartient.</p></div>
+      </div>
+      <div class="pec-panel-body">
+        <table class="pec-table">
+          <thead><tr><th>Composante</th><th>Nature</th><th class="num">Montant</th></tr></thead>
+          <tbody>
+            <!-- audit 28/08 : les montants de démo (96 240 / 12 880 / 3 204 / 2 318,15 /
+                 −6 420 / 9 118,40 €) étaient INVENTÉS — la structure reste, les chiffres
+                 attendent les encaissements réels -->
+            <tr><td>Cash encaissé (commandes payées du mois)</td><td class="meta" id="ca-encaisse-hint">Dérivé du bus — aucune commande payée sur la période</td><td class="num" id="ca-encaisse">0,00 €</td></tr>
+            <tr><td>Prix fournisseur (base)</td><td class="meta" id="ca-vent-fourn-hint">Reconstitue l’avance Duffel · règle la dette Nuitée post-payée</td><td class="num" id="ca-vent-fourn">0,00 €</td></tr>
+            <tr><td>Marge fixe</td><td class="meta" id="ca-vent-marge-hint">Revenu — taux de la grille (D.ref.marges · marge Mode, réglable en Configuration)</td><td class="num" id="ca-vent-marge">0,00 €</td></tr>
+            <tr><td>Marge de sécurité</td><td class="meta">Revenu — absorbe l’écart de prix au re-fetch. Composante contractuelle non portée par la donnée du bus : rien à afficher (source manquante, pas un zéro).</td><td class="num">0,00 €</td></tr>
+            <!-- (18/09, soir — l'agent de caisse mobile est abandonné) DEUX LIGNES ONT QUITTÉ LA DÉCOMPOSITION :
+                 « Frais de déplacement (domicile) », qui facturait au client le déplacement de l'agent, et
+                 « Masse salariale des agents », qui en était la contrepartie en charge. Le déplacement n'existe
+                 plus ; la commission du commerce partenaire, elle, est déjà déduite avant nous (sa carte est
+                 débitée de la valeur du bon d’achat moins sa commission) — elle ne transite donc pas par cette caisse. -->
+            <tr><td>Commission des commerces partenaires</td><td class="meta" id="ca-com-hint">Charge — prélevée à la source sur chaque Bon d’achat vendu (taux du référentiel des bons d’achat)</td><td class="num" id="ca-com">0,00 €</td></tr>
+            <tr><td><b>TVA encaissée</b></td><td class="meta" id="ca-tva-ligne-hint"><b>Dette fiscale — à reverser à l’État</b></td><td class="num" id="ca-tva-ligne">0,00 €</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="pec-panel" style="margin-bottom:16px">
+      <div class="pec-panel-head">
+        <div><h2>Journal comptable (<span class="ca-mois">—</span>)</h2><p class="s" id="ca-journal-s">Écritures DÉRIVÉES de ce qui existe vraiment : encaissements et remboursements (bus), factures fournisseurs. Aucune saisie manuelle.</p></div>
+        <div style="display:flex;gap:10px"><button class="pec-btn pec-btn--ghost pec-btn--sm tap" data-export="journal"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-download"/></svg> Exporter le journal</button></div>
+      </div>
+      <div class="pec-panel-body">
+        <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+        <input class="pec-search" type="search" data-fsearch="#ca-ecritures tr" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+        <div class="meta" data-fvide="#ca-ecritures tr" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+        <table data-fsortable class="pec-table">
+          <thead><tr><th>Horodatage</th><th>Journal</th><th>Libellé</th><th>Pièce</th><th class="num">Débit</th><th class="num">Crédit</th><th class="num">dont TVA</th></tr></thead>
+          <tbody id="ca-ecritures" data-fpage="15"><tr><td colspan="7" class="meta" style="text-align:center;padding:18px">Aucune écriture sur la période</td></tr></tbody>
+          <tfoot id="ca-ecritures-total"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="pec-panel" style="margin-bottom:16px">
+      <div class="pec-panel-head">
+        <div><h2>TVA par période</h2><p class="s">Encaissée, déductible, et le net réellement dû.</p></div>
+      </div>
+      <div class="pec-panel-body">
+        <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+        <input class="pec-search" type="search" data-fsearch="#ca-tva-rows tr" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+        <div class="meta" data-fvide="#ca-tva-rows tr" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+        <table data-fsortable class="pec-table">
+          <thead><tr><th>Période</th><th class="num">Base HT</th><th class="num">Encaissée</th><th class="num">Déductible</th><th class="num">Net à reverser</th><th>Déclaration</th></tr></thead>
+          <tbody id="ca-tva-rows" data-fpage="15">
+            <!-- audit 28/08 : les périodes « déclarées » 2026-05/06 étaient IMPOSSIBLES
+                 (AJEK créée le 07/07/2026) et tous les montants inventés — la ligne est
+                 DÉRIVÉE de periodeCourante() + commandes payées du bus (02/09) -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="pec-panel" style="margin-bottom:16px">
+      <div class="pec-panel-head">
+        <div><h2>Ventilation de la TVA encaissée par régime (<span class="ca-mois">—</span>)</h2><p class="s">Les régimes sont cloisonnés <b>commande par commande</b>, jamais agrégés. Voyage sur la marge (art. 297 A), mode en standard ou sur la marge selon la provenance de l’article.</p></div>
+      </div>
+      <div class="pec-panel-body">
+        <table class="pec-table">
+          <thead><tr><th>Ligne / régime</th><th>Base</th><th class="num">Base imposable</th><th class="num">TVA encaissée</th></tr></thead>
+          <tbody>
+            <tr><td>Voyage — régime de la marge (297 A)</td><td class="meta">Marge agence · billets Duffel, séjours Nuitée</td><td class="num" id="ca-reg-voyage-base">0,00 €</td><td class="num" id="ca-reg-voyage-tva">0,00 €</td></tr>
+            <tr><td>Mode — régime standard</td><td class="meta">Article neuf revendu · <a href="../../ESPACE-COMMERCANT/documents/partie-1b-financier.html">voir Étape 2 §5</a></td><td class="num" id="ca-reg-neuf-base">0,00 €</td><td class="num" id="ca-reg-neuf-tva">0,00 €</td></tr>
+            <tr><td>Mode — régime de la marge bénéficiaire</td><td class="meta">Bien d’occasion · <a href="../../ESPACE-COMMERCANT/documents/partie-1b-financier.html">voir Étape 2 §5</a></td><td class="num" id="ca-reg-occasion-base">0,00 €</td><td class="num" id="ca-reg-occasion-tva">0,00 €</td></tr>
+          </tbody>
+        </table>
+        <p class="s" id="ca-regimes-note" style="margin-top:10px">Aucun encaissement sur la période — rien à ventiler.</p>
+      </div>
+    </div>
+
+    <div class="pec-panel" style="margin-bottom:16px">
+      <div class="pec-panel-head">
+        <div><h2>Registre des objets mobiliers (art. 321-7)</h2><p class="s">Ligne MODE uniquement. Alimenté <b>automatiquement</b> à chaque achat ferme d’un article revendu — identité vendeur, description, date. <a href="../../ESPACE-COMMERCANT/documents/partie-4-flux.html">flux F11/F12</a>.</p></div>
+      </div>
+      <div class="pec-panel-body">
+        <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+        <input class="pec-search" type="search" data-fsearch="#ca-registre tr" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+        <div class="meta" data-fvide="#ca-registre tr" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+        <table data-fsortable class="pec-table">
+          <thead><tr><th>Date</th><th>Article</th><th>Vendeuse (SIRET)</th><th class="num">Prix d’achat</th><th>Facture</th></tr></thead>
+          <tbody id="ca-registre" data-fpage="15">
+            <!-- audit 28/08 : les 2 lignes de démo portaient des SIRET INVENTÉS (risque de
+                 collision avec de vraies entités) — le registre = D.mode.registrePolice
+                 (02/09), tenu ligne à ligne par 37-livre-police -->
+            <tr><td colspan="5" class="meta" style="text-align:center;padding:18px">Registre vide — chaque achat ferme d'un article revendu s'y inscrira automatiquement (identité vendeur, description, date, prix).</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="pec-notice" style="margin-bottom:22px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-alert"/></svg>
+      <div><b>Un régime de TVA ne se déduit pas de la ligne de produit à l’aveugle.</b> Le rythme déclaratif, le partage marge/standard sur la ligne mode et la TVA déductible sur les achats relèvent de l’<b>expert-comptable</b> et se tranchent commande par commande. Sur la ligne mode, AJEK étant le vendeur, chaque article revendu d’occasion est inscrit au registre des objets mobiliers — la pièce qui justifie le régime de la marge.</div>
+    </div>
+
+    <div class="pec-notice" style="margin-bottom:22px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-alert"/></svg>
+      <div><b>La périodicité affichée est une hypothèse, pas une règle.</b> Le rythme déclaratif (mensuel, trimestriel), le régime applicable et la TVA déductible sur les achats relèvent de l’<b>expert-comptable</b> et ne sont pas tranchés (Doc 8, réserve fiscale du Doc 4). L’écran est construit pour changer de période sans changer de structure — mais tant que le régime n’est pas fixé, aucun de ces montants ne vaut déclaration.</div>
+    </div>
+
+    <div class="pec-panel" style="margin-bottom:16px">
+      <div class="pec-panel-head">
+        <div><h2>Exports comptables</h2><p class="s">Format CSV, sur la période sélectionnée. Chaque export est journalisé.</p></div>
+      </div>
+      <div class="pec-panel-body">
+        <div class="pec-setting">
+          <div><div class="t">Journal des ventes</div><div class="s">Une ligne par commande payée ou aboutie : référence, date, base HT, TVA, TTC, catégorie.</div></div>
+          <div class="pec-setting-control"><button class="pec-btn pec-btn--ghost pec-btn--sm tap" data-export="ventes"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-download"/></svg> Exporter</button></div>
+        </div>
+        <div class="pec-setting">
+          <div><div class="t">Journal de TVA</div><div class="s">Agrégat de la période : base HT, TVA encaissée, TVA déductible et <b>net à reverser</b> — la pièce à remettre au comptable.</div></div>
+          <div class="pec-setting-control"><button class="pec-btn pec-btn--ghost pec-btn--sm tap" data-export="tva"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-download"/></svg> Exporter</button></div>
+        </div>
+        <div class="pec-setting">
+          <div><div class="t">Registre des objets mobiliers (321-7)</div><div class="s">Ligne mode : une ligne par article revendu — date, description, identité vendeur, prix d’achat. Alimenté automatiquement à chaque achat ferme.</div></div>
+          <div class="pec-setting-control"><button class="pec-btn pec-btn--ghost pec-btn--sm tap" data-export="registre"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-download"/></svg> Exporter</button></div>
+        </div>
+        <div class="pec-setting">
+          <div><div class="t">Ventilation TVA par régime</div><div class="s">Base et TVA encaissée par régime — voyage sur la marge (297 A), mode standard ou marge — cloisonnées commande par commande.</div></div>
+          <div class="pec-setting-control"><button class="pec-btn pec-btn--ghost pec-btn--sm tap" data-export="regimes"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-download"/></svg> Exporter</button></div>
+        </div>
+        <!-- (18/09, soir — l'agent de caisse mobile est abandonné) l'export « Journal de paie (salariés) »
+             sortait matricule, zone, contrat, net, brut et charges patronales des agents : il n'y a plus de
+             salarié à payer, donc plus de journal de paie à remettre à l'expert-comptable. -->
+        <div class="pec-setting">
+          <!-- (18/09, soir) l'export listait « dépôts en automate » et « ventilations de paie » : ni l'un ni l'autre n'existe plus -->
+          <div><div class="t">Journal de trésorerie</div><div class="s">Encaissements, prélèvements sur la carte des commerces, versements des prestataires et virements Qonto.</div></div>
+          <div class="pec-setting-control"><button class="pec-btn pec-btn--ghost pec-btn--sm tap" data-export="tresorerie"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-download"/></svg> Exporter</button></div>
+        </div>
+        <div class="pec-setting">
+          <div><div class="t">Journal des dépenses fournisseurs</div><div class="s">Mouvements du solde Duffel et règlements Nuitée post-payés.</div></div>
+          <div class="pec-setting-control"><button class="pec-btn pec-btn--ghost pec-btn--sm tap" data-export="fournisseurs"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-download"/></svg> Exporter</button></div>
+        </div>
+        <div class="pec-setting">
+          <div><div class="t">Journal d’audit</div><div class="s">Toutes les actions sensibles de la période, avec leur auteur — la contrepartie du droit de changer un tarif en ligne.</div></div>
+          <div class="pec-setting-control"><button class="pec-btn pec-btn--ghost pec-btn--sm tap" data-export="audit"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-download"/></svg> Exporter</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pec-notice pec-notice--info">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-landmark"/></svg>
+      <div>La provision de TVA se constitue au <b>versement</b>, pas à l’encaissement : tant que l’argent n’est pas arrivé sur le compte, il n’est pas là pour être mis de côté. Pour un <b>Bon d’achat PayEnCash</b>, c’est le versement du prestataire qui a débité la carte du commerce ; pour une vente réglée <b>en ligne</b>, c’est le versement du prestataire de paiement, jamais la notification d’acceptation. Seul l’état <code>on_account</code> autorise à disposer des fonds (D16). <!-- (18/09, soir) la confirmation par le rapport Cash Services est retirée : plus aucun dépôt d'espèces --></div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+  // COMPTABILITÉ DÉRIVÉE (audit zéro-dur 02/09) : « 2026-08 » figé ×4 → periodeCourante() ;
+  // « Registre vide » → D.mode.registrePolice (le livre de police 321-7, écran 37) ; le cash
+  // encaissé vient du bus et la commission des commerces du relevé du réseau — la TVA reste à
+  // 0 tant que le régime n'est pas tranché par l'expert-comptable (aucun taux inventé).
+  // (18/09, soir — l'agent de caisse mobile est abandonné) le référentiel RH/paie n'est plus lu.
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.periodeCourante) return;
+    var P = D.periodeCourante();
+    document.getElementById('ca-periode').value = P.mois;
+    document.querySelectorAll('.ca-mois').forEach(function (el) { el.textContent = P.mois; });
+    // (03/09) le sélecteur de période n'avait aucun handler : changer le mois re-dérive la période (periodeCourante(date))
+    document.getElementById('ca-periode').addEventListener('change', function () {
+      var v = this.value; if (!/^\d{4}-\d{2}$/.test(v)) return;
+      P = D.periodeCourante(new Date(parseInt(v.slice(0, 4), 10), parseInt(v.slice(5, 7), 10) - 1, 1));
+      document.querySelectorAll('.ca-mois').forEach(function (el) { el.textContent = P.mois; });
+      rendre();
+    });
+    // registre des objets mobiliers = D.mode.registrePolice (nombre de lignes + lien vers 37)
+    var reg = (D.registreGet ? D.registreGet() : ((D.mode && D.mode.registrePolice) || []));
+    if (reg.length) {
+      // (12/09 — constat C41) un rectificatif est une ligne du registre, pas un objet détenu
+      var objetsR = reg.filter(function (l) { return !l.rectif; });
+      var enStock = objetsR.filter(function (l) { return /stock/i.test(l.sortie || ''); }).length;
+      document.getElementById('ca-registre').innerHTML = '<tr><td colspan="5" class="meta" style="padding:14px"><b>' + objetsR.length + ' ligne' + (objetsR.length > 1 ? 's' : '') + '</b> au registre 321-7 · ' + enStock + ' en stock · ' + (objetsR.length - enStock) + ' sortie' + (objetsR.length - enStock > 1 ? 's' : '') + (reg.length > objetsR.length ? ' · ' + (reg.length - objetsR.length) + ' rectificatif' + (reg.length - objetsR.length > 1 ? 's' : '') : '') + ' — <a href="37-livre-police.html">ouvrir le livre de police</a> (identité du cédant, désignation, prix d\'achat, sortie).</td></tr>';
+    }
+    /* (18/09, soir — l'agent de caisse mobile est abandonné) la masse salariale des agents (Σ brut + charges
+       patronales des titulaires du référentiel RH) laisse la place à la COMMISSION DES COMMERCES : c'est la
+       seule charge que le canal espèces coûte encore, et elle est dérivée du relevé du réseau (relevesReseau),
+       jamais recalculée ici. */
+    (function () {
+      var rr = D.relevesReseau ? D.relevesReseau(P.mois) : null;
+      var zc = document.getElementById('ca-com'), zh = document.getElementById('ca-com-hint');
+      if (!zc) return;
+      zc.textContent = D.eur(rr ? rr.commissionHT : 0);
+      if (zh) zh.textContent = rr && rr.points
+        ? 'Charge — commission HT retenue par ' + rr.points + ' commerce' + (rr.points > 1 ? 's' : '') + ' sur ' + D.eur(rr.ventes) + ' de bons d’achat vendus, prélevée à la source'
+        : 'Charge — prélevée à la source sur chaque Bon d’achat vendu ; aucun bon d’achat vendu sur la période';
+    })();
+    // ── ÉCRITURES ET RÉSULTAT DE LA PÉRIODE (03/09) : une seule source, D.ecrituresGet(mois) /
+    //    D.resultatPeriode(mois). Le journal, les totaux, la TVA et les exports en découlent tous.
+    var esc = function (v) { return (window.PEC_DATA && PEC_DATA.esc) ? PEC_DATA.esc(v) : String(v == null ? '' : v); };
+    var payeesPeriode = function () {
+      return ((window.PEC_BUS && PEC_BUS.commandes) ? PEC_BUS.commandes() : [])
+        .filter(function (c) { return c.statut === 'paye' && c.payeAt && new Date(c.payeAt).toISOString().slice(0, 7) === P.mois; });
+    };
+    var ecrits = function () { return D.ecrituresGet ? D.ecrituresGet(P.mois) : []; };
+    var ventes = function () { return ecrits().filter(function (e) { return e.journal === 'Ventes'; }); };
+    // ventilation par régime — DÉRIVÉE commande par commande (D.regimeTva / D.tvaCommande), jamais agrégée
+    function ventilation() {
+      var b = { voyage: { base: 0, tva: 0, n: 0 }, neuf: { base: 0, tva: 0, n: 0 }, occasion: { base: 0, tva: 0, n: 0 } };
+      payeesPeriode().forEach(function (c) {
+        var t = D.tvaCommande(c);
+        var k = (String(c.type || 'FLY').toUpperCase() !== 'MODE') ? 'voyage' : (t.regime === 'classique' ? 'neuf' : 'occasion');
+        b[k].base += t.base || 0; b[k].tva += t.tva || 0; b[k].n++;
+      });
+      return b;
+    }
+    function rendre() {
+      var L = ecrits(), R = D.resultatPeriode ? D.resultatPeriode(P.mois) : { produits: 0, charges: 0, resultat: 0, tva: 0, lignes: 0, parJournal: {} };
+      var payees = payeesPeriode();
+      var total = payees.reduce(function (s, c) { return s + (parseFloat(String(c.montant || '0').replace(/\s/g, '').replace(',', '.')) || 0); }, 0);
+      document.getElementById('ca-encaisse').textContent = D.eur(total);
+      document.getElementById('ca-encaisse-hint').textContent = payees.length ? payees.length + ' commande' + (payees.length > 1 ? 's' : '') + ' payée' + (payees.length > 1 ? 's' : '') + ' en ' + P.label.toLowerCase() + ' (bus) — TTC, ventilé par régime ci-dessous' : 'Dérivé du bus — aucune commande payée sur la période';
+
+      // ── journal comptable : une ligne par écriture dérivée · vide → le dit, jamais un zéro trompeur
+      var corps = document.getElementById('ca-ecritures'), pied = document.getElementById('ca-ecritures-total');
+      if (!L.length) {
+        corps.innerHTML = '<tr><td colspan="7" class="meta" style="text-align:center;padding:18px">Aucune écriture sur la période</td></tr>';
+        pied.innerHTML = '';
+      } else {
+        corps.innerHTML = L.map(function (e) {
+          return '<tr><td class="meta">' + new Date(e.at).toLocaleString('fr-FR') + '</td><td>' + esc(e.journal) + '</td><td>' + esc(e.libelle) +
+            '</td><td class="ref">' + esc(e.piece || '—') + '</td><td class="num">' + (e.debit ? D.eur(e.debit) : '—') + '</td><td class="num">' + (e.credit ? D.eur(e.credit) : '—') +
+            '</td><td class="num">' + (e.tva ? D.eur(e.tva) : '—') + '</td></tr>';
+        }).join('');
+        var td = L.reduce(function (s, e) { return s + (e.debit || 0); }, 0), tc = L.reduce(function (s, e) { return s + (e.credit || 0); }, 0);
+        pied.innerHTML = '<tr><td colspan="4"><b>' + L.length + ' écriture' + (L.length > 1 ? 's' : '') + ' · ' + Object.keys(R.parJournal).join(' · ') + '</b></td><td class="num"><b>' + D.eur(td) + '</b></td><td class="num"><b>' + D.eur(tc) + '</b></td><td class="num"><b>' + D.eur(R.tva) + '</b></td></tr>';
+      }
+      document.getElementById('ca-journal-s').textContent = L.length
+        ? L.length + ' écriture' + (L.length > 1 ? 's' : '') + ' en ' + P.label.toLowerCase() + ' — produits ' + D.eur(R.produits) + ' · charges ' + D.eur(R.charges) + ' · résultat ' + D.eur(R.resultat) + '. Écritures dérivées (bus, factures) — aucune saisie manuelle.'
+        : 'Écritures DÉRIVÉES de ce qui existe vraiment : encaissements et remboursements (bus), factures fournisseurs. Aucune saisie manuelle.';
+
+      // ── TVA : somme des `tva` des écritures de vente + mention du RÉGIME DOMINANT (D.fiscalite)
+      var V = ventes(), tva = V.reduce(function (s, e) { return s + (e.tva || 0); }, 0);
+      var nMarge = V.filter(function (e) { return e.regime === 'marge'; }).length, nClassique = V.filter(function (e) { return e.regime === 'classique'; }).length;
+      var mention = !V.length ? '' : (nClassique > nMarge ? D.fiscalite.neuf.mention : D.fiscalite.voyage.mention);
+      document.getElementById('ca-tva-encaissee').textContent = D.eur(tva);
+      document.getElementById('ca-tva-encaissee-s').textContent = V.length
+        ? mention + ' (régime dominant sur ' + V.length + ' écriture' + (V.length > 1 ? 's' : '') + ' de vente : ' + (nClassique > nMarge ? 'classique' : 'marge') + ').'
+        : 'Encaissée du client pour le compte de l’État. Ni revenu, ni trésorerie disponible — aucune vente sur la période.';
+      document.getElementById('ca-tva-ligne').textContent = D.eur(tva);
+      document.getElementById('ca-tva-ligne-hint').innerHTML = '<b>Dette fiscale — à reverser à l’État</b>' + (mention ? ' · ' + esc(mention) : '');
+      // TVA déductible : aucune facture d'achat ne porte sa TVA dans la donnée — dit, pas simulé
+      var achats = ecrits().filter(function (e) { return e.journal === 'Achats'; });
+      document.getElementById('ca-tva-deductible-s').textContent = achats.length
+        ? achats.length + ' facture' + (achats.length > 1 ? 's' : '') + ' fournisseur sur la période, mais aucune ne porte sa TVA dans la donnée — rien de déductible à afficher (source manquante, pas un zéro).'
+        : 'Payée sur les achats et charges fournisseurs assujettis. Aucune facture fournisseur sur la période — rien à déduire.';
+      document.getElementById('ca-tva-nette').textContent = D.eur(tva);
+      document.getElementById('ca-tva-nette-s').textContent = 'Encaissée − déductible. La TVA déductible n’étant pas portée par la donnée, ce net vaut la seule TVA encaissée.';
+
+      // ── ventilation par régime
+      var b = ventilation(), tot = b.voyage.n + b.neuf.n + b.occasion.n;
+      [['voyage', b.voyage], ['neuf', b.neuf], ['occasion', b.occasion]].forEach(function (p) {
+        document.getElementById('ca-reg-' + p[0] + '-base').textContent = D.eur(p[1].base);
+        document.getElementById('ca-reg-' + p[0] + '-tva').textContent = D.eur(p[1].tva);
+      });
+      document.getElementById('ca-regimes-note').textContent = tot
+        ? tot + ' commande' + (tot > 1 ? 's' : '') + ' payée' + (tot > 1 ? 's' : '') + ' ventilée' + (tot > 1 ? 's' : '') + ' une par une (voyage ' + b.voyage.n + ' · mode neuf ' + b.neuf.n + ' · mode occasion ' + b.occasion.n + '). Sur les lignes en marge, la base affichée est le TTC encaissé : la marge elle-même (prix d’achat fournisseur) n’est pas portée par la donnée.'
+        : 'Aucun encaissement sur la période — rien à ventiler.';
+
+      // ── VENTILATION D'UN ENCAISSEMENT (04/09 — front/back) : commande par commande depuis le bus.
+      //    (18/09, soir) TTC → marge au taux de la grille → le reste = prix fournisseur. Le TTC n'est plus amputé
+      //    des frais de déplacement : ils facturaient la venue de l'agent, qui n'existe plus.
+      (function () {
+        var Rm = D.margesVives ? D.margesVives() : ((D.ref && D.ref.marges) || {});   // (09/09 — lot 1 socle) marges VIVES
+        var vFourn = 0, vMarge = 0;   // (18/09, soir) vFrais / nAg (frais de déplacement du canal agent) sont retirés : rien n'est plus déduit du TTC avant la marge
+        payees.forEach(function (c) {
+          var ttc = parseFloat(String(c.montant || '0').replace(/\s/g, '').replace(',', '.')) || 0;
+          var t = String(c.type || 'FLY').toUpperCase(), marge;
+          // (12/09) grille additive : la marge Mode = 7/107 de (ttc − livraison − atelier).
+          // `ttc − ttc / 1,12` versait la livraison et l'atelier dans la marge, donc dans
+          // le résultat : le prix fournisseur en sortait d'autant diminué.
+          if (t === 'MODE') marge = (D.margeCommandeMode ? (D.margeCommandeMode(ttc, null, c.remisePartage) || 0) : 0);   // (19/09) remise d'un lien partagé retranchée
+          else marge = ttc * (((/PACK/.test(t) || c.heb && c.vols) ? Rm.package : (/SEJ|HEB|STAY/.test(t) || c.heb) ? Rm.sejourSeul : Rm.volSeul) || 0) / 100;
+          vMarge += marge; vFourn += ttc - marge;
+        });
+        var r2 = function (x) { return Math.round(x * 100) / 100; };
+        document.getElementById('ca-vent-fourn').textContent = D.eur(r2(vFourn));
+        document.getElementById('ca-vent-fourn-hint').textContent = payees.length ? 'TTC encaissé − marge de la grille — reconstitue l’avance Duffel · règle la dette Nuitée post-payée' : 'Reconstitue l’avance Duffel · règle la dette Nuitée post-payée — rien à ventiler sans encaissement';
+        document.getElementById('ca-vent-marge').textContent = D.eur(r2(vMarge));
+        // PROVISION TVA : aucune table de provisions n'existe → mise de côté honnêtement à 0 ;
+        // l'écart dérive (TVA nette − provisionné) au lieu d'un zéro décoratif.
+        document.getElementById('ca-prov').textContent = D.eur(0);
+        // (18/09, soir) l'écran 32 (rapprochement bancaire) n'existe plus : la mise de côté naît du versement constaté sur le compte (Trésorerie)
+        document.getElementById('ca-prov-s').textContent = tva ? 'Aucune provision enregistrée — la mise de côté naît du versement constaté sur le compte (Trésorerie).' : 'Isolée du cash exploitable dès le versement sur le compte.';
+        document.getElementById('ca-prov-gap').textContent = D.eur(r2(tva));
+      })();
+
+      // ── TVA par période
+      var htTotal = b.voyage.base + b.neuf.base + b.occasion.base;
+      document.getElementById('ca-tva-rows').innerHTML = '<tr><td class="meta">' + P.mois + '</td><td class="num">' + D.eur(htTotal) + '</td><td class="num">' + D.eur(tva) + '</td><td class="num">—</td><td class="num">' + D.eur(tva) + '</td><td><span class="pec-pill pec-pill--off">' + (payees.length ? 'En cours — périodicité déclarative à caler avec l\'expert-comptable' : 'Première période — rien à déclarer avant l\'activité') + '</span></td></tr>';
+    }
+    window.addEventListener('pec-bus', rendre); window.addEventListener('storage', rendre); rendre();
+    // EXPORTS RÉELS (03/09 — les 9 « Exporter » n'avaient aucun handler) : CSV DÉRIVÉ des sources qui existent,
+    // journalisé (PEC_MGR.csv → bus `export`). Depuis D.ecrituresGet/resultatPeriode, les trois derniers journaux
+    // désactivés (TVA, ventilation par régime, dépenses fournisseurs) ont une source : ils exportent pour de vrai.
+    var EXPORTS = {
+      ventes: function () { return ['journal-ventes-' + P.mois, ['ref', 'date', 'client', 'type', 'canal', 'ttc_eur', 'base_ht', 'tva', 'regime', 'regle_par'], payeesPeriode().map(function (c) { var t = D.tvaCommande(c); return [c.ref, new Date(c.payeAt).toISOString(), c.client || '', c.type || '', c.canal || '', String(c.montant || ''), t.base, t.tva, t.regime, c.par || '']; })]; },
+      // JOURNAL COMPTABLE — l'intégralité des écritures dérivées de la période (D.ecrituresGet)
+      journal: function () { return ['journal-comptable-' + P.mois, ['horodatage', 'journal', 'libelle', 'piece', 'debit_eur', 'credit_eur', 'tva_eur', 'regime', 'source'], ecrits().map(function (e) { return [new Date(e.at).toISOString(), e.journal, e.libelle, e.piece || '', e.debit || 0, e.credit || 0, e.tva || 0, e.regime || '', e.source || '']; })]; },
+      // JOURNAL DE TVA — agrégat de la période : base, TVA encaissée par régime, puis le net à reverser
+      tva: function () {
+        var b = ventilation(), R = D.resultatPeriode(P.mois), l = [];
+        l.push(['Voyage — marge (297 A)', b.voyage.n, b.voyage.base, b.voyage.tva, D.fiscalite.voyage.mention]);
+        l.push(['Mode neuf — TVA ' + D.param('fiscalite.tvaTauxNeuf', 20) + ' %', b.neuf.n, b.neuf.base, b.neuf.tva, D.fiscalite.neuf.mention]);
+        l.push(['Mode occasion — marge (297 A)', b.occasion.n, b.occasion.base, b.occasion.tva, D.fiscalite.occasion.mention]);
+        l.push(['TVA encaissée (total période)', '', '', R.tva, 'somme des écritures du journal Ventes']);
+        l.push(['TVA déductible', '', '', '', 'non portée par la donnée — aucune facture d’achat ne porte sa TVA']);
+        l.push(['Net à reverser', '', '', R.tva, 'encaissée − déductible (déductible absente : net = encaissée)']);
+        return ['journal-tva-' + P.mois, ['poste', 'commandes', 'base_eur', 'tva_eur', 'mention'], l];
+      },
+      // VENTILATION PAR RÉGIME — cloisonnée COMMANDE PAR COMMANDE (D.regimeTva / D.tvaCommande)
+      regimes: function () { return ['ventilation-tva-regime-' + P.mois, ['ref', 'date', 'type', 'regime', 'taux_pct', 'ttc_eur', 'base_eur', 'tva_eur', 'mention'], payeesPeriode().map(function (c) { var t = D.tvaCommande(c); return [c.ref, new Date(c.payeAt).toISOString(), c.type || 'FLY', t.regime, t.taux || '', String(c.montant || ''), t.base, t.tva, t.mention || '']; })]; },
+      // DÉPENSES FOURNISSEURS — écritures du journal Achats de la période + mouvements des comptes voyage
+      fournisseurs: function () {
+        var l = ecrits().filter(function (e) { return e.journal === 'Achats'; }).map(function (e) { return ['facture', new Date(e.at).toISOString(), e.libelle, e.piece || '', e.debit || 0, e.source || '']; });
+        (D.achatsVoyage ? D.achatsVoyage() : []).filter(function (a) { return new Date(a.at).toISOString().slice(0, 7) === P.mois; })
+          .forEach(function (a) { l.push([a.type === 'recharge' ? 'recharge' : 'achat', new Date(a.at).toISOString(), (a.fournisseur || '') + ' · ' + a.ref, a.id, a.montant, 'compte voyage · ' + (a.par || '')]); });
+        return ['journal-depenses-fournisseurs-' + P.mois, ['nature', 'horodatage', 'libelle', 'piece', 'montant_eur', 'source'], l];
+      },
+      registre: function () { return ['registre-321-7', ['ligne', 'entree', 'designation', 'cedant', 'identite_cedant', 'prix_achat_eur', 'sortie'], ((D.mode && D.mode.registrePolice) || []).map(function (r) { return [r.ligne, r.entree, r.designation, r.fournisseur, r.idCedant || '', r.prixAchat, r.sortie || '']; })]; },
+      /* (18/09, soir — l'agent de caisse mobile est abandonné) l'export `paie` est supprimé avec la masse
+         salariale ; le journal de trésorerie ne liste plus les dépôts d'espèces (d.agent, relevé Cash Services)
+         mais les PRÉLÈVEMENTS sur la carte des commerces, qui sont l'autre mouvement d'argent réel. */
+      tresorerie: function () { var B = window.PEC_BUS; var l = []; (B && B.commandes ? B.commandes() : []).forEach(function (c) { if (c.statut === 'paye') l.push(['encaissement', c.ref, new Date(c.payeAt || 0).toISOString(), c.montant || '', c.par || '', c.statut]); }); (D.prelevementsGet ? D.prelevementsGet() : []).forEach(function (x) { l.push(['prelevement', x.id, new Date(x.at || 0).toISOString(), x.montant || '', x.enseigne || x.pointId || '', x.statut + (x.bon ? ' · bon d’achat ' + x.bon : '')]); }); return ['journal-tresorerie', ['nature', 'ref', 'horodatage', 'montant_eur', 'par', 'statut'], l]; },
+      audit: function () { return ['journal-audit', ['horodatage', 'evenement', 'ref', 'acteur', 'details'], ((window.PEC_BUS && PEC_BUS.journal) ? PEC_BUS.journal() : []).map(function (e) { var d = {}; Object.keys(e).forEach(function (k) { if (['evt', 'ref', 'at', 'par'].indexOf(k) === -1) d[k] = e[k]; }); return [new Date(e.at).toISOString(), (D.ref.auditLibelles || {})[e.evt] || e.evt, e.ref || '', e.par || 'système', JSON.stringify(d)]; })]; }
+    };
+    // (03/09) plus aucun export sans source : journal de TVA, ventilation par régime et dépenses
+    // fournisseurs sont désormais dérivés de D.ecrituresGet / D.tvaCommande / D.achatsVoyage.
+    var SANS_SOURCE = {};
+    document.querySelectorAll('[data-export]').forEach(function (b) {
+      var k = b.getAttribute('data-export');
+      if (SANS_SOURCE[k]) { b.disabled = true; b.style.opacity = '.45'; b.style.cursor = 'not-allowed'; b.title = SANS_SOURCE[k]; return; }
+      b.addEventListener('click', function () { if (!window.PEC_MGR || !PEC_MGR.csv) return; var x = EXPORTS[k](); PEC_MGR.csv(x[0], x[1], x[2]); });
+    });
+  })();
+</script>
+</body>
+</html>

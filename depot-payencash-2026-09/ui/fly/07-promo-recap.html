@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash FLY — Réserver une promo</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-verif.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<!-- RÉSERVATION PROMO (F2-promo) — depuis l'onglet Promos : une SUGGESTION à prix indicatif (pas un forfait ferme —
+     le client choisit son vol et son hôtel) ; ici il ajuste le NOMBRE DE VOYAGEURS puis récap -> Comment payer.
+     ?o=<id> sélectionne l'offre (catalogue PROMOS ci-dessous, miroir de 06-promos). -->
+<style>
+  .h1{font-size:26px;font-weight:800;line-height:1.1;letter-spacing:-0.02em;color:var(--color-ink);margin:12px 0 2px}
+  .sub2{font-size:12px;color:var(--color-muted);margin-bottom:14px}
+  .vrow{display:flex;align-items:center;justify-content:space-between;background:var(--color-surface);border-radius:16px;padding:14px 15px;box-shadow:var(--shadow-card);margin-top:12px}
+  .vstep{display:flex;align-items:center;gap:14px}
+  .vstep a{width:34px;height:34px;border-radius:999px;background:var(--color-segment);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:var(--color-ink);cursor:pointer;user-select:none;text-decoration:none}
+  .vstep b{min-width:20px;text-align:center;font-size:17px}
+  .jmin{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;border-radius:999px;padding:3px 9px;background:var(--color-amber-well);color:var(--color-amber-text)}
+  .eco{display:inline-flex;font-size:10px;font-weight:800;border-radius:999px;padding:3px 9px;background:var(--color-mint);color:var(--color-primary-dark)}
+  .terme{display:flex;gap:10px;font-size:12px;font-weight:500;line-height:1.5;color:var(--color-muted);margin-top:9px}
+  .terme .pec-ico{flex-shrink:0;margin-top:1px;font-size:15px;color:var(--color-primary)}
+  .terme b{color:var(--color-ink)}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:16px 20px 8px">
+
+    <!-- BANDEAU RÉCAP (fondatrice 27/08, maquette) : l'essentiel toujours visible. -->
+    <div style="position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 -16px;background:linear-gradient(120deg,var(--color-primary),var(--color-primary-dark));color:#fff;font-size:10.5px;font-weight:800;padding:8px 16px">
+      <span style="white-space:nowrap"><span id="tb-lbl">À régler</span> : <span id="tb-montant">—</span> €</span>
+      <span id="tb-trajet" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;color:rgba(255,255,255,.92)">—</span>
+    </div>
+
+
+    <a href="06-promos.html" class="tap" aria-label="Retour aux promos" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)">
+      <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-chevron-left"/></svg>
+    </a>
+
+    <h1 class="h1">Vérifie — avant de payer</h1>
+    <div class="sub2">Récap de ta promo · rien n'est encaissé à cette étape · Réf. <b id="ref">PRM-…</b></div>
+
+    <!-- L'offre figée -->
+    <div class="pec-card pec-card--elevated" style="overflow:hidden">
+      <div id="o-photo" style="display:none;position:relative;height:110px"></div>
+      <div style="padding:14px 16px 12px">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+          <div style="min-width:0">
+            <div id="o-mode" style="font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--color-primary-dark)">—</div>
+            <div id="o-titre" style="font-size:17px;font-weight:800;color:var(--color-ink);margin-top:2px">—</div>
+            <div id="o-det" style="font-size:12px;color:var(--color-muted);margin-top:4px;line-height:1.5">—</div>
+          </div>
+        </div>
+        <!-- TON VOL, concrètement (fondatrice 23/08 : dates + horaires pour se projeter) -->
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+          <span class="eco" id="o-eco">—</span>
+          <span class="jmin"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:11px"><use href="#i-clock"/></svg><span id="o-dep">—</span></span>
+          <span class="pec-pill" style="font-size:10px" id="o-stock">—</span>
+          <span class="jmin" id="o-expire" style="display:none"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:11px"><use href="#i-flame"/></svg>expire dans <b id="o-exp-cd" style="font-variant-numeric:tabular-nums">—</b></span>
+        </div>
+      </div>
+      </div>
+      <div id="o-expire-fin" style="display:none;border-radius:14px;background:#FDECEC;padding:11px 13px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:800;color:#B3261E">Cette offre a expiré</div>
+        <div style="font-size:10.5px;line-height:1.5;color:#7A4540;margin-top:2px">Le départ est à moins de 45 jours — la commande n'est plus possible. <a href="06-promos.html" style="color:var(--color-primary-dark);font-weight:800">Voir les offres du moment</a></div>
+    </div>
+
+    <!-- TON VOL (fondatrice 27/08, maquette) : aller ET retour détaillés — heures,
+         IATA, aéroports, durée, Direct, compagnie nommée + note enregistrement. -->
+    <div style="display:flex;align-items:center;gap:6px;margin:14px 2px 7px">
+      <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px;color:var(--color-primary-dark)"><use href="#i-plane"/></svg>
+      <span style="font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted)">Ton vol</span>
+    </div>
+    <div class="pec-card" id="o-vol" style="display:none;padding:13px 14px">
+      <div id="ov-route" style="font-size:14px;font-weight:800;letter-spacing:-0.01em;color:var(--color-ink)">—</div>
+      <div id="ov-legs"></div>
+      <div id="ov-note" style="display:flex;align-items:flex-start;gap:8px;border-radius:11px;background:var(--color-mint);padding:9px 11px;margin-top:9px">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:13px;color:var(--color-primary-dark);margin-top:1px"><use href="#i-info"/></svg>
+        <span style="font-size:10.5px;line-height:1.5;color:var(--color-mint-ink)"><b id="ov-cie" style="color:var(--color-primary-dark)">—</b> gère ton enregistrement — tes informations voyageur sont transmises directement à la compagnie.</span>
+      </div>
+    </div>
+
+    <!-- TON HÉBERGEMENT (fondatrice 27/08) : le récap complet AVANT de payer —
+         détails dépliables. Masqué en formule vol seul. -->
+    <div class="pec-card" id="o-heb" style="display:none;padding:13px 15px;margin-top:12px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:12px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-bed"/></svg></span>
+        <div style="min-width:0;flex:1">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--color-muted)">Ton hébergement</div>
+          <div style="font-size:12.5px;font-weight:800;color:var(--color-ink);margin-top:1px"><span id="oh-nom">—</span> <span id="oh-etoiles" style="font-weight:700;color:var(--color-primary-dark)">—</span></div>
+        </div>
+      </div>
+      <div style="font-size:11px;line-height:1.5;color:var(--color-muted);margin-top:7px"><span id="oh-quartier">—</span> · <span id="oh-nuits">—</span></div>
+      <details style="margin-top:7px">
+        <summary class="tap" style="cursor:pointer;font-size:11px;font-weight:800;color:var(--color-primary-dark);list-style:none">Voir le détail de l'hébergement →</summary>
+        <div style="margin-top:8px;border-radius:12px;background:var(--color-bg);padding:10px 12px;font-size:11px;line-height:1.65;color:var(--color-muted)">
+          <div><b style="color:var(--color-ink)">Chambre :</b> <span id="oh-chambre">—</span></div>
+          <div><b style="color:var(--color-ink)">Repas :</b> <span id="oh-regime">—</span></div>
+          <div><b style="color:var(--color-ink)">Inclus :</b> <span id="oh-plus">—</span></div>
+        </div>
+      </details>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:6px;margin:14px 2px 0">
+      <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px;color:var(--color-primary-dark)"><use href="#i-users"/></svg>
+      <span style="font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted)">Voyageurs</span>
+    </div>
+    <!-- Voyageurs -->
+    <div class="vrow">
+      <div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--color-muted)">Voyageurs</div>
+        <div style="font-size:11.5px;color:var(--color-muted);margin-top:2px" id="v-note">prix par personne · le récap est complet — il ne reste qu'à payer</div>
+      </div>
+      <div class="vstep">
+        <a class="tap" onclick="chgV(-1)">−</a><b id="v-n">1</b><a class="tap" onclick="chgV(1)">+</a>
+      </div>
+    </div>
+    <!-- Qui voyage (fondatrice 27/08) : le titulaire vient du PROFIL, les autres se
+         nomment ICI — tout est prêt avant le paiement. -->
+    <div class="pec-card" style="padding:6px 15px;margin-top:8px" id="v-liste"></div>
+
+    <!-- LE TOTAL (fondatrice 27/08) : rangée sobre — le bandeau noir a disparu,
+         le prix arrive APRÈS la vérification du contenu, juste avant les termes. -->
+    <div class="pec-card" style="margin-top:12px;padding:13px 16px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+        <div style="min-width:0">
+          <div style="font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--color-muted)" id="o-lbl">Total à régler</div>
+          <div class="sub" id="o-sub" style="font-size:10.5px;color:var(--color-muted);margin-top:2px">À régler · prix final, sans frais cachés</div>
+        </div>
+        <div style="flex:none;text-align:right">
+          <div style="font-size:22px;font-weight:800;letter-spacing:-0.02em;color:var(--color-primary-dark)"><span id="o-total">—</span> €</div>
+          <div style="font-size:10px;font-weight:600;color:var(--color-muted)"><s id="o-normal">—</s> · <span id="o-gain" style="font-weight:800;color:var(--color-primary-dark)">—</span></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Les termes — avant de payer -->
+    <div class="pec-card" style="padding:15px;margin-top:12px">
+      <p style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted);margin-bottom:9px">Avant de payer — ce que tu confirmes</p>
+      <div class="terme"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-info"/></svg><span><b>Ce n'est pas une offre ferme</b> — une idée de prix : <b>tu choisis ton vol et ton hôtel</b>. PayEnCash <b>intermédie</b> et facilite le paiement ; la compagnie et l'hôtel restent tes prestataires.</span></div>
+      <div class="terme"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-clock"/></svg><span>Prix promo <b>bloqué <span id="t-bloque">—</span></b> après confirmation — <b>rien n'est encaissé</b> tant que tu n'as pas réglé.</span></div>
+      <div class="terme"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-banknote"/></svg><span id="t-paiement">—</span></div>
+      <!-- (18/09, soir — l'agent de caisse mobile est abandonné) « ou un agent qui se déplace (+ frais de
+           déplacement) » n'a plus d'objet : personne ne part, et il n'y a plus de frais à annoncer. -->
+      <div class="terme"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-banknote"/></svg><span>Étape suivante : <b>choisis comment payer</b> — <span id="t-moyens">—</span>, sans le moindre frais.</span></div>
+      <div class="terme"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-file"/></svg><span>Promo à <b>dates fixes, stock limité</b> — conditions d'annulation affichées avant l'achat, remboursement <b>par le chemin d'où l'argent est venu</b> — re-crédit de ton Bon d’achat PayEnCash, avoir, ou virement (traçabilité LCB-FT).</span></div>
+      <div class="terme"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-receipt"/></svg><span id="t-fiscal">Prix <b>TTC</b> — TVA sur la marge (art. 297 A CGI) : elle ne figure pas sur la facture.</span></div>
+    </div>
+
+    <!-- (18/09, soir) LE BANDEAU #mixte EST RETIRÉ : il n'affichait qu'une chose, la répartition « X € en
+         espèces + Y € par carte sur le terminal de l'agent » au-delà du plafond légal. Plus d'agent, plus de
+         plafond à découper : un bloc que rien ne peut plus allumer n'a pas à rester dans la page. -->
+
+    <a class="pec-cta tap" href="01-ou-payer.html" id="cta" style="display:block;text-align:center;margin:14px 0 6px">Confirmer — … € · choisir comment payer</a>
+      <p style="margin-top:7px;text-align:center;font-size:9.5px;line-height:1.5;color:var(--color-muted)">En confirmant, tu acceptes nos <a href="../ecrans/18-informations-legales.html#cgv" style="color:var(--color-primary-dark);font-weight:700">CGV</a>, les <b>conditions de transport de la compagnie</b> et les <b>conditions du tarif</b> affichées ci-dessus.</p>
+
+    <div style="text-align:center;font-size:10.5px;color:var(--color-muted);margin-bottom:14px" id="t-suite">La suite : choisis comment payer</div>
+
+  <div id="fermeture-slot"></div>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('../ecrans/');})();</script>
+</div><!-- /pec-body -->
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" aria-current="page" href="06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="../ecrans/03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="../ecrans/01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="../ecrans/14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" href="../ecrans/10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+// Catalogue : PEC_DATA.promos (source unique — zéro code en dur ici)
+var D = window.PEC_DATA;
+  var oid = (location.search.match(/[?&]o=([a-z0-9-]+)/) || [])[1];
+  var P0 = (D.promosToutes ? D.promosToutes() : D.promos).find(function(p){ return p.id === oid; }) || (D.promosToutes ? D.promosToutes() : D.promos).find(function(p){ return p.id === 'bucarest'; });
+var M0 = D.promosModes.find(function(m){ return m.id === P0.mode; });
+// Formule choisie dans la liste des offres : pack (défaut) ou vol A/R seul.
+var FORM = (location.search.match(/[?&]f=(vol|pack)/) || [])[1] || 'pack';
+var SEUL = FORM === 'vol' && P0.volSeul;
+var O = { mode: M0.nom, titre: P0.titre,
+          det: SEUL ? 'Vol aller-retour seul — sans hébergement' : P0.det + ' · ' + P0.nuits + ' nuits',
+          prix: SEUL ? P0.volSeul : P0.prix, normal: SEUL ? P0.volSeulNormal : P0.normal,
+          dep: 'départ dans ' + P0.semaines + ' semaines', id: P0.id, vol: P0.vol, dates: P0.dates };
+  /* (18/09, soir — l'agent de caisse mobile est abandonné, puis pivot de positionnement) LE PLAFOND DES ESPÈCES
+     A DISPARU D'ICI : `D.plafondEspecesVif()` n'existe plus, et la règle qu'il portait — au-delà du plafond légal,
+     complément OBLIGATOIRE par carte sur le terminal de l'agent — visait un service abandonné. Rien ne le remplace :
+     le récap confirme UN total, et les plafonds propres à chaque moyen se disent sur la page de paiement. */
+  var nV = 1;
+  var DEP = (D.aeroportDefautGet ? D.aeroportDefautGet() : D.depDefaut) || (D.aeroportBaseLibelle ? D.aeroportBaseLibelle() : 'Marseille (MRS)'), DEP_V = DEP.replace(/\s*\(.*$/, ''), DEP_I = (DEP.match(/\(([A-Z]{3})\)/) || [])[1] || 'MRS';
+  (function () { var tb = document.getElementById('t-bloque'), mn = D.scenario.prixBloqueMinutes || (D.prixBloque && D.prixBloque.dureeMin); if (tb && mn) tb.textContent = mn % 60 === 0 ? (mn / 60) + ' h' : mn + ' min'; })();
+
+  // Vol concret + photo de la ville (P0.vol : arr/aero/cie/photo/dates/ha/hr)
+  (function(){
+    var v = P0.vol; if (!v) return;
+    if (v.photo) {
+      var ph = document.getElementById('o-photo');
+      ph.style.display = 'block';
+      ph.innerHTML = '<img loading="lazy" decoding="async" src="../assets/photos/' + v.photo + '" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">' +
+        '<span style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,25,20,.55))"></span>';
+    }
+    // TON VOL (v3, maquette fondatrice) : les deux segments détaillés — pour un
+    // aller simple, seul le segment ALLER s'afficherait.
+    var bloc = document.getElementById('o-vol');
+    bloc.style.display = 'block';
+    var ville = (P0.titre || '').split(' ')[0].replace(/[,;:]$/, '');
+    var cieN = ((window.PEC_DATA.compagnies || []).filter(function (x) { return x.iata === v.cie; })[0] || {}).nom || 'La compagnie';
+    document.getElementById('ov-route').innerHTML = DEP_V + ' <span style="color:var(--color-primary-dark)">⇄</span> ' + ville + ' <span style="font-weight:600;font-size:11px;color:var(--color-muted)">· aller-retour</span>';
+    document.getElementById('ov-cie').textContent = cieN;
+    var dates = (v.dates || '').split('→');
+    function duree(h) {
+      var p = (h || '').split('→').map(function (x) { return x.trim(); });
+      if (p.length < 2) return '';
+      var a = p[0].split(':'), b = p[1].split(':');
+      var mn = (+b[0] * 60 + +b[1]) - (+a[0] * 60 + +a[1]); if (mn < 0) mn += 1440;
+      return Math.floor(mn / 60) + 'h' + String(mn % 60).padStart(2, '0');
+    }
+    function leg(badge, dateTxt, h, iD, aD, iA, aA) {
+      var p = (h || ' → ').split('→').map(function (x) { return x.trim(); });
+      return '<div style="border-radius:12px;background:var(--color-bg);padding:10px 12px;margin-top:8px">'
+        + '<div style="display:flex;align-items:center;gap:8px">'
+        + '<span style="flex:none;border-radius:6px;background:var(--color-mint);color:var(--color-primary-dark);font-size:8.5px;font-weight:800;letter-spacing:.09em;padding:3px 7px">' + badge + '</span>'
+        + '<img loading="lazy" decoding="async" src="../assets/vendor/airlines/' + v.cie + '.png" alt="" style="flex:none;width:18px;height:18px;border-radius:5px;object-fit:contain;background:#fff;box-shadow:0 1px 3px rgba(15,42,36,.12)">'
+        + '<span style="min-width:0;font-size:10.5px;font-weight:700;color:var(--color-ink)">' + cieN + '</span>'
+        + '<span style="margin-left:auto;flex:none;font-size:10px;font-weight:600;color:var(--color-muted)">' + (dateTxt || '') + '</span></div>'
+        + '<div style="display:flex;align-items:center;gap:8px;margin-top:9px">'
+        + '<span style="flex:none;text-align:left"><b style="display:block;font-size:16px;letter-spacing:-0.02em;color:var(--color-ink)">' + p[0] + '</b><span style="display:block;font-size:10px;font-weight:800;color:var(--color-ink)">' + iD + '</span><span style="display:block;font-size:8.5px;color:var(--color-muted);max-width:86px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + aD + '</span></span>'
+        + '<span style="min-width:0;flex:1;text-align:center"><span style="display:block;font-size:9.5px;font-weight:600;color:var(--color-muted)">' + duree(h) + '</span>'
+        + '<span style="display:flex;align-items:center;gap:4px;margin:2px 0"><span style="flex:1;border-top:1.5px dashed var(--color-sep)"></span><svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:11px;color:var(--color-primary-dark)"><use href="#i-plane"/></svg><span style="flex:1;border-top:1.5px dashed var(--color-sep)"></span></span>'
+        + '<span style="display:block;font-size:9.5px;font-weight:800;color:var(--color-primary-dark)">Direct</span></span>'
+        + '<span style="flex:none;text-align:right"><b style="display:block;font-size:16px;letter-spacing:-0.02em;color:var(--color-ink)">' + p[1] + '</b><span style="display:block;font-size:10px;font-weight:800;color:var(--color-ink)">' + iA + '</span><span style="display:block;font-size:8.5px;color:var(--color-muted);max-width:86px;margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + aA + '</span></span>'
+        + '</div></div>';
+    }
+    document.getElementById('ov-legs').innerHTML =
+      leg('ALLER', (dates[0] || '').trim(), v.ha, DEP_I, DEP_V, v.arr, v.aero)
+      + leg('RETOUR', (dates[1] || '').trim(), v.hr, v.arr, v.aero, DEP_I, DEP_V);
+  })();
+  function majBandeau(total, n) {
+    var tNum = typeof total === 'number' ? total : (parseFloat(String(total).replace(/\s/g, '').replace(',', '.')) || 0);
+    var e = document.getElementById('tb-montant'); if (e) e.textContent = String(tNum).replace('.', ',');
+    // (18/09, soir) `montantARegler` disait le montant dû ET sa répartition espèces/carte du canal agent : le
+    // canal n'existe plus, la fonction non plus. Le titre est le même pour tous les moyens — « À régler ».
+    var _tl = document.getElementById('tb-lbl'), _ol = document.getElementById('o-lbl');
+    if (_tl) _tl.textContent = 'À régler'; if (_ol) _ol.textContent = 'Total à régler';
+    var tr = document.getElementById('tb-trajet');
+    if (tr) {
+      var v2 = (typeof P0 !== 'undefined' && P0.vol) || {};
+      tr.textContent = DEP_V + ' → ' + (v2.arr || '') + (typeof P0 !== 'undefined' && P0.heb && !SEUL ? ' + hébergement' : '') + ' · ' + n + ' voyageur' + (n > 1 ? 's' : '');
+    }
+  }
+  function render(){
+    document.getElementById('ref').textContent = 'PRM-' + (oid || 'bucarest').toUpperCase().slice(0,6);
+    document.getElementById('o-mode').textContent = O.mode;
+    document.getElementById('o-titre').textContent = O.titre;
+    document.getElementById('o-det').textContent = O.det;
+    var pc = Math.round((1 - O.prix / O.normal) * 100);
+    document.getElementById('o-eco').textContent = '−' + pc + ' % vs normal';
+    document.getElementById('o-dep').textContent = O.dep;
+    /* (10/09 — lot 8, constat C29) Les places restantes se DÉRIVENT des ventes réglées : « 4 places » était
+       un texte que rien ne faisait bouger, et le récap y plafonnait pourtant le nombre de voyageurs. */
+    var PL = D.promoPlaces ? D.promoPlaces(P0.id) : null;
+    document.getElementById('o-stock').textContent = (PL && PL.capacite != null) ? PL.libelle : (P0.mention || 'places disponibles');
+    var totalBrut = O.prix * nV, normal = O.normal * nV;
+    // (09/09 — lot 2 l'argent) L'AVOIR DU COMPTE se déduit au récap (D.avoirSolde) — consommé au règlement par le bus, jamais avant
+    var avoirDispo = 0; try { var cidA = D.clientActifGet ? D.clientActifGet() : null; if (cidA && D.avoirSolde) avoirDispo = D.avoirSolde(cidA); } catch (eA) {}
+    var avoir = Math.max(0, Math.min(avoirDispo, totalBrut)), total = Math.round((totalBrut - avoir) * 100) / 100;
+    (function () { var z = document.getElementById('o-avoir'); if (!z) { z = document.createElement('div'); z.id = 'o-avoir'; z.style.cssText = 'font-size:11.5px;font-weight:700;color:var(--color-primary-dark);margin-top:4px'; var tot = document.getElementById('o-total'); if (tot && tot.parentNode) tot.parentNode.appendChild(z); } z.textContent = avoir > 0 ? 'Avoir déduit : −' + D.eur(avoir) + ' (sur ' + D.eur(totalBrut) + ')' : ''; })();
+    document.getElementById('o-total').textContent = String(total).replace('.', ',');
+    document.getElementById('o-sub').textContent = 'À régler · ' + nV + ' voyageur' + (nV>1?'s':'') + (nV > 1 ? ' · ' + O.prix + ' €/pers. × ' + nV : '') + ' · tout compris';
+    document.getElementById('o-normal').textContent = normal + ' € en normal';
+    document.getElementById('o-gain').textContent = 'tu économises ' + (normal - totalBrut) + ' €';   // (09/09 — lot 2) l'économie se mesure sur le prix, pas sur l'avoir
+    document.getElementById('v-n').textContent = nV;
+    var cta = document.getElementById('cta');
+    // (05/09) DÉPÔT DE LA COMMANDE PROMO : le tunnel promo ne déposait rien, contrairement aux 4
+    // tunnels parcours — tout l'aval (ta commande, le manager) retombait
+    // donc sur le vol canonique : mauvaise destination, mauvais montant, « 1 voyageur » en dur.
+    function deposerPromo(totalEur) {
+      if (!D.commandeEnCoursSet) return;
+      var dep = (D.aeroportDefautGet ? D.aeroportDefautGet() : '') || '';
+      D.commandeEnCoursSet({
+        totalCents: Math.round(totalEur * 100),
+        // (17/09 — pivot) plus de `carteCents` déposé ici ; (18/09, soir) il n'y a plus de part carte du tout,
+        // ni de fonction pour la calculer : le total est un, et le moyen se choisit après.
+        avoirCents: avoir > 0 ? Math.round(avoir * 100) : 0,   // (09/09 — lot 2) l'avoir appliqué suit la commande (« Comment payer » → bus → consommé au règlement)
+        trajet: (dep ? dep.replace(/\s*\(.*\)$/, '') + ' → ' : '') + (O.titre || ''),
+        titre: O.titre || '', promoId: O.id, dates: (O.vol && O.vol.dates) || O.dates || '',
+        voyageurs: nV, type: 'FLY',
+        // (09/09 — lot 2) UN SEUL format de détail — [libellé, valeur], celui des 4 tunnels (fly/02 et partenaire/04 lisaient l[0]/l[1] : « undefined — undefined »)
+        detailPrix: [
+          ['Prix promo par voyageur — ' + (O.titre || ''), O.prix + ' €'],
+          ['Voyageurs', String(nV)],
+          ['Nos frais de service', 'inclus dans le prix promo']
+        ].concat(avoir > 0 ? [['Avoir déduit', '−' + D.eur(avoir)]] : [])
+      });
+    }
+    /* (17/09 — pivot) LE MONTANT EST UN, LE MOYEN SE CHOISIT APRÈS.
+       (18/09, soir) Il n'y a plus de canal qui découpe le total : le bandeau « Si tu choisis l'agent : X € en
+       espèces + Y € par carte sur son terminal » a disparu avec l'agent, et le bloc #mixte qui le portait reste
+       masqué en permanence — il n'a plus aucune condition qui l'allume. */
+    var moyensLbl = D.moyensPaiementLabel ? D.moyensPaiementLabel() : '';
+    var tm = document.getElementById('t-moyens'); if (tm) tm.textContent = moyensLbl;
+    var tsu = document.getElementById('t-suite'); if (tsu) tsu.textContent = 'La suite : choisis comment payer — ' + moyensLbl;
+    var tp = document.getElementById('t-paiement');
+    cta.textContent = 'Confirmer — ' + total + ' € · choisir comment payer';
+    deposerPromo(total);
+    // (09/09 — lot 2) ?m = le TOTAL : le dépôt du tunnel se retrouve et la commande annonce le vrai montant
+    cta.style.opacity = '1'; cta.setAttribute('href', '01-ou-payer.html?m=' + Math.round(total * 100));
+    if (tp) tp.innerHTML = 'Payer <b>avec un bon d’achat</b> : ' + D.esc(moyensLbl) + ', à tout montant.';
+    document.getElementById('v-note').textContent = O.prix + ' € par personne · le récap est complet — il ne reste qu\'à payer';
+    majBandeau(total, nV);   // (revue lot 2) un NOMBRE, jamais « 1 383,66 » en texte : le bandeau formate, il ne parse pas
+    var tf = document.getElementById('t-fiscal');
+    if (tf && D.fiscalite) tf.textContent = D.fiscalite.voyage.mention;
+  }
+  // (05/09) le plafond était 6 EN DUR, et `stock` (« 4 places ») n'était qu'un texte jamais
+  // comparé : on pouvait réserver 6 voyageurs sur une offre qui n'en accepte que 3.
+  function placesOffre() {
+    var max = (D.scenario && D.scenario.voyageursMax) || 6;
+    var pl = D.promoPlaces ? D.promoPlaces(P0.id) : null;
+    return (pl && pl.reste != null) ? Math.max(1, Math.min(max, pl.reste)) : max;
+  }
+  function chgV(d){ nV = Math.max(1, Math.min(placesOffre(), nV + d)); render(); }
+  render();
+
+// ── RÉCAP COMPLET + EXPIRATION (fondatrice 27/08) ──
+(function () {
+  var D = window.PEC_DATA; if (!D) return;
+  var id = (location.search.match(/[?&]o=([a-z0-9-]+)/) || [])[1];
+  var p = (D.promosToutes ? D.promosToutes() : D.promos).filter(function (x) { return x.id === id; })[0];
+  if (!p) return;
+  var volSeul = /[?&]f=vol/.test(location.search);
+
+  // l'hébergement (formule pack uniquement) — le rendu riche partagé :
+  // galerie photos, note /10, détails et COMMENTAIRES (fondatrice 27/08)
+  if (p.heb && !volSeul) {
+    var oh = document.getElementById('o-heb');
+    oh.style.display = 'block';
+    oh.innerHTML = '<div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--color-muted);margin-bottom:8px">Ton hébergement</div>' + D.hebHTML(p);
+  }
+
+  // qui voyage : titulaire (profil) + noms saisis pour les suivants
+  function rendreVoyageurs() {
+    var n = parseInt(document.getElementById('v-n').textContent, 10) || 1;
+    var z = document.getElementById('v-liste'); if (!z) return;
+    var nomT = (D.profil || {}).nomComplet || 'Toi';
+    var h = '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--color-sep)">'
+      + '<span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:11px;background:var(--color-mint);color:var(--color-primary-dark);font-size:13px;font-weight:800">' + nomT.charAt(0) + '</span>'
+      + '<span style="min-width:0;flex:1"><span style="display:block;font-size:12.5px;font-weight:800;color:var(--color-ink)">' + nomT + '</span>'
+      + '<span style="display:block;font-size:10px;font-weight:600;color:var(--color-muted)">Voyageur 1 · adulte · ' + ((D.profil && D.profil.verifie) ? '<span style="color:var(--color-primary-dark);font-weight:800">✓ profil vérifié</span>' : '<span style="color:var(--color-amber-text);font-weight:800">profil à vérifier</span>') + '</span></span>'
+      + '<a class="tap" href="../ecrans/10-compte.html" style="flex:none;font-size:11px;font-weight:800;color:var(--color-primary-dark);text-decoration:none">Modifier</a></div>';
+    for (var i = 2; i <= n; i++) {
+      h += '<div style="display:flex;align-items:center;gap:10px;padding:9px 0' + (i < n ? ';border-bottom:1px solid var(--color-sep)' : '') + '">'
+        + '<span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:11px;background:var(--color-bg);color:var(--color-muted);font-size:13px;font-weight:800">' + i + '</span>'
+        + '<span style="min-width:0;flex:1"><input class="v-nom rv-nom" data-cle="' + id + '" data-i="' + i + '" type="text" placeholder="Prénom et nom du voyageur ' + i + '" style="width:100%;border:0;border-radius:10px;background:var(--color-bg);font-size:11.5px;font-weight:600;color:var(--color-ink);padding:8px 11px;outline:none">'
+        + '<span style="display:block;font-size:10px;font-weight:600;color:var(--color-muted);margin-top:2px;padding-left:2px">Voyageur ' + i + ' · adulte · <span style="color:var(--color-primary-dark);font-weight:800">✎ modifiable jusqu\'au paiement</span></span></span></div>';
+    }
+    // les noms saisis se CONSERVENT par offre (PEC_DATA.voyageursGet — 27/08)
+    z.innerHTML = h;
+    var noms = D.voyageursGet(id);
+    [].forEach.call(z.querySelectorAll('.v-nom'), function (inp) {
+      if (noms[inp.getAttribute('data-i')]) inp.value = noms[inp.getAttribute('data-i')];
+    });
+  }
+  rendreVoyageurs();
+  var ancienChgV = window.chgV;
+  if (ancienChgV) window.chgV = function (d) { ancienChgV(d); rendreVoyageurs(); };
+
+  // expiration J−45 : décompte réel, forçable ?expire=apres|avant
+  var force = (location.search.match(/[?&]expire=(apres|avant)/) || [])[1];
+  var lim = D.promoExpireLe(p);
+  var expiree = force ? force === 'apres' : (lim ? lim <= new Date() : false);
+  /* (10/09 — lot 8, constat C29) UNE OFFRE COMPLÈTE NE SE COMMANDE PAS. Rien ne décomptait les places : on
+     pouvait vendre indéfiniment les quatre places du même voyage. Le bouton ne promet plus ce qu'il ne peut tenir. */
+  var placesR = D.promoPlaces ? D.promoPlaces(p.id) : null;
+  if (placesR && placesR.complet) {
+    var ctaC = document.getElementById('cta');
+    ctaC.style.opacity = '.4'; ctaC.style.pointerEvents = 'none';
+    ctaC.textContent = 'Offre complète — toutes les places sont prises';
+  } else if (expiree) {
+    document.getElementById('o-expire-fin').style.display = 'block';
+    var cta = document.getElementById('cta');
+    cta.style.opacity = '.4'; cta.style.pointerEvents = 'none';
+    cta.textContent = 'Offre expirée — commande impossible';
+  } else if (lim) {
+    var z = document.getElementById('o-expire'); z.style.display = 'inline-flex';
+    var e = document.getElementById('o-exp-cd');
+    (function tic() {
+      var s = Math.max(0, Math.floor((lim - new Date()) / 1000));
+      var j = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+      e.textContent = j + ' j ' + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(x).padStart(2, '0');
+      setTimeout(tic, 1000);
+    })();
+  }
+})();
+
+// COMPTE VÉRIFIÉ OBLIGATOIRE (fondatrice 30/08) : ce récap promo mène au paiement —
+// on ne le passe pas sans SMS + e-mail validés. On intercepte le CTA (lien) : si le
+// compte n'est pas complet, la fenêtre de vérification s'ouvre, puis on poursuit.
+(function () {
+  var cta = document.getElementById('cta'); if (!cta) return;
+  cta.addEventListener('click', function (e) {
+    if (window.PEC_VERIF && !PEC_VERIF.complet()) {
+      e.preventDefault();
+      var href = cta.getAttribute('href');
+      PEC_VERIF.exiger(function () { if (href) location.href = href; });
+    }
+  });
+})();
+</script>
+</body>
+</html>

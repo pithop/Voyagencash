@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Ce qu'on ne te demande jamais</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<!-- CE QU'ON NE TE DEMANDE JAMAIS — page d'information liée depuis le Compte (route /politique-especes,
+     conservée pour ne casser aucun lien ; son SUJET, lui, a changé deux fois le 18/09).
+
+     (18/09, soir — l'agent de caisse mobile est abandonné) LA PAGE S'APPELAIT « POLITIQUE ESPÈCES » et
+     décrivait comment l'AGENT acceptait un billet de 200 ou de 500 €, comment il rendait la monnaie
+     (espèces, avoir, virement le jour même), quelle pièce d'identité il contrôlait au comptoir, et à
+     partir de quel plafond le solde passait OBLIGATOIREMENT par carte sur son terminal. Plus personne ne
+     se déplace, il n'y a plus de terminal, plus de monnaie à rendre.
+
+     (18/09, soir — pivot de positionnement « on conserve que la logique paiement sans CB, un bon d’achat suffit ; toute la logique liée payer en espèces, elle saute ») LA PROMESSE N'EST PLUS
+     « payer en espèces », C'EST « PAYER AVEC UN BON D’ACHAT ». Comment le client règle son bon d’achat ou son
+     ticket chez le commerçant ne nous regarde pas, et ne doit être écrit nulle part : ce que PayEnCash
+     garantit, c'est qu'un bon d’achat lui suffit, à tout moment.
+
+     CE QUE LA PAGE DIT DONC MAINTENANT :
+     · ce qu'on ne demande jamais — numéro de carte, RIB pour prélever, compte bancaire, découvert ;
+     · ce qui plafonne réellement : le BON D’ACHAT (bonsRef : plafondBon par bon d’achat, plafondClientJour par jour,
+       plafondClientMois sur fenetrePlafondJours glissants) et le ticket anonyme (plafondAnonyme) ;
+     · où l'identité entre en jeu, et pourquoi (LCB-FT) ;
+     · comment un remboursement revient : re-crédit du bon d’achat, avoir, ou virement.
+     L'article L112-6 CMF a été RETIRÉ : il visait le paiement d'une dette en espèces à AJEK, qui n'existe
+     plus. ZÉRO CHIFFRE ÉCRIT : tout descend de D.bonsRef() (valeurs VIVES — le manager les ajuste en
+     Configuration), de D.moyensPaiement() et de D.bonsRef().fondement pour les textes de loi. La page
+     ÉCOUTE le bus : un plafond modifié en Configuration se relit sans recharger.
+     ⚠️ Contenu à VALIDER par un pro avant mise en ligne (pas juridique). -->
+<style>
+  .h1{font-size:23px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;color:var(--color-ink);margin:14px 0 6px}
+  .h1 em{font-style:normal;color:var(--color-primary)}
+  .lead{font-size:14px;font-weight:500;line-height:1.5;color:var(--color-muted);margin:0 0 4px}
+  .card2{background:var(--color-card);border-radius:16px;box-shadow:var(--shadow-card);padding:15px 16px;margin-top:12px}
+  .card2 .tt{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:800;color:var(--color-ink)}
+  .rule{display:flex;gap:9px;align-items:flex-start;margin-top:10px}
+  .rule .ic{flex:none;margin-top:1px;color:var(--color-primary-dark)}
+  .rule p{margin:0;font-size:12.5px;line-height:1.55;color:var(--color-muted)}
+  .rule p b{color:var(--color-ink)}
+  .jamais{display:flex;gap:9px;align-items:flex-start;margin-top:9px}
+  .jamais .x{flex:none;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:999px;background:var(--color-bg);color:var(--color-muted);font-size:12px}
+  .jamais p{margin:0;font-size:12.5px;line-height:1.5;color:var(--color-muted)}
+  .jamais p b{color:var(--color-ink)}
+  .ex{margin-top:8px;border-radius:11px;background:var(--color-mint);padding:8px 11px;font-size:11.5px;line-height:1.5;color:var(--color-mint-ink)}
+  .ex b{color:var(--color-primary-dark)}
+  .warn{border-left:3px solid #E39A2E;background:rgba(227,154,46,.10)}
+  .liste{margin:8px 0 0;padding-left:16px}
+  .liste li{margin-top:5px;font-size:12px;line-height:1.55;color:var(--color-muted)}
+  .fond{margin-top:9px;font-size:11.5px;line-height:1.55;color:var(--color-muted)}
+  .fond b{color:var(--color-ink)}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;background:var(--color-surface)">
+
+    <div style="padding:18px 20px 0">
+      <a href="10-compte.html" class="tap" aria-label="Retour" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-chevron-left"/></svg>
+      </a>
+      <h1 class="h1">Ce qu'on ne te<br><em>demande jamais.</em></h1>
+      <p class="lead"><b style="color:var(--color-ink)">Un bon d’achat suffit</b> pour réserver et pour payer chez nous. Ce qui le permet : <span class="js-moyens">—</span>.</p>
+    </div>
+
+    <div class="pec-info-body">
+
+      <!-- 1 · La liste de ce qui n'existe pas -->
+      <p class="pec-section-label" style="margin:0 0 4px">1 · Ce qu'on ne te demande jamais</p>
+      <div class="card2">
+        <div class="jamais"><span class="x">×</span><p><b>Un numéro de carte bancaire.</b> Il n'y a aucun champ pour ça dans l'app — ni à l'inscription, ni au récapitulatif, ni au paiement.</p></div>
+        <div class="jamais"><span class="x">×</span><p><b>Un RIB pour prélever.</b> PayEnCash ne prélève rien, jamais. Le seul RIB que tu peux enregistrer sert à <b>recevoir</b> un remboursement.</p></div>
+        <div class="jamais"><span class="x">×</span><p><b>Un compte bancaire.</b> Tu n'as pas besoin d'en avoir un, ni d'être à flot, ni de le prouver.</p></div>
+        <div class="jamais"><span class="x">×</span><p><b>Un complément par carte</b> au-delà d'un montant. Aucun paiement ne bascule sur une carte, à aucun montant.</p></div>
+        <div class="ex">Un <span class="js-bon-nom">bon d’achat</span> et un ticket sont des <b>codes prépayés</b> : tu les achètes chez un commerçant, tu les saisis ici. Nous ne voyons ni comment tu les as réglés chez lui, ni auprès de quelle banque.</div>
+      </div>
+
+      <!-- 2 · Les plafonds réels -->
+      <p class="pec-section-label" style="margin:22px 0 4px">2 · Ce qui plafonne vraiment</p>
+      <div class="card2">
+        <div class="rule"><svg class="pec-ico ic" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-ticket"/></svg><p><b>Par bon d’achat</b> : <b class="js-plafond-bon">—</b> — et au moins <b class="js-min">—</b>. Au-delà, ton commerçant t'en crée <b>plusieurs</b>, que tu saisis l'un après l'autre.</p></div>
+        <div class="rule"><svg class="pec-ico ic" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-user"/></svg><p><b>Par client et par jour</b> : <b class="js-plafond-jour">—</b> de bons d’achat utilisés.</p></div>
+        <div class="rule"><svg class="pec-ico ic" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-history"/></svg><p><b>Sur <span class="js-fenetre">—</span> glissants</b> : <b class="js-plafond-mois">—</b>. Au-delà, ton bon d’achat <b>reste intact</b> — mais la loi nous demande de <b>vérifier ton identité</b> avant que tu continues à t'en servir.</p></div>
+        <div class="rule" id="rule-anonyme" hidden><svg class="pec-ico ic" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-shield"/></svg><p id="txt-anonyme">—</p></div>
+        <div class="ex warn" id="ex-plafond">—</div>
+        <p class="fond" style="margin-top:10px"><a class="lien" href="19-verification-identite.html" style="font-weight:800;color:var(--color-primary-dark)">Vérifier mon identité</a> — quelques minutes, une pièce et une courte vidéo.</p>
+      </div>
+
+      <!-- 3 · Le retour de l'argent -->
+      <p class="pec-section-label" style="margin:22px 0 4px">3 · Si on te rembourse</p>
+      <div class="card2">
+        <div class="tt">Trois chemins, jamais un numéro de carte</div>
+        <div class="rule"><svg class="pec-ico ic" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-refresh"/></svg><p><b>Re-crédit du <span class="js-bon-nom">bon d’achat</span></b> : ce que ton bon d’achat a réglé lui revient, et son solde repart pour <b class="js-validite">—</b>.</p></div>
+        <div class="rule"><svg class="pec-ico ic" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-receipt"/></svg><p><b>Avoir sur ton compte</b> (valable <b class="js-avoir">—</b>), utilisable sur FLY comme sur MODE — sans rien ouvrir nulle part.</p></div>
+        <div class="rule"><svg class="pec-ico ic" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-landmark"/></svg><p><b>Virement</b>, si tu le préfères : sur un RIB <b>à ton nom</b>, sous <b class="js-virement">—</b> — jamais vers un tiers. Sans RIB enregistré, le remboursement part en avoir.</p></div>
+        <div class="rule"><svg class="pec-ico ic" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-info"/></svg><p>Un paiement en ligne accepté puis remboursé <b>repart par le chemin d'où il est venu</b> — le compte du prestataire qui l'a encaissé.</p></div>
+      </div>
+
+      <!-- 4 · Conditions & fondement, dérivés -->
+      <p class="pec-section-label" style="margin:22px 0 4px">4 · Les conditions du <span class="js-bon-nom pec-nom">bon d’achat</span></p>
+      <div class="card2">
+        <ul class="liste" id="bon-mentions"></ul>
+        <div id="bon-fondement" style="margin-top:12px"></div>
+      </div>
+
+      <p id="lcb-source" style="margin:14px 2px 0;font-size:10.5px;line-height:1.5;color:var(--color-muted-2)"></p>
+      <div id="fermeture-slot" style="margin-top:8px"></div>
+    </div>
+
+    <nav class="pec-tabbar" aria-label="Navigation principale">
+      <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+      <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+      <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+      <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+      <a class="pec-tab" aria-current="page" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+    </nav>
+  </div>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('');})();</script>
+</div>
+</div>
+<script>
+  /* TOUT DESCEND DU RÉFÉRENTIEL — pas un chiffre, pas un article de loi écrit dans cette page :
+     · les règles du bon d’achat : D.bonsRef() (minimum, plafondBon, plafondClientJour, plafondClientMois,
+       fenetrePlafondJours, validiteMois) — VIVES, le manager les ajuste en Configuration ;
+     · les moyens proposés : D.moyensPaiementLabel() — la liste du pays du client ;
+     · le plafond du ticket anonyme : plafondAnonyme du moyen en ligne (jamais recopié) ;
+     · les conditions et le fondement légal : D.bonsRef().mentions et .fondement ;
+     · le délai de virement et la validité d'un avoir : D.scenario.lcbft.
+     (18/09, soir) Ont disparu d'ici, avec l'agent de caisse mobile et la promesse « en espèces » :
+     D.scenario.lcbft.billets (les coupures de 200/500 €), .pieceIdentite (le contrôle au comptoir par
+     l'agent), D.ref.renduMonnaie.delaiVirementH (le rendu de monnaie viré le jour même),
+     D.scenario.plafondEspeces et D.plafondEspecesVif() (le plafond légal du paiement d'une dette en
+     espèces, et son complément carte obligatoire). Aucune de ces fonctions n'existe plus. */
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.bonsRef) return;
+    function esc(s) { return D.esc ? D.esc(s) : String(s == null ? '' : s); }
+    function $(id) { return document.getElementById(id); }
+    function txt(sel, v) { [].forEach.call(document.querySelectorAll(sel), function (el) { el.textContent = v; }); }
+
+    /* LA RÉFÉRENCE D'UN ARTICLE, extraite du fondement rédigé « art. X — explication » (même recette que
+       25-ou-acheter-un-bon) : la page ne réécrit jamais un texte de loi, elle le cite et le garde au survol. */
+    function refArticle(s) { var m = /^([^—]+)—/.exec(String(s || '')); return (m ? m[1] : String(s || '')).trim(); }
+    /* (18/09, soir) LA CLÉ `especes` DU FONDEMENT N'EST PLUS RENDUE : elle porte l'article sur la vente au
+       comptoir en espèces, qui n'est plus notre sujet — ce que le client paie chez son commerçant ne nous
+       regarde pas. Les autres fondements, eux, expliquent bien ce qu'est le bon d’achat et pourquoi il est légal. */
+    var FOND_LBL = {
+      exemption: 'Un titre à usage limité',
+      horsMonnaieElectronique: 'Ce n\'est pas de la monnaie électronique',
+      declarationAcpr: 'Déclaration à l\'ACPR',
+      tva: 'TVA',
+      avertissement: 'Réserve'
+    };
+
+    function peindre() {
+      var R = D.bonsRef(), L = (D.scenario && D.scenario.lcbft) || {};
+      var eur = function (x) { return D.eur ? D.eur(x) : String(x) + ' €'; };
+
+      txt('.js-bon-nom', R.nom);
+      txt('.js-min', eur(R.minimum));
+      txt('.js-plafond-bon', eur(R.plafondBon));
+      txt('.js-plafond-jour', eur(R.plafondClientJour));
+      txt('.js-plafond-mois', eur(R.plafondClientMois));
+      txt('.js-fenetre', R.fenetrePlafondJours + ' jours');
+      txt('.js-validite', R.validiteMois + ' mois');
+      txt('.js-avoir', (L.avoirValiditeMois || R.validiteMois) + ' mois');
+      txt('.js-virement', (L.virementHeures || '—') + ' h');
+
+      // LES MOYENS DU PAYS, dérivés : la phrase d'introduction ne connaît aucun nom de marque en dur.
+      var libelles = D.moyensPaiementLabel ? D.moyensPaiementLabel() : '';
+      if (libelles) txt('.js-moyens', libelles);
+
+      // LE TICKET ANONYME : son plafond appartient au MOYEN, pas à cette page (art. 12 de la directive LCB-FT).
+      var anon = (D.moyensPaiement ? D.moyensPaiement() : []).filter(function (m) { return m.plafondAnonyme > 0; })[0] || null;
+      $('rule-anonyme').hidden = !anon;
+      if (anon) $('txt-anonyme').innerHTML = '<b>Ticket ' + esc(D.libelleMoyen(anon.k)) + ' anonyme</b> : jusqu\'à <b>' + esc(eur(anon.plafondAnonyme)) + '</b> par paiement. Au-delà, il faut un <b>compte vérifié</b> chez le prestataire — la connexion se fait sur sa page de paiement.';
+
+      // L'EXEMPLE SE CALCULE à partir des règles : aucun montant d'exemple n'est écrit deux fois.
+      var exGros = R.plafondBon * 2, nb = Math.ceil(exGros / R.plafondBon);
+      $('ex-plafond').innerHTML = '📝 Une commande de <b>' + esc(eur(exGros)) + '</b> : au-dessus de ' + esc(eur(R.plafondBon)) + ' par bon d’achat, il t\'en faut <b>' + nb + '</b> — tu les saisis l\'un après l\'autre, et le solde du dernier reste sur ton compte.';
+
+      // LES CONDITIONS DU TICKET, telles qu'elles sont imprimées dessus (ref.bons.mentions) : jamais reformulées.
+      $('bon-mentions').innerHTML = (R.mentions || []).map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('');
+
+      // LE FONDEMENT LÉGAL : la référence de l'article en gras, le texte entier au survol (title).
+      var f = R.fondement || {};
+      $('bon-fondement').innerHTML = Object.keys(FOND_LBL).filter(function (k) { return f[k]; }).map(function (k) {
+        var ref = refArticle(f[k]), reste = String(f[k]).slice(ref.length).replace(/^\s*—\s*/, '');
+        return '<p class="fond"><b title="' + esc(f[k]) + '">' + esc(FOND_LBL[k]) + (ref && ref !== f[k] ? ' — ' + esc(ref) : '') + '</b>' + (reste ? ' : ' + esc(reste) : '') + '</p>';
+      }).join('');
+
+      var s = $('lcb-source'); if (s) s.textContent = R.source ? 'Source : ' + R.source + '.' : '';
+    }
+
+    peindre();
+    // LES PLAFONDS SONT VIVANTS : le manager les ajuste en Configuration (paramètres bons d’achat.*) — la page se relit
+    // sans être rechargée, ici comme depuis un autre onglet.
+    window.addEventListener('pec-bus', peindre);
+    window.addEventListener('storage', function (e) { if (!e.key || /^pec/.test(e.key)) peindre(); });
+  })();
+</script>
+</body>
+</html>

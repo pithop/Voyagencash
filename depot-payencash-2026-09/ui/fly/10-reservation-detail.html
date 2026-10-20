@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash FLY — Détail de la réservation</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-qr.js"></script>
+<!-- DÉTAIL COMPLET D'UNE RÉSERVATION (fondatrice 22/08 : « les détails orientent vers
+     une page complète ») — ?ref=CMD-… : en cours → comment la régler (code à faire scanner par
+     paiement en ligne, ou code d'un bon d’achat) · payée → billet émis + facture, avec le MOYEN réel du règlement.
+     (18/09, soir — l'agent de caisse mobile est abandonné) LE « LIEU » A DISPARU : il n'existait que pour le
+     canal agent (« Agent à domicile · <adresse> »), et il changeait le libellé du code en « à faire scanner
+     par l'agent ». Plus personne ne vient : il n'y a plus de lieu, le code identifie la commande, et le
+     bandeau dit COMMENT régler — moyens DÉRIVÉS de moyensPaiementLabel().
+     (17/09 — pivot) plus de « ticket à présenter au point » : il n'y a plus de comptoir où aller payer. -->
+<style>
+  .et{display:flex;gap:11px;align-items:flex-start;padding:8px 0}
+  .et .dot{flex:none;width:22px;height:22px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-top:1px}
+  .et.ok .dot{background:var(--color-primary);color:#fff}
+  .et.todo .dot{background:var(--color-bg);color:var(--color-muted-2);box-shadow:inset 0 0 0 1.5px var(--color-sep)}
+  .et .t{font-size:13px;font-weight:700;color:var(--color-ink)}
+  .et.todo .t{color:var(--color-muted-2);font-weight:600}
+  .dr{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--color-sep);font-size:12.5px}
+  .dr:last-child{border-bottom:none}
+  .dr span{color:var(--color-muted)}
+  .dr b{color:var(--color-ink);text-align:right}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device" style="background:var(--color-bg)">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:0 16px 12px">
+
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 2px 4px">
+      <a href="../ecrans/03-mes-codes.html" class="tap" aria-label="Retour aux réservations" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-chevron-left"/></svg></a>
+      <div style="min-width:0">
+        <div style="font-size:17px;font-weight:800;letter-spacing:-0.01em;color:var(--color-ink)">Détail de la réservation</div>
+        <div id="d-ref" style="font-size:11px;font-weight:700;color:var(--color-primary-dark)">—</div>
+      </div>
+    </div>
+
+    <!-- LE RÉCAP COMPLET (fondatrice 27/08) : même trame que l'avant-paiement. -->
+    <div class="pec-card" id="rd-recap" style="display:none;margin:4px 0 12px;padding:2px 0 0"></div>
+
+    <!-- Statut -->
+    <div id="d-statut" style="margin-top:10px;border-radius:14px;padding:11px 14px;font-size:12.5px;font-weight:700"></div>
+
+    <!-- TICKET À PRÉSENTER (en cours seulement) -->
+    <div id="d-ticket" hidden class="pec-card pec-card--elevated" style="margin-top:12px;padding:14px 15px;text-align:center">
+      <div style="font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--color-muted)" id="d-ticket-lbl">Ton code de commande</div>
+      <div class="pec-flashcode" id="d-barres" aria-label="Flashcode de paiement"></div>
+      <div id="d-code" style="font-size:16px;font-weight:800;letter-spacing:.1em;color:var(--color-ink)">—</div>
+      <div id="d-min" style="margin-top:6px;font-size:11.5px;font-weight:700;color:var(--color-amber-text)">—</div>
+      <div id="d-lieu" style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:var(--color-mint);padding:6px 12px;font-size:11.5px;font-weight:700;color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px"><use href="#i-map-pin"/></svg><span>—</span></div>
+    </div>
+
+    <!-- BILLET (payée seulement) -->
+    <div id="d-billet" hidden class="pec-card" style="margin-top:12px;padding:13px 15px;display:flex;align-items:center;gap:11px">
+      <span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:11px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-ticket"/></svg></span>
+      <span style="min-width:0;font-size:12px;line-height:1.5;color:var(--color-muted)"><b style="color:var(--color-ink)">Billet émis</b> — <span id="d-billet-txt">—</span><br>Payé le <b id="d-paye" style="color:var(--color-ink)">—</b><br>Réf. compagnie <b id="d-pnr" style="color:var(--color-ink);letter-spacing:.05em">—</b> · e-ticket <b id="d-eticket" style="color:var(--color-ink)">—</b></span>
+    </div>
+    <!-- MA FACTURE (28/08) : document PayEnCash — l'ÉDITION vit chez notre
+         facturier (Odoo, adaptateur server/services/facturation) : le client
+         la CONSULTE ici (données réelles de la commande) et reçoit le PDF
+         par email. Mentions : régime de la marge art. 297 A CGI (TVA non
+         détaillée), vendeur AJEK complet. -->
+    <details id="d-facture" hidden class="pec-card" style="margin-top:10px;padding:4px 15px">
+      <summary class="tap" style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:11px;padding:9px 0">
+        <span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:11px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-receipt"/></svg></span>
+        <span style="min-width:0;flex:1;font-size:12px;line-height:1.5;color:var(--color-muted)"><b style="color:var(--color-ink)">Ma facture</b> — <span id="fa-num">—</span><br>Consulter, ou recevoir le PDF par email</span>
+        <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:13px;color:var(--color-muted)"><use href="#i-chevron-down"/></svg>
+      </summary>
+      <div style="border-top:1px solid var(--color-sep);padding:11px 0 12px">
+        <div style="border:1.5px solid var(--color-sep);border-radius:12px;padding:12px 13px;font-size:10.5px;line-height:1.6;color:var(--color-muted)">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <div><b style="font-size:12px;color:var(--color-ink)">FACTURE <span id="fa-num2">—</span></b><br>émise le <span id="fa-date">—</span></div>
+            <div style="text-align:right"><b style="color:var(--color-ink)" id="fa-soc-nom">— </b><br><span id="fa-soc-siege">—</span><br>SIREN 107 398 448 · TVA FR59107398448</div>
+          </div>
+          <div style="border-top:1px solid var(--color-sep);margin-top:9px;padding-top:9px">
+            <div style="display:flex;justify-content:space-between;gap:10px"><span id="fa-lib">—</span><b style="color:var(--color-ink)" id="fa-mnt">—</b></div>
+            <div style="display:flex;justify-content:space-between;gap:10px;margin-top:4px"><span>TVA</span><span id="fa-tva">régime de la marge (art. 297 A CGI) — non détaillée</span></div>
+            <div style="display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--color-sep);margin-top:7px;padding-top:7px"><b style="color:var(--color-ink)">Total TTC</b><b style="color:var(--color-ink)" id="fa-total">—</b></div>
+            <div style="display:flex;justify-content:space-between;gap:10px;margin-top:4px"><span>Réglée</span><span id="fa-moyen">—</span></div>
+          </div>
+          <div style="border-top:1px solid var(--color-sep);margin-top:9px;padding-top:8px;font-size:9.5px;color:var(--color-muted-2)">Intermédiaire (NAF 7990Z) — vol et hôtel choisis par le client, réservés auprès des prestataires ; PayEnCash facilite le paiement par bon d’achat. Document consultatif : l'original PDF fait foi.</div>
+        </div>
+        <button type="button" class="pec-cta pec-cta--tight tap" id="fa-envoyer" style="display:block;width:100%;text-align:center;margin-top:10px">Recevoir ma facture PDF — par e-mail</button>
+        <div id="fa-ok" hidden style="margin-top:10px;border-radius:12px;background:var(--color-mint);padding:10px 12px;font-size:11.5px;line-height:1.5;color:var(--color-mint-ink)"></div>
+      </div>
+    </details>
+
+    <!-- COMMANDE PAYÉE ET CONFIRMÉE (29/08) : le récapitulatif du voyage est
+         REGROUPÉ ICI, juste SOUS la facture — coiffé de la réf et de l'état du
+         billet (émis / en cours). En « à payer », c'est le récapitulatif simple. -->
+    <div class="pec-card" id="rd-detail" style="margin-top:12px;padding:12px 15px">
+      <div style="border-bottom:1px solid var(--color-sep);padding-bottom:9px;margin-bottom:5px">
+        <div id="rd-detail-titre" style="font-size:13px;font-weight:800;color:var(--color-ink)">Récapitulatif de ta commande</div>
+        <div id="rd-detail-sous" style="font-size:11px;font-weight:700;color:var(--color-primary-dark);margin-top:2px"></div>
+      </div>
+      <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+      <input class="pec-search" type="search" data-fsearch="#d-lignes > *" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+      <div class="meta" data-fvide="#d-lignes > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+      <div id="d-lignes" data-fpage="15"></div>
+    </div>
+
+    <div id="d-enreg" hidden class="pec-reassure" style="margin-top:10px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-info"/></svg>
+      <p id="d-enreg-txt">—</p>
+    </div>
+
+    <!-- Où en est ta réservation -->
+    <div class="pec-card" style="margin-top:12px;padding:11px 15px">
+      <div style="font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--color-muted);margin-bottom:4px">Où en est ta réservation</div>
+      <div id="d-etapes"></div>
+    </div>
+
+    <!-- ANNULATION — un clic, conditions du TARIF affichées, orchestration fournisseur (6b §2e) -->
+    <details id="d-annul" style="margin-top:12px">
+      <summary class="tap" style="list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:13px;background:var(--color-surface);box-shadow:var(--shadow-card);padding:11px;font-size:12.5px;font-weight:700;color:var(--color-ink)">Demander une annulation <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px"><use href="#i-chevron-down"/></svg></summary>
+      <div class="pec-card" style="margin-top:8px;padding:13px 15px">
+        <div style="font-size:11.5px;line-height:1.6;color:var(--color-muted)"><b style="color:var(--color-ink)">Tes conditions, selon ton tarif :</b><br>· Tarif <b style="color:var(--color-ink)">Basique</b> : la compagnie rend ce que son tarif permet (souvent les taxes seulement).<br>· Tarif <b style="color:var(--color-ink)">Super Flex</b> : billet remboursable.<br>· Hôtel : la fenêtre d'annulation gratuite est celle affichée avant l'achat.<br><b style="color:var(--color-ink)">Remboursement en avoir (crédité sur ton compte, valable FLY et MODE) ou par virement</b> (RIB à ton nom) — un règlement par Bon d’achat PayEnCash est re-crédité sur le bon d’achat (LCB-FT).<br>· Certaines compagnies ne rendent qu'un <b style="color:var(--color-ink)">avoir à ton nom</b> (bon d’achat de voyage) — dans ce cas on te le transmet tel quel, avec son code.</div>
+        <div style="border-radius:12px;background:var(--color-mint);padding:10px 12px;margin-top:9px;font-size:11px;line-height:1.6;color:var(--color-mint-ink)"><b style="color:var(--color-primary-dark)">Ce que tu récupères, cas par cas :</b><br>· La compagnie ou l'hôtel annule → <b style="color:var(--color-ink)">tout, nos frais compris</b>.<br>· Tarif remboursable (Super Flex, fenêtre hôtel) → le billet/séjour <b style="color:var(--color-ink)">et nos frais de service</b> — seul le prix du tarif reste acquis.<br>· Tarif partiellement remboursable → <b style="color:var(--color-ink)">exactement ce que le fournisseur rend</b>.<br>· Non remboursable / hors délai → rien — et c'était écrit avant l'achat.<br><b style="color:var(--color-primary-dark)">Zéro frais d'annulation PayEnCash, dans tous les cas.</b></div>
+        <input id="an-motif" type="text" placeholder="Ton motif (facultatif)" style="width:100%;margin-top:9px;border:1.5px solid var(--color-sep);border-radius:11px;background:var(--color-bg);padding:10px 12px;font:inherit;font-size:12.5px;color:var(--color-ink);outline:none">
+        <button type="button" id="an-envoyer" class="pec-cta pec-cta--tight tap" style="display:block;width:100%;text-align:center;margin-top:9px">Envoyer ma demande d'annulation</button>
+        <div id="an-ok" hidden style="margin-top:9px;border-radius:12px;background:var(--color-mint);padding:11px 13px;font-size:12px;line-height:1.55;color:var(--color-mint-ink)"></div>
+      </div>
+    </details>
+
+
+    <div style="height:14px"></div>
+  <div id="fermeture-slot"></div>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('../ecrans/');})();</script>
+</div>
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" aria-current="page" href="../ecrans/03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="../ecrans/01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="../ecrans/14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" href="../ecrans/10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+  /* (08/09 — audit « écran sourd ») LE BUS FAIT FOI, et il bouge : réglée (notification du prestataire, bon d’achat débité), annulée, remboursée —
+     la fiche se repeint (statut, étapes, billet) sans recharger. Le rendu est une fonction, rejouée sur pec-bus / storage. */
+  function rendreFiche() {
+    var D = window.PEC_DATA;
+    var ref = (location.search.match(/[?&]ref=([\w-]+)/) || [])[1] || ((D.reservations[0] || {}).ref || '');
+    // Résolution HONNÊTE de la réf (fondatrice 27/08) : exacte, ou équivalence
+    // CMD-X ↔ PEC-X (même dossier) — jamais de fallback silencieux.
+    var suffixe = ref.replace(/^(CMD|PEC)-/, '');
+    var r = D.reservations.find(function (x) { return x.ref === ref; })
+         || D.reservations.find(function (x) { return x.ref.replace(/^(CMD|PEC)-/, '') === suffixe; });
+    var bus = null;
+    if (window.PEC_BUS) bus = PEC_BUS.commandes().find(function (c) { var cr = String(c.ref || ''); return cr === ref || cr.replace(/^(CMD|PEC)-/, '') === suffixe; });
+    if (!r) {
+      // réf inconnue de la table : la fiche se construit depuis le BUS + les données
+      var Pp = D.recapPromoPourRef ? D.recapPromoPourRef(ref) : null;
+      // AUCUNE source (ni table, ni bus, ni promo) : on le DIT — jamais une
+      // fiche fantôme à 0,00 € (fondatrice 28/08 : zéro donnée inventée)
+      if (!bus && !Pp) {
+        var stv = document.getElementById('d-statut');
+        stv.style.background = 'var(--color-amber-bg, #FBF3E0)'; stv.style.color = 'var(--color-amber-text, #8a6d1f)';
+        stv.textContent = 'Cette réservation n\'est plus disponible ici — son prix bloqué a peut-être expiré. Relance une recherche : rien ne t\'a été facturé.';
+        document.getElementById('d-ref').textContent = ref ? 'Réf. ' + ref : '';
+        var dl = document.getElementById('d-lignes'); if (dl) dl.closest('.pec-card').style.display = 'none';
+        var de = document.getElementById('d-etapes'); if (de) de.closest('.pec-card').style.display = 'none';
+        var da = document.getElementById('d-annul'); if (da) da.style.display = 'none';
+        return;
+      }
+      r = {
+        ref: ref, code: ref,
+        // (18/09, soir) plus de `lieu` du tout : aucune commande ne porte plus d'adresse d'encaissement.
+        // On dit le MOYEN, jamais un lieu — et `lieu` reste vide pour que le reste de l'écran le sache.
+        lieu: '',
+        expireMin: (D.scenario && D.scenario.prixBloqueMinutes) || 60,
+        titre: (bus && bus.trajet) || (Pp ? Pp.titre : 'Ta réservation'),
+        date: (bus && bus.dates) || (Pp && Pp.vol && Pp.vol.dates) || '',
+        compagnie: (bus && bus.compagnie) || '', voyageurs: (bus && bus.voyageurs) || 1,
+        vols: bus && bus.vols, bagages: bus && bus.bagages, pack: bus && bus.pack, heb: bus && bus.heb, point: bus && bus.point,
+        total: bus ? (parseFloat(String(bus.montant).replace(',', '.')) || 0) : 0, statut: 'en_cours',
+        type: bus && bus.type,
+        etapes: [['Réservation confirmée', true], ['Paiement', false], [(bus && bus.type === 'HOTEL') ? 'Séjour confirmé par l\'hôtel' : 'Billet émis par la compagnie', false], ['Bon voyage !', false]]
+      };
+      if (Pp && Pp.vol) { var cie = (D.compagnies || []).find(function (c) { return c.iata === Pp.vol.cie; }); r.compagnie = cie ? cie.nom : ''; }
+    }
+    // LE BUS FAIT FOI : réglé (notification du prestataire, ou bon d’achat débité) → billet ; à régler → code.
+    if (bus && bus.statut === 'paye' && r.statut !== 'payee') {
+      r = Object.assign({}, r, {
+        statut: 'payee',
+        // (17/09 — pivot) le MOYEN réel du règlement, jamais un lieu : libelleMoyen le nomme, et la preuve
+        // complète est dans reglementLibelle(commande). (18/09, soir) plus de repli sur 'agent'.
+        payeLe: new Date(bus.payeAt || Date.now()).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+          + ' · ' + ((D.libelleMoyen && bus.moyen) ? D.libelleMoyen(bus.moyen) : 'règlement effectué'),
+        billet: r.type === 'HOTEL' ? 'séjour confirmé — ton code de confirmation arrive par SMS & e-mail (à donner à la réception)' : 'en cours d\'émission par la compagnie',
+        pnr: r.pnr || null, eticket: r.eticket || null,
+        enregistrement: r.enregistrement || 'L\'enregistrement se fait CHEZ LA COMPAGNIE — en ligne, généralement dès J−2, avec ta référence dossier (PNR) et ton nom. Ta référence et ton e-billet arrivent par SMS et e-mail dès l\'émission (quelques minutes après le règlement).',
+        etapes: [['Réservation confirmée', true], ['Paiement — règlement déclaré', true], [r.type === 'HOTEL' ? 'Séjour confirmé par l\'hôtel' : 'Billet émis par la compagnie', false], ['Bon voyage !', false]]
+      });
+    } else if (bus && (bus.statut === 'annule' || bus.statut === 'rembourse' || bus.statut === 'echec')) {
+      // (05/09) le bus écrit aussi ces trois états : sans eux, une commande annulée ou remboursée
+      // restait affichée « en cours — il reste à régler », flashcode vivant et décompte qui tourne.
+      var LB = { annule: 'Annulée', rembourse: 'Remboursée', echec: 'Encaissement en échec' };
+      r = Object.assign({}, r, {
+        statut: bus.statut === 'rembourse' ? 'remboursee' : (bus.statut === 'echec' ? 'echec' : 'annulee'),
+        clos: true, ticket: null,
+        motifEtat: LB[bus.statut] + (bus.motifRemboursement || bus.motif ? ' — ' + (bus.motifRemboursement || bus.motif) : '')
+          + (bus.statut === 'rembourse' && bus.modeRemboursement ? ' (' + bus.modeRemboursement + ')' : ''),
+        etapes: [['Réservation confirmée', true], ['Paiement — règlement déclaré', bus.statut !== 'annule'], [LB[bus.statut], true]]
+      });
+    } else if (bus && bus.statut === 'a_payer' && r.statut === 'payee') {
+      // fiche payée mais bus dit à payer (démo remise à zéro) : le bus fait foi
+      r = Object.assign({}, r, { statut: 'en_cours' });
+    }
+    document.getElementById('d-ref').textContent = 'Réf. ' + ref;
+    var st = document.getElementById('d-statut');
+    if (r.statut === 'en_cours') {
+      st.style.background = 'var(--color-amber-bg, #FBF3E0)'; st.style.color = 'var(--color-amber-text, #8a6d1f)';
+      var ou = 'avec un bon d’achat (' + ((D.moyensPaiementLabel && D.moyensPaiementLabel()) || '') + ')';
+      st.textContent = r.type === 'HOTEL'
+        ? '⏳ En cours — il reste à régler ' + ou + ' pour confirmer ton séjour à l\'hôtel.'
+        : '⏳ En cours — il reste à régler ' + ou + ' pour lancer l\'émission du billet.';
+    } else if (r.statut === 'remboursee' || r.statut === 'annulee' || r.statut === 'echec') {
+      // (05/09) toute autre valeur que « en cours » affichait « Payée et confirmée — bon voyage ! »,
+      // y compris une commande ANNULÉE ou REMBOURSÉE.
+      st.style.background = '#FDECEC'; st.style.color = '#7A4540';
+      st.textContent = (r.statut === 'remboursee' ? '↩︎ ' : '✕ ') + (r.motifEtat || (r.statut === 'annulee' ? 'Annulée' : 'Encaissement en échec'))
+        + (r.statut === 'remboursee' ? ' — plus rien n\'est dû.' : ' — cette réservation est close.');
+    } else {
+      st.style.background = 'var(--color-mint)'; st.style.color = 'var(--color-primary-dark)';
+      st.textContent = '✓ Payée et confirmée — bon voyage !';
+    }
+    // ticket (en cours) : flashcode + minuteur + lieu
+    if (r.statut === 'en_cours') {
+      var t = document.getElementById('d-ticket'); t.hidden = false;
+      if (window.PEC_QR) PEC_QR.render('d-barres', r.code);  // vrai QR de la réf
+      document.getElementById('d-code').textContent = r.code;
+      // (18/09, soir) il n'y a plus de lieu à annoncer : le bandeau dit COMMENT régler, et le code reste
+      // ce qu'il a toujours été — l'identifiant de la commande, que personne ne scanne.
+      var zLieu = document.getElementById('d-lieu');
+      zLieu.lastElementChild.textContent = 'À régler avec un bon d’achat · ' + ((D.moyensPaiementLabel && D.moyensPaiementLabel()) || '');
+      var zTkLbl = document.getElementById('d-ticket-lbl');
+      if (zTkLbl) zTkLbl.textContent = 'Ton code de commande';
+      var s = Math.max(0, r.expireMin * 60 - ((bus && bus.at) ? Math.floor((Date.now() - bus.at) / 1000) : 0));
+      (function tic() {
+        var m = Math.floor(s / 60), sec = s % 60;
+        document.getElementById('d-min').textContent = s > 0
+          ? 'Prix bloqué — encore ' + m + ':' + String(sec).padStart(2, '0') + ' pour payer à ce prix'
+          : 'Prix bloqué expiré — le tarif de la compagnie sera revérifié avant le paiement';
+        if (s > 0) { s--; setTimeout(tic, 1000); }
+      })();
+    } else {
+      var b = document.getElementById('d-billet'); b.hidden = false;
+      // MA FACTURE — numéro dérivé de la réf (séquence réelle côté facturier), montants de LA commande
+      (function () {
+        var f = document.getElementById('d-facture'); if (!f) return;
+        f.hidden = false;
+        var num = 'FAC-' + String(ref).replace(/^(CMD|PEC)-/, '');
+        document.getElementById('fa-num').textContent = num;
+        document.getElementById('fa-num2').textContent = num;
+        document.getElementById('fa-date').textContent = r.payeLe ? String(r.payeLe).split('·')[0].trim() : new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+        document.getElementById('fa-lib').textContent = (r.titre || 'Prestation de voyage') + ' · ' + (r.voyageurs || 1) + ' voyageur' + ((r.voyageurs || 1) > 1 ? 's' : '');
+        var tot = (typeof r.total === 'number' ? r.total : parseFloat(String(r.total || '0').replace(',', '.')) || 0).toFixed(2).replace('.', ',') + ' €';
+        document.getElementById('fa-mnt').textContent = tot;
+        document.getElementById('fa-total').textContent = tot;
+        // (17/09 — pivot) LA FACTURE PORTE LE MOYEN RÉEL DU RÈGLEMENT (et sa transaction s'il y en a une) —
+        // plus « borne payEnCash au point », qui n'existe plus et n'a jamais été un moyen de paiement.
+        document.getElementById('fa-moyen').textContent = (bus && D.reglementLibelle) ? D.reglementLibelle(bus).replace(/\.$/, '') : 'règlement effectué';
+        var soc = (D.ref && D.ref.societe) || {};
+        document.getElementById('fa-soc-nom').textContent = (soc.nom || 'AJEK') + ' — PayEnCash';
+        document.getElementById('fa-soc-siege').textContent = soc.siege || '—';
+        if (D.fiscalite && D.fiscalite.voyage) document.getElementById('fa-tva').textContent = D.fiscalite.voyage.mention.replace(/^Prix TTC — /, '');
+      })();
+      document.getElementById('d-billet-txt').textContent = r.billet;
+      document.getElementById('d-paye').textContent = r.payeLe;
+      document.getElementById('d-pnr').textContent = r.pnr || 'transmis par SMS & e-mail dès l\'émission';
+      document.getElementById('d-eticket').textContent = r.eticket || 'suivra avec le PNR';
+      if (r.enregistrement) {
+        document.getElementById('d-enreg').hidden = false;
+        document.getElementById('d-enreg-txt').textContent = r.enregistrement;
+      }
+    }
+    // COIFFE du récap regroupé sous la facture : payé → « Commande payée et
+    // confirmée » + réf + état du billet ; à payer → récapitulatif simple.
+    (function () {
+      var titre = document.getElementById('rd-detail-titre'), sous = document.getElementById('rd-detail-sous');
+      if (!titre || !sous) return;
+      if (r.statut === 'en_cours') {
+        titre.textContent = 'Récapitulatif de ta commande';
+        sous.textContent = 'Réf. ' + ref + ' · à régler';
+      } else {
+        titre.textContent = 'Commande payée et confirmée';
+        sous.textContent = 'Réf. ' + ref + ' · ' + (r.type === 'HOTEL' ? 'séjour confirmé' : ('billet émis — ' + (r.billet || 'en cours d\'émission')));
+      }
+    })();
+    document.getElementById('d-etapes').innerHTML = r.etapes.map(function (e) {
+      return '<div class="et ' + (e[1] ? 'ok' : 'todo') + '"><span class="dot">' + (e[1] ? '✓' : '·') + '</span><span class="t">' + e[0] + '</span></div>';
+    }).join('');
+    var lignes = [
+      ['Voyage', r.titre],
+      r.date ? ['Date', r.date] : null,
+    ].concat((r.vols || []).map(function (v) {
+      return ['Vol ' + v.sens.toLowerCase(), v.compagnie + (v.heures ? ' · ' + v.heures : '')];
+    })).concat([
+      (r.vols || []).length ? null : (r.compagnie ? ['Compagnie', r.compagnie] : null),
+      r.bagages ? ['Bagages', r.bagages] : null,
+      r.pack ? ['Annulation & flexibilité', 'Tarif ' + r.pack] : null,
+      r.heb ? ['Hébergement', r.heb.nom + ' ' + (r.heb.etoiles ? '★'.repeat(+r.heb.etoiles || 0) : '') + (r.heb.nuits ? ' · ' + r.heb.nuits + ' nuits' : '') + (r.heb.note ? ' · ' + r.heb.note + ' ' + (r.heb.label || '') : '')] : null,
+      r.lieu ? ['Encaissement', r.lieu] : null,
+      ['Voyageur' + (r.voyageurs > 1 ? 's' : ''), String(r.voyageurs)],
+      ['Total — tous les voyageurs', r.total.toFixed(2).replace('.', ',') + ' €']
+    ]);
+    lignes = lignes.filter(Boolean);
+    document.getElementById('d-lignes').innerHTML = lignes.map(function (l) {
+      return '<div class="dr"><span>' + l[0] + '</span><b>' + l[1] + '</b></div>';
+    }).join('');
+    window.__rdFiche = r;   // le bloc « Qui voyage » lit la fiche résolue
+  }
+  rendreFiche();
+  window.addEventListener('pec-bus', rendreFiche);
+  window.addEventListener('storage', function (e) { if (!e.key || /^pec/.test(e.key)) rendreFiche(); });
+
+// Récap complet du détail (fondatrice 27/08)
+(function () {
+  var D = window.PEC_DATA; if (!D || !D.recapHTML) return;
+  var ref = (location.search.match(/[?&]ref=([A-Z0-9-]+)/i) || [])[1] || '';
+  var z = document.getElementById('rd-recap');
+  if (ref && D.recapPromoPourRef(ref)) {
+    var nv = (D.promoCommande && ref === D.promoCommande.ref) ? D.promoCommande.voyageurs : (((D.reservationsHisto || []).filter(function (r) { return r.ref === ref; })[0] || {}).voyageurs || 1);
+    z.innerHTML = '<div style="font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--color-muted);padding:11px 16px 0">Ta commande</div>' + D.recapHTML(ref, nv);
+    z.style.display = 'block';
+  } else if (ref && D.blocRecapHTML && window.__rdFiche) {
+    // fiche de flux ou de table : la MÊME trame que les cartes de 03-mes-codes
+    // (composant partagé du data-layer) — volet vol avec logo, hébergement
+    // riche avec photos, voyageurs. Le composant est neutre en marges : la
+    // carte compense avec son propre padding horizontal.
+    var f = window.__rdFiche;
+    z.innerHTML = '<div style="font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--color-muted);padding:11px 16px 0">Ta commande</div>'
+      + '<div style="padding:0 16px 12px">'
+      + D.blocRecapHTML(ref, f.voyageurs, f.statut === 'en_cours', { vols: f.vols, compagnie: f.compagnie, dates: f.date, trajet: f.titre, heb: f.heb, noms: f.noms })
+      + '</div>';
+    z.style.display = 'block';
+  }
+})();
+
+// L'ANNULATION EST UNE VRAIE DEMANDE (fondatrice 27/08) : elle part au bus —
+// fil vérifiable dans Assistance → Mes demandes, reçue par la hotline en direct.
+(function () {
+  var b = document.getElementById('an-envoyer'); if (!b) return;
+  b.addEventListener('click', function () {
+    var ref = ((document.getElementById('d-ref') || {}).textContent || '').replace('Réf. ', '').trim();
+    var motif = ((document.getElementById('an-motif') || {}).value || '').trim();
+    if (window.PEC_BUS && PEC_BUS.ouvrirDemande) {
+      var d = PEC_BUS.ouvrirDemande({ type: 'reclamation', ref: ref, client: (window.PEC_DATA.profil || {}).nomComplet,
+        sujet: 'Annulation — ' + ref + (motif ? ' · ' + motif : ''), canal: 'app', statut: 'en_cours',
+        echanges: [{ qui: 'moi', texte: 'Demande d\'annulation' + (motif ? ' — ' + motif : '') }] });
+      var ok = document.getElementById('an-ok'); ok.hidden = false;
+      if (!d) { ok.innerHTML = 'Ta demande n\'a PAS pu être enregistrée (stockage de cet appareil plein) — libère de la place et recommence, ou appelle-nous.'; return; }
+      ok.innerHTML = '✓ <b style="color:var(--color-primary-dark)">Demande ' + d.id + ' envoyée</b> — on interroge la compagnie/l\'hôtel et on te répond dans Assistance → Mes demandes (et par e-mail) avec le montant exact remboursable. <a href="../ecrans/14-assistance.html" style="font-weight:800;color:var(--color-primary-dark)">Suivre ma demande →</a>';
+      b.style.display = 'none';
+    }
+  });
+})();
+
+// MA FACTURE PDF — une DEMANDE réelle portée par la commande (factureDemande — 09/09 ; journal en trace),
+// e-mail du compte) ; l'état se relit au chargement. Zéro « ✓ envoyée » décoratif.
+(function () {
+  var b = document.getElementById('fa-envoyer'), z = document.getElementById('fa-ok'); if (!b || !z) return;
+  var D = window.PEC_DATA;
+  function refCmd() { return ((document.getElementById('d-ref') || {}).textContent || '').replace('Réf. ', '').trim(); }
+  function deja() {
+    if (!window.PEC_BUS || !PEC_BUS.commande) return null;   // (09/09 — lot 1 socle) la demande est portée par la commande
+    return (PEC_BUS.commande(refCmd()) || {}).factureDemande || null;
+  }
+  function rendre(e) {
+    if (!e) return;
+    b.style.display = 'none'; z.hidden = false;
+    z.innerHTML = '✓ <b style="color:var(--color-primary-dark)">Demande enregistrée</b> le ' + new Date(e.at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+      + ' — le PDF officiel ' + (e.numero ? '(' + e.numero + ') ' : '') + 'part à <b>' + (e.email || 'ton e-mail') + '</b> dès son édition par notre facturier.';
+  }
+  rendre(deja());
+  b.addEventListener('click', function () {
+    if (!window.PEC_BUS || !PEC_BUS.demanderFacture) return;
+    var email = (D && D.profil && D.profil.email) || '';
+    var rF = PEC_BUS.demanderFacture(refCmd(), { numero: (document.getElementById('fa-num') || {}).textContent || '', email: email });
+    if (!rF.ok) { z.hidden = false; z.textContent = rF.motif; return; }
+    rendre(deja());
+  });
+})();
+</script>
+</body>
+</html>

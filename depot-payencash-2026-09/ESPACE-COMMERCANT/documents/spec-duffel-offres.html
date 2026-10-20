@@ -1,0 +1,173 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Spec Duffel — création d'offre · PayEnCash</title>
+<style>
+:root{--ajek:#0f7a4d;--ajek-d:#0b5c3a;--ink:#1a1f1c;--muted:#5b675f;--line:#d9e5dd;--bg:#f4f7f5;--card:#fff;--chip:#e8f3ec;--gold:#b8860b;--goldbg:#fdf5e6;--red:#b3261e;--blue:#1d6fa5}
+@media(prefers-color-scheme:dark){:root{--ink:#e8efe9;--muted:#9fb0a6;--line:#254034;--bg:#0d1512;--card:#121d18;--chip:#173026;--goldbg:#241d0f}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.sheet{max-width:960px;margin:0 auto 60px;background:var(--card);border:1px solid var(--line)}
+header{background:linear-gradient(120deg,var(--ajek),var(--ajek-d));color:#fff;padding:26px 36px}.brand{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.9}header h1{margin:6px 0 2px;font-size:23px}header p{margin:3px 0 0;opacity:.93;font-size:13.5px}
+nav.j{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:8px 36px;display:flex;gap:8px;overflow-x:auto;white-space:nowrap}
+nav.j a{font-size:12.5px;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 11px;flex:none}nav.j a:hover{border-color:var(--ajek);color:var(--ajek)}
+.body{padding:22px 36px 40px}
+h2{font-size:17px;color:var(--ajek-d);margin:30px 0 8px;border-bottom:2px solid var(--line);padding-bottom:6px}h3{font-size:14px;color:var(--ajek-d);margin:16px 0 4px}@media(prefers-color-scheme:dark){h2,h3{color:#5fd39a}}
+p{margin:8px 0}ul,ol{margin:6px 0 6px 2px;padding-left:22px}li{margin:5px 0}
+.note{background:var(--chip);border:1px solid var(--line);border-left:3px solid var(--ajek);border-radius:8px;padding:12px 14px;font-size:13.5px;color:var(--muted);margin:12px 0}
+.warn{background:var(--goldbg);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--ink);margin:12px 0}
+.red{background:#fbeae8;border:1px solid var(--line);border-left:3px solid var(--red);border-radius:8px;padding:11px 14px;font-size:13px;color:var(--red);margin:12px 0}@media(prefers-color-scheme:dark){.red{background:#2a1512;color:#e08a80}}
+pre{background:var(--ink);color:#e8efe9;border-radius:10px;padding:12px 14px;overflow-x:auto;font-size:12.2px;line-height:1.5;margin:8px 0}@media(prefers-color-scheme:dark){pre{background:#05100c;border:1px solid var(--line)}}
+pre .k{color:#7fd1a8}pre .s{color:#e6c07a}pre .c{color:#7f8c8a}
+code{background:var(--chip);padding:1px 5px;border-radius:4px;font-size:12px}
+.step{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}.step .n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--ajek);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}.step .t{font-weight:700}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;margin:8px 0;font-size:12.6px}th,td{text-align:left;padding:6px 9px;border:1px solid var(--line);vertical-align:top}th{background:var(--chip);font-weight:600}
+.toolbar{max-width:960px;margin:16px auto 0;display:flex;gap:10px;justify-content:flex-end;padding:0 8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 12px;font-size:12.5px;text-decoration:none}.btn.p{background:var(--ajek);color:#fff;border-color:var(--ajek)}
+@media print{body{background:#fff}.toolbar,nav.j{display:none}.sheet{border:none}pre{background:#f4f4f4;color:#111;border:1px solid #ccc}}
+</style></head><body>
+<div class="toolbar"><a class="btn" href="diagramme-principal.html">🗺️ Diagramme</a><a class="btn" href="diagramme-principal.html">🧭 Fil rouge</a><a class="btn" href="partie-1b-financier.html">Modèle financier</a><a class="btn" href="../marketing/analyse-clientele.html">Analyse (prix)</a><a class="btn p" href="#" onclick="window.print();return false">Imprimer / PDF</a></div>
+<div class="sheet">
+<header><div class="brand">AJEK · PayEnCash — dev</div><h1>Spec Duffel — création d'offre</h1><p>Accès API · recherche → offre → réservation · marge · hébergement (Stays) · catalogue destinations · 18 août 2026</p></header>
+<nav class="j"><a href="#role">Rôle</a><a href="#cle">Obtenir la clé</a><a href="#flux">Flux d'offre</a><a href="#marge">Marge &amp; prix</a><a href="#paiement">Paiement (cash)</a><a href="#couverture">Couverture</a><a href="#stays">Hébergement (Stays)</a><a href="#catalogue">Catalogue</a><a href="#test">Script de test</a><a href="#secu">Sécurité</a></nav>
+<div class="body">
+
+<div class="note"><strong>À quoi sert ce document.</strong> Duffel est le <strong>fournisseur</strong> des vols (et des hôtels) de PayEnCash. Cette spec décrit, pour le développeur, <strong>comment créer une offre de A à Z</strong> : obtenir la clé, chercher des vols, présenter le prix (tarif Duffel + notre marge), encaisser en espèces, puis réserver. Base : <a href="https://duffel.com/docs">duffel.com/docs</a> (vérifier la version exacte de l'API).</div>
+
+<h2 id="role">0 · Rôle dans le produit</h2>
+<!-- (18/09, soir) Le document proposait encore « un agent qui se déplace » comme moyen de paiement : il est
+     supprimé. Ce qui change pour cette spec, c'est le COÛT d'encaissement à déduire de la marge — il n'est
+     plus un déplacement, mais la commission du commerçant et les frais du prestataire qui le prélève. -->
+<p>Duffel renvoie les <strong>offres réelles des compagnies</strong> (plus de 200 compagnies : NDC + GDS + low-cost) et, via <strong>Duffel Stays</strong>, des <strong>hôtels</strong>. C'est la <strong>matière première</strong> vendue dans l'app PayEnCash. Le client choisit → il paie <strong>avec un bon d’achat</strong> (Bon d’achat PayEnCash ou Bon d’achat PayEnCash, achetés au comptoir d'un commerce) → AJEK crée la commande (order) chez Duffel → le client reçoit son <strong>reçu + code</strong>.</p>
+
+<h2 id="cle">1 · Obtenir la clé d'accès (access token)</h2>
+<ol>
+<li>Dashboard <strong>app.duffel.com</strong> (connecté).</li>
+<li>Bascule le <strong>mode</strong> : <strong>Test</strong> = données fictives (compagnies de démo, prix bidon) ; <strong>Live</strong> = <strong>vrais tarifs</strong>. ⚠️ Le mode Live doit d'abord être <strong>activé</strong> (infos société + moyen de paiement).</li>
+<li><strong>Settings</strong> → <strong>Access tokens</strong> → <strong>Create token</strong> → nom + mode → <strong>Copy</strong>.</li>
+<li>La clé (<code>duffel_live_…</code> / <code>duffel_test_…</code>) n'est affichée <strong>qu'une fois</strong> — la stocker aussitôt.</li>
+</ol>
+<div class="red"><strong>Sécurité (impératif) :</strong> la clé est un <strong>secret serveur</strong>. Jamais dans l'app client, jamais dans le front, jamais dans un dépôt Git, jamais collée dans un chat. Elle vit dans une <strong>variable d'environnement</strong> côté back-end (ex. <code>DUFFEL_TOKEN</code>).</div>
+
+<h2 id="flux">2 · Le flux de création d'offre (3 étapes)</h2>
+<div class="step"><div class="n">1</div><div><div class="t">Recherche — Offer Request</div>On envoie les trajets voulus ; Duffel renvoie les offres disponibles.</div></div>
+<pre><span class="c"># POST https://api.duffel.com/air/offer_requests</span>
+<span class="c"># Headers : Authorization: Bearer $DUFFEL_TOKEN · Duffel-Version: v2 · Content-Type/Accept: application/json</span>
+{
+  <span class="k">"data"</span>: {
+    <span class="k">"cabin_class"</span>: <span class="s">"economy"</span>,
+    <span class="k">"passengers"</span>: [{ <span class="k">"type"</span>: <span class="s">"adult"</span> }],
+    <span class="k">"slices"</span>: [
+      { <span class="k">"origin"</span>: <span class="s">"MRS"</span>, <span class="k">"destination"</span>: <span class="s">"ALG"</span>, <span class="k">"departure_date"</span>: <span class="s">"2026-08-15"</span> },
+      { <span class="k">"origin"</span>: <span class="s">"ALG"</span>, <span class="k">"destination"</span>: <span class="s">"MRS"</span>, <span class="k">"departure_date"</span>: <span class="s">"2026-08-29"</span> }
+    ]
+  }
+}</pre>
+<div class="step"><div class="n">2</div><div><div class="t">Résultats — Offers</div>Chaque offre porte un <code>id</code>, <code>total_amount</code> + <code>total_currency</code>, la compagnie (<code>owner.name</code>) et les segments. On trie par prix.</div></div>
+<pre><span class="c"># Les offres sont dans la réponse (return_offers par défaut), ou : GET /air/offers?offer_request_id=...</span>
+data.offers[] → { id, <span class="k">total_amount</span>: <span class="s">"189.90"</span>, <span class="k">total_currency</span>: <span class="s">"EUR"</span>, owner: { name: <span class="s">"Air Algérie"</span> }, slices[].segments[] }</pre>
+<div class="step"><div class="n">3</div><div><div class="t">Réservation — Order</div><strong>Après encaissement des espèces</strong>, on crée la commande avec l'offre choisie + les données passager + le paiement à Duffel.</div></div>
+<pre><span class="c"># POST https://api.duffel.com/air/orders</span>
+{
+  <span class="k">"data"</span>: {
+    <span class="k">"type"</span>: <span class="s">"instant"</span>,
+    <span class="k">"selected_offers"</span>: [<span class="s">"off_123..."</span>],
+    <span class="k">"passengers"</span>: [{ <span class="c">/* identité, date naissance, contact... */</span> }],
+    <span class="k">"payments"</span>: [{ <span class="k">"type"</span>: <span class="s">"balance"</span>, <span class="k">"amount"</span>: <span class="s">"189.90"</span>, <span class="k">"currency"</span>: <span class="s">"EUR"</span> }]
+  }
+}</pre>
+<div class="note">⏱️ Une offre a une <strong>durée de validité</strong> et le prix peut changer entre la recherche et la réservation → afficher un prix « <em>sous réserve de confirmation</em> » et re-vérifier avant l'order. Duffel propose aussi des <strong>hold orders</strong> (réserver sans payer immédiatement) selon les compagnies. <b>C'est LE mécanisme de notre « prix bloqué 1 h »</b> : hold order à la confirmation → le client va payer en espèces → règlement déclaré → <code>payment</code> sur l'order → émission (PNR + e-tickets). Si le hold expire sans paiement : l'offre est libérée, la commande passe « annulée — hors délai ».</div>
+
+<h2 id="marge">3 · Marge &amp; prix affiché</h2>
+<div class="warn"><strong>Prix payé par le client = tarif Duffel + marge AJEK.</strong> La <strong>marge</strong> est <strong>librement fixée</strong> par AJEK (≈ 15–30 %) — c'est notre <strong>commission d'agence</strong>. Les <strong>frais Duffel</strong> (~3 $/commande + 1 % du montant + 1–2,5 $/segment passager, +2 % si change de devise) sont un <strong>coût</strong> à déduire. (17/09, révisé le 18/09 au soir) Le coût d'encaissement dépend du moyen : frais du prestataire en ligne pour un Bon d’achat PayEnCash , ou <strong>commission du commerçant 1,10 % HT + frais du prestataire qui le prélève</strong> (Stripe, 1,5 % + 0,25 €) pour un Bon d’achat PayEnCash — Étape 2 §1b.</div>
+<p>Techniquement, la marge s'ajoute côté AJEK au <code>total_amount</code> Duffel avant affichage ; on ne modifie pas l'offre Duffel, on présente <code>total_amount + marge</code> comme prix de vente.</p>
+
+<h2 id="paiement">4 · Le paiement (spécificité cash PayEnCash)</h2>
+<p>Le client paie <strong>avec un bon d’achat</strong> (Bon d’achat PayEnCash, ou Bon d’achat PayEnCash réglé en ligne par le prestataire). AJEK, elle, règle Duffel pour émettre le billet — typiquement via le <strong>solde Duffel Payments</strong> (<code>payment.type: "balance"</code>) approvisionné par AJEK. Séquence :</p>
+<ol>
+<li>Recherche + choix (étapes 2·1 et 2·2).</li>
+<li><strong>Règlement</strong> — notification du prestataire (en ligne) ou espèces comptées par l'agent → <strong>reçu + code</strong> (voir <a href="recu-client-code.html">reçu client</a>).</li>
+<li>Création de l'<strong>order</strong> (étape 2·3) financée par le solde AJEK.</li>
+<li>Rapprochement : transaction du prestataire (en ligne) ou dépôt de l'agent (espèces) ↔ facture Odoo.</li>
+</ol>
+<div class="red"><strong>Point à border (LCB-FT / trésorerie) :</strong> le décalage « règlement client (virement du prestataire à J+n, espèces déposées) » ↔ « paiement à Duffel par AJEK » implique une <strong>avance de trésorerie</strong> et une traçabilité stricte des espèces. À cadrer avec l'expert-comptable.</div>
+
+<h2 id="couverture">5 · Couverture &amp; limites (impact produit)</h2>
+<p>Plus de 200 compagnies, mais la disponibilité varie selon le contenu (NDC / GDS / LCC).</p>
+<div class="tw"><table>
+<thead><tr><th>Type</th><th>Exemples utiles</th><th>Sur Duffel ?</th></tr></thead>
+<tbody>
+<tr><td>Maghreb (diaspora)</td><td>Air Algérie, Transavia</td><td>✅ oui (Air Algérie confirmée)</td></tr>
+<tr><td>Europe régulier / NDC</td><td>Vueling, Transavia, Air France, Lufthansa…</td><td>✅ oui</td></tr>
+<tr><td>Ultra-low-cost</td><td><strong>Ryanair, easyJet, Wizz Air</strong></td><td>⚠️ <strong>limité / souvent absent</strong></td></tr>
+</tbody></table></div>
+<div class="warn"><strong>Conséquence directe sur l'offre « découverte à petit prix » :</strong> les billets à ~15–30 € sont surtout du <strong>Ryanair / Wizz Air</strong>, mal couverts par Duffel. Le <strong>script de test (§8) tranchera route par route</strong> : si Duffel ne renvoie pas ces tarifs, il faudra soit ajuster les destinations « découverte » à ce que Duffel propose vraiment, soit envisager une 2ᵉ source à terme.</div>
+
+<h2 id="stays">6 · Hébergement — Duffel Stays (le bundle &lt; 100 €)</h2>
+<p>Duffel propose une API <strong>Stays</strong> (hôtels) séparée : recherche par ville/dates → tarifs → réservation. Elle permet le <strong>bundle « vol + hôtel »</strong> chez un seul fournisseur — cœur de l'idée « <strong>un week-end découverte à moins de 100 €</strong> » (billet cheap + 1–2 nuits).</p>
+<pre><span class="c"># Recherche d'hôtels (schéma indicatif — voir duffel.com/docs/api/stays)</span>
+<span class="c"># POST https://api.duffel.com/stays/search</span>
+{ <span class="k">"data"</span>: { <span class="k">"location"</span>: {<span class="s">"radius"</span>: 10, <span class="s">"geographic_coordinates"</span>: {…}}, <span class="k">"check_in_date"</span>: <span class="s">"2026-09-18"</span>, <span class="k">"check_out_date"</span>: <span class="s">"2026-09-20"</span>, <span class="k">"rooms"</span>: 1, <span class="k">"guests"</span>: [{<span class="s">"type"</span>:<span class="s">"adult"</span>}] } }</pre>
+<p class="note">Même logique de marge : prix hôtel Duffel + marge AJEK. On peut composer un « <strong>prix pack</strong> » = vol + hôtel + marge, affiché comme une offre unique payable en espèces.</p>
+
+<h2 id="catalogue">7 · Catalogue de destinations à chiffrer</h2>
+<div class="tw"><table>
+<thead><tr><th>Segment</th><th>Destinations (IATA)</th></tr></thead>
+<tbody>
+<tr><td>🌍 Diaspora / au pays</td><td>Alger <code>ALG</code> · Tunis <code>TUN</code> · Marrakech <code>RAK</code> · Casablanca <code>CMN</code></td></tr>
+<tr><td>🏙️ Grandes villes</td><td>Rome <code>FCO</code> · Barcelone <code>BCN</code> · Madrid <code>MAD</code> · Amsterdam <code>AMS</code></td></tr>
+<tr><td>✨ Découverte petit prix</td><td>Bucarest <code>OTP</code> · Budapest <code>BUD</code> · Porto <code>OPO</code> · Lisbonne <code>LIS</code> · Naples <code>NAP</code> · Athènes <code>ATH</code> · Cracovie <code>KRK</code> · Séville <code>SVQ</code></td></tr>
+</tbody></table></div>
+<p>Origine par défaut : Marseille <code>MRS</code> (zone pilote). Objectif : sortir le <strong>vrai prix A/R Duffel</strong> par route pour alimenter les destinations mises en avant et le panier de l'<a href="../marketing/analyse-clientele.html">analyse §2</a>.</p>
+
+<h2 id="test">8 · Script de test (sortir les vrais tarifs)</h2>
+<p>À lancer côté serveur / terminal, clé en variable d'environnement (jamais en clair). Nécessite <code>curl</code> + <code>jq</code>.</p>
+<pre><span class="k">export</span> DUFFEL_TOKEN=<span class="s">"duffel_live_…"</span>   <span class="c"># reste côté serveur</span>
+routes=<span class="s">"
+MRS ALG 2026-08-15 2026-08-29
+MRS TUN 2026-08-15 2026-08-29
+MRS RAK 2026-08-15 2026-08-29
+MRS FCO 2026-09-18 2026-09-21
+MRS BCN 2026-09-18 2026-09-21
+MRS OTP 2026-09-18 2026-09-21
+MRS BUD 2026-09-18 2026-09-21
+MRS OPO 2026-09-18 2026-09-21
+MRS LIS 2026-09-18 2026-09-21
+MRS NAP 2026-09-18 2026-09-21
+MRS ATH 2026-09-18 2026-09-21
+"</span>
+<span class="k">echo</span> <span class="s">"$routes"</span> | <span class="k">while read</span> o d da dr; <span class="k">do</span>
+  [ -z <span class="s">"$o"</span> ] &amp;&amp; <span class="k">continue</span>
+  resp=$(curl -s https://api.duffel.com/air/offer_requests \
+    -H <span class="s">"Authorization: Bearer $DUFFEL_TOKEN"</span> -H <span class="s">"Duffel-Version: v2"</span> \
+    -H <span class="s">"Content-Type: application/json"</span> -H <span class="s">"Accept: application/json"</span> \
+    -d <span class="s">"{\"data\":{\"cabin_class\":\"economy\",\"passengers\":[{\"type\":\"adult\"}],\"slices\":[{\"origin\":\"$o\",\"destination\":\"$d\",\"departure_date\":\"$da\"},{\"origin\":\"$d\",\"destination\":\"$o\",\"departure_date\":\"$dr\"}]}}"</span>)
+  cheapest=$(<span class="k">echo</span> <span class="s">"$resp"</span> | jq -r <span class="s">'[.data.offers[]? | {c:.owner.name,p:(.total_amount|tonumber),cur:.total_currency}] | sort_by(.p) | .[0] | if .==null then "aucune offre Duffel" else "\(.p) \(.cur) — \(.c)" end'</span>)
+  printf <span class="s">"%-4s -&gt; %-4s (A/R) : %s\n"</span> <span class="s">"$o"</span> <span class="s">"$d"</span> <span class="s">"$cheapest"</span>
+  sleep 1
+<span class="k">done</span></pre>
+<p class="note">Sortie : une ligne par destination (<code>prix + devise — compagnie</code>, ou « aucune offre Duffel »). Ces chiffres remplacent les fourchettes marché dans l'analyse et le modèle.</p>
+
+<h2 id="secu">9 · Sécurité &amp; bonnes pratiques</h2>
+<ul>
+<li><strong>Clé côté serveur uniquement</strong> (variable d'env), jamais front / app client / Git / chat.</li>
+<li><strong>Mode Live</strong> pour de vrais prix ; le Test renvoie des données fictives.</li>
+<li><strong>Chercher ne réserve ni ne facture</strong> ; seule la création d'<em>order</em> engage un paiement.</li>
+<li><strong>Prix volatil</strong> : re-vérifier l'offre avant l'order ; gérer l'expiration.</li>
+<li><strong>Rate limits</strong> Duffel : espacer les requêtes en masse (<code>sleep</code>).</li>
+<li><strong>Version d'API</strong> : fixer <code>Duffel-Version</code> à la version validée (voir dashboard/docs).</li>
+</ul>
+
+<h2>Annulations &amp; remboursements — ce que Duffel fait VRAIMENT (vérifié 27/08)</h2>
+<ul>
+<li><b>Éligibilité</b> : l'annulation par API n'est possible que si l'order porte <code>"cancel"</code> dans <code>available_actions</code> — sinon, demande manuelle via le dashboard Duffel (prévoir ce chemin dans l'orchestrateur : c'est lui qui justifie le délai « sous 48 h »).</li>
+<li><b>Deux temps, avec expiration</b> : <code>POST /air/order_cancellations</code> → un DEVIS en attente (<code>refund_amount</code>, <code>refund_to</code>, <code>expires_at</code>) → <b>confirmer AVANT expires_at</b> ; un devis périmé renvoie <code>order_cancellation_stale</code> → re-deviser. Seul le devis le plus récent est confirmable.</li>
+<li><b>Où va l'argent</b> : <code>refund_to = "original_form_of_payment"</code> → sur NOTRE moyen de paiement Duffel (le solde prépayé) — c'est ensuite NOUS qui remboursons le client (retour sur le moyen d'origine, virement RIB ou espèces par l'agent, F10) · <code>refund_to = "airline_credits"</code> → un AVOIR NOMINATIF par passager (<code>credit_code</code> à la confirmation) que l'on TRANSMET au client tel quel — jamais converti en espèces.</li>
+<li><b>Le montant exact</b> n'est connu qu'au devis — d'où notre promesse client « on te répond avec le montant exact remboursable », jamais un chiffre avant.</li>
+</ul>
+
+<h2>Bagages — ce que Duffel donne VRAIMENT (vérifié 27/08 sur la doc officielle)</h2>
+<div class="note"><b>Implémenté côté serveur (27/08)</b> : table <code>order_services</code> (le contrat Duffel tel quel : provider_service_id, segment_ref/passenger_ref — la soute PAR SENS et PAR PASSAGER —, quantity, amount_cents TEL QUEL jamais re-margé, maximum_weight_kg NULLABLE) + <code>POST /voyage/orders</code> accepte <code>services[]</code> et augmente le total de amount × quantity (la règle Duffel). Schéma validé Postgres 16 réel (58 objets). Brancher la vraie clé = remplacer l'adaptateur, rien d'autre — la transition base réelle est immédiate.</div>
+<ul>
+<li><b>Bagage inclus</b> : chaque offre porte <code>slices[].segments[].passengers[].baggages[]</code> = <code>{type: "carry_on" | "checked", quantity}</code> — par passager et <b>par segment</b>, selon la compagnie et le tarif. <b>Aucun poids n'est publié à ce niveau</b> : Duffel dit le NOMBRE de bagages inclus, pas les kilos. À l'écran : « Bagage cabine inclus · selon l'offre de la compagnie ».</li>
+<li><b>Bagage soute en plus</b> : <code>available_services</code> de type <code>baggage</code>, récupérés en ajoutant <code>return_available_services=true</code> à la lecture de l'offre. Champs : <code>total_amount/total_currency</code> (le prix de LA compagnie), <code>maximum_quantity</code>, <code>segment_ids</code> + <code>passenger_ids</code> (un service est attaché à des segments et passagers précis → l'option soute se choisit <b>par sens</b> en aller-retour), et <code>metadata</code> — le poids max (souvent 23 kg) n'y figure que si la compagnie le publie ; sinon on affiche « selon la compagnie », jamais un chiffre inventé.</li>
+<li><b>Quand</b> : les services s'ajoutent <b>à la création de l'order</b> (champ <code>services: [{id, quantity}]</code>) et le paiement doit être augmenté d'autant — le bagage choisi au tunnel entre donc dans le total à remettre en espèces AVANT le prix bloqué. Des bagages <b>post-réservation</b> existent aussi chez Duffel (guide « Adding Post Booking Bags ») — hors périmètre pilote.</li>
+</ul>
+
+<p style="font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:12px;margin-top:22px">PayEnCash — marque d'AJEK SAS · spec Duffel (dev) · 18 août 2026. Schémas indicatifs — se référer à <a href="https://duffel.com/docs">duffel.com/docs</a> pour la version exacte. · <a href="../marketing/analyse-clientele.html">analyse (prix)</a>.</p>
+</div></div></body></html>

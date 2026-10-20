@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Questions fréquentes</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<!-- Page info « FAQ » — calquée sur app/(info)/faq/page.tsx.
+     (17/09 — pivot) Plus de borne. Les moyens listés dans « Comment je paie ? » sont DÉRIVÉS
+     (moyensPaiementLabel).
+     (18/09 — Bon d’achat PayEnCash) Le Bon d’achat en premier : bon d'achat prépayé vendu par un commerçant partenaire — le
+     partenaire VEND le bon d’achat, il n'encaisse jamais une commande. Plafonds et validité viennent de bonsRef()
+     ([data-bon]), la page écoute.
+     (18/09, soir — pivot de positionnement) LA PROMESSE EST « UN BON D’ACHAT SUFFIT », plus
+     « payer en espèces » : comment le client règle son code chez son commerçant ne nous regarde pas, et cette
+     FAQ ne le dit plus.
+     (18/09, soir — l'agent de caisse mobile est abandonné) TOUT UN CHAPITRE A DISPARU : « Encaissement à
+     domicile » et ses six questions (où l'agent vient, son retard, comment le joindre, le code de sécurité,
+     la photo de preuve, la note 1-5★), plus les réponses sur le sac de pièces compté à la mallette, sur la
+     carte bancaire en complément obligatoire et sur le plafond légal du paiement d'une dette en espèces.
+     Aucune ne décrivait encore un geste possible. DEUX moyens restent, achetés au comptoir d'un commerce. -->
+<style>
+  .h1{font-size:23px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;color:var(--color-ink);margin:14px 0 6px}
+  .h1 em{font-style:normal;color:var(--color-primary)}
+  .lead{font-size:14.5px;font-weight:500;line-height:1.5;color:var(--color-muted);margin:0 0 4px}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;background:var(--color-surface)">
+
+<div style="padding:18px 20px 0">
+  <a href="01-accueil.html" class="tap" aria-label="Retour" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)">
+    <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-chevron-left"/></svg>
+  </a>
+  <h1 class="h1">Questions<br><em>fréquentes</em></h1>
+  <p class="lead">Tout ce qu'il faut savoir avant de réserver.</p>
+</div>
+
+    <div class="pec-info-body">
+      <div class="pec-accordion" style="display:flex;flex-direction:column;gap:8px">
+        <div class="pec-accordion-item"><button type="button">Comment je paie ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Avec un seul titre : le <b style="color:var(--color-ink)">Bon d’achat PayEnCash</b>. Ton commerçant le crée au montant que tu demandes (jusqu'à <span data-bon="plafondBon">—</span> par bon d’achat) et tu saisis le code de son ticket ; ce que tu n'utilises pas reste sur le bon d’achat. Tu peux en cumuler plusieurs sur une même commande. <a href="25-ou-acheter-un-bon.html" style="color:var(--color-primary-dark);font-weight:700">Où l'acheter</a>.</p></div>
+        <div class="pec-accordion-item"><button type="button">Qui encaisse mon argent ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Ton <b style="color:var(--color-ink)">commerçant</b> — ou le distributeur qui se déplace jusqu'à toi — te vend un Bon d’achat PayEnCash. Il te le vend <b>pour le compte de PayEnCash</b> (il est mandaté pour ça, et il te le dit), mais il n'encaisse jamais ta commande. Ensuite, c'est le <b style="color:var(--color-ink)">code</b> qui règle : PayEnCash le débite, et ta commande passe en « réglée ».</p></div>
+        <div class="pec-accordion-item"><button type="button">Combien de temps pour payer ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Ton prix est bloqué <span data-pb>1 h</span> après confirmation — le temps de saisir un code que tu as déjà, ou d'aller en acheter un (la fenêtre de paiement va jusqu'à <span data-info="fenetre">2 h</span>). S'il expire, rien n'est perdu : tu revalides au tarif du moment, sans frais, et tu ne dois rien tant que tu n'as pas payé.</p></div>
+        <div class="pec-accordion-item"><button type="button">Puis-je payer en plusieurs fois ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Non : chaque commande se règle en une seule fois, le montant affiché (TTC) est le total exact à remettre. En revanche, un <b style="color:var(--color-ink)">Bon d’achat PayEnCash s'utilise en une ou plusieurs fois</b> : le solde non utilisé reste sur le bon d’achat (valable <span data-bon="validiteMois">12</span> mois), et un bon d’achat peut régler une partie d'une commande — le reste se règle avec un autre bon d’achat.</p></div>
+        <div class="pec-accordion-item"><button type="button">Faut-il une carte bancaire, un RIB, un compte ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans"><b style="color:var(--color-ink)">Aucun des trois.</b> Il n'existe pas de champ de paiement dans l'app. Le seul RIB que tu peux enregistrer sert à <b style="color:var(--color-ink)">recevoir</b> un remboursement, jamais à prélever. Chez ton commerçant, tu règles ton code comme tu veux : cela ne nous concerne pas.</p></div>
+        <div class="pec-accordion-item"><button type="button">Je n'ai ni carte ni compte en banque. Ça marche quand même ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans"><b style="color:var(--color-ink)">Oui.</b> Le <b style="color:var(--color-ink)">Bon d’achat PayEnCash</b> s'achète chez un commerçant partenaire, ou auprès d'un distributeur qui vient jusqu'à toi — sans rien ouvrir nulle part : tu repars avec un code, tu le saisis, c'est réglé. <b style="color:var(--color-ink)">Un bon d’achat suffit</b>, à aucun moment. <a href="25-ou-acheter-un-bon.html" style="color:var(--color-primary-dark);font-weight:700">Où acheter un Bon d’achat</a>.</p></div>
+        <div class="pec-accordion-item"><button type="button">La carte bancaire sert à quoi, alors ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">À <b style="color:var(--color-ink)">rien</b>. Il n'y a aucun champ pour un numéro de carte dans l'app, et <b style="color:var(--color-ink)">aucun complément par carte</b> n'est jamais demandé, à aucun montant. Le Bon d’achat PayEnCash n'en réclame pas.</p></div>
+        <div class="pec-accordion-item"><button type="button">Y a-t-il un plafond ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Ceux du Bon d’achat, et l'app te les dit avant de valider. Un <b style="color:var(--color-ink)">Bon d’achat PayEnCash</b> va jusqu'à <span data-bon="plafondBon">—</span> ; pour plus, ton commerçant t'en crée plusieurs, dans la limite de <span data-bon="plafondClientJour">—</span> de bons d’achat utilisés par jour et par compte (vigilance LCB-FT).</p></div>
+        <div class="pec-accordion-item"><button type="button">Puis-je fractionner mes achats pour dépasser un plafond ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Non. Un dispositif anti-fractionnement détecte les commandes rapprochées d'un même client qui viseraient à contourner les plafonds — elles sont bloquées ou déclenchent une vérification renforcée.</p></div>
+        <div class="pec-accordion-item"><button type="button">Pourquoi dois-je vérifier mon identité ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Parce que nous encaissons des titres prépayés et anonymes, la loi demande de savoir qui paie au-delà d'un certain montant : la vérification est progressive (KYC) : une vérification standard suffit pour commencer, une vérification renforcée (prestataire certifié PVID) est demandée au-delà de <span data-kyc="achats">3 achats</span> ou de <span data-kyc="cumul">1 000 € cumulés</span> sur <span data-kyc="jours">7 jours glissants</span>.</p></div>
+        <div class="pec-accordion-item"><button type="button">Quand reçois-je mon billet ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Dès que le règlement est confirmé — code du bon d’achat accepté, ou notification du prestataire —, c'est la <b style="color:var(--color-ink)">compagnie</b> (pas nous) qui émet ton billet. Tu reçois le <b style="color:var(--color-ink)">PNR et l'e-ticket</b> par SMS et email, avec le lien d'enregistrement de la compagnie — et c'est <b style="color:var(--color-ink)">elle qui gère l'enregistrement</b> (en ligne, en général dès J−2). Tout se retrouve dans « Réservations » ; chez nous, un billet ne se « télécharge » jamais.</p></div>
+        <div class="pec-accordion-item"><button type="button">Dois-je créer un compte ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Oui, un compte est nécessaire pour recevoir ton billet et suivre tes réservations. L'inscription se fait par SMS — pas de mot de passe. Ton e-mail est demandé et vérifié avant ta première commande : c'est là qu'arrivent ton billet et ton PNR.</p></div>
+        <div class="pec-accordion-item"><button type="button">Puis-je réserver pour quelqu'un d'autre ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Oui. Tu renseignes les informations de la personne qui voyage (nom, prénom, date de naissance). Le billet sera établi à son nom.</p></div>
+        <div class="pec-accordion-item"><button type="button">Puis-je annuler ma réservation ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Avant de payer : il suffit de ne pas payer — tu ne dois rien. Après le paiement : ce que tu récupères dépend du tarif choisi (affiché avant l'achat) — les règles complètes, cas par cas, sont sur « Nos politiques » dans ton Compte. Zéro frais d'annulation PayEnCash, dans tous les cas.</p></div>
+        <div class="pec-accordion-item"><button type="button">Comment suis-je remboursé ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Le montant remboursable dépend de ton tarif — il t'est confirmé par SMS et email avant toute annulation ferme, jamais de surprise. On rembourse <b style="color:var(--color-ink)">par le chemin d'où l'argent est venu</b> (traçabilité LCB-FT) : <b style="color:var(--color-ink)">re-crédit de ton Bon d’achat PayEnCash</b>, ou un avoir sur ton compte PayEnCash. Un avoir compagnie éventuel est à ton nom et t'est transmis tel quel.</p></div>
+      </div>
+
+      <!-- (18/09, soir — l'agent de caisse mobile est abandonné) CE CHAPITRE S'APPELAIT « Encaissement à
+           domicile » et répondait à six questions sur l'agent : où il vient, son retard et son ETA, comment lui
+           écrire ou l'appeler sans échanger de numéros, le code de sécurité révélé à son arrivée, la photo de
+           preuve, la note 1-5★. Rien de tout cela n'a plus lieu. Ce qui le remplace répond à la question que le
+           client se pose vraiment maintenant : où trouver son code, et que faire s'il coince. -->
+      <h2 class="pec-h2" style="margin:28px 0 12px;display:flex;align-items:center;gap:8px">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="color:var(--color-primary)"><use href="#i-store"/></svg> Acheter son code au comptoir
+      </h2>
+      <div class="pec-accordion" style="display:flex;flex-direction:column;gap:8px">
+        <div class="pec-accordion-item"><button type="button">Où est-ce que j'achète mon code ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Dans un commerce près de chez toi : le <a href="25-ou-acheter-un-bon.html" style="color:var(--color-primary-dark);font-weight:700">réseau des Bons d’achat PayEnCash</a>, des commerces sous contrat avec nous. La liste se met à jour toute seule. Tu peux aussi demander à un <b style="color:var(--color-ink)">distributeur mobile</b> de venir te le vendre.</p></div>
+        <div class="pec-accordion-item"><button type="button">Quelqu'un peut venir jusqu'à moi ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans"><b style="color:var(--color-ink)">Oui, si tu le demandes</b> (19/09). Un <b style="color:var(--color-ink)">distributeur mobile</b> — un indépendant sous le même contrat qu'un commerce — peut te rejoindre <b style="color:var(--color-ink)">à l'adresse que tu donnes</b> — la tienne, ou n'importe quelle autre — à l'heure que tu choisis, et te vendre ton bon d’achat sur place. Il <b>n'encaisse pas ta commande</b> : il te vend un titre, et c'est son code qui règle. Sinon, tu achètes ton code au comptoir quand tu veux.</p></div>
+        <div class="pec-accordion-item"><button type="button">Et si mon code est refusé ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Rien n'est débité : un code refusé ne prélève rien. Tant que la fenêtre de paiement est ouverte, tu peux retenter ou changer de moyen — et si ça coince, l'assistance reprend la main avec ta réf et le ticket que ton commerçant t'a remis (<b style="color:var(--color-ink)">garde-le</b> : le code vaut titre).</p></div>
+        <div class="pec-accordion-item"><button type="button">J'ai perdu le ticket de mon bon d’achat.<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Le <b style="color:var(--color-ink)">code du ticket vaut titre</b> : conserve-le, il ne peut pas être remplacé en cas de perte ou de vol. Une fois le bon d’achat utilisé une première fois, son solde reste consultable dans ton compte.</p></div>
+        <div class="pec-accordion-item"><button type="button">Le service d'assistance est-il gratuit ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans"><b style="color:var(--color-ink)">Oui, entièrement gratuit.</b> Une vraie personne te répond par téléphone (<span id="faq-tel">numéro gratuit</span>) et par chat, aux horaires indiqués. Tu donnes ta réf de réservation, on cerne ton besoin tout de suite — et un humain prend le relais s'il le faut.</p></div>
+      </div>
+
+      <div class="pec-info-card" style="margin-top:28px;text-align:center;padding:24px 20px">
+        <p style="font-size:15px;font-weight:700;color:var(--color-ink)">Tu n'as pas trouvé ta réponse ?</p>
+        <p id="faq-sup" style="margin-top:4px;font-size:13px;color:var(--color-muted)">Une vraie personne te répond — appel gratuit.</p>
+        <script>(function(){var D=window.PEC_DATA;if(!D||!D.serviceClient)return;var e=document.getElementById('faq-sup');if(e)e.innerHTML='Une vraie personne te répond au <b style="color:var(--color-ink)">'+D.serviceClient.tel+'</b> — appel gratuit · '+D.serviceClient.horaires+'.';var t=document.getElementById('faq-tel');if(t)t.innerHTML='<b style="color:var(--color-ink)">'+D.serviceClient.tel+'</b>, appel gratuit · '+D.serviceClient.horaires;})();</script>
+        <a href="08-contact.html" class="tap" style="margin-top:16px;display:inline-flex;align-items:center;gap:8px;border-radius:12px;background:var(--color-primary);color:var(--color-bg);padding:10px 18px;font-size:14px;font-weight:600">Contacter le support <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-arrow-right"/></svg></a>
+      </div>
+
+      <div id="fermeture-slot"></div>
+    </div>
+
+    <nav class="pec-tabbar" aria-label="Navigation principale">
+      <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+      <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+      <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+      <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+      <a class="pec-tab" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+    </nav>
+  </div>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('');
+// (17/09 — pivot) les moyens proposés dans le pays du client : dérivés, jamais écrits dans la page
+// (18/09 — Bon d’achat PayEnCash) …et les règles du bon d’achat ([data-bon] : plafonds, validité — bonsRef, valeurs vives) ; la page écoute
+var D=window.PEC_DATA;if(!D||!D.moyensPaiementLabel)return;
+function peindre(){var t=D.moyensPaiementLabel();[].forEach.call(document.querySelectorAll('.js-moyens'),function(e){if(t)e.textContent=t;});
+  if(!D.bonsRef)return;var R=D.bonsRef(),vals={plafondBon:D.eur(R.plafondBon),plafondClientJour:D.eur(R.plafondClientJour),minimum:D.eur(R.minimum),validiteMois:String(R.validiteMois)};
+  [].forEach.call(document.querySelectorAll('[data-bon]'),function(e){var v=vals[e.getAttribute('data-bon')];if(v!=null)e.textContent=v;});}
+peindre();window.addEventListener('pec-bus',peindre);window.addEventListener('storage',function(e){if(!e.key||/^pec-param|^pec_bus_/.test(e.key))peindre();});})();</script>
+<!-- remplissage commun (07/09) : PEC_DATA.formulairesAppliquer, au chargement -->
+</div>
+</div>
+
+<script>
+  document.querySelectorAll('.pec-accordion-item > button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var item = b.parentElement;
+      var wasOpen = item.classList.contains('open');
+      item.parentElement.querySelectorAll('.pec-accordion-item').forEach(function (i) { i.classList.remove('open'); });
+      if (!wasOpen) item.classList.add('open');
+    });
+  });
+</script>
+</body>
+</html>

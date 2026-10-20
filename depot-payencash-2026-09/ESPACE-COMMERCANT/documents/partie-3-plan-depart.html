@@ -1,0 +1,96 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Étape 8 · Plan de départ (mode test) — PayEnCash</title>
+<style>
+:root{--ajek:#0f7a4d;--ajek-d:#0b5c3a;--ink:#1a1f1c;--muted:#5b675f;--line:#d9e5dd;--bg:#f4f7f5;--card:#fff;--chip:#e8f3ec;--gold:#b8860b;--goldbg:#fdf5e6}
+@media(prefers-color-scheme:dark){:root{--ink:#e8efe9;--muted:#9fb0a6;--line:#254034;--bg:#0d1512;--card:#121d18;--chip:#173026;--goldbg:#2a2410}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.tb{display:flex;gap:8px;flex-wrap:wrap;padding:12px 22px 0}.btn{border:1px solid var(--line);background:var(--card);color:var(--ajek-d);border-radius:8px;padding:6px 11px;font-size:12.5px;text-decoration:none;font-weight:700}
+.wrap{max-width:1080px;margin:0 auto;padding:8px 22px 60px}
+.head{background:linear-gradient(120deg,var(--ajek),var(--ajek-d));color:#fff;border-radius:14px;padding:22px 26px;margin:10px 0 18px}
+.head .k{font-size:12px;letter-spacing:.14em;font-weight:800;opacity:.85}.head h1{margin:4px 0 6px;font-size:24px}.head p{margin:0;font-size:13.5px;opacity:.94}
+h2{font-size:18px;color:var(--ajek-d);margin:30px 0 10px;border-bottom:2px solid var(--line);padding-bottom:6px}
+@media(prefers-color-scheme:dark){h2{color:#5fd39a}}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13px}
+.card b{color:var(--ajek-d)}@media(prefers-color-scheme:dark){.card b{color:#5fd39a}}
+ul{margin:8px 0;padding-left:20px}li{margin:4px 0}
+a.doc{color:var(--ajek-d);font-weight:700;text-decoration:none;border-bottom:1px dashed var(--ajek)}
+@media(prefers-color-scheme:dark){a.doc{color:#5fd39a}}
+.note{background:var(--goldbg);border-left:4px solid var(--gold);border-radius:8px;padding:10px 14px;font-size:13px;margin:14px 0}
+.ok{background:var(--chip);border-left:4px solid var(--ajek);border-radius:8px;padding:10px 14px;font-size:13px;margin:14px 0}
+table{width:100%;border-collapse:collapse;background:var(--card);font-size:12.5px}
+th{background:var(--ajek);color:#fff;text-align:left;padding:8px 10px;font-size:11.5px}
+td{border-top:1px solid var(--line);padding:8px 10px;vertical-align:top}
+td b{color:var(--ajek-d)}@media(prefers-color-scheme:dark){td b{color:#5fd39a}}
+.tblwrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line)}
+</style><style>/*fresh*/
+:root{--ajek:#10A06A;--ajek-d:#0C7F54;--gold:#E39A2E}
+body{background:
+ radial-gradient(1100px 520px at 92% -12%, rgba(63,217,155,.16), transparent 62%),
+ radial-gradient(900px 460px at -12% 34%, rgba(227,154,46,.09), transparent 58%),
+ radial-gradient(700px 420px at 50% 115%, rgba(16,160,106,.10), transparent 60%),
+ var(--bg)}
+.head{background:linear-gradient(115deg,#0F2A24 0%,#0C7F54 55%,#10A06A 100%)!important;position:relative;overflow:hidden}
+.head::after{content:"";position:absolute;right:-40px;top:-60px;width:220px;height:220px;border-radius:50%;
+ background:radial-gradient(circle,rgba(63,217,155,.35),transparent 65%);pointer-events:none}
+h2{border-bottom:none!important;position:relative;padding-bottom:9px!important}
+h2::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:4px;border-radius:2px;
+ background:linear-gradient(90deg,#10A06A,#3FD99B)}
+.card,.flux,.app,.part,.tbl{transition:transform .16s ease,box-shadow .16s ease}
+.card:hover,.flux:hover,.app:hover,.tbl:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(15,42,36,.13)}
+.btn{transition:transform .12s ease,box-shadow .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(16,160,106,.22)}
+.pill{background:linear-gradient(120deg,#E6F4EC,#d8f3e6)}
+.ok{background:linear-gradient(120deg,#E6F4EC,#f0faf4)}
+.note{background:linear-gradient(120deg,#FDF1E7,#fdf7ee)}
+.gbar .bar i,.part .g i,.lab .g i{background:linear-gradient(90deg,#10A06A,#3FD99B)!important}
+th{background:linear-gradient(115deg,#0C7F54,#10A06A)!important}
+</style>
+</head><body>
+<div class="tb"><a class="btn" href="diagramme-principal.html">🧭 Fil rouge</a><a class="btn" href="partie-6b-specs-dev.html">← Étape 7 · Architecture</a><a class="btn" href="etape-9-recette.html">Étape 9 · Tests & recette →</a></div>
+<div class="wrap">
+
+<div class="head"><div class="k">ÉTAPE 8 / 10</div><h1>🚀 Le plan de départ — mode test</h1>
+<p>Le pont entre le droit (Étape 3) et les process (Étape 4) : <b>comment on démarre petit, légal et mesurable</b>. Le pilote est le terrain qui valide — ou invalide — tout ce qui suit. <b>(17/09 — pivot, complété le 18/09 au soir)</b> Plus de borne, plus de commerçant qui encaisse, <b>plus d'agent de caisse mobile</b> : le pilote se joue avec <b>les deux moyens de payer avec un bon d’achat</b>, achetés l'un et l'autre au comptoir d'un commerce — le Bon d’achat PayEnCash vendu chez les commerces partenaires (qui nous règlent par carte à chaque vente) et le Bon d’achat PayEnCash  — en France, sur Fly et Mode.</p></div>
+
+<h2>1 · Le dispositif du pilote</h2>
+<div class="grid">
+<div class="card" hidden><b>(20/09 — supprimé)</b><ul><li>Contrat prestataire signé (KYB, réserve glissante 5 %), page hébergée branchée, <b>pingback</b> reçu sur <code>api.payencash.fr</code>.</li><li hidden>(20/09 — supprimé) — le plafond est dit avant l'achat du ticket.</li><li>Docs : <a class="doc" href="partie-4-flux.html">F1 et F7 (Étape 4)</a> · <a class="doc" href="partie-6b-specs-dev.html">endpoints psp-intent / pingback (Étape 7)</a>.</li></ul></div>
+<!-- (18/09, soir) Le pilote ne recrute plus personne pour encaisser : l'agent de caisse mobile est supprimé. Ce
+     qu'il faut mettre debout à sa place, c'est le réseau qui vend les bons d’achat — et le moyen d'être payé par lui. -->
+<div class="card"><b>Le réseau de commerçants partenaires (le Bon d’achat)</b><ul><li><b>Contrat de distribution</b> signé en ligne par le gérant (lien jetonné + code OTP), dossier KYB au coffre : <a class="doc" href="contrat-distribution-bons.html">contrat</a> · <a class="doc" href="conditions-bon-payencash.html">conditions du bon d’achat</a>.</li><li><b>Carte d'entreprise du commerce enregistrée</b> (tokenisée chez <b>Stripe</b>, le numéro ne traverse aucun de nos serveurs) : c'est elle qui nous règle à chaque vente, valeur faciale moins sa commission (1,10 % HT + TVA).</li><li>Vente : ticket imprimé <code>BV-…</code> (code + QR). <b>Refus de la banque = aucun bon d’achat</b> ; annulation possible au comptoir <b>30 minutes</b>.</li><li><b>Zéro matériel, zéro borne, zéro avance de trésorerie</b> côté commerçant — et zéro créance côté AJEK.</li></ul></div>
+<div class="card"><b>2 apps clientes en construction</b><ul><li><a class="doc" href="maquette-app-fly.html">✈️ PayEnCash FLY</a> et <a class="doc" href="maquette-app-mode.html">👟 PayEnCash MODE</a> — mêmes moyens de payer avec un bon d’achat (Bon d’achat PayEnCash · Bon d’achat PayEnCash), un bon d’achat suffit demandée.</li><li>En attendant : prise de commande accompagnée (fondatrice) + <a class="doc" href="../marketing/landing-page.html">landing</a>.</li></ul></div>
+</div>
+<div class="note"><b>Besoin en fonds de roulement :</b> avance Duffel ≈ D × X × Y (<a class="doc" href="partie-1b-financier.html">Étape 2 §4</a>) — à provisionner avant J-0.</div>
+
+<h2>2 · Objectifs & go/no-go</h2>
+<div class="ok"><b>Pilote = 3 mois · Marseille et sa métropole · budget marketing 10 000 €.</b> Les 3 scénarios chiffrés (cascade CA → marge → seuil de rentabilité) et les <b>seuils go/no-go</b> sont dans <a class="doc" href="../marketing/objectifs-chiffres.html">Objectifs chiffrés</a> et <a class="doc" href="../marketing/plan-lancement.html">Plan de lancement</a>. Paniers réels Duffel : ~80–200 € Europe · ~280–450 € diaspora. Traction déjà acquise : 4 700 € de CA, milliers d'abonnés sociaux.</div>
+<div class="note"><b>Si no-go — l'arrêt propre.</b> Honorer <b>toutes</b> les commandes déjà payées (PAID/CONFIRMED) jusqu'au retour du dernier voyageur · geler les nouvelles ventes <b>immédiatement</b> · restituer les commandes non exécutables selon F10 (re-crédit du bon d’achat → avoir → crédit compte client → virement — <b>jamais d'espèces</b>) · <b>honorer les bons d’achat en circulation, qui sont une dette envers leurs porteurs</b> (les rembourser si le service s'arrête, et arrêter d'abord la vente au comptoir) · rembourser les transactions en ligne « à rembourser » · payer les factures fournisseurs <b>≤ 7 j</b> quoi qu'il arrive · communication : un message simple, jamais de silence.</div>
+
+<h2>3 · Le calendrier — J+40, puis pilote 3 mois (S12)</h2>
+<div class="tblwrap"><table>
+<tr><th>Quand</th><th>Jalon</th><th>Preuve de passage</th></tr>
+<tr><td><b>S1–S2</b></td><td><b>compte Stripe activé</b> (KYB d'AJEK validé, Connect ouvert, activité « cartes cadeaux » acceptée par écrit) · <b>premiers commerçants signés</b> (contrat de distribution + carte enregistrée)</td><td>notification Stripe signée reçue en recette · 1ᵉʳ prélèvement de test accepté · contrats de distribution signés et cartes enregistrées</td></tr>
+<tr><td><b>S1–S2</b></td><td><b>Garantie financière (APST) + RCP tourisme : PREUVES émises</b> — sans elles, l'immatriculation Atout France n'existe pas et <b>AUCUNE vente n'est légale</b>. <b>Bloquant absolu du pilote.</b></td><td>attestation de garantie financière APST + attestation RCP reçues — rien ne se vend avant</td></tr>
+<tr><td><b>S1–S2</b></td><td>Extension de l'objet social + registre 321-7 + CGV mode (rétractation 14 j)</td><td>Kbis modifié · registre ouvert · CGV publiées</td></tr>
+<tr><td><b>S1–S2</b></td><td>Continuité bancaire : ≥ 2 comptes ouverts</td><td>2 RIB actifs</td></tr>
+<tr><td><b>S2–S3</b></td><td>Recette du paiement en ligne (3 transactions : acceptée, refusée, acceptée hors délai → à rembourser) · <b>recette du Bon d’achat</b> (vente acceptée, vente refusée par la banque, annulation au comptoir sous 30 min → prélèvement contre-passé)</td><td>banc vert sur les scénarios psp_* · 3 reçus réels · 3 tickets <code>BV-</code> réels, dont un refus qui n'a produit aucun bon d’achat</td></tr>
+<tr><td><b>S3</b></td><td><b>Première vente test</b> (commande témoin à faible montant, achat Duffel réel)</td><td>reçu + code émis · billet réel confirmé</td></tr>
+<tr><td><b>S3–S8</b></td><td>Lancement acquisition (jeu concours, flyers terrain, pub sociale) · revue hebdo</td><td>tableau de pilotage rempli chaque semaine</td></tr>
+<tr><td><b>S12</b></td><td><b>Décision go/no-go</b> : montée en charge (nouveaux commerces partenaires, nouvelles villes, Pays-Bas pour iDEAL) — ou pivot</td><td>seuils des <a class="doc" href="../marketing/objectifs-chiffres.html">objectifs</a> atteints ou non</td></tr>
+</table></div>
+<p style="font-size:12.5px;color:var(--muted)">Détail opérationnel jour par jour : <a class="doc" href="feuille-de-route.html">feuille de route J+40</a>.</p>
+
+<h2>4 · Ce qu'on mesure chaque semaine (et rien d'autre)</h2>
+<div class="grid">
+<div class="card"><b>Ventes</b><ul><li>Ventes par moyen (Bon d’achat PayEnCash) — cible : voir grille des scénarios</li><li>Panier moyen réel Duffel vs fourchettes</li><li>Taux de transactions en ligne refusées / abandonnées · délai de notification</li></ul></div>
+<div class="card"><b>Acquisition</b><ul><li>Téléchargements par source (QR flyer, pub, influenceur)</li><li>Coût par téléchargement · coût par 1ʳᵉ commande</li><li>Participations au jeu concours</li></ul></div>
+<div class="card"><b>Opérations & conformité</b><ul><li><b>Prélèvements refusés</b> (chaque refus est une vente perdue au comptoir) · cartes de commerce expirées · bons d’achat annulés sous 30 min</li><li>Incidents au comptoir (journal) · transactions « à rembourser » soldées sous 48 h</li><li>Reçus émis = paiements (contrôle du journal)</li></ul></div>
+<div class="card"><b>Trésorerie &amp; fiscalité (Étape 2 §7)</b><ul><li>Avance Duffel vs seuil</li><li>Frais du prestataire Stripe · montant moyen du bon d’achat vendu (c'est lui qui décide du poids du fixe de 0,15 €)</li><li>TVA collectée mise de côté</li><li>Factures fournisseurs Mode ≤ 7 j</li></ul></div>
+</div>
+<div class="note"><b>Où on le mesure :</b> l'<a class="doc" href="maquette-app-manager.html">Espace Pilotage du Manager</a> (écrans 1, 3, 6–8). La revue hebdo arbitre : on coupe ce qui ne rend pas, on double ce qui marche.</div>
+
+<h2>5 · Ce que le pilote doit prouver avant la montée en charge</h2>
+<div class="ok">① Des clients paient réellement <b>avec un bon d’achat</b> un voyage / une pièce — <b>par bon d’achat</b> acheté au comptoir ET par Bon d’achat PayEnCash (le geste existe, dans les deux cas) · ② le circuit de l'argent tient : bon d’achat (vente → prélèvement accepté → code émis, <b>aucun bon d’achat sans prélèvement, aucun prélèvement sans bon d’achat</b>) et en ligne (pingback → règlement → virement du prestataire, aucune transaction « à rembourser » oubliée) · ③ <b>le prélèvement à la vente tient dans la durée</b> : taux de refus supportable, cartes à jour, authentification forte faite une fois à l'enregistrement de la carte (SetupIntent Stripe), plus aucune demandée à la vente · ④ l'acquisition a un coût par client soutenable. <b>Si les 4 sont vrais → montée en charge</b> : nouveaux commerces partenaires et nouvelles villes, ouverture iDEAL hors France.</div>
+
+<p style="margin-top:24px"><a class="btn" href="partie-6b-specs-dev.html">← Étape 7 · Architecture</a> <a class="btn" href="diagramme-principal.html">🧭 Fil rouge</a> <a class="btn" href="etape-9-recette.html">Continuer → Étape 9 · Tests & recette</a></p>
+</div></body></html>

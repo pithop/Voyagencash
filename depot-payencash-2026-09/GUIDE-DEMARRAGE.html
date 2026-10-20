@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash — Guide de démarrage local</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+  /* Sans ceci, un navigateur en mode sombre rend champs, listes et ascenseurs
+     en sombre sur notre fond creme. La doc est concue en clair, on le declare. */
+  color-scheme: light;
+    --vert: #1F4438; --cuivre: #D8722B; --creme: #F7F5F0; --encre: #1A1A1A;
+    --gris: #6B6966; --gris-clair: #E4E0D6; --blanc: #FFFFFF; --rouge: #C0392B; --radius: 10px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; color: var(--encre); background: var(--creme); line-height: 1.7; font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+  .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: var(--vert); color: var(--creme); overflow-y: auto; padding: 24px 0; z-index: 100; }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 0.5px solid rgba(244,241,234,0.15); margin-bottom: 16px; }
+  .sidebar-logo .brand { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 4px; }
+  .sidebar-logo .brand .accent { color: var(--cuivre); }
+  .sidebar-logo .doc-num { font-size: 11px; color: rgba(244,241,234,0.5); margin-top: 4px; }
+  .sidebar nav a { display: block; padding: 7px 20px; font-size: 12.5px; color: rgba(244,241,234,0.7); text-decoration: none; border-left: 2px solid transparent; }
+  .sidebar nav a:hover { color: var(--creme); border-left-color: var(--cuivre); background: rgba(244,241,234,0.06); }
+  .doc-nav { margin-top: 24px; padding: 16px 20px 0; border-top: 0.5px solid rgba(244,241,234,0.15); }
+  .doc-nav p { font-size: 11px; color: rgba(244,241,234,0.4); margin-bottom: 8px; }
+  .doc-nav a { display: block; font-size: 12px; color: rgba(244,241,234,0.6); text-decoration: none; padding: 4px 0; }
+  .doc-nav a:hover { color: var(--cuivre); }
+
+  .main { margin-left: 240px; max-width: 920px; padding: 48px 56px; }
+
+  .doc-header { border-bottom: 1px solid var(--gris-clair); padding-bottom: 24px; margin-bottom: 40px; }
+  .doc-header .doc-tag { display: inline-block; background: var(--cuivre); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px; letter-spacing: 0.04em; }
+  .doc-header h1 { font-family: 'Archivo', sans-serif; font-size: 32px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .doc-header .meta { display: flex; gap: 20px; font-size: 13px; color: var(--gris); flex-wrap: wrap; }
+
+  .section { margin-bottom: 48px; scroll-margin-top: 24px; }
+  h2 { font-family: 'Archivo', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--gris-clair); color: var(--vert); }
+  h3 { font-family: 'Archivo', sans-serif; font-size: 17px; font-weight: 600; margin: 28px 0 12px; color: var(--encre); }
+  p { margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 12px 0 20px; }
+  th { background: var(--vert); color: var(--creme); padding: 9px 12px; text-align: left; font-weight: 600; font-size: 12px; }
+  td { padding: 8px 12px; border-bottom: 0.5px solid var(--gris-clair); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(244,241,234,0.5); }
+  td code { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: rgba(31,68,56,0.07); color: var(--vert); padding: 2px 6px; border-radius: 4px; }
+  pre { background: #1A1A2E; color: #E8E6E3; border-radius: var(--radius); padding: 18px 20px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; overflow-x: auto; margin: 14px 0; }
+  pre .comment { color: #6B7A8D; }
+
+  .callout { border-radius: var(--radius); padding: 14px 16px; margin: 16px 0; font-size: 14px; display: flex; gap: 12px; align-items: flex-start; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: rgba(31,68,56,0.06); border-left: 3px solid var(--vert); }
+  .callout.warning { background: rgba(216,114,43,0.08); border-left: 3px solid var(--cuivre); }
+  .callout strong { display: block; font-weight: 600; margin-bottom: 4px; color: var(--encre); }
+
+  .checklist { list-style:none; margin: 12px 0; }
+  .checklist li { padding: 6px 0 6px 28px; position:relative; font-size:14px; }
+  .checklist li::before { content:"☐"; position:absolute; left:0; color: var(--vert); font-size:16px; }
+
+  @media print { .sidebar { display: none; } .main { margin-left: 0; padding: 24px; } }
+  @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; padding: 24px 20px; } }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">PayEn<span class="accent">Cash</span></div>
+    <div class="doc-num">Documentation technique · v1.0</div>
+  </div>
+  <nav>
+    <div class="section-head">Guide de démarrage</div>
+    <a href="#prerequis">Prérequis</a>
+    <a href="#installation">Installation</a>
+    <a href="#arborescence">Arborescence de projet</a>
+    <a href="#env">Fichier .env.example</a>
+    <a href="#comptes">Comptes à créer avant de coder</a>
+    <a href="#premiers-pas">Premiers pas une fois installé</a>
+    <a href="#tester-bon">Tester le Bon d’achat PayEnCash en 5 minutes</a>
+    <a href="#ordre-dev">Ordre de développement suggéré</a>
+  </nav>
+  <div class="doc-nav">
+    <p>Documentation complète</p>
+    <a href="docs/01-flux-metier.html">Doc 1 : Flux métier</a>
+    <a href="ESPACE-COMMERCANT/documents/partie-6-donnees.html">Doc 2 : Schéma BDD</a>
+    <a href="docs/03-api-specs.html">Doc 3 : Spécifications API</a>
+    <a href="docs/04-pricing.html">Doc 4 : Logique de pricing</a>
+    <a href="docs/05-architecture.html">Doc 5 : Architecture technique</a>
+    <a href="docs/06-segment-maghreb.html">Doc 6 : Segment Maghreb</a>
+    <a href="docs/07-annulations-remboursements.html">Doc 7 : Annulations &amp; remboursements</a>
+    <a href="docs/08-mecanisme-financier.html">Doc 8 : Mécanisme financier</a>
+    <a href="docs/09-espace-manager.html">Doc 9 : Espace manager</a>
+    <a href="docs/10-compte-utilisateur.html">Doc 10 : Compte utilisateur</a>
+    <a href="docs/11-ui-v2.html">Doc 11 : UI v2</a>
+    <a href="ESPACE-COMMERCANT/documents/partie-4-flux.html">Ligne Mode — Étape 4, flux F11/F12</a>
+    <a href="ESPACE-COMMERCANT/documents/partie-2-juridique-socle.html#bon">Le Bon d’achat PayEnCash — Étape 3 §2b (L521-3 CMF)</a>
+    <a href="ESPACE-COMMERCANT/documents/contrat-distribution-bons.html">Contrat de distribution du bon d’achat</a>
+    <a href="ESPACE-COMMERCANT/documents/cgu-espace-partenaire.html">CGU espace partenaire</a>
+    <a href="ESPACE-COMMERCANT/documents/conditions-bon-payencash.html">Conditions du bon d’achat (consommateur)</a>
+  </div>
+</aside>
+
+<main class="main">
+
+  <div class="doc-header">
+    <span class="doc-tag">Guide pratique</span>
+    <h1>Guide de démarrage local</h1>
+    <div class="meta">
+      <span>AJEK SASU — application PayEnCash</span>
+      <span>Version 1.0</span>
+      <span>Révisé le 18 septembre 2026</span>
+    </div>
+  </div>
+
+  <section class="section" id="intro-section">
+    <p>Ce guide donne tout ce qu'il faut pour passer de zéro à un environnement de développement fonctionnel, avant même d'écrire la première ligne de logique métier. Il s'appuie sur la stack recommandée au Doc 5 (Architecture technique) — si une autre stack est choisie, les principes restent valables mais les commandes ci-dessous devront être adaptées.</p>
+  </section>
+
+  <section class="section" id="prerequis">
+    <h2>Prérequis</h2>
+    <table>
+      <thead><tr><th>Outil</th><th>Version minimale</th><th>Usage</th></tr></thead>
+      <tbody>
+        <tr><td>Node.js</td><td>20 LTS</td><td>Runtime backend et frontend</td></tr>
+        <tr><td>npm ou pnpm</td><td>npm 10+ / pnpm 9+</td><td>Gestion des dépendances</td></tr>
+        <tr><td>PostgreSQL</td><td>16+</td><td>Base de données — imposé par le schéma du Doc 2 (JSONB, UUID, extension PostGIS)</td></tr>
+        <tr><td>Redis</td><td>7+</td><td>File d'attente BullMQ (notification du prestataire, paiement fournisseur) et canal temps réel (Doc 5)</td></tr>
+        <tr><td>Git</td><td>2.40+</td><td>Gestion de version</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Option Docker</strong> Si Docker est disponible, PostgreSQL et Redis peuvent être lancés en conteneurs locaux plutôt qu'installés directement sur la machine — voir la commande <code>docker compose</code> suggérée dans la section installation.</div>
+    </div>
+  </section>
+
+  <section class="section" id="installation">
+    <h2>Installation</h2>
+    <h3>1. Cloner le dépôt et installer les dépendances</h3>
+    <pre>git clone &lt;url-du-depot&gt; payencash
+<span class="comment"># cd dans le dossier backend</span>
+cd payencash/backend
+npm install
+
+<span class="comment"># cd dans le dossier frontend, dans un second terminal</span>
+cd ../frontend
+npm install</pre>
+
+    <h3>2. Lancer PostgreSQL et Redis (option Docker)</h3>
+    <pre><span class="comment"># Si un docker-compose.yml est fourni à la racine du dépôt</span>
+docker compose up -d postgres redis
+
+<span class="comment"># Sinon, installation locale classique :</span>
+<span class="comment"># PostgreSQL : créer une base "payencash_dev"</span>
+<span class="comment"># Redis : lancer le service par défaut sur le port 6379</span></pre>
+
+    <h3>3. Configurer les variables d'environnement</h3>
+    <p>Copier le fichier d'exemple et le compléter avec les clés sandbox obtenues (voir section "Comptes à créer" ci-dessous) :</p>
+    <pre>cp .env.example .env</pre>
+
+    <h3>4. Appliquer le schéma de base de données</h3>
+    <pre><span class="comment"># Selon l'outil de migration retenu, par exemple avec Prisma :</span>
+npx prisma migrate dev
+
+<span class="comment"># Ou directement via un script SQL reprenant les 35 tables détaillées au Doc 2</span>
+<span class="comment"># — complétées par les entités d'août 2026 (KYB/KYC, cash &amp; rémunération, RH,</span>
+<span class="comment">#   points de collecte, comptabilité de gestion) spécifiées dans</span>
+<span class="comment">#   MODELE-DONNEES-COMPLEMENT-2026-08.md</span></pre>
+
+    <h3>5. Lancer les serveurs de développement</h3>
+    <pre><span class="comment"># Terminal 1 — backend</span>
+cd backend
+npm run dev
+
+<span class="comment"># Terminal 2 — worker de file d'attente (dispatch agent, tracking, paiement fournisseur)</span>
+cd backend
+npm run worker
+
+<span class="comment"># Terminal 3 — frontend</span>
+cd frontend
+npm run dev</pre>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <!-- (18/09, soir) Le dispatch de courses n'existe plus avec l'agent de caisse mobile ; ce qui reste vrai, et qui reste la raison d'être du worker, c'est que le règlement déclenche l'achat fournisseur. -->
+      <div><strong>Le worker n'est pas optionnel</strong> Sans le processus worker actif, la notification du prestataire ne déclenchera jamais le paiement fournisseur (Duffel / Hotelbeds) — aucune commande ne passera au statut <code>CONFIRMED</code>. Voir Doc 5, section "File d'attente asynchrone", pour la justification de cette séparation.</div>
+    </div>
+  </section>
+
+  <section class="section" id="arborescence">
+    <h2>Arborescence de projet suggérée</h2>
+    <p>Structure cohérente avec la stack Node.js + TypeScript du Doc 5, organisée pour refléter directement le découpage des documents techniques :</p>
+    <pre>payencash/
+├── backend/
+│   ├── src/
+│   │   ├── controllers/        <span class="comment"># Points d'entrée HTTP (REST)</span>
+│   │   │   ├── orders.controller.ts
+│   │   │   ├── payments.controller.ts   <span class="comment"># code interne + validation de collecte</span>
+│   │   │   ├── collections.controller.ts <span class="comment"># courses, dispatch, tracking</span>
+│   │   │   └── agents.controller.ts   <span class="comment"># espacet agent (inscription, courses)</span>
+│   │   ├── services/           <span class="comment"># Logique métier — un service par phase du Doc 1</span>
+│   │   │   ├── pricing.service.ts       <span class="comment"># logique du Doc 4 (marges, service fee, TVA)</span>
+│   │   │   ├── duffel.service.ts        <span class="comment"># intégration Doc 3</span>
+│   │   │   ├── hotelbeds.service.ts      <span class="comment"># intégration Doc 3 (post-payé)</span>
+│   │   │   ├── agent.service.ts       <span class="comment"># profils, disponibilité, plafonds cash</span>
+│   │   │   ├── dispatch.service.ts      <span class="comment"># attribution : distance prioritaire, note secondaire (D5)</span>
+│   │   │   └── tracking.service.ts      <span class="comment"># position live + ETA (WebSocket/SSE)</span>
+│   │   ├── models/              <span class="comment"># Correspondance avec les tables du Doc 2</span>
+│   │   ├── jobs/                 <span class="comment"># Workers BullMQ (dispatch, tracking, notation, retry fournisseur)</span>
+│   │   ├── middlewares/          <span class="comment"># Auth client/agent/manager, throttle, etc.</span>
+│   │   └── config/               <span class="comment"># Chargement et validation des variables d'environnement</span>
+│   ├── prisma/ (ou migrations/)  <span class="comment"># Schéma de base de données (Doc 2)</span>
+│   ├── tests/
+│   ├── .env.example
+│   └── package.json
+├── frontend/
+│   ├── src/
+│   │   ├── components/           <span class="comment"># Slider budget, stepper voyageurs, etc. (cf. maquettes ui/)</span>
+│   │   ├── pages/                 <span class="comment"># Écrans du tunnel de vente (Doc 1)</span>
+│   │   └── lib/                   <span class="comment"># Appels API vers le backend</span>
+│   └── package.json
+└── docker-compose.yml             <span class="comment"># PostgreSQL + Redis pour le développement local</span></pre>
+  </section>
+
+  <section class="section" id="env">
+    <h2>Fichier .env.example</h2>
+    <p>Liste exhaustive des variables nécessaires, reprenant le récapitulatif des secrets du Doc 3 et les besoins d'infrastructure du Doc 5. Aucune valeur réelle n'est présente — à compléter une fois les comptes créés (section suivante).</p>
+    <pre><span class="comment"># --- Base de données ---</span>
+DATABASE_URL=postgresql://user:password@localhost:5432/payencash_dev
+
+<span class="comment"># --- File d'attente ---</span>
+REDIS_URL=redis://localhost:6379
+
+<span class="comment"># --- Duffel (vols) — voir Doc 3 ---</span>
+DUFFEL_API_KEY=duffel_test_xxxxxxxxxxxxx
+
+<span class="comment"># --- Hotelbeds APItude (hébergement) — voir Doc 3 ---</span>
+HOTELBEDS_API_KEY=
+HOTELBEDS_SECRET=
+
+<span class="comment"># --- (20/09) plus aucune clé de prestataire de paiement en ligne : ce rail est supprimé ---</span>
+<span class="comment"># page de paiement hébergée + pingback serveur à serveur (répondre « OK », sinon renvoi toutes les 30 min)</span>
+PSP_PAGE_URL=
+PAYS_OUVERT=FR
+<span class="comment"># (18/09, soir) Le terminal de l'agent a disparu avec l'agent. Ce qui le remplace : le prestataire qui</span>
+<span class="comment"># PRÉLÈVE le commerçant à chaque vente d'un bon d’achat — montant du bon moins sa commission (Stripe,</span>
+<span class="comment"># 1,5 % + 0,25 € — retenu le 21/09 pour les deux lignes, Mode et PayEnCash Solution). Le numéro de carte ne</span>
+<span class="comment"># traverse jamais nos serveurs : le composant Stripe du navigateur l'enregistre (SetupIntent), nous ne gardons</span>
+<span class="comment"># que l'empreinte pm_…, les 4 derniers chiffres, la marque et l'échéance. Deux jeux de clés (test, réel) ;</span>
+<span class="comment"># STRIPE_MODE — ou le réglage manager stripe.mode — choisit celui qui sert. Détail : server/.env.example.</span>
+STRIPE_MODE=test
+STRIPE_SECRET_KEY_TEST=
+STRIPE_PUBLISHABLE_KEY_TEST=
+STRIPE_WEBHOOK_SECRET_TEST=
+STRIPE_CONNECT_WEBHOOK_SECRET_TEST=
+STRIPE_CONNECT_CLIENT_ID_TEST=
+STRIPE_SECRET_KEY_LIVE=
+STRIPE_PUBLISHABLE_KEY_LIVE=
+STRIPE_WEBHOOK_SECRET_LIVE=
+STRIPE_CONNECT_WEBHOOK_SECRET_LIVE=
+STRIPE_CONNECT_CLIENT_ID_LIVE=
+
+<span class="comment"># --- Bon d’achat PayEnCash (18/09) : AUCUNE clé tierce — le bon d’achat n'est pas le titre d'un tiers, il se règle dans le bus AJEK</span>
+<span class="comment"># (service bons d’achat). Ses valeurs (5–250 € par bon d’achat, 1 000 € de bons d’achat par client et par jour, 12 mois, commission 1,10 % HT + TVA,</span>
+<span class="comment"># annulation au comptoir 30 min) sont lues depuis la Configuration manager (référentiel ref.bons),</span>
+<span class="comment"># jamais en variables d'environnement.</span>
+
+<span class="comment"># (18/09, soir) LE BLOC « ENCAISSEMENT DES ESPÈCES PAR L'AGENT » ET LE BLOC « RÉSEAU CASH SERVICES » SONT</span>
+<span class="comment"># PARTIS AVEC L'AGENT : plus de code de sécurité remis sur le pas d'une porte, plus de photo de preuve de</span>
+<span class="comment"># collecte à conserver, plus de plafond d'espèces à découper, plus de dépôt en automate. Une variable</span>
+<span class="comment"># d'environnement qui survit à sa fonction finit par être remplie « au cas où ».</span>
+<span class="comment"># --- Prélèvement du commerçant à la vente d'un bon d’achat, comptes des marques Solution (prestataire Stripe) ---</span>
+<span class="comment"># La clé publique monte le composant de carte DANS LE NAVIGATEUR du commerçant : le numéro ne traverse jamais nos</span>
+<span class="comment"># serveurs, on ne garde que l'empreinte pm_…, les 4 derniers chiffres, la marque et l'échéance (partner_cards).</span>
+<span class="comment"># Un jeu de clés par mode ; STRIPE_MODE (ou le réglage manager stripe.mode) choisit celui qui sert.</span>
+STRIPE_MODE=test
+STRIPE_SECRET_KEY_TEST=
+STRIPE_PUBLISHABLE_KEY_TEST=
+STRIPE_WEBHOOK_SECRET_TEST=
+STRIPE_CONNECT_WEBHOOK_SECRET_TEST=
+STRIPE_CONNECT_CLIENT_ID_TEST=
+STRIPE_SECRET_KEY_LIVE=
+STRIPE_PUBLISHABLE_KEY_LIVE=
+STRIPE_WEBHOOK_SECRET_LIVE=
+STRIPE_CONNECT_WEBHOOK_SECRET_LIVE=
+STRIPE_CONNECT_CLIENT_ID_LIVE=
+<span class="comment"># Les plafonds du bon d’achat (5–250 €, 1 000 € par client et par jour, 12 mois, commission 1,10 % HT + TVA)</span>
+<span class="comment"># se lisent dans la Configuration manager (ref.bons), JAMAIS en variable d'environnement.</span>
+<span class="comment"># ⚠️ Aucune variable ne doit s'appeler AML_* : AJEK n'est a priori pas assujettie LCB-FT (à confirmer) —</span>
+<span class="comment">#    ces plafonds sont des règles de prudence, pas de l'anti-blanchiment.</span>
+
+<span class="comment"># --- KYC client gradué (déclenché à 3 achats ou 1 000 €/7 jours, PVID) &amp; KYB fournisseurs (ligne Mode) ---</span>
+KYC_PROVIDER_KEY=
+KYB_PROVIDER_KEY=
+
+<span class="comment"># --- Logiciel de caisse certifié (art. 286-I-3° bis CGI) ---</span>
+<span class="comment"># Reçu à numérotation séquentielle continue, horodaté, inaltérable, DISTINCT du</span>
+<span class="comment"># récapitulatif proforma affiché avant paiement. Exiger de l'éditeur une attestation</span>
+<span class="comment"># individuelle visant explicitement le 286-I-3° bis — « sécurisé » ne suffit pas.</span>
+RECEIPT_SEQUENCE_NAMESPACE=
+
+<span class="comment"># --- Cartographie (où acheter un bon d’achat, où acheter un Bon d’achat PayEnCash) — voir Doc 5 ---</span>
+<span class="comment"># Fournisseur de tuiles vectorielles (MapLibre). Prévoir une clé/quota dédiés en production.</span>
+MAP_TILES_URL=
+MAP_TILES_KEY=
+<span class="comment"># Google Places : adresses des commerces partenaires et des commerces partenaires</span>
+GOOGLE_PLACES_API_KEY=
+<span class="comment"># Canal temps réel position + ETA (WebSocket/SSE)</span>
+REALTIME_URL=
+
+<span class="comment"># --- Notifications push (app agent : nouvelle course, rappels) ---</span>
+PUSH_PROVIDER_KEY=
+
+<span class="comment"># --- Chiffrement applicatif des données voyageurs (Doc 5, colonnes *_enc) ---</span>
+ENCRYPTION_KEY=
+
+<span class="comment"># --- Divers ---</span>
+NODE_ENV=development
+PORT=3000
+FRONTEND_URL=http://localhost:5173</pre>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Ne jamais committer le fichier .env réel</strong> Seul <code>.env.example</code> (sans valeurs) doit être versionné dans Git. Le <code>.gitignore</code> du projet doit explicitement exclure <code>.env</code>. En production, ces variables doivent venir d'un coffre de secrets (vault), jamais d'un fichier sur le serveur — voir Doc 5, section Sécurité.</div>
+    </div>
+  </section>
+
+  <section class="section" id="comptes">
+    <h2>Comptes à créer avant de coder</h2>
+    <p>Reprend et complète la checklist du document <code>outils-integration/outils-a-integrer.html</code>, dans l'ordre où ils deviennent nécessaires :</p>
+    <table>
+      <thead><tr><th>Étape</th><th>Compte</th><th>Délai d'obtention typique</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Compte développeur Duffel (sandbox)</td><td>Immédiat — self-service</td></tr>
+        <tr><td>2</td><td>Inscription développeur Hotelbeds + certification</td><td>Self-service immédiat pour le test ; certification avant production (voir outils-a-integrer.html)</td></tr>
+        <tr><td>3</td><td>Fournisseur de tuiles cartographiques (carte « où acheter un bon d’achat ») + service de notifications push</td><td>Self-service, mais prévoir une clé/quota dédiés pour la production</td></tr>
+        <tr><td>4</td><td>Compte Brevo (SMS transactionnels : OTP, confirmations, rappels)</td><td>Self-service — validation de l'expéditeur à anticiper</td></tr>
+      </tbody>
+    </table>
+    <p>Le développeur peut commencer à travailler sur la structure du projet, le schéma de base de données et le frontend dès l'obtention de la clé sandbox Duffel (étape 1) — les étapes suivantes ne bloquent que l'intégration effective de l'hébergement, de la carte live et des notifications, pas le reste du développement.</p>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div hidden><strong>(20/09 — retiré)</strong> (— pas le Bon d’achat PayEnCash, qui se règle dans le bus AJEK) — <i>(20/09 — supprimé)</i> : page de paiement hébergée, <strong>pingback</strong> serveur à serveur (seule la notification règle une commande), KYB d'AJEK avec bénéficiaires effectifs, réserve glissante 5 %, API Delivery Confirmation pour la ligne Mode. <!-- (18/09, soir) DEUX CHANGEMENTS DE CONTRATS, pas seulement de mots : l'agent de caisse mobile supprimé
+       fait tomber l'acquéreur TPE, le réseau Cash Services et le recrutement d'agents ; le prélèvement à la
+       vente en ajoute un, le prestataire qui débite la carte des commerces. -->
+      Depuis le 18/09 au soir, <strong>l'agent de caisse mobile est supprimé</strong> : plus de terminal d'agent, plus de contrat d'acquéreur TPE, plus de réseau Cash Services, plus de recrutement d'agents. Il reste <strong>deux moyens, achetés au comptoir d'un commerce</strong> : le <strong>Bon d’achat PayEnCash</strong> vendu par des <strong>commerçants partenaires</strong> sous contrat de distribution (titre prépayé émis par AJEK, moyen de paiement à usage limité, art. L521-3 CMF — <a href="ESPACE-COMMERCANT/documents/partie-2-juridique-socle.html#bon">Étape 3 §2b</a>) : le bon d’achat se règle dans le bus AJEK. <strong>UN SEUL PRESTATAIRE, Stripe</strong> (1,5 % + 0,25 € par transaction carte EEE, tarif relevé le 18/09 — retenu le 21/09 pour les deux lignes, Mode et PayEnCash Solution) — c'est lui qui <strong>prélève le commerçant à chaque vente</strong> : la carte enregistrée de son commerce est débitée du montant du bon d’achat moins sa commission (1,10 % HT + TVA 20 %), et <strong>aucun bon d’achat n'est créé si la banque refuse</strong>. Il n'y a donc plus ni créance, ni échéance, ni relance : il reste un relevé mensuel et l'autofacture de commission (art. 289 CGI). L'authentification forte est faite une fois, à l'enregistrement de la carte (SetupIntent Stripe) ; reste à obtenir de Stripe, par écrit, l'acceptation de l'activité « cartes cadeaux » avant le passage en réel. En contrepartie, il faut mettre en place le <strong>KYC client</strong> gradué et le <strong>KYB fournisseurs</strong> (ligne Mode) ainsi que le <strong>KYB des commerces partenaires</strong>. <strong>AJEK SASU n'est a priori pas assujettie LCB-FT — à confirmer par avis juridique</strong> avant mise en production.</div>
+    </div>
+  </section>
+
+  <section class="section" id="premiers-pas">
+    <h2>Premiers pas une fois installé</h2>
+    <ul class="checklist">
+      <li>Vérifier que le serveur backend répond sur <code>http://localhost:3000</code></li>
+      <li>Vérifier que le frontend répond sur <code>http://localhost:5173</code> (ou le port par défaut de l'outil retenu)</li>
+      <li>Lancer une requête de test vers Duffel <code>/air/offer_requests</code> avec la clé sandbox, pour confirmer que la connexion API fonctionne avant tout développement métier</li>
+      <li>Vérifier que le worker BullMQ démarre sans erreur et se connecte bien à Redis</li>
+      <li>Créer une commande de test manuellement en base pour valider que le schéma du Doc 2 est bien appliqué</li>
+    </ul>
+  </section>
+
+  <section class="section" id="tester-bon">
+    <h2>Tester le Bon d’achat PayEnCash en 5 minutes (maquette, 18/09)</h2>
+    <p>Le troisième moyen de payer sans carte se teste de bout en bout dans la maquette (serveur local <code>python3 serve-8777.py</code>, puis <code>http://localhost:8777/PORTAIL.html</code>). Zéro seed : il n'existe aucun point de démo, tout part d'une inscription.</p>
+    <ol>
+  <li><b>Inscription du commerce</b> — <a href="ui/partenaire/00-inscription.html"><code>ui/partenaire/00-inscription.html</code></a> : enseigne, adresse, SIRET, e-mail (code reçu), puis les pièces du coffre (Kbis, pièce du gérant, vidéo) → « transmis ». Le point naît en <code>contrat_a_signer</code>.</li>
+  <li><b>Dossier</b> — Manager <a href="ui/manager/29-partenaires.html"><code>29-partenaires</code></a> (ou <code>40-comptes</code>) : valider la candidature et chaque pièce du coffre.</li>
+  <li><b>Contrat</b> — le partenaire signe depuis <a href="ui/partenaire/07-mon-point.html"><code>partenaire/07-mon-point</code></a>, ou le commercial envoie le lien (<code>commercial/03-signature</code> → page gérant <code>commercial/09-signature-gerant</code>, code OTP).</li>
+  <li><b>Activation</b> — Manager <code>29-partenaires</code> → « Activer » (exige dossier valide ET contrat signé) : le point passe <code>actif</code>, il apparaît dans « Où acheter un bon d’achat » (<code>ecrans/25</code>).</li>
+  <li><b>Vente</b> — <a href="ui/partenaire/03-vendre.html"><code>partenaire/03-vendre</code></a> : montant (5–250 €), case « j'ai encaissé le montant auprès du client », « Émettre le bon d’achat » → prélèvement sur la carte du commerce, puis ticket imprimable avec le code.</li>
+  <li><b>Paiement client</b> — <a href="ui/fly/01-ou-payer.html"><code>fly/01</code></a> ou <a href="ui/mode/05-ou-payer.html"><code>mode/05</code></a> : carte « Bon d’achat PayEnCash », code, « Vérifier » (solde), puis « Payer avec mon bon d’achat » (tout) ou « Utiliser X € » (le reste par un autre bon de la série). En fin de mois : Manager <code>29</code> → le <strong>relevé</strong> du point, d'où s'émet l'autofacture de commission.</li>
+</ol>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Ce que le partenaire ne fait jamais</strong> — scanner un code de paiement, encaisser une commande, rembourser, rendre la monnaie sur un bon d’achat : le bus refuse <code>payer(..., par:'partenaire')</code>. Le partenaire vend un titre et en reverse le prix ; le remboursement d'une commande réglée par bon d’achat <strong>re-crédite le bon d’achat</strong> (<code>rembourser(ref, {mode:'bon'})</code>).</div>
+    </div>
+  </section>
+
+  <section class="section" id="ordre-dev">
+    <h2>Ordre de développement suggéré</h2>
+    <p>Suggestion de séquencement, en cohérence avec les 5 phases du flux métier (Doc 1) :</p>
+    <ul class="checklist">
+      <li>Schéma de base de données complet (Doc 2) avant tout le reste — tout en dépend</li>
+      <li>Intégration Duffel en lecture seule (recherche d'offres, Phase 1) pour valider la connexion API la plus simple</li>
+      <li>Tunnel de vente frontend (écrans 1 à 3, en s&rsquo;appuyant sur les maquettes <code>ui/parcours/</code> et <code>ui/ecrans/</code> — logique API réelle, sessionStorage, scénarios A/B/C — comme référence à jour ; à reconstruire avec de vraies données)</li>
+      <li>Génération du <strong>code interne</strong> + du code de sécurité (Phase 3) — hachage du code, aucune valeur en clair en base</li>
+      <li><strong>Ouvrir très tôt le contrat</strong> — <strong>Stripe</strong> (enregistrement de la carte des commerces et prélèvement à la vente ; Connect pour les marques de PayEnCash Solution), accès à l'export/rapport de transactions, compte bancaire de l'entreprise. Ce sont des démarches commerciales à délai, pas du développement : les lancer avant le premier commerce partenaire (voir <code>outils-integration/outils-a-integrer.html</code>)</li>
+      <li><strong>KYC client gradué</strong> (3 achats ou 1 000 €/7 jours, PVID) et <strong>KYB fournisseurs</strong> (ligne Mode, voir <a href="ESPACE-COMMERCANT/documents/partie-4-flux.html"><code>Étape 4 · flux F11/F12</code></a>) — à cadrer avant l'ouverture au public</li>
+      <!-- (18/09, soir) Le circuit de retour du cash n'a plus d'objet : AJEK ne détient plus d'espèces nulle part. Le commerçant encaisse pour son propre compte et nous règle par carte dans la seconde. -->
+      <li><strong>Domaine réseau partenaire</strong> : chaîne d'ouverture d'un point, <strong>ordonnée</strong> : inscription du commerce → dossier KYB au coffre (Kbis, pièce du gérant, vidéo) validé pièce par pièce → <strong>contrat de distribution signé</strong> (lien jetonné + code OTP au gérant) → <strong>carte du commerce enregistrée</strong> → activation par le manager. Chaque porte est bloquante : sans dossier valide, pas de contrat ; sans contrat, pas d'activation ; <strong>sans carte valide, pas de vente</strong> — c'est elle qui règle PayEnCash à chaque bon d’achat émis.</li>
+      <li><strong>Les moyens de règlement</strong> (17/09, révisé le 18/09 au soir — le canal <code>agent</code> est supprimé) : <code>orders.channel</code> (<code>psp</code> | <code>soldee</code>) et <code>orders.pay_method</code> (<code>bon</code>, et lui seul depuis le 20/09) ; <code>POST /encaissement/payments/:ref/psp-intent</code> ouvre la transaction (<code>psp_transactions</code>) et <code>POST /encaissement/psp/pingback</code> la règle — <strong>seule la notification serveur règle une commande</strong>, jamais le retour du navigateur. Plus de dispatch par distance, plus de frais de déplacement.</li>
+      <li><strong>Le service bons d’achat</strong> (18/09) : <code>POST /partners/:id/bons</code> (émettre, journal), <code>GET /bons/:code</code> (état + solde, sans PII), <code>POST /payments/:ref/bon</code> (appliquer ou débiter selon le reste dû, transaction SQL), <code>POST /bons/:code/recredit</code> (manager), <code>POST /bons/:code/bloquer</code>, <code>POST /partners/:id/cards/setup</code> puis <code>/cards</code> (enregistrer la carte du commerce chez Stripe, en deux temps), <code>GET /partners/:id/releves/:mois</code>, <code>POST /partners/:id/releves/:mois/autofacture</code> — tables <code>partners</code>, <code>partner_cards</code>, <code>partner_charges</code>, <code>gift_cards</code> (étendue : origine, partenaire, solde, ticket), <code>gift_card_movements</code>, <code>signature_links</code>, vue <code>v_partner_monthly_statements</code> ; librairie pure <code>lib/bons.js</code> (code, montant, état, débit possible, relevé au centime). <strong>L'émission est transactionnelle : le prélèvement d'abord, le bon d’achat ensuite</strong> — une carte refusée ne doit laisser aucun code derrière elle, et une écriture refusée doit rembourser le prélèvement. Le bon d’achat ne passe par aucun prestataire tiers.</li>
+      <li><strong>Numérotation séquentielle continue</strong> des tickets de bon d’achat (préfixe <code>BV-</code>) et des autofactures de commission — à brancher <strong>avant</strong> la première vente réelle : un compteur séquentiel ne se reconstitue pas après coup. <em>L'obligation de logiciel de caisse certifié (art. 286-I-3° bis CGI) visait l'encaissement d'espèces par AJEK : à refaire qualifier par le comptable maintenant qu'AJEK n'encaisse plus au comptoir.</em></li>
+      <li><strong>Règlement d'une commande</strong> (notification du prestataire, ou débit d'un bon d’achat) + file d'attente (Phase 4) — point critique, à ne pas développer en dernier sous pression de délai : c'est l'évènement qui déclenche le paiement fournisseur</li>
+      
+      <li>Intégration Duffel en écriture (achat réel) et Hotelbeds (Phase 5, post-payé : confirmation puis règlement immédiat)</li>
+      <li>Logique d'annulation et de remboursement (Doc 7). Le <strong>montant</strong> est tranché : il est <strong>borné par ce qu'AJEK récupère du fournisseur</strong> (D2 rév.) et peut être nul sur un tarif non remboursable. ✅ <strong>Le canal est tranché (2026-08-03, révisé au pivot du 17/09)</strong> — <code>cancellation_requests.refund_method</code> ∈ <code>bon</code> (le montant re-crédite le bon d’achat — jamais d'espèces, jamais de rendu de monnaie) · <code>virement</code> · <code>avoir_compagnie</code>. La « remise au point d'encaissement » et la course de retour au domicile n'existent plus. Le cas d'échec fournisseur après collecte (D4) suit la même contrainte : la commande est mise en attente de résolution puis retentée, mais ce qui est rendu reste borné par la récupération</li>
+      <li>Questionnaire de satisfaction (1-5★) et agrégation de la note moyenne, côté hotline</li>
+      <li>Catalogue des emails transactionnels et rappel avant expiration (Doc 7)</li>
+      <li>Segment Maghreb (Doc 6) une fois le flux généraliste stable</li>
+    </ul>
+  </section>
+
+</main>
+
+</body>
+</html>

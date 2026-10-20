@@ -1,0 +1,189 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Étape 7 · Spécifications développeur — PayEnCash</title>
+<style>
+:root{--ajek:#10A06A;--ajek-d:#0C7F54;--ink:#0F2A24;--muted:#5C6B64;--line:#d9e5dd;--bg:#F4F7F5;--card:#fff;--chip:#E6F4EC;--gold:#E39A2E;--goldbg:#fdf5e6}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(1100px 520px at 92% -12%, rgba(63,217,155,.16), transparent 62%),var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.tb{display:flex;gap:8px;flex-wrap:wrap;padding:12px 22px 0}.btn{border:1px solid var(--line);background:var(--card);color:var(--ajek-d);border-radius:8px;padding:6px 11px;font-size:12.5px;text-decoration:none;font-weight:700}
+.wrap{max-width:1080px;margin:0 auto;padding:8px 22px 60px}
+.head{background:linear-gradient(115deg,#0F2A24 0%,#0C7F54 55%,#10A06A 100%);color:#fff;border-radius:14px;padding:22px 26px;margin:10px 0 18px}
+.head .k{font-size:12px;letter-spacing:.14em;font-weight:800;opacity:.85}.head h1{margin:4px 0 6px;font-size:24px}.head p{margin:0;font-size:13.5px;opacity:.94}
+h2{font-size:17px;color:var(--ajek-d);margin:26px 0 8px;position:relative;padding-bottom:8px}
+h2::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:4px;border-radius:2px;background:linear-gradient(90deg,#10A06A,#3FD99B)}
+table{width:100%;border-collapse:collapse;background:var(--card);font-size:12.5px;margin:10px 0;border-radius:10px;overflow:hidden}
+th{background:linear-gradient(115deg,#0C7F54,#10A06A);color:#fff;text-align:left;padding:8px 10px;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em}
+td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:top}
+code{background:var(--chip);border-radius:5px;padding:1px 6px;font-size:11.5px;color:var(--ajek-d)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13px;margin:10px 0}
+.card b{color:var(--ajek-d)}
+.note{background:var(--goldbg);border-left:4px solid var(--gold);border-radius:8px;padding:10px 14px;font-size:13px;margin:12px 0}
+.ok{background:var(--chip);border-left:4px solid var(--ajek);border-radius:8px;padding:10px 14px;font-size:13px;margin:12px 0}
+ul{margin:6px 0;padding-left:20px}li{margin:4px 0}
+.check li{list-style:none;margin:6px 0;padding-left:26px;position:relative}
+.check li::before{content:"☐";position:absolute;left:0;color:var(--ajek);font-weight:800}
+</style></head><body>
+<div class="tb"><a class="btn" href="diagramme-principal.html">🧭 Fil rouge</a><a class="btn" href="partie-6-donnees.html">← Étape 6 · Données</a><a class="btn" href="partie-1b-financier.html">Étape 2 · modèle financier</a><a class="btn" href="partie-3-plan-depart.html">Étape 8 · Plan de lancement →</a></div>
+<div class="wrap">
+
+<div class="head"><div class="k">ÉTAPE 7 / 10 · CE QU'ON CODE</div><h1>🧑‍💻 Spécifications développeur — back &amp; front</h1>
+<p>Le pont entre les données (Étape 6) et les maquettes (Étape 10) : stack, mapping <b>écran → endpoints → tables</b>, intégrations, règles transverses, et la <b>checklist de publication J-0</b>. Objectif fondatrice : le développeur ouvre ce dossier et publie <b>sans une seule question</b> — zéro oubli.</p></div>
+
+<h2>1 · La stack de référence (déjà posée dans le dossier)</h2>
+<div class="card"><b>Front</b> : Next.js (app existante : <code>app/</code>, <code>theme.css</code> = source de vérité du kit <code>payencash-v2.css</code>, composants cités écran par écran dans les commentaires des maquettes : <code>PhoneFrame.tsx</code>, <code>BudgetSearchForm.tsx</code>…). <b>Les écrans <code>ui/ecrans/</code> et <code>ui/parcours/</code> portent en commentaire leur route et leurs composants ; les écrans plus récents (fly, mode, fournisseur, manager, partenaire, commercial, hotline) documentent leur contrat dans le mapping ci-dessous.</b> Données de démo : <code>ui/assets/payencash-data.js</code> (PEC_DATA) est la <b>source unique du scénario de démo</b> — mêmes montants partout.</div>
+<div class="card"><b>Back</b> : PostgreSQL — <b>128 tables + 3 vues</b>, source de vérité <code>server/db/schema.sql</code> (miroir exact de l'Étape 6 ; détail historique dans <code>MODELE-DONNEES-COMPLEMENT-2026-08.md</code>) · ~90 endpoints (<code>docs/03-api-specs.html</code>) · facturation Odoo (factures clients, autofacturation des fournisseurs Mode).</div>
+<div class="card"><b>Intégrations</b> : <b>Duffel</b> (vols, plus de 200 compagnies — solde prépayé, manager/13 ; référentiel compagnies : GET /air/airlines → table airlines, logos officiels logo_symbol_url servis par Duffel) · <b>Nuitée</b> (post-payé) · <b>Mondial Relay</b> (étiquettes + tracking API + retours — transporteur retenu, le moins cher de France) · <b>Stripe</b> (18/09, soir — le prélèvement de la carte du commerçant à chaque bon d’achat vendu : 1,5 % + 0,25 € par transaction carte EEE, carte tokenisée et réutilisable par son empreinte) <i>(20/09 — supprimé avec le réseau tiers et son rail en ligne)</i> (17/09 — paiement en ligne Bon d’achat PayEnCash hors France : page hébergée, pingback serveur à serveur, API Delivery Confirmation pour la ligne Mode) · prestataire <b>KYC/PVID</b> (client gradué + KYB fournisseurs).</div>
+<div class="card ok"><b>Audit des intégrations (22/08)</b> : contrats d'API relus et mappés variable par variable — <a href="audit-api-integrations.html">audit-api-integrations.html</a> · moteur éprouvé en charge sur serveur simulé (8/8) — <a href="audit-charge-api.html">audit-charge-api.html</a>.</div>
+
+<h2>2 · Mapping écran → endpoints → tables (extrait pilotable)</h2>
+<table>
+<tr><th>Écran (galerie P7)</th><th>Endpoints principaux</th><th>Tables</th></tr>
+<tr><td>FLY 1 · Accueil budget-first</td><td><code>GET /offers/search</code> · <code>GET /promos/teaser</code></td><td>offres cache · promo_offers</td></tr>
+<tr><td>FLY 3b · Promos (4 modes)</td><td><code>GET /promos?mode=</code> — maquettes alimentées par PEC_DATA (<code>ui/assets/payencash-data.js</code>), à répliquer dans le seed <code>promo_offers</code></td><td>promo_offers (contrôle départ−édité ≥ 45 j)</td></tr>
+<tr><td>FLY 3c · Récap promo</td><td><code>POST /orders</code> (promo_offer_id, nb_voyageurs) — maquettes alimentées par PEC_DATA (<code>ui/assets/payencash-data.js</code>), à répliquer dans le seed <code>promo_offers</code></td><td>orders · promo_offers.stock · payment_tenders</td></tr>
+<tr><td>FLY 4a–4d · Tunnels</td><td><code>GET /offers/:id</code> · <code>POST /orders</code> · <code>PUT /orders/:id/travelers</code></td><td>orders · order_travelers (AES-256) · saved_travelers</td></tr>
+<tr><td>FLY 6 · Comment payer (17/09 · 18/09 soir)</td><td><code>POST /orders/:id/channel</code> (<b>bon | psp</b>, pay_method) · bon d’achat : <code>GET /bons/:code</code> (solde) puis <code>POST /payments/:ref/bon</code> (applique ou débite selon le reste dû, transaction SQL) · Bon d’achat PayEnCash : <code>POST /bons/payments/:ref/bon</code> (code du bon → débit sous verrou) <i>(20/09 — supprimé avec le réseau tiers et son rail en ligne)</i> <code>POST /encaissement/psp/pingback</code> (notification signée du prestataire — répond « OK »)</td><td>orders.channel / pay_method · <code>gift_cards</code> · <code>gift_card_movements</code> · <code>psp_transactions</code> · <code>payments</code>.method · <code>payment_tenders</code></td></tr>
+<tr><td>FLY 6a · Où acheter un Bon d’achat PayEnCash (ecrans/23)</td><td>liste locale <code>pointsBons()</code> (position NON stockée) — nos commerces partenaires, sous contrat</td><td>— (réseau de distribution, hors base)</td></tr>
+<!-- (18/09, soir) La ligne « FLY 6b · Recherche agent » (dispatch + WS de suivi, tables couriers et tournées)
+     est retirée : le métier d'agent de caisse mobile est supprimé, l'écran fly/05 n'existe plus et aucune de ces
+     deux tables n'existe au schéma. À sa place, le moyen qui l'a remplacée : le Bon d’achat PayEnCash. -->
+<tr><td>FLY 6c · Où acheter un bon d’achat PayEnCash (ecrans/25)</td><td><code>GET /bons/points</code> — les commerces partenaires <b>actifs</b> seulement (enseigne, adresse, ville ; état vide honnête tant qu'il n'y en a pas)</td><td><code>partners</code> (status = 'actif')</td></tr>
+<tr><td>FLY 7 · Ta commande (le règlement et son reçu)</td><td><code>GET /orders/:id/code</code> (code haché · reçu du règlement, <code>reglementLibelle</code>) — écran paramétrable <code>?res=promo</code> pour servir la 2ᵉ réservation (commande promo réf <code>PEC-B7CR31XA</code>) depuis Mes réservations</td><td>payments · orders.promo_offer_id</td></tr>
+<tr><td>FLY 8–9 · Suivi + états</td><td><code>GET /orders/:id/tracking</code> (12 statuts + 5 non nominaux)</td><td>orders.status · journal audit</td></tr>
+<tr><td>FLY 10 · Réservations</td><td><code>GET /orders?tab=</code> — la 1ʳᵉ carte « en cours » embarque le code-barres de la commande promo (réf <code>PEC-B7CR31XA</code>) et route vers le code en grand en <code>?res=promo</code></td><td>orders · payments · promo_offers · order_ratings</td></tr>
+<tr><td>MODE 1–5 · Boutique → commande</td><td><code>GET /mode/articles</code> · <code>POST /mode/orders</code> · <code>GET /shipments/:id/tracking</code> (Mondial Relay)</td><td>mode_articles · article_variants · shipments</td></tr>
+<tr><td>MODE 3 · Panier fusionné (TVA composée + commandes)</td><td><code>POST /mode/cart/price</code> · <code>GET /orders?line=mode</code> (onglets En cours / Livrées)</td><td>order_items.vat_scheme (occasion_marge_297A | neuf_20) · orders.vat_amount_cents · orders · shipments</td></tr>
+<tr><td>MODE 9 · Recherche</td><td><code>GET /mode/articles?q=&amp;filtres</code> (marque · taille · état · prix · reconditionné — temps réel)</td><td>mode_articles · brands</td></tr>
+<tr><td>MODE 10 · Tendances</td><td><code>GET /mode/trends</code> (« Porté par » + similaires + collabs)</td><td>trend_looks · look_similars · collab_drops</td></tr>
+<tr><td>MODE 11 · Code de paiement (+ Panier onglet « À payer »)</td><td><code>POST /mode/orders</code> émet la réf (M-…) et le code-barres · <code>GET /orders/:ref</code> (statut a_payer, expiration prix bloqué) · le règlement passe par <code>POST /payments/:ref/bon</code> (bon d’achat) ou par le pingback du prestataire (Bon d’achat PayEnCash) — déclare payé → achat ferme F11</td><td>orders (statut) · payment_tenders · purchase_orders</td></tr>
+<tr><td>STOCK & RETOURS (audit 22/08)</td><td><code>POST /mode/orders</code> crée la <b>réservation</b> (expires_at = +1 h) · CRON <code>expire_reservations</code> libère le stock et invalide le code · le règlement confirme (stock −qty, purchase_order) · <code>POST /mode/returns</code> (motif, mode de remboursement) → étiquette RET-… · <code>PATCH /mode/returns/:id</code> (reçu atelier, verdict, restock)</td><td>stock_reservations · article_variants · mode_returns · purchase_orders</td></tr>
+<tr><td>FILTRES transverses (audit 21/08 — plus aucun filtre décoratif)</td><td>chaque groupe de filtres UI correspond à une colonne réelle : Manager 04 onglets → <code>orders.status</code> + recherche <code>orders.public_ref</code> · Manager 16 journal → <code>transactional_messages</code> (canal/statut) · Fournisseur 07 type de code → <code>supplier_promo_codes</code> (montant/pourcentage) · MODE 09 catégorie/sous/tri → <code>mode_articles.category/subcategory/genre/price_client_cents</code> · Manager 17 rôle → <code>manager_users.role</code></td><td>kit <code>ui/assets/payencash-filters.js</code> (data-fscope · data-fpanes · data-fpick · data-fset · data-fsearch)</td></tr>
+<!-- (18/09, soir) La ligne « MODE 6-7 · Agent &amp; itinéraire » (dispatch, tables couriers et delivery_zones) est
+     retirée avec le métier d'agent : les écrans mode/06 et mode/07 n'existent plus, ces tables non plus. -->
+<tr><td>MODE 8 · Compte</td><td><code>GET /me</code> · <code>PUT /me/relay-favori</code></td><td>users · shipments.relay_id · gift_cards</td></tr>
+<tr><td>FOURNISSEUR 1–6</td><td><code>POST /suppliers</code> (KYB) · <code>POST /supplier/articles</code> (wizard) · <code>GET /supplier/shipments</code> · <code>GET /supplier/invoices</code> · <code>GET /supplier/share-links</code></td><td>suppliers · mode_articles · shipments · purchase_orders · supplier_invoices · share_links</td></tr>
+<tr><td>MANAGER 26 · Fournisseurs</td><td><code>GET /admin/suppliers</code> · <code>PUT /admin/mode-articles/:id/verdict</code></td><td>suppliers · mode_articles · supplier_invoices</td></tr>
+<tr><td>FOURNISSEUR 7 · Codes promo</td><td><code>GET/POST /suppliers/:id/promo-codes</code> · le panier applique le code via <code>POST /mode/cart/price</code> (promo_code)</td><td>supplier_promo_codes · orders.discount_cents · purchase_orders (facture réduite)</td></tr>
+<!-- (18/09, soir) La ligne « LIVREUR 6-10 · Scan → collecte → dépôt » est retirée : plus d'agent, donc plus de
+     collecte d'espèces ni de dépôt en automate. À sa place, l'espace qui encaisse réellement : le partenaire. -->
+<tr><td>PARTENAIRE 3–5 · Vendre → bons d’achat → relevés</td><td><code>POST /partners/:id/bons</code> (le prélèvement de la carte précède l'émission — refus = aucun code) · <code>POST /bons/:code/annuler</code> (30 min au comptoir, rembourse le prélèvement) · <code>GET /partners/:id/releve/:mois</code></td><td><code>partner_cards</code> · <code>partner_charges</code> · <code>gift_cards</code> · <code>gift_card_movements</code> · vue <code>v_partner_monthly_statements</code></td></tr>
+<tr><td>COMMERCIAL 1–2 · Pipeline fournisseurs</td><td><code>GET/POST /sales/leads</code> (lead_type fournisseur) · invitation de l'atelier</td><td>sales_leads · commercial_callbacks</td></tr>
+<tr><td>COMMERCIAL 5 · Campagnes</td><td><code>POST /marketing/campaigns</code> (création via API régie — TikTok Marketing API / Meta / Snap, <b>clés API des régies en variables d'environnement, §4d</b>) · <code>GET /marketing/campaigns</code> (budget en direct : dépense, impressions, clics, installs rapatriés par API)</td><td>ad_campaigns</td></tr>
+<tr><td>COMMERCIAL 6 · Concours</td><td><code>GET /marketing/contest</code> (jauge, forces, codes influenceurs)</td><td>contest_entries · influencer_links · flyer_batches</td></tr>
+<tr><td>COMMERCIAL 7 · GED</td><td><code>GET/POST /marketing/assets</code> (une campagne ne consomme que la version validée)</td><td>ged_assets</td></tr>
+<tr><td>COMMERCIAL 8 · Agenda</td><td><code>GET/POST /marketing/events</code></td><td>marketing_events</td></tr>
+</table>
+
+<h2>2b · Flux RÉSERVATION HÔTEL &amp; VOL+HÔTEL — le contrat Nuitée exact (LiteAPI)</h2>
+<div class="card"><b>Partenaire hôtels : Nuitée (Connect · produit LiteAPI, liteapi.travel) — 300+ sources, 2,6 M hôtels, sandbox « production-like ». Les 3 appels, dans l'ordre — jamais autrement :</b><ol>
+<li><b>Disponibilité</b> (<code>POST /hotels/rates</code>) : <code>checkin / checkout</code> (la plage choisie au CALENDRIER de l'accueil — champs OBLIGATOIRES, une nuit a une arrivée ET un départ) + <code>occupancies[{adults, children[]}]</code> + hôtels de la destination (<code>GET /data/hotels</code>). Réponse → cache <code>hotel_offers</code> (nom, étoiles, room_type, board, refundable, <b>rate_id</b>, prix, <code>nights</code> calculé en base, <code>expires_at</code>).</li>
+<li><b>Prebook</b> (<code>POST /rates/prebook</code>) : <b>verrouille l'offre et son prix</b> — retourne <code>prebook_id</code> + prix confirmé + fenêtre de validité. C'est LE support technique de notre « prix bloqué » côté hôtel : tant que la fenêtre court, le client paie SANS surprise ; fenêtre expirée → on re-prébooke et on ré-affiche le prix AVANT d'encaisser (règle maison).</li>
+<li><b>Book</b> (<code>POST /rates/book</code>) : APRÈS la remise d'espèces validée (statut PAID) — <code>prebookId</code> + holder + guests + <code>clientReference</code> = notre réf commande. Réponse → <code>supplier_bookings</code> (provider 'nuitee', <b>post-payé</b> : la facture se règle après, aucun solde à immobiliser) + confirmation dans Réservations.</li></ol></div>
+<div class="card"><b>Chaîne de tables (validée Postgres réel)</b> : <code>hotel_offers</code> (cache, rate_id + prebook_id + prebook_expires_at, occupation, CHECK checkout&gt;checkin) → <code>orders</code> → <code>order_items.hotel_offer_id</code> → <code>payments/payment_tenders</code> (le règlement d'abord) → <code>supplier_bookings</code> (booking réf, nuitee_postpaid) → notification client. <b>VOL+HÔTEL</b> = un seul <code>orders</code> avec DEUX <code>order_items</code> (kind 'flight' + kind 'hotel') — l'encaissement est UNIQUE (un code, un total), l'émission se fait par item (billet d'abord, book hôtel ensuite ; échec hôtel après émission billet → écran États non nominaux + SAV prioritaire).</div>
+<div class="card warn"><b>Séquence côté client (accueil → tunnel 4c)</b> : mode Hôtel → champ dates = <b>calendrier arrivée → départ</b> (deux dates tapées, nuits calculées) — recherche BLOQUÉE sans plage ni destination ; l'overlay interroge « les hôtels » (jamais le nom du fournisseur : <b>secret professionnel — aucun nom de partenaire API côté client</b>, réassurance anonymisée sur l'écran Sécurité &amp; confiance). Le moteur a été éprouvé sur serveur simulé : <a href="audit-charge-api.html">test d'ampleur — 8/8</a> (zéro survente à 30 clients simultanés, prix bloqué honoré à la minute, anti-double encaissement).</div>
+
+<h2>2c · Confirmation &amp; billets — QUI envoie QUOI (Brevo, SMS + email)</h2>
+<div class="card ok"><b>Règle de langage verrouillée : chez nous, un billet ne se « télécharge » JAMAIS.</b> La chaîne exacte, alimentée par les API :<ol>
+<li><b>Vol (Duffel)</b> : règlement effectué → <code>POST /air/orders</code> → Duffel émet et renvoie <code>booking_reference</code> (le <b>PNR compagnie</b>) + numéros d'<b>e-tickets</b> → stockés dans <code>supplier_bookings.confirmation_code</code>. <b>C'est LA COMPAGNIE qui gère l'enregistrement</b> (en ligne, dès J−2 en général) — pas nous, pas un PDF chez nous.</li>
+<li><b>Nous (Brevo)</b> : on envoie <b>immédiatement</b> par SMS <b>et</b> email les informations indispensables : PNR, n° d'e-ticket, <b>lien d'enregistrement en ligne de la compagnie</b>, rappel bagages/horaires — table <code>transactional_messages</code> (template <code>billet_emis</code>, payload jsonb, messageId Brevo). Idem à chaque étape : <code>code_paiement</code> (code + minuteur + moyen choisi) · <code>paiement_recu</code> (reçu) · <code>voucher_hotel</code> · <code>rappel_expiration</code> (30 min avant la fin du prix bloqué).</li>
+<li><b>Hôtel (Nuitée)</b> : <code>POST /rates/book</code> → statut CONFIRMED + <b>code de confirmation hôtel</b> → même chaîne Brevo (template <code>voucher_hotel</code> : code à donner à la réception, adresse, dates, occupation). L'app affiche tout dans « Détail de la réservation » (fly/10 : PNR, e-ticket, qui gère l'enregistrement).</li></ol></div>
+
+<!-- (18/09, soir) La section « 2d · Appel de sécurisation — 1ʳᵉ commande à domicile » est retirée : elle
+     n'existait que pour ne pas envoyer un agent chez un inconnu (« sans réponse ×2 → la commande repasse au point »).
+     Personne ne se déplace plus, et le client achète son moyen de paiement au comptoir d'un commerce : il n'y a plus
+     rien à sécuriser avant un déplacement. L'appel de bienvenue de la cohorte « premiers clients », lui, reste un
+     geste commercial de la hotline — il ne conditionne aucun envoi. -->
+<h2>2e · Annulations &amp; remboursements — orchestration EXACTE avec les fournisseurs</h2>
+<div class="card"><b>Spec dédiée (27/08)</b> : le flux serveur complet, la machine d'états, la GRILLE TARIFAIRE de restitution et les endpoints implémentés/testés → <a href="spec-annulations-remboursements.html">spec-annulations-remboursements.html</a>.</div>
+<div class="card ok"><b>Tout part d'UN clic client</b> (« Demander une annulation », fly/10) → <code>cancellation_requests</code> → l'orchestrateur applique le scénario :<ol>
+<li><b>Vol Duffel — le flux RÉEL (vérifié docs officielles 27/08)</b> : ① l'éligibilité d'abord — l'order doit porter <code>"cancel"</code> dans <code>available_actions</code>, sinon <b>traitement manuel</b> (dashboard/support Duffel — c'est ce qui justifie notre délai « réponse sous 48 h ») ; ② <code>POST /air/order_cancellations</code> crée un <b>DEVIS d'annulation en attente</b> : <code>refund_amount</code> + <code>refund_currency</code> + <code>refund_to</code> + <code>expires_at</code> — le devis <b>EXPIRE</b> : il faut le <b>CONFIRMER avant expires_at</b>, sinon re-deviser (erreur <code>order_cancellation_stale</code> si on confirme un devis périmé). L'orchestrateur présente le montant au client, obtient son accord, PUIS confirme — si le client tarde, on re-devise ; ③ <code>refund_to</code> a DEUX valeurs : <b>"original_form_of_payment"</b> = l'argent revient sur <b>NOTRE moyen de paiement Duffel (le solde prépayé)</b> — jamais chez le client directement : c'est NOUS qui remboursons ensuite le client — <b>ou "airline_credits"</b> = la compagnie ne rend qu'un <b>AVOIR NOMINATIF</b> (tableau <code>airline_credits</code> : passenger_id, credit_amount, <code>credit_code</code> fourni à la confirmation) — l'avoir est AU NOM du passager, on le lui <b>transmet tel quel</b> (on ne le convertit pas en espèces) ; ④ conditions par tarif connues AVANT l'achat (<code>refund_before_departure</code> de l'offre) : <b>Basique</b> = ce que la compagnie rend (souvent 0, taxes parfois) · <b>Super Flex</b> = remboursable (la promesse du pack est couverte par le tarif choisi à l'achat). <i>(Prime : REPORTÉ 27/08 — sa règle « 1 annulation/an sur marge » suivra sa réactivation.)</i></li>
+<li><b>Hôtel Nuitée — la mécanique RÉELLE</b> : chaque tarif (rate) porte <code>refundableTag</code> = <b>RFN</b> (remboursable) ou <b>NRFN</b> (non remboursable) + <code>cancelPolicyInfos[]</code> = des <b>PALIERS datés</b> {cancelTime, amount} — après telle date, tel montant est retenu ; plusieurs paliers possibles, <b>celui dont la date est passée le plus récemment s'applique</b>. Affiché AVANT l'achat (dépliant « Voir les détails »). Annulation : l'appel <code>cancelBooking</code> sur la réservation confirmée — <b>REFUSÉ si NRFN ou hors délai</b> (dans ce cas : rien à récupérer côté hôtel, la règle « AJEK ne rembourse jamais plus que ce qu'elle récupère » s'applique, F10). Post-payé : la facture Nuitée s'ajuste.</li>
+<li><b>Le remboursement CLIENT</b> (17/09 · 18/09) : payé par <b>Bon d’achat PayEnCash</b> → <b>re-crédit du bon</b> (<code>bonRecrediter</code>, montant ≤ Σ débits de la commande — jamais en espèces) <i>(20/09 — supprimé avec le réseau tiers et son rail en ligne)</i> (crédit compte client ou <b>virement</b> (RIB AU NOM du client, règle anti-fraude) ; à défaut, <b>avoir sur le compte</b> — <b>jamais d'espèces, jamais de rendu de monnaie</b>, le client n'en a jamais remis et ne nous a jamais donné de carte. Notification Brevo à chaque étape (demande reçue → décision → remboursement fait).</li></ol></div>
+
+<div class="card ok"><b>Zéro vente perdue</b> — la politique du stock (12 situations, chacune sa règle : file d'attente prioritaire 15 min, grâce au scan, offre partielle, plancher fournisseur…) : <a href="politique-stock-zero-vente-perdue.html">politique-stock-zero-vente-perdue.html</a> — prouvée par la 3ᵉ vague de tests (W1-W7).</div>
+
+<div class="card ok"><b>Où vit mon ticket ?</b> La carte des états (chaque état → son écran, chaque clic en lien) : <a href="carte-etats-tickets.html">carte-etats-tickets.html</a> — règle de nommage : un ticket non payé est « À payer », jamais « en cours ».</div>
+
+<h2>3 · Règles transverses (non négociables, vérifiées par le banc de test)</h2>
+<ul>
+<li><b>Montants exacts au centime</b> à chaque étape — jamais d'arrondi affiché (bug corrigé, testé).</li>
+<!-- (18/09, soir) Le plafond contrôlé n'est plus le plafond légal des espèces (il n'y a plus d'espèces chez
+     nous) mais celui du TITRE et du COMPTE, qui sont nos propres règles LCB-FT. -->
+<li><b>Plafonds du moyen</b> contrôlés AVANT paiement (tunnels, promos ×voyageurs, MODE) : bon d’achat 5–250 €, <b>1 000 € de bons d’achat par client et par jour</b>, <b>1 000 € sur 30 jours glissants</b> ; Bon d’achat PayEnCash anonyme ≤ 50 €, au-delà compte client vérifié. Au-delà, c'est la vérification d'identité renforcée qui prend le relais, jamais un mur muet.</li>
+<li><b>Position géographique</b> : pop-up de consentement, jamais persistée.</li>
+<li><b>Prix bloqué 120 min</b> après confirmation (<code>scenario.fenetreEncaissementMinutes</code>, une seule fenêtre pour toute commande) — puis recalcul, jamais d'encaissement automatique.</li>
+<li><b>Terminologie fournisseur</b> : achat ferme / facture / virement — interdits : reversement, solde, cagnotte (DSP2).</li>
+<li><b>Prix barrés promo</b> : référence justifiable et datée (Omnibus) — méthodologie à l'Étape 5.</li>
+<li><b>Seule la notification du prestataire règle un paiement en ligne</b> (pingback signé, idempotent, « OK » en clair) — jamais le retour du navigateur ; iDEAL jamais proposé en France (<code>PAYS_OUVERT</code>).</li>
+<li><b>Le client ne saisit JAMAIS de carte bancaire</b> : il n'existe aucun écran, aucun champ, aucun endpoint qui lui en demande une. La seule carte du système est celle du <b>commerce partenaire</b>, tokenisée chez Stripe et débitée à chaque bon d’achat vendu (<code>partner_cards</code>, <code>partner_charges</code>).</li>
+<li><b>Remboursement d'un paiement en ligne</b> (17/09) : <i>(20/09 — supprimé avec le réseau tiers et son rail en ligne)</i> (par, canal, motif, montant_cents) — la transaction n'est marquée remboursée que par le pingback de type 2/220 (<code>refund_channel</code>, <code>refund_ticket</code>, <code>refund_requested_at</code>).</li>
+<li><b>Delivery Confirmation obligatoire</b> (17/09) : <code>POST /encaissement/payments/:ref/livraison</code> (statut, suivi, transporteur) — Mode : order_placed (automatique à l'acceptation) → package_prepared → delivering → delivered, jamais une étape sautée ; voyage : delivered à la notification. Chaque envoi gardé avec sa réponse dans <code>psp_delivery_confirmations</code> ; sans clés, rien ne part et la ligne le dit.</li>
+<li>Un panier peut mélanger <b>deux régimes de TVA</b> — la part marge n'est <b>JAMAIS</b> détaillée (art. 297 A, → <a href="partie-1b-financier.html" style="color:var(--ajek-d);font-weight:700">Étape 2 §5</a>).</li>
+<!-- (18/09, soir) L'encours de l'agent et le cycle du cash en 5 états n'ont plus d'objet : aucune espèce n'entre
+     jamais chez AJEK. Ce qui les remplace, c'est le fait qu'un bon d’achat ne peut pas exister sans paiement. -->
+<li><b>Le bon d’achat naît du paiement</b> : <code>partner_charges</code> accepté → <code>gift_cards</code> créé — dans la même transaction SQL, jamais l'un sans l'autre ; un refus laisse une ligne <code>refused</code> motivée et aucun code.</li>
+<li><b>Deux flux d'argent, rapprochés à part</b> : les prélèvements Stripe (bons d’achat vendus) et les virements du prestataire en ligne (Bons d’achat PayEnCash) — chaque transition journalisée (<code>audit_log</code>).</li>
+</ul>
+
+<h2>3b · Intégration Mondial Relay — le contrat exact (suivi client avec ses réfs)</h2>
+<div class="card"><b>Ce que l'API Mondial Relay fournit</b> (compte pro requis, clés en env) : ① <b>création d'expédition</b> → retourne le <b>numéro d'expédition MR</b> + l'<b>étiquette PDF</b> (imprimée à l'atelier après contrôle) · ② <b>widget de sélection de point relais</b> (le client choisit son relais au panier — ou on prend le plus proche de son adresse) · ③ <b>suivi (tracking)</b> : événements horodatés (prise en charge → en transit → arrivé au relais → retiré) · ④ <b>retours</b> (étiquette retour pour la rétractation 14 j).</div>
+<table>
+<tr><th>Moment</th><th>Côté back</th><th>Ce que voit le client (app MODE, écran 5)</th></tr>
+<tr><td>Commande réglée (bon d’achat OU pingback du Bon d’achat PayEnCash)</td><td><code>orders.status = paid</code> → achat ferme fournisseur · Delivery Confirmation « order_placed » au prestataire (automatique, <code>psp_delivery_confirmations</code>)</td><td>« Règlement effectué — confirmée » + réf commande <code>M-1208</code></td></tr>
+<tr><td>Pièce contrôlée à l'atelier</td><td><code>POST /mr/expeditions</code> → <code>shipments.mr_expedition_num</code> + <code>label_url</code></td><td>« Contrôlée &amp; authentifiée · certificat joint »</td></tr>
+<tr><td>Colis remis à Mondial Relay</td><td>webhook/polling tracking → <code>shipments.statut_mr</code></td><td>« Mondial Relay : en route » + <b>n° d'expédition complet</b> + bouton <b>« Suivre en direct »</b> (page de suivi MR officielle) + notification SMS/push à CHAQUE événement</td></tr>
+<tr><td>Arrivé au relais</td><td>webhook <code>arrived_at_relay</code> → notification</td><td>« À retirer — relais X · gardé 8 jours · <b>code de retrait = réf commande</b> + pièce d'identité »</td></tr>
+<tr><td>Retiré / non retiré à J+8</td><td><code>delivered</code> / retour automatique → F10</td><td>« Récupéré ✓ » / « Retourné — on te rembourse (avoir ou virement) »</td></tr>
+</table>
+<div class="ok"><b>Règle produit :</b> le client suit TOUT dans l'app avec ses références (réf commande + n° MR) — le lien « Suivre en direct » ouvre le suivi public Mondial Relay avec le même numéro : jamais d'écart entre ce que dit l'app et ce que dit le transporteur.</div>
+<h2>4 · Checklist de publication J-0 (zéro oubli)</h2>
+<div class="ok"><b>Recette :</b> rejouer le <b>banc de 289 scénarios</b> (voir <a href="audit-90-scenarios.html" style="color:var(--ajek-d);font-weight:700">le rapport d'audit</a>) — 289/289 doivent passer, plus <code>linkcheck</code> global (196 pages, zéro lien mort).</div>
+<ul class="check">
+<li>Secrets &amp; env : Duffel, Nuitée, Mondial Relay, <b>Stripe</b> (clé du prestataire de prélèvement — la carte du commerce n'est connue que par son empreinte), KYC, Odoo, SMS, régies pub (TikTok Marketing API, Meta, Snap) — via variables d'environnement, jamais en dur</li>
+<li>Seeds : <code>promo_offers</code> (9 offres, 4 modes, contrôle J−45) · commandes canoniques réglées par bon d’achat et par Bon d’achat PayEnCash en ligne (PW-1000)</li>
+<li>Kit UI : <code>payencash-v2.css</code> ↔ <code>theme.css</code> synchronisés (contrôle automatisé à brancher)</li>
+<li>Sprite d'icônes : liste fermée — toute nouvelle icône passe par le sprite, jamais d'inline sauvage</li>
+<li>Chiffrement : voyageurs AES-256 dès la saisie · codes de paiement et codes de bons d’achat hachés (rendus UNE fois à l'émission) · RIB fournisseurs chiffrés</li>
+<li>Webhooks : Mondial Relay (tracking → statuts commande) · Duffel (émission billets) · échecs → états non nominaux (écran 9)</li>
+<li>Facturation Odoo : D19 → D20 → D22 branchés · TVA 297 A voyage cloisonnée de la TVA MODE (<a class="doc" href="partie-1b-financier.html">Étape 2 · modèle financier</a>) · registre 321-7 auto</li>
+<li>Sources marketing tracées : QR flyers, liens influenceurs fournisseurs (<code>share_links</code>), participation concours à l'inscription</li>
+<li>Stores : fiches App Store / Google Play — captures = écrans des galeries P7 (déjà au design final)</li>
+</ul>
+
+<h2>4b · Architecture serveur — microservices &amp; CapRover</h2>
+<div class="card">Le dossier <code>server/</code> à la racine du projet contient l'implémentation de référence : le <b>schéma PostgreSQL complet</b> (<code>server/db/schema.sql</code>), le <b>seed du scénario canonique</b> (<code>server/db/seed.sql</code> — mêmes montants que PEC_DATA <b>au centime</b>), et des <b>microservices Node indépendants</b> derrière une passerelle. Guide dev : <code>server/README-DEV.md</code>.</div>
+<table>
+<tr><th>Brique</th><th>Contenu / règle</th></tr>
+<tr><td><b>Microservices Node</b></td><td>identite · voyage · promos · encaissement · logistique · mode · fournisseurs · reporting · <b>bons</b> · <b>solution</b> <i>(21/09 : comptes Stripe des marques, ventes à commission, notifications signées)</i> — chacun indépendant, derrière une passerelle. (18/09) Le <b>microservice bons</b> porte le Bon d’achat PayEnCash : <code>POST /partners/:id/bons</code> (émettre), <code>GET /bons/:code</code> (état, solde, sans PII), <code>POST /payments/:ref/bon</code> (appliquer ou débiter selon le reste dû, transaction SQL), <code>POST /bons/:code/recredit</code>, <code>POST /bons/:code/bloquer</code>, <code>GET /partners/:id/releve/:mois</code> (le relevé se CALCULE, il ne se stocke pas) — librairie pure <code>lib/bons.js</code> (code, montant, état, débit possible, relevé au centime, n° d'autofacture), tables <code>partners</code> · <code>partner_cards</code> · <code>partner_charges</code> · <code>gift_cards</code> · <code>gift_card_movements</code> · <code>signature_links</code>, vue <code>v_partner_monthly_statements</code>. <b>(18/09, soir)</b> L'émission est <b>subordonnée au prélèvement</b> de la carte du commerce (Stripe) dans la même transaction : refus de la banque → aucun code, ligne <code>refused</code> motivée. Le bon d’achat ne passe par aucun prestataire tiers.</td></tr>
+<tr><td><b>Déploiement CapRover</b></td><td>un service = une app CapRover · déploiement par <code>captain-definition</code> · base PostgreSQL managée via <code>DATABASE_URL</code></td></tr>
+<tr><td><b>Données</b></td><td><code>server/db/schema.sql</code> (schéma complet) · <code>server/db/seed.sql</code> (scénario canonique, mêmes montants que PEC_DATA au centime)</td></tr>
+<tr><td><b>Bascule front</b></td><td>le front maquette bascule de PEC_DATA aux endpoints <b>sans changer un seul montant affiché</b></td></tr>
+</table>
+
+<h2>4c · Authentification &amp; autorisations</h2>
+<ul>
+<li><b>Client</b> : OTP par SMS (le téléphone est l'identifiant) · session mobile longue durée.</li>
+<li><b>Comptes à rôle</b> (courier / supplier / manager / hotline / commercial) : login + <b>JWT courts (15 min)</b> + refresh token, <b>révocables</b>.</li>
+<li><b>Contrôle d'accès PAR RÔLE</b> appliqué à deux niveaux : gateway <b>et</b> service.</li>
+<li>Les données internes (barème 25 %, <code>buy_price</code>, colonnes <code>internal_*</code>) ne transitent <b>JAMAIS</b> par les API des rôles non autorisés.</li>
+<li>Le fournisseur ne voit que <b>SES</b> pièces, factures et codes promo.</li>
+</ul>
+
+<h2>4d · Sécurité applicative</h2>
+<ul>
+<li><b>Secrets</b> : uniquement en variables d'environnement CapRover — jamais en dur, jamais dans le dépôt.</li>
+<li><b>Chiffrement au repos</b> des champs sensibles : adresses du client, identités voyageurs, RIB.</li>
+<li hidden><b>(20/09 — supprimé)</b> — aucun identifiant de paiement ne touche nos serveurs ; le pingback est <b>vérifié par signature</b> (clé secrète) avant d'être appliqué, idempotent · <b>carte du commerçant partenaire</b> : tokenisée chez <b>Stripe</b>, stockée en <b>empreinte</b> (jamais un numéro, <code>partner_cards</code>) — conformité PCI déléguée au prestataire. <b>Le client, lui, ne donne un bon d’achat suffit.</b></li>
+<li><b>Rate-limiting</b> sur la gateway.</li>
+<li><code>audit_log</code> en <b>append-only</b> — aucune écriture modifiée ou supprimée.</li>
+<li><b>OWASP top 10</b> passé en revue de code.</li>
+</ul>
+
+<h2>4e · Observabilité &amp; continuité</h2>
+<ul>
+<li><b>Logs structurés JSON</b> par service.</li>
+<li><b>Alertes</b> : avance Duffel sous seuil · écarts de rapprochement · factures fournisseurs à J-6.</li>
+<li><b>Sauvegarde quotidienne</b> de la base + <b>test de restauration mensuel documenté</b>.</li>
+<li><b>PRA simple</b> : tout est redéployable depuis le dépôt (<code>captain-definition</code>) + la dernière sauvegarde.</li>
+</ul>
+
+<div class="note"><b>Arbitrages fondatrice encore ouverts avant code :</b> SASU (Kbis) · <s>circuit restitution cash</s> <b>sans objet (18/09, soir) : on rend par où le client a payé — re-crédit du bon d’achat, remboursement du prestataire en ligne, virement ou avoir</b> · acceptation écrite par Stripe de l'activité « cartes cadeaux » (l'authentification forte est faite une fois, à l'enregistrement de la carte) · TVA 297 A (expert-comptable) · CCN IDCC 1710 · <s>grille mode −8 %/+12 %</s> <b>TRANCHÉ le 12/09/2026 : marge 7 % du prix d'achat, livraison et atelier refacturés en sus</b> (<a class="doc" href="partie-1b-financier.html">Étape 2 · modèle financier</a>) · <s>prix plancher promo/petits articles (marge vs livraison)</s> <b>sans objet — reste un plancher commercial de 5 €</b> · méthodologie du prix de référence promo.</div>
+
+</div></body></html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PayEnCash FLY — Réservation de billets d’avion</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="depot-payencash-2026-09/ui/assets/logos/payencash-fly-blanc-64.png">
+  <link rel="apple-touch-icon" href="depot-payencash-2026-09/ui/assets/logos/payencash-fly-blanc-180.png">
+  <link rel="stylesheet" href="depot-payencash-2026-09/ui/assets/vendor/fonts.css">
+  <style>
+    :root {
+      --primary: #10A06A;
+      --primary-dark: #0C7F54;
+      --ink: #0F2A24;
+      --muted: #5C6B64;
+      --mint: #E6F4EC;
+      --bg: #091C17;
+      --card: #ffffff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #154539 0%, var(--bg) 75%);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow-x: hidden;
+    }
+    header {
+      width: 100%;
+      max-width: 1200px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+    }
+    .brand img {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+    }
+    .brand-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .brand-title span {
+      color: #3FD99B;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: #10A06A;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(16, 160, 106, 0.4);
+    }
+    .btn-primary:hover {
+      background: #13b87b;
+      transform: translateY(-1px);
+    }
+    .btn-outline {
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    main {
+      width: 100%;
+      max-width: 1200px;
+      padding: 28px 20px 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+    .hero-text {
+      text-align: center;
+      max-width: 680px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(63, 217, 155, 0.15);
+      color: #3FD99B;
+      font-size: 12.5px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      border: 1px solid rgba(63, 217, 155, 0.3);
+    }
+    h1 {
+      font-size: 38px;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+    }
+    h1 span {
+      background: linear-gradient(120deg, #3FD99B, #fff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    p.desc {
+      font-size: 16px;
+      color: #A3B8B0;
+      line-height: 1.5;
+    }
+
+    .preview-container {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    .phone-mockup {
+      width: 100%;
+      max-width: 430px;
+      height: 860px;
+      border-radius: 46px;
+      background: #000;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 0 10px #1e2926, 0 0 0 12px rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      position: relative;
+    }
+    .phone-mockup iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;
+    }
+
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      width: 100%;
+      max-width: 880px;
+      margin-top: 10px;
+    }
+    .quick-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 16px 18px;
+      text-decoration: none;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .quick-card:hover {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: #3FD99B;
+      transform: translateY(-2px);
+    }
+    .quick-card b {
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .quick-card span {
+      font-size: 12.5px;
+      color: #A3B8B0;
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 28px; }
+      .phone-mockup {
+        height: 88vh;
+        border-radius: 0;
+        box-shadow: none;
+        max-width: 100%;
+      }
+      .preview-container {
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="depot-payencash-2026-09/ui/ecrans/01-accueil.html" class="brand">
+      <img src="depot-payencash-2026-09/ui/assets/logos/payencash-fly-blanc-180.png" alt="PayEnCash Fly">
+      <div class="brand-title">pay<span>En</span>Cash <em>FLY</em></div>
+    </a>
+    <div class="nav-actions">
+      <a href="depot-payencash-2026-09/ui/ecrans/01-accueil.html" class="btn btn-outline" target="_blank">Plein écran ↗</a>
+      <a href="depot-payencash-2026-09/ui/parcours/02-vol-aller-retour.html" class="btn btn-primary" target="_blank">Réserver un vol</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero-text">
+      <div class="badge">✈️ Spécialiste Billets d'Avion · Connecté Duffel API</div>
+      <h1>Réserve tes <span>billets d’avion</span> sans carte bancaire</h1>
+      <p class="desc">Compare plus de 200 compagnies aériennes au meilleur prix garanti, réserve ton vol aller simple, aller-retour ou multi-destinations et règle en toute sécurité.</p>
+    </div>
+
+    <div class="preview-container">
+      <div class="phone-mockup">
+        <iframe id="app-frame" src="depot-payencash-2026-09/ui/ecrans/01-accueil.html" title="Application PayEnCash Fly"></iframe>
+      </div>
+    </div>
+
+    <div class="quick-links">
+      <a href="depot-payencash-2026-09/ui/ecrans/01-accueil.html" class="quick-card" onclick="loadFrame(this.href); return false;">
+        <b>🔍 Recherche de vols</b>
+        <span>Choix aéroport, destination, dates et budget</span>
+      </a>
+      <a href="depot-payencash-2026-09/ui/parcours/02-vol-aller-retour.html" class="quick-card" onclick="loadFrame(this.href); return false;">
+        <b>⇄ Tunnel Aller-retour</b>
+        <span>Comparateur direct, sélection aller + retour</span>
+      </a>
+      <a href="depot-payencash-2026-09/ui/parcours/01-vol-aller-simple.html" class="quick-card" onclick="loadFrame(this.href); return false;">
+        <b>→ Tunnel Aller simple</b>
+        <span>Sélection directe du vol aller au meilleur tarif</span>
+      </a>
+      <a href="depot-payencash-2026-09/ui/ecrans/03-mes-codes.html" class="quick-card" onclick="loadFrame(this.href); return false;">
+        <b>🎟️ Mes billets & PNR</b>
+        <span>Suivi des commandes, cartes d'embarquement</span>
+      </a>
+    </div>
+  </main>
+
+  <script>
+    function loadFrame(url) {
+      document.getElementById('app-frame').src = url;
+      window.scrollTo({ top: document.querySelector('.preview-container').offsetTop - 30, behavior: 'smooth' });
+    }
+    // Sur mobile, ouvrir directement la vue app si l'écran est petit
+    if (window.innerWidth < 640 && !window.location.search.includes('preview')) {
+      // Affichage plein écran fluide
+    }
+  </script>
+
+</body>
+</html>

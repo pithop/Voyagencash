@@ -1,0 +1,125 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brochure « Régler avec un bon d’achat » · PayEnCash</title>
+<!-- (17/09 — pivot) Cette brochure était « Devenez point partenaire » : le pitch de la borne installée chez un
+     commerçant. Le réseau de points n'existe plus (un tiers qui encaisse pour AJEK = service de paiement sans
+     agrément). Le fichier garde son nom — le fil rouge, le script vidéo et la feuille de route y renvoient — et
+     devient la brochure CLIENT : les moyens de payer avec un bon d’achat (18/09 : + le Bon d’achat PayEnCash vendu
+     chez un commerçant partenaire).
+     (18/09, soir) La brochure en annonçait TROIS, dont « un agent se déplace ». Cette branche est abandonnée :
+     envoyer un salarié encaisser des espèces au domicile du client expose l'entreprise à un risque humain et à un
+     cadre CNAPS que le projet ne veut pas assumer. Il en reste DEUX, tous deux achetés au comptoir d'un commerce,
+     donc plus de frais de déplacement, plus de rendu de monnaie et plus de plafond d'espèces découpé en « part
+     espèces + complément carte ». Et l'on ne dit nulle part comment le client règle au comptoir : ce qu'on promet,
+     c'est de payer AVEC UN BON D’ACHAT, sans donner la moindre donnée bancaire. Les chiffres viennent du référentiel
+     (PEC_DATA.scenario, MOYENS_PAIEMENT) : rien n'est inventé pour la brochure. -->
+<style>
+:root{--ajek:#10A06A;--ajek-d:#0C7F54;--vif:#3FD99B;--ink:#0F2A24;--muted:#5C6B64;--line:#d9e5dd;--bg:#F4F7F5;--card:#fff;--chip:#E6F4EC;--gold:#E39A2E;--goldbg:#FDF1E7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.toolbar{max-width:820px;margin:14px auto 0;display:flex;gap:10px;justify-content:flex-end;padding:0 8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 12px;font-size:12.5px;text-decoration:none}.btn.p{background:var(--ajek);color:#fff;border-color:var(--ajek)}
+.page{width:210mm;min-height:297mm;margin:14px auto;background:var(--card);box-shadow:0 6px 30px rgba(15,42,36,.10);position:relative;overflow:hidden}
+.pad{padding:18mm 20mm 24mm}
+.cover{min-height:297mm;background:linear-gradient(160deg,#0F2A24 0%,#0C7F54 55%,#10A06A 100%);color:#fff;padding:22mm 20mm;display:flex;flex-direction:column;justify-content:space-between}
+.kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;opacity:.85;font-weight:800}
+.cover h1{font-size:44px;line-height:1.05;margin:14px 0 0;letter-spacing:-.02em}
+.cover .lead{font-size:19px;max-width:34ch;margin-top:14px;opacity:.97}
+.cover .hero{font-size:15px;opacity:.95;border-top:1px solid rgba(255,255,255,.35);padding-top:16px;max-width:46ch}
+.badge{display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:6px 14px;font-size:13px;margin:4px 6px 0 0}
+h2{font-size:22px;color:var(--ajek-d);margin:0 0 4px}
+.sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+.moyens{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0 4px} /* (18/09, soir) deux moyens, plus trois : une 3e colonne laisserait un vide */
+.moyen{border:1px solid var(--line);border-top:4px solid var(--ajek);border-radius:12px;padding:14px 14px;background:var(--card)}
+.moyen .t{font-weight:800;font-size:16px;margin-bottom:4px}.moyen .d{font-size:13px;color:var(--muted)}.moyen .k{font-size:12px;color:var(--ajek-d);font-weight:700;margin-top:8px}
+.steps{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0 4px}
+.step{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--card)}
+.step .num{width:30px;height:30px;border-radius:50%;background:var(--ajek);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;margin-bottom:8px}
+.step .t{font-weight:700;margin-bottom:2px}.step .d{font-size:13px;color:var(--muted)}
+.benefits{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.ben{border:1px solid var(--line);border-left:4px solid var(--ajek);border-radius:10px;padding:12px 14px}
+.ben .t{font-weight:700;font-size:14px}.ben .d{font-size:12.5px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}th,td{text-align:left;padding:10px 12px;border:1px solid var(--line)}th{background:var(--chip);font-weight:700}
+.note{background:var(--goldbg);border-left:4px solid var(--gold);border-radius:8px;padding:10px 14px;font-size:13px;margin:14px 0}
+.cta{background:var(--chip);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-top:18px;text-align:center}
+.cta h3{margin:0 0 6px;color:var(--ajek-d);font-size:20px}.cta .contact{font-size:15px;margin-top:8px}
+.pfoot{position:absolute;bottom:12mm;left:20mm;right:20mm;border-top:1px dashed var(--line);padding-top:8px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+@media(max-width:820px){.page{width:auto;min-height:auto}.moyens,.steps,.benefits{grid-template-columns:1fr}.pfoot{position:static;margin-top:20px}}
+@media print{body{background:#fff}.toolbar{display:none}.page{width:auto;min-height:auto;margin:0;box-shadow:none}.cover{min-height:auto}@page{size:A4;margin:0}.page{page-break-after:always}}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <a class="btn" href="diagramme-principal.html">🧭 Fil rouge</a>
+  <a class="btn" href="script-video-commerciale.html">Script vidéo</a>
+  <a class="btn p" href="#" onclick="window.print();return false">Imprimer (A4 recto-verso)</a>
+</div>
+
+<!-- PAGE 1 — COUVERTURE -->
+<div class="page">
+  <div class="cover">
+    <div>
+      <div class="kicker">PayEnCash · Fly &amp; Mode</div>
+      <h1>Commande en ligne.<br>Paie avec un bon d’achat.</h1>
+      <div class="lead">Un billet d'avion, une nuit d'hôtel, une pièce de seconde main — réglés comme tu veux : un Bon d’achat PayEnCash ou un Bon d’achat PayEnCash, acheté chez un commerçant à côté de chez toi.</div>
+    </div>
+    <div>
+      <span class="badge">💶 Un bon d’achat suffit à nous donner</span>
+      <span class="badge">🧾 Un reçu à chaque fois</span>
+      <span class="badge">🕐 2 heures pour régler</span>
+      <div class="hero" style="margin-top:18px">Tu as l'argent. Mais pas la carte. PayEnCash, c'est l'inverse des sites de voyage : tu commandes en ligne, et <strong>tu choisis comment payer</strong> — avec un bon d’achat.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2 — LES DEUX MOYENS + COMMENT ÇA MARCHE (18/09, soir) -->
+<div class="page"><div class="pad">
+  <h2>Deux façons de payer, avec un bon d’achat</h2>
+  <p class="sub">Tu choisis à la commande. Aucune n'est « la bonne » : c'est la tienne.</p>
+  <div class="moyens">
+    <div class="moyen"><div class="t">Bon d’achat PayEnCash</div><div class="d">Tu achètes un bon au comptoir d'un commerçant partenaire (5 à 250 €), tu repars avec un ticket, tu tapes son code au moment de payer. Le solde reste pour la suite.</div><div class="k">Immédiat · valable 12 mois · en une ou plusieurs fois</div></div>
+    <div class="moyen"><div class="t">Bon d’achat PayEnCash</div><div class="d">Tu achètes un ticket au comptoir d'un commerçant du réseau de distribution, puis tu tapes son code à 10 caractères.</div><div class="k">Immédiat · jusqu'à 50 € sans compte</div></div>
+  </div>
+
+  <h2 style="margin-top:22px">Comment ça marche</h2>
+  <div class="steps">
+    <div class="step"><div class="num">1</div><div class="t">Tu commandes</div><div class="d">Dans l'app Fly (voyages) ou Mode (seconde main). Le prix affiché est le prix payé — taxes et frais compris.</div></div>
+    <div class="step"><div class="num">2</div><div class="t">Tu choisis comment payer</div><div class="d">Un Bon d’achat PayEnCash ou un Bon d’achat PayEnCash. Tu as deux heures : le prix est bloqué pendant ce temps.</div></div>
+    <div class="step"><div class="num">3</div><div class="t">Tu règles</div><div class="d">Avec le code de ton Bon d’achat, ou avec celui de ton Bon d’achat PayEnCash sur la page de paiement de notre prestataire. Un bon d’achat suffit.</div></div>
+    <div class="step"><div class="num">4</div><div class="t">C'est réglé</div><div class="d">Notification « Règlement effectué », reçu, puis ton billet est émis ou ta commande est expédiée en point relais.</div></div>
+  </div>
+
+  <h2 style="margin-top:22px">Ce que ça change pour toi</h2>
+  <div class="benefits">
+    <div class="ben"><div class="t">💶 Sans carte, vraiment</div><div class="d">Pas de carte à sortir, pas de numéro à donner à un site.</div></div>
+    <div class="ben"><div class="t">🧾 Un reçu à chaque fois</div><div class="d">Le moyen, le montant, la référence : tout est écrit.</div></div>
+    <div class="ben"><div class="t">🏪 À côté de chez toi</div><div class="d">Tabacs, presse, commerces de proximité : l'app te montre les plus proches.</div></div>
+    <div class="ben"><div class="t">🏷️ Au meilleur prix</div><div class="d">Des tarifs négociés auprès de nos fournisseurs — et tout compris.</div></div>
+  </div>
+  <div class="pfoot"><span>PayEnCash — une marque d'AJEK</span><span>Commande en ligne. Paie avec un bon d’achat.</span></div>
+</div></div>
+
+<!-- PAGE 3 — LES RÈGLES CLAIRES + CONTACT -->
+<div class="page"><div class="pad">
+  <h2>Les règles, noir sur blanc</h2>
+  <p class="sub">Ce qu'on te dit avant que tu paies — pas après.</p>
+  <table>
+    <tr><th>Moyen</th><th>Ce qu'il faut savoir</th></tr>
+    <tr><td><strong>Bon d’achat PayEnCash</strong></td><td>Un bon d’achat émis par PayEnCash, de <strong>5 à 250 €</strong>, valable <strong>12 mois</strong> sur payencash.fr seulement — ni échangeable ni remboursable en espèces, pas de rendu de monnaie : si une commande est remboursée, le montant revient sur le bon. Au plus <strong>1 000 €</strong> de bons d’achat utilisés par jour. Tu peux l'annuler au comptoir dans les <strong>30 minutes</strong> qui suivent l'achat. Le commerçant qui te le vend n'encaisse rien d'autre pour nous.</td></tr>
+    <tr><td><strong>Bon d’achat PayEnCash</strong></td><td>Un ticket est accepté sans compte jusqu'à <strong>50 €</strong> par paiement (la loi). Au-delà, tu te connectes à ton compte client. Un remboursement ne repasse pas par le ticket : il revient sur ton compte client, ou par virement.</td></tr>
+  </table>
+  <div class="note"><strong>Où acheter un bon d’achat PayEnCash ?</strong> Chez nos commerçants partenaires (tabacs, presse, commerces de proximité) — l'app te montre les plus proches. Ils vendent le bon, ils n'encaissent pas ta commande. <strong>Où acheter un Bon d’achat PayEnCash ?</strong> Chez les commerçants du réseau de distribution. L'app te montre les plus proches et le localisateur officiel. Ce sont des commerces indépendants : ils vendent le ticket, ils n'encaissent rien pour PayEnCash.</div>
+
+  <div class="cta">
+    <h3>Télécharge l'app, tente de gagner un voyage.</h3>
+    <div>Chaque mois, un voyage à gagner parmi les nouveaux inscrits — sans obligation d'achat.</div>
+    <div class="contact">📱 <strong>PayEnCash Fly</strong> &nbsp;·&nbsp; 👟 <strong>PayEnCash Mode</strong> &nbsp;·&nbsp; 🌐 <strong>payencash.fr</strong></div>
+  </div>
+
+  <div style="margin-top:16px;font-size:11px;color:var(--muted);line-height:1.5">
+    <strong>Mentions légales.</strong> PayEnCash est une marque d'<strong>AJEK SAS</strong> — SIREN <strong>107&nbsp;398&nbsp;448</strong> — siège social : <strong>16 route de la Plage, 13700 Marignane</strong>. Le Bon d’achat PayEnCash est un bon d’achat prépayé émis par AJEK, vendu par des commerçants partenaires sous contrat de distribution, utilisable sur payencash.fr seulement (moyen de paiement à usage limité, art. L521-3 CMF) ; le paiement en ligne est exécuté par un prestataire de services de paiement agréé. Le Bon d’achat PayEnCash est émis par le réseau de distribution, indépendant d'AJEK, et accepté sans identification jusqu'à 50 €. AJEK n'encaisse aucun règlement au comptoir : le commerçant partenaire vend le bon d’achat, il n'encaisse rien d'autre pour nous. Jeu sans obligation d'achat, règlement disponible dans l'app.
+  </div>
+
+  <div class="pfoot"><span>AJEK SAS — marque PayEnCash · SIREN 107 398 448 · 16 route de la Plage, 13700 Marignane</span><span>Bon d’achat PayEnCash · Bon d’achat PayEnCash</span></div>
+</div></div>
+
+</body>
+</html>

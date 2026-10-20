@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zéro vente perdue — la politique du stock</title>
+<style>
+  :root{--ink:#0F2A24;--pri:#10A06A;--prid:#0C7F54;--bg:#F4F7F5;--mut:#5B6E66;--sep:#E3EAE6;--amber:#8a6d1f;--amberbg:#FBF3E0;--mint:#E3F4EC}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;padding:34px 18px 60px}
+  main{max-width:900px;margin:0 auto}
+  h1{font-size:26px;letter-spacing:-0.02em;margin-bottom:4px}
+  .sub{color:var(--mut);font-size:13.5px;margin-bottom:22px}
+  h2{font-size:17px;margin:26px 0 10px;color:var(--prid)}
+  .sc{display:grid;grid-template-columns:230px 1fr;background:#fff;border-radius:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(15,42,36,.06);overflow:hidden}
+  .sc .q{background:var(--mint);padding:13px 15px;font-size:12.5px;font-weight:700;color:var(--prid)}
+  .sc .r{padding:12px 15px;font-size:12.5px;color:var(--mut)}
+  .sc .r b{color:var(--ink)}
+  .sc .r code{background:#EAF2EE;border-radius:5px;padding:1px 6px;font-size:11px}
+  .regle{background:var(--amberbg);border-left:4px solid #d9a52b;border-radius:12px;padding:13px 16px;font-size:13px;color:var(--amber);margin:14px 0}
+  p{font-size:13px;color:var(--mut)}
+  .ok{background:#fff;border-left:4px solid var(--pri);border-radius:12px;padding:13px 16px;font-size:13px;color:var(--mut);margin:10px 0}
+</style>
+</head>
+<body>
+<main>
+<h1>Zéro vente perdue, zéro bug — la politique du stock</h1>
+<p class="sub">Décision fondatrice du 22 août : chaque situation de concurrence sur le stock a UNE règle écrite, testée sur serveur simulé (<a href="audit-charge-api.html">audit de charge, 3 vagues</a>), portée par la base (44+ tables validées Postgres). Le principe : <b>un client qui veut acheter ne repart JAMAIS sur un échec sec — on lui propose toujours la suite logique.</b></p>
+
+<h2>Les 12 situations — et leur règle</h2>
+
+<div class="sc"><div class="q">S1 · Deux clients, dernier exemplaire, à la même seconde</div><div class="r"><b>Décrément atomique</b> (prouvé : 12 simultanés → 1 vente exacte). Le perdant ne voit pas une erreur : il voit <b>S2</b>.</div></div>
+<div class="sc"><div class="q">S2 · L'article est réservé par quelqu'un d'autre (compte à rebours en cours)</div><div class="r">La fiche affiche <b>« Très demandé — réservé, expire dans 43 min »</b> + deux portes : <b>« Me placer en file d'attente »</b> (position FIFO, table <code>stock_waitlist</code>) et <b>« M'alerter s'il se libère »</b> (<code>product_alerts</code>). La vente n'est pas perdue — elle est mise en file.</div></div>
+<div class="sc"><div class="q">S3 · La réservation expire (ou est annulée)</div><div class="r">Libération atomique → le stock est <b>PRÉ-RÉSERVÉ 15 minutes pour le 1ᵉʳ de la file</b> (status notified, priority_until) : SMS/notification « il est à toi, tu as 15 min ». Pendant la fenêtre, personne d'autre ne peut le prendre. Pas de conversion → le suivant ; file vide → stock public.</div></div>
+<div class="sc"><div class="q">S4 · Le client règle à 1 minute de l'expiration</div><div class="r"><b>LA GRÂCE</b> (17/09) : le scan du flashcode <b>par l'agent</b> arrivé chez le client, ou une <b>transaction en ligne encore en attente</b> (ouverte dans la fenêtre valide), <b>fige la réservation</b> (<code>scan_hold_at</code>) — le comptage des espèces ou la notification du prestataire peuvent arriver après l'expiration. Un code expiré AVANT le scan, ou une transaction ouverte après l'expiration → refus propre : « commande expirée — le client doit revalider le prix ».</div></div>
+<div class="sc"><div class="q">S5 · Le fournisseur veut retirer une pièce réservée</div><div class="r"><b>Bloqué</b> : « réservée jusqu'à 15:04 — retrait possible après, si non vendue ». Une pièce vendue n'est jamais retirable. <b>On ne retire jamais le sol sous une vente en cours.</b></div></div>
+<div class="sc"><div class="q">S6 · Le fournisseur met à jour sa quantité pendant des réservations actives</div><div class="r"><b>Plancher</b> : la nouvelle quantité ne peut pas descendre sous (réservations actives + scans figés) — refus 422 motivé. Une <b>augmentation</b> de stock notifie automatiquement la file d'attente (fenêtres 15 min en cascade).</div></div>
+<div class="sc"><div class="q">S7 · Le client veut 3 exemplaires, il n'en reste qu'1</div><div class="r"><b>Offre partielle</b>, jamais un échec sec : « Il en reste 1 — on te le réserve ? » — la vente de 1 vaut mieux que la vente de 0.</div></div>
+<div class="sc"><div class="q">S8 · Panier multi-articles dont UN devient indisponible</div><div class="r"><b>Réservation partielle proposée</b> avec recalcul affiché — jamais un tout-ou-rien silencieux, jamais un panier qui « saute ».</div></div>
+<div class="sc"><div class="q">S9 · Le même code scanné deux fois (deux agents, ou double scan — 17/09 : plus de point)</div><div class="r"><b>Verrou au premier scan</b> : le second affiche « déjà en cours d'encaissement par [agent] ». Anti-double encaissement prouvé (2 pay simultanés → 1 seul PAID).</div></div>
+<div class="sc"><div class="q">S10 · Le client annule sa réservation active</div><div class="r">Libération immédiate → S3 (la file est servie). L'annulation d'un client devient la vente d'un autre.</div></div>
+<div class="sc"><div class="q">S11 · Les horloges</div><div class="r">Toutes les expirations en <b>temps serveur</b>, jamais le téléphone du client. Rappel Brevo à <b>T−15 min</b> : « ton article part dans 15 minutes ». Les horloges des services sont isolées (prouvé : une expiration MODE ne touche pas un prix bloqué vol).</div></div>
+<div class="sc"><div class="q">S12 · Rupture, puis réapprovisionnement fournisseur</div><div class="r">Les clients en alerte (<code>product_alerts</code>) sont notifiés à la re-dispo, une seule fois — la vente différée n'est pas perdue non plus.</div></div>
+
+<h2>Ce qui le prouve</h2>
+<div class="ok"><b>3 vagues de tests sur serveur simulé</b> (mêmes règles que la prod, horloge pilotable) : T1-T8 (fondamentaux : atomicité, prix bloqué, plafond espèces, anti-double), M1-M5 (multi-utilisateurs multi-services : 60 simultanés, isolation, chaos → zéro 500), W1-W7 (cette politique : file d'attente bout-en-bout, grâce au scan, offre partielle, plancher fournisseur, cascade de fenêtres). Chiffres réels : <a href="audit-charge-api.html">audit-charge-api.html</a>. À rejouer sur les sandbox officielles Duffel + Nuitée à l'ouverture des clés (item registre, Étape 9).</div>
+<div class="regle"><b>Règle d'or produit</b> (à opposer à toute future maquette) : aucun écran ne montre jamais « Erreur » ou « Indisponible » sec — chaque cul-de-sac affiche LA suite qui garde la vente : file d'attente, alerte, offre partielle, revalidation du prix.</div>
+
+</main>
+</body>
+</html>

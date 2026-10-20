@@ -1,0 +1,771 @@
+{
+  "_mode_emploi": "LE REGISTRE UNIQUE DU RESTE À FAIRE. Deux types d'items : type='auto' → vérifié par la présence du fichier (+ marqueur de contenu) à chaque exécution de progress.rb ; type='declare' → action humaine : passer \"fait\": true quand c'est fait (ou demander un audit qui le vérifie et met à jour). Le % FAIT et le % RESTE de chaque étape se calculent sur TOUS les items, les deux types confondus. Chemins relatifs à la racine du projet. — (18/09, au soir) Deux décisions fondatrices ont retiré quatre items de ce registre et réécrit une quinzaine d'autres. POURQUOI : (1) l'agent de caisse mobile est abandonné, parce qu'un salarié qui transporte des espèces chez le client expose l'entreprise à un risque humain et à un cadre CNAPS que le projet ne veut pas porter — un livrable qui prépare son embauche, son terminal de paiement ou son réseau de dépôt d'espèces ne peut plus être « à faire », il n'a plus d'objet ; (2) le reversement mensuel du partenaire est remplacé par un prélèvement à la vente chez Stripe, parce qu'attendre l'argent d'un commerçant crée une créance, une relance et un risque d'impayé — l'IBAN de reversement à renseigner cède donc la place au compte Stripe et à la carte de chaque commerce. Trois marqueurs 'auto' pointaient des noms que le pivot a fait disparaître (reversementRecevoir, releveReversement, deux intitulés d'article 5) : ils sont remis sur les noms réels du code, sans quoi des livrables faits étaient comptés comme à faire.",
+  "etapes": [
+    {
+      "nom": "1 · Marketing & cibles",
+      "items": [
+        {
+          "libelle": "Plan marketing",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/plan-marketing.html"
+        },
+        {
+          "libelle": "Étude des 2 branches (FLY × MODE)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/etude-deux-branches.html"
+        },
+        {
+          "libelle": "Analyse concurrentielle",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/etude-deux-branches.html",
+          "marqueur": "Face à qui on se bat"
+        },
+        {
+          "libelle": "Scénario chiffré de pré-ouverture MODE (J-59, entonnoir fournisseurs)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/etude-deux-branches.html",
+          "marqueur": "J-59"
+        },
+        {
+          "libelle": "Stratégie",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/strategie.html"
+        },
+        {
+          "libelle": "Analyse clientèle",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/analyse-clientele.html"
+        },
+        {
+          "libelle": "Objectifs chiffrés (3 scénarios)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/objectifs-chiffres.html"
+        },
+        {
+          "libelle": "Plan réseaux sociaux",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/reseaux-sociaux.html"
+        },
+        {
+          "libelle": "Identité de marque (charte verte)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/identite-marque.html"
+        },
+        {
+          "libelle": "Audit Zara × Vinted",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/audit-zara.html"
+        },
+        {
+          "libelle": "Vitrine grand public 2 apps (+ bandeau lancement J-59)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/landing-page.html",
+          "marqueur": "PayEnCash MODE"
+        },
+        {
+          "libelle": "Vitrine fournisseurs",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/landing-fournisseurs.html"
+        },
+        {
+          "libelle": "Vitrine équipe",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/landing-equipe.html"
+        },
+        {
+          "libelle": "Affiche + brochure + photos + logos",
+          "type": "auto",
+          "fichier": "ui/assets/logos/ryanair.svg"
+        },
+        {
+          "libelle": "Comptes publicitaires régies créés (TikTok Ads · Meta · Snap)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "Créer les 3 comptes business + accès API Marketing"
+        },
+        {
+          "libelle": "Comptes réseaux officiels ouverts (TikTok · Insta · Snap · chaîne WhatsApp)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "Handles @payencash réservés + bio + lien"
+        },
+        {
+          "libelle": "4 influenceurs briefés et signés (kit GED-006)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Commercial",
+          "comment": "Brief envoyé + mention « collaboration commerciale » acceptée"
+        },
+        {
+          "nom": "Comparatif du jour (fly/08) : relevés Opodo horodatés publiés CHAQUE MATIN (captures conservées)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Commercial",
+          "comment": "Process quotidien : relever 6+ routes sur opodo.fr à 7 h, capturer, publier — sinon dépublier la page (comparatif périmé = trompeur)"
+        },
+        {
+          "nom": "Rédiger les modèles Brevo (SMS + email) : code de paiement, paiement reçu, billet émis (PNR + lien enregistrement compagnie), voucher hôtel, rappel expiration",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice + Marketing",
+          "comment": "Chaîne technique prête (6b §2c, table transactional_messages) — il manque les TEXTES"
+        }
+      ]
+    },
+    {
+      "nom": "2 · Modèle financier",
+      "items": [
+        {
+          "libelle": "Le modèle (3 lignes, cycle du cash, TVA)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-1b-financier.html"
+        },
+        {
+          "libelle": "Point mort du pilote",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-1b-financier.html",
+          "marqueur": "point mort"
+        },
+        {
+          "libelle": "Coût d'encaissement par moyen (Bon d’achat PayEnCash · Bon d’achat PayEnCash) — Étape 2 §1b",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-1b-financier.html",
+          "marqueur": "Stripe"
+        },
+        {
+          "libelle": "Doc socle mécanisme financier",
+          "type": "auto",
+          "fichier": "docs/08-mecanisme-financier.html"
+        },
+        {
+          "libelle": "Compte bancaire pro ouvert (+ 2e banque de continuité)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "2 comptes ouverts, RIB en main"
+        },
+        {
+          "libelle": "BFR avance Duffel provisionné",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "Montant D×X×Y viré sur le compte dédié"
+        },
+        {
+          "nom": "Calibrer les suppléments packs (+12 € Flex / +29 € Super Flex) sur les pénalités réelles des tarifs Duffel",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice + Étape 2",
+          "comment": "Règle : jamais vendre Flex si la pénalité du tarif dépasse le supplément (audit-opodo §3)"
+        },
+        {
+          "libelle": "(20/09 — sans objet : le prestataire de paiement en ligne est abandonné)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "Contrat + clés (projet, secrète du pingback) en variables d'environnement — 17/09"
+        },
+        {
+          "libelle": "Le Bon d’achat PayEnCash dans le modèle financier (vente hors champ TVA, commission 1,10 % HT + TVA autofacturée, prélèvement à la vente sur la carte du commerce, bons en circulation = dette) — Étape 2 (18/09)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-1b-financier.html",
+          "marqueur": "Bons en circulation = dette"
+        },
+        {
+          "libelle": "Compte Stripe activé et carte de chaque commerce enregistrée — sans elle, aucun bon d’achat ne peut être vendu",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "Le prélèvement à la vente (décision du 18/09 au soir) remplace le reversement mensuel : plus d'IBAN de reversement. Activer le compte Stripe (1,5 % + 0,25 €) et Connect, puis enregistrer la carte de chaque partenaire à l'activation ; tant qu'elle manque, l'écran Vendre refuse l'émission. À obtenir de Stripe par écrit : l'acceptation de l'activité « cartes cadeaux » — l'authentification forte se fait une fois, à l'enregistrement de la carte (SetupIntent)."
+        }
+      ]
+    },
+    {
+      "nom": "3 · Juridique & conformité",
+      "items": [
+        {
+          "libelle": "Socle juridique",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-2-juridique-socle.html"
+        },
+        {
+          "libelle": "Checklist Atout France",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/checklist-atout-france.html"
+        },
+        {
+          "libelle": "SASU immatriculée — Kbis en main",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "Kbis reçu (vérifier l'objet social : voyage + mode)"
+        },
+        {
+          "libelle": "Garantie financière APST — attestation reçue",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "BLOQUANT : aucune vente légale sans elle"
+        },
+        {
+          "libelle": "RCP tourisme — attestation reçue",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "BLOQUANT : exigée pour Atout France"
+        },
+        {
+          "libelle": "Immatriculation Atout France déposée",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "Dossier déposé avec garantie + RCP"
+        },
+        {
+          "libelle": "TVA 297 A — confirmation expert-comptable",
+          "type": "declare",
+          "fait": false,
+          "qui": "Expert-comptable",
+          "comment": "Avis écrit (voyage + occasion)"
+        },
+        {
+          "libelle": "CCN IDCC 1710 — validation juriste social",
+          "type": "declare",
+          "fait": false,
+          "qui": "Juriste",
+          "comment": "Avis écrit avant 1re embauche"
+        },
+        {
+          "libelle": "LCB-FT — avis juridique",
+          "type": "declare",
+          "fait": false,
+          "qui": "Avocat",
+          "comment": "Note sur l'assujettissement"
+        },
+        {
+          "libelle": "Marque déposée INPI (payEnCash)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "Dépôt classes 35/36/39/25"
+        },
+        {
+          "nom": "Publicité comparative Opodo (L122-1 s.) + CGV packs Flex/Super Flex (remboursement : moyen d'origine · virement) — validation avocat + usage référentiel des logos de compagnies aériennes (pratique standard OTA, à confirmer)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Avocat",
+          "comment": "Comparaison objective DATÉE (captures conservées) — Prime REPORTÉ (27/08), ses CGV suivront à la réactivation"
+        },
+        {
+          "libelle": "Le Bon d’achat PayEnCash — moyen de paiement à usage limité (art. L521-3 CMF cité, L315-1 a contrario, seuil ACPR 1 M€, TVA 256 ter, distributeur mandataire) — Étape 3 §2b (18/09)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-2-juridique-socle.html",
+          "marqueur": "LEGIARTI000035430673"
+        },
+        {
+          "libelle": "Source commerciale (guide cartes cadeaux) copiée au dossier et recoupée avec Légifrance — L521-3, jamais L521-3-1",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/sources/README.md",
+          "marqueur": "L521-3-1 est l'exemption TÉLÉCOMS"
+        },
+        {
+          "libelle": "Contrat de distribution relu par l'avocat (qualification du contrat ; prélèvement à la vente par un prestataire de paiement — le bon d’achat n'est créé qu'après accord de la banque ; seuil de déclaration ACPR ; sort des soldes expirés ; mentions consommateur)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Avocat",
+          "comment": "Les trois textes v1 (contrat, CGU partenaire, conditions du bon d’achat) portent la mention « à faire relire par un avocat » tant que l'avis n'est pas rendu"
+        },
+        {
+          "libelle": "Veille du seuil ACPR 1 M€ (L521-3 II) — indicateur « bons vendus sur 12 mois glissants » tenu, déclaration préparée avant le franchissement, actualisation annuelle ensuite",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "Déclaration à l'ACPR (description des services, exclusion invoquée) dès que les opérations des 12 derniers mois dépassent 1 000 000 € ; silence = approbation"
+        },
+        {
+          "libelle": "TVA du bon d’achat (bon à usages multiples, art. 256 ter CGI) et autofacture de la commission de distribution (art. 289 CGI) — confirmation expert-comptable",
+          "type": "declare",
+          "fait": false,
+          "qui": "Expert-comptable",
+          "comment": "Avis écrit, avec le 297 A voyage + occasion"
+        }
+      ]
+    },
+    {
+      "nom": "4 · Flux métier",
+      "items": [
+        {
+          "libelle": "Flux F1→F13 (+ F2-promo)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-4-flux.html",
+          "marqueur": "F13"
+        },
+        {
+          "libelle": "Paiement par Bon d’achat (F1) + vie d'un bon (F7)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-4-flux.html",
+          "marqueur": "pingback"
+        },
+        {
+          "libelle": "Recherche/Tendances/lancement J-59 dans F11",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-4-flux.html",
+          "marqueur": "J-59"
+        },
+        {
+          "libelle": "Reçu client + code de paiement",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/recu-client-code.html"
+        },
+        {
+          "libelle": "F4 Bon d’achat PayEnCash (vente chez un commerçant partenaire, prélèvement à la vente, usage fractionné, re-crédit) + F6 où acheter (Bon d’achat PayEnCash hors contrat ET Bon d’achat sous contrat) — 18/09",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-4-flux.html",
+          "marqueur": "bonRecrediter"
+        }
+      ]
+    },
+    {
+      "nom": "5 · Contrats & documents",
+      "items": [
+        {
+          "libelle": "Matrice flux ↔ documents (F13 incluse)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-5-docs-flux.html",
+          "marqueur": "F13"
+        },
+        {
+          "libelle": "Clause médiation MTV",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-5-docs-flux.html",
+          "marqueur": "mtv.travel"
+        },
+        {
+          "libelle": "CGV MODE — moyens de paiement sans carte (art. 3, 17/09)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/cgv-mode.html",
+          "marqueur": "Bon d’achat PayEnCash"
+        },
+        {
+          "libelle": "Contrat-cadre d'achat fournisseur (v1)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/contrat-cadre-achat-fournisseur.html"
+        },
+        {
+          "libelle": "Charte terminologie fournisseur (v1)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/charte-terminologie-fournisseur.html"
+        },
+        {
+          "libelle": "CGU espace fournisseur (v1)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/cgu-espace-fournisseur.html"
+        },
+        {
+          "libelle": "CGV MODE (v1)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/cgv-mode.html"
+        },
+        {
+          "libelle": "Relecture AVOCAT de tous les textes v1",
+          "type": "declare",
+          "fait": false,
+          "qui": "Avocat",
+          "comment": "CGV voyage+mode, contrats fournisseurs, jeu, promo, carte cadeau — retours intégrés"
+        },
+        {
+          "libelle": "Règlement du jeu « 1 000 € d'achats » déposé (ouverture MODE)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Avocat",
+          "comment": "Règlement rédigé sur le modèle du jeu mensuel + dépôt huissier si retenu"
+        },
+        {
+          "libelle": "Contrat de distribution du bon d’achat d’achat PayEnCash (v1 — miroir du modèle contrat_partenaire du coffre, 16 articles)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/contrat-distribution-bons.html",
+          "marqueur": "Article 5 — Règlement à la vente et commission"
+        },
+        {
+          "libelle": "CGU de l'espace partenaire v2 (compte, vendre / annuler / relevé / prélèvement à la vente, plafonds, autofacture, données, suspension, responsabilité, évolution, loi)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/cgu-espace-partenaire.html",
+          "marqueur": "Article 5 — Prélèvement à la vente, relevé et autofacture"
+        },
+        {
+          "libelle": "Conditions du bon d’achat d’achat PayEnCash (consommateur : nature, montant, validité, usage fractionné, ni échange ni remboursement, re-crédit, perte/vol, solde, réclamation, médiateur, émetteur)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/conditions-bon-payencash.html",
+          "marqueur": "re-crédité sur le bon"
+        },
+        {
+          "libelle": "Matrice flux ↔ documents : lignes F4 et F6 accrochées aux trois documents du bon d’achat (18/09)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-5-docs-flux.html",
+          "marqueur": "contrat-distribution-bons.html"
+        }
+      ]
+    },
+    {
+      "nom": "6 · Données",
+      "items": [
+        {
+          "libelle": "Modèle complet (tables + matrice droits + tendances/collabs)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-6-donnees.html",
+          "marqueur": "trend_looks"
+        },
+        {
+          "libelle": "Rétention & purge RGPD",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-6-donnees.html",
+          "marqueur": "Rétention"
+        },
+        {
+          "libelle": "Schéma SQL exécutable (psp_transactions + payment_tenders + cockpit)",
+          "type": "auto",
+          "fichier": "server/db/schema.sql",
+          "marqueur": "psp_transactions"
+        },
+        {
+          "libelle": "Tables tendances/collabs/brands dans le schéma SQL",
+          "type": "auto",
+          "fichier": "server/db/schema.sql",
+          "marqueur": "trend_looks"
+        },
+        {
+          "libelle": "Seed = scénario canonique au centime",
+          "type": "auto",
+          "fichier": "server/db/seed.sql",
+          "marqueur": "PEC-Z6DNX8HV"
+        },
+        {
+          "libelle": "Migration du pivot (suppression du réseau de points, paiement en ligne)",
+          "type": "auto",
+          "fichier": "server/db/migrations/2026-09-17-pivot-paiement-en-ligne.sql",
+          "marqueur": "psp_transactions"
+        }
+      ]
+    },
+    {
+      "nom": "7 · Architecture & API",
+      "items": [
+        {
+          "libelle": "Specs dev (mapping, AuthN/AuthZ, sécurité, observabilité)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-6b-specs-dev.html",
+          "marqueur": "Authentification"
+        },
+        {
+          "libelle": "8 microservices + passerelle + libs (code testé)",
+          "type": "auto",
+          "fichier": "server/services/encaissement/index.js",
+          "marqueur": "psp/pingback"
+        },
+        {
+          "libelle": "Endpoints cockpit marketing (/marketing/*)",
+          "type": "auto",
+          "fichier": "server/services/reporting/index.js",
+          "marqueur": "marketing/campaigns"
+        },
+        {
+          "libelle": "Endpoint recherche/tendances MODE",
+          "type": "auto",
+          "fichier": "server/services/mode/index.js",
+          "marqueur": "trends"
+        },
+        {
+          "libelle": "Déploiement CapRover (Dockerfile, compose, guide)",
+          "type": "auto",
+          "fichier": "server/README-DEV.md",
+          "marqueur": "CapRover"
+        },
+        {
+          "libelle": "Serveur CapRover provisionné (domaine api.payencash.fr + SSL)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Dev",
+          "comment": "VPS + CapRover installé + DNS"
+        },
+        {
+          "libelle": "Base PostgreSQL de production créée + schema/seed chargés",
+          "type": "declare",
+          "fait": false,
+          "qui": "Dev",
+          "comment": "One-click app + psql < schema.sql + seed.sql"
+        },
+        {
+          "libelle": "DATABASE_URL posée sur les 9 apps — LE geste final",
+          "type": "declare",
+          "fait": false,
+          "qui": "Dev",
+          "comment": "Variable env sur chaque app CapRover"
+        },
+        {
+          "libelle": "Clés API réelles branchées (Duffel · Stripe · Mondial Relay · régies pub)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Dev + Fondatrice",
+          "comment": "Comptes ouverts, clés en variables d'env (jamais dans le code)"
+        },
+        {
+          "libelle": "Numéro service client 0 805 626 626 activé",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "Numéro vert souscrit + horaires configurés"
+        },
+        {
+          "libelle": "Nom de domaine payencash.fr acquis + vitrine en ligne",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "DNS + hébergement vitrine"
+        },
+        {
+          "libelle": "(20/09 — sans objet : le prestataire de paiement en ligne est abandonné)",
+          "type": "auto",
+          "fichier": null,
+          "marqueur": "Test Pingback Tool"
+        },
+        {
+          "libelle": "(20/09 — sans objet) — pièces KYB téléversées, réponse de compliance@ sur la revente de marques au dossier, Evaluation Mode désactivé",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "(20/09 — sans objet : le prestataire de paiement en ligne est abandonné)"
+        },
+        {
+          "libelle": "Service bons (émettre, état, appliquer/débiter selon le reste dû, re-créditer, bloquer, prélèvement à la vente et relevé mensuel) — server/services/bons + gateway /bons",
+          "type": "auto",
+          "fichier": "server/services/bons/index.js",
+          "marqueur": "bons"
+        },
+        {
+          "libelle": "Librairie pure lib/bons.js testée (code, montant, état, débit possible, montant prélevé et frais du prestataire au centime, n° d'autofacture)",
+          "type": "auto",
+          "fichier": "server/lib/bons.js",
+          "marqueur": "montantPreleve"
+        },
+        {
+          "libelle": "Étape 7 : le microservice bons dans l'architecture serveur",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-6b-specs-dev.html",
+          "marqueur": "microservice bons"
+        }
+      ]
+    },
+    {
+      "nom": "8 · Plan de lancement",
+      "items": [
+        {
+          "libelle": "Plan de départ (garantie bloquante + arrêt propre)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/partie-3-plan-depart.html",
+          "marqueur": "arrêt propre"
+        },
+        {
+          "libelle": "Plan de lancement + checklists",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/plan-lancement.html"
+        },
+        {
+          "libelle": "Paiement en ligne OUVERT (pingback reçu en recette, page hébergée branchée)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Dev + Fondatrice",
+          "comment": "3 transactions de recette : acceptée, refusée, acceptée hors délai → à rembourser"
+        },
+        {
+          "libelle": "Premiers commerçants partenaires signés (contrat de distribution + carte de règlement enregistrée)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "Contrat signé par le gérant, dossier KYB complet au coffre, carte du commerce enregistrée chez Stripe, point activé"
+        },
+        {
+          "libelle": "Objectif pré-ouverture MODE : 25 fournisseurs inscrits",
+          "type": "declare",
+          "fait": false,
+          "qui": "Commercial",
+          "comment": "Palier 1 — annoncé sur les réseaux"
+        },
+        {
+          "libelle": "Objectif pré-ouverture MODE : 50 fournisseurs inscrits",
+          "type": "declare",
+          "fait": false,
+          "qui": "Commercial",
+          "comment": "Palier 2"
+        },
+        {
+          "libelle": "Objectif pré-ouverture MODE : 120 candidatures / 40 actifs au jour J",
+          "type": "declare",
+          "fait": false,
+          "qui": "Commercial",
+          "comment": "Cible du scénario chiffré (entonnoir 300→120→90→60→40)"
+        },
+        {
+          "libelle": "1re collab influenceur × fournisseur signée (vague réseaux lancée)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Commercial",
+          "comment": "Collab signée + vague annonce/coulisses/drop programmée"
+        }
+      ]
+    },
+    {
+      "nom": "9 · Tests & recette",
+      "items": [
+        {
+          "libelle": "Étape recette (harnais + règles de rejeu)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/etape-9-recette.html"
+        },
+        {
+          "libelle": "Banc de scénarios réels",
+          "type": "auto",
+          "fichier": "tests/test-runner.html",
+          "marqueur": "Banc de test"
+        },
+        {
+          "libelle": "Rapports d'audit (scénarios + cohérence + expert)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/audit-coherence-etapes.html"
+        },
+        {
+          "libelle": "Outillage charge (k6) + sécurité (ZAP) + tests unitaires",
+          "type": "auto",
+          "fichier": "server/test/k6-charge.js"
+        },
+        {
+          "libelle": "Passe k6 EXÉCUTÉE sur staging (p95 < 500 ms)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Dev",
+          "comment": "Rapport daté archivé — avant ouverture publique"
+        },
+        {
+          "libelle": "Passe ZAP EXÉCUTÉE sur staging (zéro High)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Dev",
+          "comment": "Rapport daté archivé — avant ouverture publique"
+        },
+        {
+          "libelle": "Vente test réelle par moyen (Bon d’achat PayEnCash · Bon d’achat PayEnCash · MODE expédiée)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice + équipe",
+          "comment": "4 ventes de bout en bout au pilote, preuves archivées"
+        },
+        {
+          "nom": "Rejouer la batterie de tests d'ampleur sur les sandbox officielles Duffel + Nuitée (LiteAPI) — clés à ouvrir",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice + dev",
+          "comment": "Le serveur simulé a prouvé les invariants (audit-charge-api 8/8) ; reste la conformité aux vraies réponses d'API"
+        }
+      ]
+    },
+    {
+      "nom": "10 · Maquettes",
+      "items": [
+        {
+          "libelle": "Kit UI + PEC_DATA (recherche, tendances, lancement)",
+          "type": "auto",
+          "fichier": "ui/assets/payencash-data.js",
+          "marqueur": "tendances"
+        },
+        {
+          "libelle": "Recherche vivante MODE (09)",
+          "type": "auto",
+          "fichier": "ui/mode/09-recherche.html",
+          "marqueur": "chercher"
+        },
+        {
+          "libelle": "Tendances MODE (10) — Porté par + collabs",
+          "type": "auto",
+          "fichier": "ui/mode/10-tendances.html",
+          "marqueur": "portePar"
+        },
+        {
+          "libelle": "Panier fusionné (panier + commandes)",
+          "type": "auto",
+          "fichier": "ui/mode/03-panier.html",
+          "marqueur": "p-apayer"
+        },
+        {
+          "libelle": "Validation visuelle fondatrice des 7 apps (clic par clic) — dont « Comment payer » et la page hébergée simulée",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "Chaque galerie parcourue et approuvée"
+        },
+        {
+          "libelle": "Galerie des 3 sites vitrine (étape 10)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/maquette-app-vitrines.html",
+          "marqueur": "App Store"
+        },
+        {
+          "libelle": "Boutons App Store / Google Play branchés sur la vitrine",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/landing-page.html",
+          "marqueur": "apps.apple.com"
+        },
+        {
+          "libelle": "URLs DÉFINITIVES des fiches stores (apps déposées)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Dev",
+          "comment": "Remplacer les URLs de redirection par les fiches réelles après dépôt App Store / Play Store"
+        },
+        {
+          "libelle": "Page hébergée SIMULÉE du prestataire (ecrans/24) — annoncée comme telle",
+          "type": "auto",
+          "fichier": null,
+          "marqueur": "Simulation"
+        },
+        {
+          "libelle": "Galerie de l'app Partenaire — 8 écrans HD (inscription, connexion, accueil, vendre, bons, relevés, mon point, notifications)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/documents/maquette-app-partenaire.html",
+          "marqueur": "03 · Vendre un bon d’achat"
+        },
+        {
+          "libelle": "Écran partenaire/03 — vendre un bon d’achat (montant encaissé confirmé, prélèvement accepté, ticket imprimé)",
+          "type": "auto",
+          "fichier": "ui/partenaire/03-vendre.html",
+          "marqueur": "bonEmettre"
+        },
+        {
+          "libelle": "Écran manager/29 — commerces partenaires (candidatures, activation, suspension, carte de règlement, prélèvements, relevé mensuel)",
+          "type": "auto",
+          "fichier": "ui/manager/29-partenaires.html",
+          "marqueur": "prelevementsGet"
+        },
+        {
+          "libelle": "Page publique « Où acheter un bon d’achat d’achat PayEnCash » (ecrans/25 — points actifs, état vide honnête)",
+          "type": "auto",
+          "fichier": "ui/ecrans/25-ou-acheter-un-bon.html",
+          "marqueur": "pointsBons"
+        },
+        {
+          "libelle": "Vitrine « Vendez le bon d’achat d’achat PayEnCash » (landing partenaires : 1,10 %, zéro matériel, prélèvement à la vente, 4 étapes)",
+          "type": "auto",
+          "fichier": "ESPACE-COMMERCANT/marketing/landing-partenaires.html",
+          "marqueur": "1,10 %"
+        },
+        {
+          "libelle": "Validation visuelle fondatrice de l'espace partenaire (inscription → dossier → contrat → activation → carte enregistrée → vente → ticket → relevé) et du parcours client « payer avec un Bon d’achat » (fly/01, mode/05, mode/03)",
+          "type": "declare",
+          "fait": false,
+          "qui": "Fondatrice",
+          "comment": "Dérouler « Tester le bon d’achat en 5 minutes » (GUIDE-DEMARRAGE / PORTAIL) et approuver chaque écran"
+        }
+      ]
+    }
+  ]
+}

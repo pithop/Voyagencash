@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash — Doc 11 : UI v2 — Tunnel, Code, Suivi agent, Compte, Billet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+  /* Sans ceci, un navigateur en mode sombre rend champs, listes et ascenseurs
+     en sombre sur notre fond creme. La doc est concue en clair, on le declare. */
+  color-scheme: light;
+    --vert: #1F4438; --cuivre: #D8722B; --creme: #F7F5F0; --encre: #1A1A1A;
+    --gris: #6B6966; --gris-clair: #E4E0D6; --blanc: #FFFFFF; --rouge: #C0392B; --radius: 10px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; color: var(--encre); background: var(--creme); line-height: 1.7; font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+  .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: var(--vert); color: var(--creme); overflow-y: auto; padding: 24px 0; z-index: 100; }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 0.5px solid rgba(244,241,234,0.15); margin-bottom: 16px; }
+  .sidebar-logo .brand { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 4px; }
+  .sidebar-logo .accent { color: var(--cuivre); }
+  .sidebar-logo .doc-num { font-size: 11px; color: rgba(244,241,234,0.5); margin-top: 4px; }
+  .sidebar nav a { display: block; padding: 7px 20px; font-size: 12.5px; color: rgba(244,241,234,0.7); text-decoration: none; border-left: 2px solid transparent; }
+  .sidebar nav a:hover { color: var(--creme); border-left-color: var(--cuivre); background: rgba(244,241,234,0.06); }
+  .sidebar nav .section-head { padding: 14px 20px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(244,241,234,0.35); font-weight: 600; }
+  .doc-nav { margin-top: 24px; padding: 16px 20px 0; border-top: 0.5px solid rgba(244,241,234,0.15); }
+  .doc-nav p { font-size: 11px; color: rgba(244,241,234,0.4); margin-bottom: 8px; }
+  .doc-nav a { display: block; font-size: 12px; color: rgba(244,241,234,0.6); text-decoration: none; padding: 4px 0; }
+  .doc-nav a:hover { color: var(--cuivre); }
+
+  .main { margin-left: 240px; max-width: 920px; padding: 48px 56px; }
+  .doc-header { border-bottom: 1px solid var(--gris-clair); padding-bottom: 24px; margin-bottom: 40px; }
+  .doc-header .doc-tag { display: inline-block; background: var(--cuivre); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px; letter-spacing: 0.04em; }
+  .doc-header h1 { font-family: 'Archivo', sans-serif; font-size: 30px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .doc-header .meta { display: flex; gap: 20px; font-size: 13px; color: var(--gris); flex-wrap: wrap; }
+
+  .section { margin-bottom: 48px; scroll-margin-top: 24px; }
+  h2 { font-family: 'Archivo', sans-serif; font-size: 21px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--gris-clair); color: var(--vert); }
+  h3 { font-family: 'Archivo', sans-serif; font-size: 16.5px; font-weight: 600; margin: 26px 0 12px; color: var(--encre); }
+  h4 { font-family: 'Archivo', sans-serif; font-size: 14px; font-weight: 600; margin: 18px 0 8px; color: var(--encre); }
+  p { margin-bottom: 12px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0 20px; }
+  th { background: var(--vert); color: var(--creme); padding: 9px 11px; text-align: left; font-weight: 600; font-size: 11.5px; }
+  td { padding: 8px 11px; border-bottom: 0.5px solid var(--gris-clair); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(244,241,234,0.5); }
+  td code { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: rgba(31,68,56,0.07); color: var(--vert); padding: 2px 6px; border-radius: 4px; }
+  pre { background: #1A1A2E; color: #E8E6E3; border-radius: var(--radius); padding: 16px 18px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7; overflow-x: auto; margin: 14px 0; }
+  pre .comment { color: #6B7A8D; }
+  pre .key { color: #82AAFF; }
+  pre .str { color: #C3E88D; }
+  pre .kw { color: #C792EA; }
+  pre .num { color: #F78C6C; }
+
+  .callout { border-radius: var(--radius); padding: 14px 16px; margin: 16px 0; font-size: 13.5px; display: flex; gap: 12px; align-items: flex-start; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: rgba(31,68,56,0.06); border-left: 3px solid var(--vert); }
+  .callout.warning { background: rgba(216,114,43,0.08); border-left: 3px solid var(--cuivre); }
+  .callout.danger { background: rgba(192,57,43,0.07); border-left: 3px solid var(--rouge); }
+  .callout strong { display: block; font-weight: 600; margin-bottom: 4px; color: var(--encre); }
+
+  .checklist { list-style:none; margin: 12px 0; }
+  .checklist li { padding: 6px 0 6px 28px; position:relative; font-size:14px; }
+  .checklist li::before { content:"☐"; position:absolute; left:0; color: var(--vert); font-size:16px; }
+
+  .flow-step { display:flex; gap:16px; margin-bottom:12px; align-items:flex-start; }
+  .flow-num { width:32px; height:32px; border-radius:50%; background:var(--vert); color:#fff; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
+  .flow-body { flex:1; }
+  .flow-body strong { display:block; font-weight:600; margin-bottom:4px; }
+  .flow-connector { width:2px; height:16px; background:var(--gris-clair); margin-left:15px; }
+
+  .case-box { border:0.5px solid var(--gris-clair); border-radius:var(--radius); padding:16px; margin:12px 0; background:#fff; }
+  .case-box .case-title { font-family:'Archivo', sans-serif; font-weight:700; font-size:14px; color:var(--vert); margin-bottom:10px; }
+
+  @media print { .sidebar { display:none; } .main { margin-left:0; padding:24px; } }
+  @media (max-width:768px) { .sidebar { display:none; } .main { margin-left:0; padding:24px 20px; } }
+</style>
+</head>
+<body>
+<div style="background:#fdf5e6;border:2px dashed #b8860b;border-radius:10px;padding:12px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#8a6508"><b>⚠️ Mise à jour août 2026, révisée au pivot du 18/09 (soir) — remplace la révision du 17/09.</b> La « course de retour cash » est <b>abandonnée</b>, et l'<b>agent de caisse mobile est supprimé</b> : <b>plus aucune espèce ne circule</b>, ni à l'aller ni au retour. Le client paie sans carte par <b>Bon d’achat PayEnCash</b> ou par <b>Bon d’achat PayEnCash</b>, tous deux achetés au comptoir d'un commerce. Circuit de restitution, désormais entièrement dématérialisé : <b>le remboursement re-crédite le Bon d’achat PayEnCash</b> (<code>gift_card_movements</code>) — ou, à défaut de bon, un virement au RIB du client. <b>Jamais d'espèces, jamais de rendu de monnaie</b>, et plus aucun « point » ni agent. ⚠️ <b>À valider par l'avocat</b> : un avoir re-crédité vaut-il remboursement au sens de la rétractation légale de 14 jours, qui impose le même moyen de paiement qu'à l'achat ? Voir <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html" style="color:#0b5c3a;font-weight:700">Étape 4 · F10</a>.</div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">PayEn<span class="accent">Cash</span></div>
+    <div class="doc-num">Documentation technique · v2.0 (encaissement à domicile)</div>
+  </div>
+  <nav>
+    <div class="section-head">Document 11</div>
+    <a href="#intro">Introduction</a>
+    <a href="#charte">Conventions & charte</a>
+    <a href="#navigation">Navigation</a>
+    <div class="section-head">Tunnel de réservation</div>
+    <a href="#ecran-accueil">A1 — Accueil</a>
+    <a href="#ecran-resultats">A2 — Résultats vols</a>
+    <a href="#ecran-retour">A3 — Résultats retour</a>
+    <a href="#ecran-hebergement">A4 — Hébergement</a>
+    <a href="#ecran-recap">A5 — Récap</a>
+    <div class="section-head">Paiement & compte</div>
+    <a href="#ecran-code">Code</a>
+    <a href="#ecran-codedetail">CodeDetail — suivi</a>
+    <a href="#ecran-suivi">Suivi agent</a>
+    <a href="#ecran-notation">Notation</a>
+    <a href="#ecran-mescodes">Mes codes</a>
+    <a href="#ecran-compte">Compte</a>
+    <a href="#ecran-billet">Billet</a>
+    <div class="section-head">Transverse</div>
+    <a href="#ecran-incidents">B7 — Échec &amp; remboursement</a>
+    <a href="#etats-transverses">États transverses</a>
+    <a href="#a-concevoir">Écrans à concevoir</a>
+    <a href="#decisions">Décisions & écarts (impl.)</a>
+    <a href="#champs-v2">Champs introduits (lot v2)</a>
+  </nav>
+  <div class="doc-nav">
+    <p>Documents</p>
+    <a href="01-flux-metier.html">← Doc 1 : Flux métier</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">← Doc 2 : Schéma BDD</a>
+    <a href="03-api-specs.html">← Doc 3 : Spécifications API</a>
+    <a href="04-pricing.html">← Doc 4 : Pricing</a>
+    <a href="05-architecture.html">← Doc 5 : Architecture</a>
+    <a href="07-annulations-remboursements.html">← Doc 7 : Annulations &amp; remboursements</a>
+    <a href="09-espace-manager.html">← Doc 9 : Espace Manager</a>
+    <a href="10-compte-utilisateur.html">← Doc 10 : Compte / OTP</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">📖 Glossaire</a>
+  </div>
+</aside>
+
+<main class="main">
+<div class="bandeau-socle" style="background:#FDF1E7;border:1px solid #E39A2E;border-left:5px solid #E39A2E;border-radius:10px;padding:13px 17px;margin:0 0 28px;font-size:13.5px;line-height:1.65;color:#7a5410">⚠️ <b>Document socle (juillet 2026)</b> — conservé comme référence technique. Les décisions <b>À JOUR</b> vivent dans le fil rouge (10 étapes)&nbsp;: <a href="../ESPACE-COMMERCANT/documents/diagramme-principal.html" style="color:#0c7f54;font-weight:700">diagramme principal</a>. En cas d'écart, le fil rouge fait foi (ex.&nbsp;: carte bleue en complément, Mondial Relay, F13, codes promo fournisseurs).</div>
+
+
+  <div class="doc-header">
+    <span class="doc-tag">Document 11 / 11 · lot v2</span>
+    <h1>UI v2 — Tunnel, Code, Suivi agent, Compte, Billet</h1>
+    <div class="meta">
+      <span>11 écrans haute-fidélité — <strong>implémentés</strong></span>
+      <span>Source : app réelle <code>payencash/frontend/</code> + <code>DESIGN_SYSTEM.md</code></span>
+      <span>Cible : app web <code>payencash/frontend/</code> (Next.js)</span>
+    </div>
+  </div>
+
+  <section class="section" id="intro">
+    <h2>Introduction</h2>
+    <p>Ce document fait le pont entre l'itération de <strong>design haute-fidélité v2</strong> (validée pour 6 écrans) et le backend documenté (Doc 1 à 10) d'<strong>AJEK SASU</strong> (« PayEnCash » désigne l'application). Il fixe, pour chaque écran, son <strong>rôle</strong>, ses <strong>états</strong> et son <strong>mapping données</strong> (table / colonne / endpoint réels).</p>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Écrans voyage uniquement — ligne MODE à part</strong> Les 11 écrans ci-dessous couvrent la <strong>ligne voyage</strong> (vols Duffel / hôtels Hotelbeds). Les écrans de la <strong>ligne MODE</strong> (catalogue d'articles, panier, expédition, droit de rétractation) ne sont pas construits ici : ils sont spécifiés dans <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html"><code>Étape 4 · flux F11/F12</code></a> — s'y reporter, ne pas les inventer.</div>
+    </div>
+    <p>L'<strong>espace agent</strong> (5ᵉ surface, <code>courier/</code>) a ses propres maquettes dans <code>ui/agent/</code> — 13 écrans, même charte que l'app cliente, mobile-first strict. Deux d'entre eux portent le circuit du cash : <strong>scan du code-barres</strong> à la collecte, et <strong>dépôt au réseau Cash Services</strong> (carte de dépôt nominative) avec déclaration du reçu, dès que l'encours dépasse le <strong>seuil de 400 €</strong> (paramétrable). Une tournée y est explicitement présentée comme « encaisser <em>puis</em> déposer » : tant que les espèces ne sont pas déposées, l'agent salarié est retiré du dispatch.</p>
+    <p>La <strong>source de vérité visuelle est l'application réelle</strong> <code>payencash/frontend/</code> (composants React + <code>src/styles/theme.css</code>), complétée par <code>DESIGN_SYSTEM.md</code> (charte stricte, à la racine de la documentation). Les maquettes HTML de <code>ui/parcours/</code> et <code>ui/ecrans/</code> reprennent cette charte via le kit partagé <code>ui/assets/payencash-v2.css</code> : ils illustrent l'intention et les parcours, mais l'implémentation se lit dans l'app. <em>(Les anciens dossiers de handoff design ont été supprimés : leurs prompts de génération étaient caducs depuis que l'app existe, et leurs visuels étaient corrompus.)</em></p>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Cible = l'app web existante, pas une app mobile native</strong> Les écrans sont présentés dans un cadre téléphone (« PhoneFrame »), mais l'implémentation se fait dans l'app cliente <strong>web</strong> <code>payencash/frontend/</code> (Next.js, PWA mobile-first). Les noms de champs ci-dessous sont les <strong>noms réels du backend</strong> (modèle d'encaissement à domicile : le code est généré en interne — <code>payments.barcode_value</code> — et il n'y a plus de prestataire de paiement externe).</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">✅</span>
+      <div><strong>Refonte v2 (encaissement à domicile)</strong> Les écrans du tunnel (A1→A5) restent inchangés ; le tunnel de paiement est recâblé sur le modèle agent : <strong>code interne</strong> → attribution agent → <strong>suivi live</strong> (carte position + ETA) → collecte (code de sécurité + photo, côté espace agent) → <strong>notation</strong>. Composants partagés : DarkBanner, Countdown (fenêtre de collecte), Segmented, CodeStateView, OrderTimeline, BottomSheet, Splash, BudgetSearchForm, BudgetBar, FilterPill, FlightCard, StayCard, DelaySelector, BoardingPass, <strong>CourierLiveMap</strong> (ex-RelayMap), <strong>CourierTrackingView</strong>, <strong>RatingStars</strong>. L'<strong>espace agent</strong> est une surface distincte (voir §Écrans à concevoir). Voir « Décisions & écarts » pour les choix arbitrés.</div>
+    </div>
+  </section>
+
+  <section class="section" id="charte">
+    <h2>Conventions & charte</h2>
+    <p>La charte stricte est définie dans <code>DESIGN_SYSTEM.md</code>. Rappels structurants applicables à tous les écrans :</p>
+    <ul class="checklist">
+      <li><strong>Profondeur sans bordures</strong> : fond + ombre douce, jamais de <code>border</code> (sauf séparateurs internes <code>#F1F4F2</code> et pointillés du billet).</li>
+      <li><strong>Palette verrouillée</strong> : verts/encre/neutres. <strong>Pas de bleu</strong>, <strong>orange réservé à l'urgence</strong> (compte à rebours, « ferme bientôt »), <strong>rouge réservé à la suppression</strong>.</li>
+      <li><strong>Carte live en charte</strong> : markers custom (agent en mouvement <code>#10A06A</code>, domicile client <code>#0F2A24</code>, position live agent <code>#0C7F54</code>) — jamais le style SDK par défaut (voir Doc 5, « Carte live d'encaissement »).</li>
+      <li><strong>Typo</strong> : Hanken Grotesk (UI) + JetBrains Mono (codes, compte à rebours). Zéro emoji. Icônes Lucide.</li>
+      <li><strong>Compte à rebours</strong> : lit toujours la fin de la <strong>fenêtre de collecte</strong> (<code>orders.collection_deadline_at</code>), jamais un timer codé en dur.</li>
+    </ul>
+  </section>
+
+  <section class="section" id="navigation">
+    <h2>Navigation</h2>
+    <p>Barre d'onglets racine : <strong>Rechercher · Mes codes · Suivi · Compte</strong>. Transitions principales :</p>
+    <table>
+      <thead><tr><th>Depuis</th><th>Action</th><th>Vers</th></tr></thead>
+      <tbody>
+        <tr><td>Code</td><td>« Générer mon code / demander la collecte »</td><td>CodeDetail (suivi)</td></tr>
+        <tr><td>Code · CodeDetail · MesCodes · Compte</td><td>« Suivre mon agent »</td><td>Suivi agent</td></tr>
+        <tr><td>MesCodes</td><td>tap sur un code</td><td>CodeDetail</td></tr>
+        <tr><td>CodeDetail (payé)</td><td>« Voir mon billet »</td><td>Billet</td></tr>
+        <tr><td>Billet</td><td>fermer (X) / « Voir dans Mes codes »</td><td>MesCodes</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="ecran-tunnel-intro">
+    <h2>Tunnel de réservation (A1 → A5)</h2>
+    <p><strong>Principe « budget-first ».</strong> Le parcours part du <strong>budget</strong> — pas d'une destination ni de dates figées : l'utilisateur pose ce qu'il veut dépenser, l'app propose des voyages dedans. Cinq écrans mènent du budget à la création de la commande (<code>orders.status = DRAFT</code> en sortie de A5), avant le tunnel de paiement (Code → Billet).</p>
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div><strong>Contrats de navigation</strong> Vol : <code>/vols?order=…&origin=…&destination=…&date=…&trip_type=…&cabin_class=economy[&return_date=…]</code>. Séjour : <code>/sejour?order=…&destination=…&check_in=…&mode=stay_only</code>. La cible de retour du tunnel est <code>/budget</code> (même formulaire que l'accueil).</div>
+    </div>
+  </section>
+
+  <section class="section" id="ecran-accueil">
+    <h2>A1 — Accueil</h2>
+    <p><strong>Rôle.</strong> Entrée du tunnel. Saisie du <strong>budget</strong> (curseur + montant), de l'<strong>aéroport de départ</strong> et de la <strong>destination</strong> (ou « type de voyage » : vol aller-retour ou séjour seul), puis lancement de la recherche. CTA « Voir les voyages ».</p>
+    <h4>États</h4>
+    <ul class="checklist">
+      <li><strong>Formulaire</strong> : <code>BudgetSearchForm</code> partagé entre <code>/</code> (accueil) et <code>/budget</code> (retour du tunnel) — une seule source, pas de duplication.</li>
+      <li><strong>Reprise</strong> : si une recherche était en cours (<code>pec_budget_pending</code>), pré-remplissage à la réouverture.</li>
+      <li><strong>Splash</strong> : écran d'accueil animé au tout premier lancement (<code>pec_splash_seen</code> en localStorage), puis masqué.</li>
+    </ul>
+    <h4>Mapping données</h4>
+    <table>
+      <thead><tr><th>Élément UI</th><th>Donnée (table.colonne / endpoint)</th></tr></thead>
+      <tbody>
+        <tr><td>Budget (curseur + montant)</td><td>paramètre de recherche → borne max <code>total_price_cents</code></td></tr>
+        <tr><td>Aéroport de départ (pré-rempli)</td><td><code>users.preferred_origin_iata</code> (sinon saisie)</td></tr>
+        <tr><td>Destination / villes</td><td>recherche de vols (Duffel) — IATA + libellés villes</td></tr>
+        <tr><td>Type de voyage</td><td>aiguillage <code>trip_type</code> : vol A/R → A2, séjour seul → A4</td></tr>
+        <tr><td>« Voir les voyages »</td><td>navigation <code>/vols</code> ou <code>/sejour</code> (contrats ci-dessus)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="ecran-resultats">
+    <h2>A2 — Résultats vols</h2>
+    <p><strong>Rôle.</strong> Comparer les vols tenant dans le budget pour la destination choisie, et en sélectionner un. <strong>Mono-destination</strong> : la destination est fixée à l'étape A1.</p>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>« Partout » (multi-destinations) reporté</strong> Proposer plusieurs destinations pour un même budget est un épic recherche (agrégation multi-destinations Duffel + backend). Hors périmètre v2 : A2 reste mono-destination.</div>
+    </div>
+    <h4>États</h4>
+    <p><code>FlightCard</code> : ville en titre, tag « le moins cher de cette recherche » (menthe — re-libellé, C. conso L121-2 : jamais de superlatif absolu), trajets <strong>aller + retour visibles</strong> (deux <em>legs</em>, horaires de chaque sens), bandeau menthe. <code>BudgetBar</code> (budget restant) et <code>FilterPill</code> (filtres). États vide / chargement / erreur : voir §États transverses.</p>
+    <h4>Mapping données</h4>
+    <table>
+      <thead><tr><th>Élément UI</th><th>Donnée</th></tr></thead>
+      <tbody>
+        <tr><td>Ville / route</td><td><code>flight_offers.origin_iata</code> / <code>.destination_iata</code> (+ libellés)</td></tr>
+        <tr><td>Horaires aller</td><td><code>flight_offers.departure_at</code> / <code>.arrival_at</code> <em>(exposés en lot v2)</em></td></tr>
+        <tr><td>Horaires retour</td><td><code>flight_offers.return_departure_at</code> / <code>.return_arrival_at</code> <em>(lot v2)</em></td></tr>
+        <tr><td>Compagnie</td><td><code>flight_offers.carrier_name</code> <em>(lot v2)</em> + logo (<code>carrier_iata</code> → CDN, fallback)</td></tr>
+        <tr><td>Prix / tag meilleur prix</td><td><code>flight_offers.total_price_cents</code> (tri croissant)</td></tr>
+        <tr><td>Budget restant</td><td>budget A1 − <code>total_price_cents</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="ecran-retour">
+    <h2>A3 — Résultats retour</h2>
+    <p><strong>Rôle.</strong> Sélection du vol <strong>retour</strong> après choix de l'aller (parcours séquentiel aller → retour).</p>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Livré en fallback « A/R visible »</strong> La sélection séquentielle du retour suppose des offres combinées Duffel et une commande portant deux <code>flight_offers</code> — c'est un <strong>épic backend</strong>. En v2, l'aller-retour est <strong>entièrement visible dès A2</strong> (horaires retour + deux legs sur la <code>FlightCard</code>) : l'utilisateur choisit un A/R complet en une fois. A3 n'est donc pas un écran séparé en production ; cette section trace l'écart et l'épic à venir.</div>
+    </div>
+    <h4>Mapping données (cible)</h4>
+    <table>
+      <thead><tr><th>Élément UI</th><th>Donnée</th></tr></thead>
+      <tbody>
+        <tr><td>Liste vols retour</td><td><code>flight_offers</code> retour (slice 1) — <em>nécessite offres combinées Duffel</em></td></tr>
+        <tr><td>Horaires retour (affichés dès A2)</td><td><code>flight_offers.return_departure_at</code> / <code>.return_arrival_at</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="ecran-hebergement">
+    <h2>A4 — Hébergement</h2>
+    <p><strong>Rôle.</strong> Choisir un hébergement, soit en séjour seul (<code>mode=stay_only</code>), soit en complément d'un vol. CTA vers le récapitulatif.</p>
+    <h4>États</h4>
+    <p><code>StayCard</code> : visuel (placeholder dégradé en l'absence d'image), <strong>prix par nuit</strong>, bandeau menthe « total séjour », filtre « Dans mon budget ». <code>DelaySelector</code> restylé (marge de souplesse +0 / +1 / +2 €/pers). États vide / chargement (« Recherche des hébergements… ») / erreur : §États transverses.</p>
+    <h4>Mapping données</h4>
+    <table>
+      <thead><tr><th>Élément UI</th><th>Donnée</th></tr></thead>
+      <tbody>
+        <tr><td>Liste hébergements</td><td>recherche Hotelbeds (Doc 1)</td></tr>
+        <tr><td>Prix / nuit + total</td><td>tarif Hotelbeds × nb nuits (<code>check_in</code> → <code>check_out</code>)</td></tr>
+        <tr><td>Filtre « Dans mon budget »</td><td>total ≤ budget A1</td></tr>
+        <tr><td>Date d'arrivée</td><td>paramètre <code>check_in</code></td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Champs absents du DTO séjour</strong> Le <strong>score d'avis</strong> et la <strong>localisation</strong> de l'hôtel ne sont pas encore exposés ; la carte affiche un placeholder. À enrichir si nécessaire (mapping Hotelbeds).</div>
+    </div>
+  </section>
+
+  <section class="section" id="ecran-recap">
+    <h2>A5 — Récap</h2>
+    <p><strong>Rôle.</strong> Dernier écran avant la génération du code : récapitulatif vol + hébergement + voyageurs + total, choix de la marge de sécurité, puis « continuer » vers l'écran Code (<code>orders.status = DRAFT</code>).</p>
+    <h4>États</h4>
+    <ul class="checklist">
+      <li><strong>Marge de sécurité</strong> : <code>DelaySelector</code> (+0 / +1 / +2 €/pers). Prévisualisée par un <strong>miroir client</strong> du plancher backend (Doc 4) — le serveur peut majorer (override p95), il n'existe pas d'endpoint de preview.</li>
+      <li><strong>Voyageurs</strong> : récap des voyageurs ; l'édition se fait via <code>/voyageurs</code> (les bottom-sheets d'édition inline sont reportés).</li>
+    </ul>
+    <h4>Mapping données</h4>
+    <table>
+      <thead><tr><th>Élément UI</th><th>Donnée</th></tr></thead>
+      <tbody>
+        <tr><td>Récap vol</td><td><code>flight_offers</code> (route, horaires, compagnie)</td></tr>
+        <tr><td>Récap hébergement</td><td>séjour sélectionné (Hotelbeds)</td></tr>
+        <tr><td>Voyageurs</td><td><code>order_travelers</code> / <code>saved_travelers</code> ; nombre = <code>traveler_count</code></td></tr>
+        <tr><td>Marge de sécurité</td><td>plancher client (miroir) ; barème par durée et par voyageur (Doc 4)</td></tr>
+        <tr><td>Total à payer</td><td><code>orders.total_price_cents</code> = <code>total_ht</code> + <code>vat_amount_cents</code>, où <code>total_ht</code> = <code>base_price_cents</code> + <code>margin_fixed_cents</code> + <code>margin_safety_cents</code> + <code>service_fee_cents</code> (Doc 4). <strong>C'est le montant TTC que l'agent collecte</strong> : omettre les frais de service (D13) ou la TVA (D19) afficherait au client moins que ce qu'on lui réclamera à la porte</td></tr>
+        <tr><td>« Continuer »</td><td>création <code>orders</code> (<code>DRAFT</code>) → écran Code (B1)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="ecran-code">
+    <h2>B1 — Code</h2>
+    <p><strong>Rôle.</strong> Après validation de la commande (<code>DRAFT</code>), générer le <strong>code interne</strong> et déclencher le <strong>dispatch d'un agent</strong> (<code>DRAFT → AWAITING_COURIER</code>).</p>
+    <h4>États</h4>
+    <ul class="checklist">
+      <li><strong>Avant génération</strong> : récap montant TTC « À payer à l'agent » (dont TVA), adresse de collecte, bloc réassurance « ton code n'est créé qu'à cet instant », CTA « Générer mon code &amp; demander la collecte » (sous-texte « Un agent vient encaisser à domicile »).</li>
+      <li><strong>Après génération</strong> : code interne + code de sécurité (affiché une seule fois) + compte à rebours de la fenêtre de collecte + suivi de commande (attribution → en route → collecte). <em>CodeDetail est la source privilégiée du suivi</em>.</li>
+    </ul>
+    <h4>Mapping données</h4>
+    <table>
+      <thead><tr><th>Élément UI</th><th>Donnée (table.colonne / endpoint)</th></tr></thead>
+      <tbody>
+        <tr><td>Référence (ex. PEC-2026-4821)</td><td><code>orders.order_ref</code></td></tr>
+        <tr><td>Route (Marseille → Alicante)</td><td><code>flight_offers.origin_iata</code> / <code>.destination_iata</code> (+ libellés villes)</td></tr>
+        <tr><td>Montant « À payer à l'agent » (TTC, dont TVA)</td><td><code>orders.total_price_cents</code> + <code>vat_amount_cents</code> (Doc 4)</td></tr>
+        <tr><td>Adresse de collecte</td><td><code>orders.delivery_address_enc</code> / <code>delivery_lat</code> / <code>delivery_lng</code> (Doc 2)</td></tr>
+        <tr><td>CTA « Générer mon code &amp; demander la collecte »</td><td><code>POST /orders/{id}/payment-code</code> puis <code>POST /orders/{id}/deliveries</code> (Doc 3) → <code>payments</code> (barcode + code de sécurité haché), dispatch agent ; <code>orders.status = AWAITING_COURIER</code></td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Étape KYC et plafond espèces, avant la génération du code</strong> Deux garde-fous précèdent l'attribution d'un agent (Doc 10) : une <strong>vérification d'identité KYC</strong> — simple dès la 1re commande, renforcée (prestataire PVID) dès 3 achats ou 1 000 € cumulés sur 7 jours glissants — et le <strong>plafond de 1 000 € par transaction</strong> en espèces, contrôlé côté serveur et figé sur la commande (anti-fractionnement). Si la vérification est requise, l'écran insère une étape KYC ; si le total dépasse le plafond, la génération du code est refusée côté serveur.</div>
+    </div>
+  </section>
+
+  <section class="section" id="ecran-codedetail">
+    <h2>B2 — CodeDetail (suivi)</h2>
+    <p><strong>Rôle.</strong> Écran unique réutilisé (a) juste après la génération du code, (b) au tap sur un code dans « Mes codes ». Il gère tous les états d'une commande et intègre le <strong>suivi live de l'agent</strong>.</p>
+    <div class="callout danger">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Retirer le sélecteur d'aperçu d'états</strong> Le prototype contient un sélecteur (sous le téléphone) qui bascule les états — c'est un <strong>outil de revue</strong>, à ne pas porter en production. L'état réel dérive de <code>orders.status</code>.</div>
+    </div>
+    <h4>États (dérivés de <code>orders.status</code>)</h4>
+    <table>
+      <thead><tr><th>État</th><th>Statut</th><th>Spécificités UI</th></tr></thead>
+      <tbody>
+        <tr><td>En attente d'agent</td><td><code>AWAITING_COURIER</code></td><td>pill ambre, « recherche d'un agent », compte à rebours de la fenêtre de collecte, code interne + code de sécurité</td></tr>
+        <tr><td>Agent en route</td><td><code>COURIER_ASSIGNED</code> / <code>OUT_FOR_COLLECTION</code></td><td>carte live (position + ETA), profil agent (prénom, note), rappel du code de sécurité à communiquer</td></tr>
+        <tr><td>Collecté</td><td><code>CASH_COLLECTED</code> / <code>PAID</code></td><td>« cash encaissé, réservation en cours », suivi Duffel/Hotelbeds</td></tr>
+        <tr><td>Payé / confirmé</td><td><code>CONFIRMED</code></td><td>pill vert, « billet émis et envoyé par SMS », action « Voir mon billet » + invitation à noter l'agent</td></tr>
+        <tr><td>Expiré</td><td><code>EXPIRED</code></td><td>code grisé + tampon EXPIRÉ, action « Générer un nouveau code »</td></tr>
+        <tr><td>Annulé / échec</td><td><code>CANCELLED</code> / <code>COLLECTION_FAILED</code> / <code>FAILED</code></td><td>code grisé + tampon, action « Réserver à nouveau » ; si remboursement, suivi de la tournée de retour cash</td></tr>
+      </tbody>
+    </table>
+    <h4>Mapping données</h4>
+    <table>
+      <thead><tr><th>Élément UI</th><th>Donnée</th></tr></thead>
+      <tbody>
+        <tr><td>Pill statut</td><td><code>orders.status</code></td></tr>
+        <tr><td>Code interne (code-barres)</td><td><code>payments.barcode_value</code> (généré en interne)</td></tr>
+        <tr><td>Code de sécurité</td><td>affiché une seule fois à la génération — jamais réaffiché (<code>payments.security_code_hash</code>)</td></tr>
+        <tr><td>Montant TTC (dont TVA)</td><td><code>orders.total_price_cents</code> + <code>vat_amount_cents</code></td></tr>
+        <tr><td>Compte à rebours « Valable encore »</td><td><code>orders.collection_deadline_at − now()</code></td></tr>
+        <tr><td>Carte live + ETA agent</td><td><code>deliveries</code> + <code>delivery_tracking_events</code> (WS/SSE, Doc 3)</td></tr>
+        <tr><td>Suivi (attribution → en route → collecté → confirmé)</td><td><code>orders.status</code> + <code>deliveries.status</code> + <code>supplier_bookings</code></td></tr>
+        <tr><td>« Voir mon billet »</td><td><code>supplier_bookings</code> (PNR Duffel / voucher Hotelbeds)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="ecran-suivi">
+    <h2>B3 — Suivi agent</h2>
+    <p><strong>Rôle.</strong> Suivre en temps réel l'agent qui vient collecter le cash à domicile. Accessible en onglet (« Suivi ») et depuis « Suivre mon agent ». C'est l'écran de suivi de la collecte à domicile du modèle d'encaissement à domicile.</p>
+    <h4>États</h4>
+    <p>Carte live plein écran (position de l'agent + trajet vers le domicile) + bottom sheet : profil agent (prénom, note, véhicule), ETA, statut de la tournée (attribué · en route · arrivé · collecté). Si aucun agent n'est encore attribué : état « recherche d'un agent ». États vide / chargement / erreur : voir §États transverses.</p>
+    <h4>Mapping données</h4>
+    <table>
+      <thead><tr><th>Élément UI</th><th>Donnée</th></tr></thead>
+      <tbody>
+        <tr><td>Carte + position agent (charte)</td><td><code>delivery_tracking_events (courier_lat, courier_lng)</code> → SDK carto, markers custom (WS/SSE)</td></tr>
+        <tr><td>Domicile du client (destination)</td><td><code>orders.delivery_lat</code> / <code>.delivery_lng</code></td></tr>
+        <tr><td>ETA</td><td><code>delivery_tracking_events.eta_minutes</code></td></tr>
+        <tr><td>Profil agent (prénom, note, véhicule)</td><td><code>couriers</code> (via <code>deliveries.courier_id</code>) — <code>rating_avg</code>, <code>vehicle</code></td></tr>
+        <tr><td>Statut de la tournée</td><td><code>deliveries.status</code></td></tr>
+        <tr><td>« Appeler l'agent »</td><td>numéro relayé / anonymisé de l'agent</td></tr>
+        <tr><td>Rappel du code de sécurité à communiquer</td><td>affiché côté app (le client le lit à l'agent) — non transmis au serveur pour affichage</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>RGPD — géolocalisation live</strong> La position de l'agent et l'ETA sont poussés en temps réel ; la position du client (domicile) est une donnée sensible. Rétention bornée, accès restreint (Doc 5, D10). Aucune trace de position n'est conservée au-delà de la clôture de la tournée.</div>
+    </div>
+  </section>
+
+  <section class="section" id="ecran-notation">
+    <h2>B3bis — Notation de l'agent</h2>
+    <p><strong>Rôle.</strong> Après <code>CONFIRMED</code>, permettre au client de noter la tournée (1-5★). Écran / bottom-sheet léger, déclenché par le job <code>request-rating</code> (Doc 5) et accessible depuis CodeDetail et Mes codes.</p>
+    <h4>États</h4>
+    <p><code>RatingStars</code> (sélection 1 à 5 étoiles) + champ commentaire optionnel + CTA « Envoyer ». Une seule notation par tournée (contrainte <code>(delivery_id, user_id)</code>, Doc 2). Après envoi : état « merci », note figée non modifiable.</p>
+    <h4>Mapping données</h4>
+    <table>
+      <thead><tr><th>Élément UI</th><th>Donnée</th></tr></thead>
+      <tbody>
+        <tr><td>Étoiles (1-5)</td><td><code>POST /orders/{id}/courier-rating</code> → <code>courier_ratings.stars</code> (Doc 3)</td></tr>
+        <tr><td>Commentaire (optionnel)</td><td><code>courier_ratings.comment</code></td></tr>
+        <tr><td>Agent noté</td><td><code>deliveries.courier_id</code> — alimente <code>couriers.rating_avg</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="ecran-mescodes">
+    <h2>B4 — Mes codes</h2>
+    <p><strong>Rôle.</strong> Retrouver ses codes et billets. Onglet racine.</p>
+    <h4>États</h4>
+    <p>Segmented <strong>Tous / En cours / Terminés</strong> ; section « À régler » (code actif) + section « Historique » (payé/expiré/annulé). État vide à concevoir sobrement.</p>
+    <div class="callout info">
+      <span class="callout-icon">✅</span>
+      <div><strong>Aligné (v2)</strong> Les onglets ont été refondus sur <strong>« Tous / En cours / Terminés »</strong> (<code>Segmented</code> v2), avec les sections « À régler » (code actif) et « Historique » (payé / expiré / annulé). L'ancien découpage (« En attente / Billets / Alertes / Historique ») est remplacé.</div>
+    </div>
+    <h4>Mapping données</h4>
+    <table>
+      <thead><tr><th>Élément UI</th><th>Donnée</th></tr></thead>
+      <tbody>
+        <tr><td>Liste des codes</td><td><code>orders WHERE user_id = current_user</code> (Doc 10)</td></tr>
+        <tr><td>Carte active (route, date, voyageurs)</td><td><code>orders</code> + <code>flight_offers</code> + <code>count(order_travelers)</code></td></tr>
+        <tr><td>Montant + compte à rebours</td><td><code>orders.total_price_cents</code> + <code>payments.expires_at</code></td></tr>
+        <tr><td>Historique (payé/expiré/annulé)</td><td><code>orders.status</code> + <code>flight_offers</code></td></tr>
+        <tr><td>Filtre Tous / En cours / Terminés</td><td>requête filtrée sur <code>orders.status</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="ecran-compte">
+    <h2>B5 — Compte</h2>
+    <p><strong>Rôle.</strong> Profil + réglages. Pas d'authentification par mot de passe : l'identité est le numéro vérifié par OTP (Doc 10).</p>
+    <div class="callout info">
+      <span class="callout-icon">✅</span>
+      <div><strong>Livré (v2)</strong> L'écran profil/compte a été créé dans <code>payencash/frontend/</code> (groupe de routes <code>(compte)</code>), dans la charte v2.</div>
+    </div>
+    <h4>Mapping données</h4>
+    <table>
+      <thead><tr><th>Élément UI</th><th>Donnée</th></tr></thead>
+      <tbody>
+        <tr><td>Nom + initiales (avatar)</td><td><code>users.first_name</code> / <code>.last_name</code> (chiffrés)</td></tr>
+        <tr><td>Téléphone masqué</td><td><code>users.phone_number</code> (E.164)</td></tr>
+        <tr><td>Chip « Vérifié »</td><td><code>users.phone_verified_at IS NOT NULL</code></td></tr>
+        <tr><td>Mes voyageurs (« 3 enregistrés »)</td><td><code>saved_travelers</code> <em>(table ajoutée en lot v2)</em></td></tr>
+        <tr><td>Aéroport de départ</td><td><code>users.preferred_origin_iata</code></td></tr>
+        <tr><td>Notifications</td><td><code>users.push_enabled</code> / <code>.push_token</code></td></tr>
+        <tr><td>Se déconnecter</td><td>invalider <code>user_sessions.revoked_at</code></td></tr>
+        <tr><td>Supprimer mon compte <em>(rouge)</em></td><td>suppression RGPD <code>users</code> (+ cascade)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="ecran-billet">
+    <h2>B6 — Billet</h2>
+    <p><strong>Rôle.</strong> État final <code>CONFIRMED</code> après encaissement : le billet a été émis et envoyé par SMS. Affiche une carte d'embarquement.</p>
+    <h4>Mapping données</h4>
+    <table>
+      <thead><tr><th>Élément UI</th><th>Donnée</th></tr></thead>
+      <tbody>
+        <tr><td>Compagnie / n° de vol</td><td><code>flight_offers</code> (carrier, flight number Duffel) ; <strong>logo</strong> via <code>carrier_iata → logo_url</code> <em>(mapping ajouté en lot v2)</em> + fallback monochrome</td></tr>
+        <tr><td>Pill CONFIRMÉ</td><td><code>orders.status = CONFIRMED</code></td></tr>
+        <tr><td>Route / horaires / date</td><td><code>flight_offers</code> (slices / segments Duffel)</td></tr>
+        <tr><td>Voyageur</td><td><code>order_travelers.given_name_enc</code> / <code>.family_name_enc</code></td></tr>
+        <tr><td>Référence (PNR)</td><td><code>supplier_bookings.provider_booking_ref</code></td></tr>
+        <tr><td>Code-barres / QR d'embarquement</td><td>e-billet Duffel (PNR)</td></tr>
+        <tr><td>« Payé en espèces · 59 € »</td><td><code>payments.collected_amount_cents</code> (<code>status = collected</code>)</td></tr>
+        <tr><td>Reçu numéroté (téléchargeable)</td><td>Reçu à <strong>numérotation séquentielle continue</strong> émis à <code>CONFIRMED</code> (logiciel de caisse, art. 286-I-3° bis CGI) — distinct du récapitulatif proforma affiché avant paiement ; le code interne n'est ni l'un ni l'autre</td></tr>
+        <tr><td>« Billet envoyé par SMS au … »</td><td>prestataire SMS (Doc 10) + <code>users.phone_number</code></td></tr>
+        <tr><td>CTA « Voir dans Mes codes »</td><td>navigation → MesCodes</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="etats-transverses">
+    <h2>États transverses (non maquettés)</h2>
+    <p>Les états <strong>vide / chargement / erreur</strong> ne sont pas détaillés écran par écran. Les implémenter en appliquant le design system, de façon sobre :</p>
+    <ul class="checklist">
+      <li><strong>Chargement</strong> : skeletons neutres (fond <code>#F4F7F5</code>, pas de spinner tape-à-l'œil).</li>
+      <li><strong>Vide</strong> : message court + icône Lucide encre + CTA contextuel (ex. « Lance une recherche »).</li>
+      <li><strong>Erreur</strong> : encart sobre, action « Réessayer » ; pas de rouge (réservé à la suppression) sauf erreur destructive.</li>
+    </ul>
+  </section>
+
+  <section class="section" id="ecran-incidents">
+    <h2>B7 — Suivi : états d'échec et de remboursement</h2>
+    <p>Maquette : <code>ui/ecrans/11-suivi-etats-echec.html</code>. <strong>Ce n'est pas une seconde UI d'encaissement</strong> — c'est la route <code>/suivi/[orderId]</code> (B2) dans ses états non nominaux, servie par le même composant <code>CourierTrackingView</code> piloté par <code>orders.status</code>. Jusqu'ici l'écran ne rendait que les six statuts du chemin heureux : un client dont la collecte échouait, dont la fenêtre expirait, ou dont l'argent revenait par agent n'avait aucun écran.</p>
+
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>« Où est mon argent » est la seule question d'un état d'échec</strong> Le bandeau de montant est donc <strong>constant d'un état à l'autre</strong>, à la même place : seule sa nature change. Neutre quand rien n'a été collecté, encre quand la somme est chez nous, menthe quand elle repart vers le client — le vert restant ce qu'il est dans toute l'app, des espèces. Le fil d'avancement garde lui aussi les mêmes étapes ; seul l'endroit où il casse change.</div>
+    </div>
+
+    <table>
+      <thead><tr><th><code>orders.status</code></th><th>Pastille</th><th>Bandeau montant</th><th>Ce que le client peut faire</th></tr></thead>
+      <tbody>
+        <tr><td><code>COLLECTION_FAILED</code></td><td><code>pec-pill--wait</code> « Collecte non aboutie »</td><td><code>pec-neutral-banner</code> — <strong>0,00 €</strong>, « aucune somme collectée »</td><td>Relancer un agent, ou annuler. <strong>Seul état avec compte à rebours</strong> (<code>pec-urgency</code>) : la fenêtre court encore et il peut agir</td></tr>
+        <tr><td><code>EXPIRED</code></td><td><code>pec-pill--off</code> « Expirée »</td><td><code>pec-neutral-banner</code> — <strong>0,00 €</strong></td><td>Refaire sa réservation. Le code interne porte le tampon <code>pec-stamp--off</code> « Expiré » : il ne vaut plus rien</td></tr>
+        <tr><td><code>FAILED</code></td><td><code>pec-pill--wait</code> « En cours de résolution »</td><td><code>pec-dark-banner</code> — montant <strong>collecté, conservé par PayEnCash</strong></td><td>Rien, et l'écran doit le dire : l'attente est de notre côté. <strong>Pas de compte à rebours</strong> — rien à presser chez lui. Le texte engage le remboursement intégral si le retry échoue (D2/D4)</td></tr>
+        <tr><td><code>CANCELLED</code></td><td><code>pec-pill--live</code> « Retour en cours »</td><td><code>pec-mint-banner</code> — montant <strong>en route vers le client</strong></td><td>Suivre l'agent sur la carte. La tournée de retour est un encaissement comme une autre (<code>deliveries.is_return = true</code>) : même carte, même ETA</td></tr>
+        <tr><td><code>REFUNDED</code></td><td><code>pec-pill--done</code> « Remboursée »</td><td><code>pec-mint-banner</code> — montant <strong>remis en main propre</strong>, horodaté</td><td>Refaire une réservation. État final</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Ni rouge, ni croix</strong> La charte réserve le rouge à la suppression (« Supprimer mon compte »). Un échec de collecte n'est pas une destruction, et un écran rouge ferait paniquer sur un incident dont on garantit l'issue. L'étape non aboutie suit la règle du design system — <strong>pastille grise + tiret</strong>, jamais une croix rouge. L'ambre reste réservé au seul cas où une horloge tourne <em>et</em> où le client peut encore agir.</div>
+    </div>
+
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>DÉCISION REQUISE : comment prouve-t-on la remise d'une tournée de retour ?</strong> La collecte a son appareil de preuve — code de sécurité vérifié + photo (D10). Le <strong>retour n'en a aucun</strong> : rien, dans le Doc 1, le Doc 3 ni le Doc 7, ne décrit comment on établit que l'agent a effectivement remis les espèces au client. Point à trancher (voir <code>NOUVELLES-FONCTIONNALITES-2026-08.md</code>). La preuve doit d'ailleurs aller dans l'autre sens : c'est le client qui reçoit, donc c'est lui qui devrait attester. Tant que ce point n'est pas tranché, la maquette n'affiche aucun code de sécurité en état <code>CANCELLED</code> — plutôt que d'inventer une mécanique qui contredirait la décision réelle.</div>
+    </div>
+  </section>
+
+  <section class="section" id="a-concevoir">
+    <h2>Écrans encore à concevoir (tickets de design séparés)</h2>
+    <p>Hors périmètre du lot v2 — à concevoir avant implémentation, ne pas inventer l'UI :</p>
+    <ul class="checklist">
+      <li><strong>Espace agent salarié (surface distincte)</strong> — candidature puis <strong>recrutement / embauche RH</strong> côté manager (Doc 9), prise de poste (check-list), liste des tournées (<strong>affectation automatique, sans refus</strong>), navigation, position live, <strong>validation d'encaissement (code de sécurité + photo)</strong>, dépôt Cash Services, tournées de retour cash. Voir Doc 3 / Doc 9 et <code>NOUVELLES-FONCTIONNALITES-2026-08.md</code>.</li>
+                  <li><strong>Mes voyageurs</strong> — détail du carnet de voyageurs réutilisables (<code>saved_travelers</code>).</li>
+      <li><strong>OTP SMS</strong> — inscription / connexion (Doc 10).</li>
+      <li><strong>Alertes de prix</strong> — création / gestion (Doc 10).</li>
+    </ul>
+  </section>
+
+  <section class="section" id="decisions">
+    <h2>Décisions & écarts (implémentation v2)</h2>
+    <p>Choix arbitrés pendant la refonte — à <strong>re-signaler avant d'y revenir</strong> (ils encadrent ce qui est livré vs reporté).</p>
+    <h4>Décisions produit arbitrées</h4>
+    <ul class="checklist">
+      <li><strong>A2 mono-destination</strong> — « Partout » (un budget → plusieurs destinations) = épic recherche, reporté.</li>
+      <li><strong>A3 fallback « A/R visible »</strong> — aller-retour entièrement visible dès A2 ; sélection séquentielle du retour = épic backend (offres combinées Duffel + commande à un seul <code>flight_offer</code>).</li>
+      <li><strong><code>/budget</code> = cible de retour du tunnel</strong> — formulaire partagé avec l'accueil (<code>BudgetSearchForm</code>), donc conservé (non supprimé).</li>
+      <li><strong>Marge de sécurité = miroir client</strong> — plancher prévisualisé côté front ; un override serveur (p95) peut majorer le total. Pas d'endpoint de preview.</li>
+      <li><strong>Logos compagnies = helper front</strong> — <code>carrierLogoUrl</code> (CDN) + fallback monochrome, sans changement backend.</li>
+    </ul>
+    <h4>Éléments reportés / à concevoir</h4>
+    <ul class="checklist">
+      <li><strong>Édition voyageurs inline</strong> (bottom-sheets) dans A5 Récap — édition via <code>/voyageurs</code> pour l'instant.</li>
+      <li><strong>Précision de l'ETA agent</strong> — ETA basée sur la distance au départ ; intégration d'un moteur d'itinéraire (trafic temps réel) reportée.</li>
+      <li><strong>Cadence de la carte live</strong> — fréquence des heartbeats de position à arbitrer (batterie agent vs fluidité côté client).</li>
+      <li><strong>Tuiles MapLibre en prod</strong> — actuellement CARTO Positron (libre) ; clé / quota fournisseur à arbitrer.</li>
+      <li><strong>Nom & n° de vol</strong> absents d'<code>OrderRecap</code> / <code>OrderDetail</code> (IATA affiché) ; <strong>score d'avis & localisation hôtel</strong> absents du DTO séjour.</li>
+    </ul>
+  </section>
+
+  <section class="section" id="champs-v2">
+    <h2>Champs introduits (lot v2)</h2>
+    <p>Deux niveaux d'ajouts ont été nécessaires pour brancher ces écrans (dépôt <code>payencash/</code>) : des <strong>ajouts au schéma</strong> et des <strong>champs exposés côté API sans migration</strong>. Reportés au Doc 2 et au Glossaire.</p>
+    <h4>Ajouts au schéma</h4>
+    <table>
+      <thead><tr><th>Champ / table</th><th>Usage UI</th><th>Écran</th></tr></thead>
+      <tbody>
+        <tr><td><code>couriers</code>, <code>deliveries</code>, <code>delivery_tracking_events</code>, <code>courier_ratings</code></td><td>suivi live, profil agent, notation</td><td>Suivi agent, Notation</td></tr>
+        <tr><td><code>saved_travelers</code> (table)</td><td>« Mes voyageurs » réutilisables (pré-remplissage)</td><td>Compte</td></tr>
+        <tr><td><code>carrier_iata → logo_url</code> (mapping/CDN)</td><td>logos compagnies aériennes + fallback</td><td>Billet (et listes vols)</td></tr>
+      </tbody>
+    </table>
+    <h4>Champs exposés côté API (projection / DTO — sans migration)</h4>
+    <p>Surfacés depuis des colonnes ou relations existantes pour brancher l'UI, sans changement de schéma :</p>
+    <table>
+      <thead><tr><th>Champ</th><th>Usage UI</th><th>Écran</th></tr></thead>
+      <tbody>
+        <tr><td><code>flight_offers.origin_iata</code></td><td>route / ville de départ</td><td>A2, B1, B4</td></tr>
+        <tr><td><code>orders.traveler_count</code></td><td>nombre de voyageurs</td><td>A5, B4</td></tr>
+        <tr><td><code>orders.status_at</code></td><td>date de l'événement de statut (payé / expiré…)</td><td>B2, B4</td></tr>
+        <tr><td><code>flight_offers.departure_at</code> / <code>.arrival_at</code></td><td>horaires du vol aller</td><td>A2, B6</td></tr>
+        <tr><td><code>flight_offers.return_departure_at</code> / <code>.return_arrival_at</code></td><td>horaires du vol retour</td><td>A2, A3</td></tr>
+        <tr><td><code>flight_offers.carrier_name</code></td><td>nom de la compagnie</td><td>A2, B6</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div><strong>À implémenter côté backend (modèle v2)</strong> La fenêtre de collecte (<code>orders.collection_deadline_at</code>), le job d'expiration <code>AWAITING_COURIER → EXPIRED</code>, le dispatch agent, le suivi temps réel (WS/SSE), la validation de collecte (code + photo) et son idempotence sur <code>deliveries.id</code> remplacent l'ancien appareil de paiement externe (voir Doc 1 / Doc 3).</div>
+    </div>
+  </section>
+
+</main>
+
+</body>
+</html>

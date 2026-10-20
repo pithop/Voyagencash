@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Moyens de paiement</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<!-- MOYENS DE PAIEMENT (fondatrice 25/08 soir) — la page de référence sur « avec quoi tu paies ».
+     (18/09, soir — décisions fondatrice) DEUX MOYENS, PLUS AUCUN AGENT, PLUS AUCUN RENDU DE MONNAIE.
+       · « supprime l'agent qui se déplace, elle perd toute sa logique » — le canal où des espèces changeaient
+         de main dans la rue est abandonné (risque CNAPS relevé le 17/09). Sont partis avec lui : la section
+         « ce que l'agent accepte » (pièces en vrac, billets de 5 à 500 €), le comptage devant le client, le
+         code de sécurité à 4 chiffres, les frais de déplacement ;
+       · « enlève toute mention de rendu de monnaie » — il n'existait QUE parce qu'un agent recevait des billets
+         et devait rendre l'écart. Un Bon d’achat PayEnCash est émis au montant exact demandé : il n'y a plus
+         rien à rendre. Sont partis : payencash-rendu.js (plus aucune balise script
+         ici, le fichier est supprimé du dépôt — le charger serait un 404), PEC_RENDU, ref.renduMonnaie,
+         la règle des billets de 200/500 €, le RIB de rendu ;
+       · LE COMPLÉMENT PAR CARTE N'EXISTE PLUS, et avec lui l'article L112-6 CMF cité pour le paiement d'une
+         dette en espèces : plus personne ne règle une dette en espèces ICI.
+     PUIS LE PIVOT DE POSITIONNEMENT DU MÊME SOIR : « on conserve que la logique paiement sans CB, un bon d’achat suffit » et « toute la logique liée payer en espèces, elle saute ». On ne dit donc PLUS
+     comment la cliente règle son bon ou son ticket au comptoir — elle paie comme elle veut, ça ne nous regarde
+     pas. LA PHRASE MÈRE DE CETTE PAGE : « payer avec un bon d’achat ».
+     LES SEULS PLAFONDS QUI VALENT sont ceux du Bon (bonsRef : plafondBon par bon, plafondClientJour par client
+     et par jour, plafondClientMois sur fenetrePlafondJours glissants — LCB-FT).
+     (20/09) Le ticket d'un réseau tiers et son plafond anonyme sont partis : il n'y a plus qu'un titre.
+     Le plafond sur fenêtre glissante N'EST PAS UN MUR :
+     au-delà, `bonValider` rend `verificationRequise` et le motif invite à vérifier son identité.
+     Zéro dur : libellés, délais, plafonds, validité, mentions, articles de loi et liens viennent de PEC_DATA
+     (MOYENS_PAIEMENT, moyensPaiement(), bonsRef() et son `fondement`). Les cartes des
+     moyens portent data-moyen : celles qui ne sont pas proposées dans le pays du client (iDEAL en France) sont
+     retirées par le script — une page ne décide pas toute seule de ce qu'on accepte. -->
+<style>
+  .h1{font-size:26px;font-weight:800;line-height:1.15;letter-spacing:-0.03em;color:var(--color-ink);margin:14px 0 7px}
+  .h1 em{font-style:normal;color:var(--color-primary)}
+  .lead{font-size:14px;font-weight:500;line-height:1.5;color:var(--color-muted);margin:0}
+  .sec{margin:22px 16px 0}
+  .card{border-radius:20px;background:var(--color-card);box-shadow:var(--shadow-card);overflow:hidden}
+  .cardp{padding:14px 15px}
+  .lbl{font-size:9.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--color-muted)}
+  .tt{font-size:15px;font-weight:800;letter-spacing:-0.01em;color:var(--color-ink);line-height:1.25}
+  .tx{font-size:12px;line-height:1.55;color:var(--color-muted);margin-top:4px}
+  .ic{flex:none;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:12px;background:var(--color-mint);color:var(--color-primary-dark)}
+  .row{display:flex;align-items:flex-start;gap:11px}
+  .no{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.12)}
+  .no:last-child{border-bottom:0}
+  .no .x{flex:none;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:999px;background:rgba(255,255,255,.12);color:#fff;font-size:13px;font-weight:800}
+  .rule{display:flex;align-items:flex-start;gap:11px;padding:12px 0;border-bottom:1px solid var(--color-sep)}
+  .rule:last-child{border-bottom:0}
+  .q{border-bottom:1px solid var(--color-sep)}
+  .q:last-child{border-bottom:0}
+  .q summary{list-style:none;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;text-align:left;font-size:12.5px;font-weight:700;color:var(--color-ink)}
+  .q summary::-webkit-details-marker{display:none}
+  .q .chev{transition:transform .18s ease;color:var(--color-muted)}
+  .q[open] .chev{transform:rotate(180deg)}
+  .q p{font-size:11.5px;line-height:1.6;color:var(--color-muted);padding:0 0 12px}
+  .tag{display:inline-block;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:10px;font-weight:800;padding:3px 9px}
+  .lien{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--color-primary-dark);text-decoration:none}
+  /* LES ÉTAPES d'un moyen : le parcours concret, numéroté — c'est ce qui distingue « sa logique » d'une promesse. */
+  .etapes{margin:10px 0 0;padding:0;list-style:none;counter-reset:e}
+  .etapes li{position:relative;padding-left:27px;margin-top:7px;font-size:12px;line-height:1.5;color:var(--color-muted);counter-increment:e}
+  .etapes li b{color:var(--color-ink)}
+  .etapes li::before{content:counter(e);position:absolute;left:0;top:0;display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:10.5px;font-weight:800}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;background:var(--color-surface)">
+
+    <!-- ═════ HÉRO ═════ -->
+    <div style="padding:18px 16px 0">
+      <a href="01-accueil.html" onclick="if(history.length>1){history.back();return false}" class="tap" aria-label="Retour" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-chevron-left"/></svg>
+      </a>
+      <h1 class="h1">Tu paies avec un bon d’achat.<br><em>À toi de choisir où l’acheter.</em></h1>
+      <p class="lead" id="mp-lead">Voici comment marche chaque moyen — et tout ce qu'on ne te demandera jamais.</p>
+      <!-- Les tuiles sont DÉRIVÉES des moyens proposés dans ton pays : jamais une liste écrite ici. -->
+      <div id="mp-tuiles" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:7px;margin-top:14px"></div>
+    </div>
+
+    <!-- ═════ 1 · LES DEUX MOYENS ═════ -->
+    <div class="sec">
+      <p class="pec-section-label" style="margin:0 0 9px">1 · Tes moyens de paiement</p>
+
+      <!-- LE BON D’ACHAT — premier moyen : un bon d’achat prépayé acheté au comptoir d'un commerçant partenaire.
+           Aide, étapes, plafonds, validité et mentions viennent du référentiel (MOYENS_PAIEMENT.bon, bonsRef). -->
+      <div class="card" data-moyen="bon">
+        <div class="cardp">
+          <div class="row">
+            <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-ticket"/></svg></span>
+            <div style="min-width:0">
+              <div class="tt" data-moyen-lbl>Bon d’achat PayEnCash</div>
+              <span class="tag" style="margin-top:5px">acheté au comptoir · en une ou plusieurs fois</span>
+              <p class="tx" data-moyen-aide>—</p>
+            </div>
+          </div>
+          <div style="margin-top:12px;border-radius:14px;background:var(--color-bg);padding:11px 12px">
+            <div class="lbl">Comment ça se passe</div>
+            <ol class="etapes" id="mp-bon-etapes"></ol>
+          </div>
+          <p class="tx" style="margin-top:9px" id="mp-bon-plafond">—</p>
+          <ul id="mp-bon-mentions" class="tx" style="margin:8px 0 0;padding-left:16px"></ul>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:9px">
+            <a href="25-ou-acheter-un-bon.html" class="tap lien">Où acheter un bon d’achat près de chez toi — carte et distances <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px"><use href="#i-chevron-right"/></svg></a>
+            <a href="18-informations-legales.html#bon" class="tap lien pec-tap-confort">Les conditions du bon d’achat <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px"><use href="#i-chevron-right"/></svg></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:10px">
+        <div class="cardp">
+          <div class="row">
+            <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-check"/></svg></span>
+            <div style="min-width:0">
+              <div class="tt" style="font-size:13px">Le même prix, quel que soit ton moyen</div>
+              <!-- (18/09, soir) « Seul le déplacement d'un agent ajoute ses frais » est tombé avec l'agent :
+                   il n'y a plus un centime au-dessus du prix affiché, par aucun chemin. -->
+              <p class="tx">Aucun des moyens ne coûte plus cher que l'autre : <b style="color:var(--color-ink)">le prix affiché est le prix payé</b>. Pas de frais de dossier, pas de supplément, pas de commission.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═════ 2 · CE QUE DIT LA LOI ═════ -->
+    <div class="sec">
+      <p class="pec-section-label" style="margin:0 0 9px">2 · Ce que dit la loi</p>
+      <div class="card">
+        <div class="cardp">
+          <div class="row">
+            <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-shield"/></svg></span>
+            <div style="min-width:0">
+              <div class="tt">Le Bon d’achat PayEnCash, en droit</div>
+              <!-- LE FONDEMENT LÉGAL, DÉRIVÉ de bonsRef().fondement : les articles ne se réécrivent pas ici. -->
+              <p class="tx" id="mp-acpr">—</p>
+            </div>
+          </div>
+          <div style="margin-top:11px;border-radius:14px;background:var(--color-bg);padding:11px 12px">
+            <div class="lbl">Ce que ça change pour toi</div>
+            <p class="tx" style="margin-top:4px" id="mp-acpr-toi">—</p>
+          </div>
+          <a href="18-informations-legales.html#bon" class="tap lien pec-tap-confort" style="margin-top:9px">Conditions complètes et fondement légal <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px"><use href="#i-chevron-right"/></svg></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═════ 3 · QUI VALIDE TON PAIEMENT ═════ -->
+    <div class="sec">
+      <p class="pec-section-label" style="margin:0 0 9px">3 · Qui valide ton paiement</p>
+      <div class="card">
+        <div class="cardp">
+          <div class="rule">
+            <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-lock"/></svg></span>
+            <div style="min-width:0">
+              <b class="tt" style="font-size:13px">En ligne : la confirmation du prestataire</b>
+              <p class="tx">Tu paies sur <b style="color:var(--color-ink)">sa page à lui</b>, pas dans l'app. Ta commande ne passe en « réglée » que lorsqu'il nous confirme l'encaissement, de serveur à serveur. Fermer l'onglet ou revenir en arrière ne change rien : c'est sa confirmation qui fait foi, pas ton navigateur.</p>
+            </div>
+          </div>
+          <div class="rule">
+            <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-ticket"/></svg></span>
+            <div style="min-width:0">
+              <b class="tt" style="font-size:13px">Avec un bon d’achat : le code, vérifié puis débité</b>
+              <p class="tx">Le code de ton ticket est <b style="color:var(--color-ink)">vérifié avant</b> que tu valides — son solde, sa validité, son état s'affichent. Il n'est <b style="color:var(--color-ink)">débité qu'au règlement</b>, jamais à la vérification : tant que tu n'as pas payé, ton bon est intact.</p>
+            </div>
+          </div>
+          <div class="rule">
+            <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-clock"/></svg></span>
+            <div style="min-width:0">
+              <b class="tt" style="font-size:13px">Tu changes d'avis ? Tu changes de moyen</b>
+              <p class="tx">Tant que la commande n'est pas réglée, tu peux revenir en arrière et choisir l'autre moyen — tant que ton prix est bloqué.</p>
+            </div>
+          </div>
+        </div>
+        <a href="../fly/01-ou-payer.html" class="tap" style="display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--color-sep);padding:12px 15px;text-decoration:none">
+          <span style="font-size:12.5px;font-weight:800;color:var(--color-primary-dark)">Voir l'écran « Comment payer »</span>
+          <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px;color:var(--color-primary-dark)"><use href="#i-chevron-right"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- ═════ 4 · CE QU'ON NE FERA JAMAIS ═════ -->
+    <div class="sec">
+      <p class="pec-section-label" style="margin:0 0 9px">4 · Ce qu'on ne fera jamais</p>
+      <div style="border-radius:20px;background:linear-gradient(160deg,#0F2A24,#123B30 55%,#0E5E40 140%);box-shadow:0 14px 32px rgba(15,42,36,.3);padding:15px 16px" id="mp-jamais">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:12px;background:rgba(255,255,255,.14);color:var(--color-bright)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-shield"/></svg></span>
+          <div>
+            <div style="font-size:15px;font-weight:800;color:#fff;line-height:1.2">Cinq promesses fermes</div>
+            <div style="font-size:10.5px;font-weight:600;color:rgba(255,255,255,.7)">Ce ne sont pas des options : c'est le modèle.</div>
+          </div>
+        </div>
+        <div style="margin-top:11px">
+          <div class="no">
+            <span class="x">✕</span>
+            <div style="min-width:0"><b style="display:block;font-size:12.5px;font-weight:800;color:#fff;line-height:1.3">Aucun numéro de carte saisi dans l'app</b><span style="display:block;font-size:11px;line-height:1.45;color:rgba(255,255,255,.68);margin-top:1px">On ne te demandera jamais de saisir un numéro de carte, une date d'expiration ou un cryptogramme. Il n'y a pas de champ pour ça — nulle part.</span></div>
+          </div>
+          <div class="no">
+            <span class="x">✕</span>
+            <!-- (18/09, soir) « Elle ne revient qu'au-delà du plafond légal, en complément du règlement à l'agent »
+                 était la SEULE réserve de cette promesse : elle tombe avec l'agent. La promesse est désormais
+                 entière, sans exception — et c'est le sens du pivot. -->
+            <div style="min-width:0"><b style="display:block;font-size:12.5px;font-weight:800;color:#fff;line-height:1.3">Jamais de carte, à aucun montant</b><span style="display:block;font-size:11px;line-height:1.45;color:rgba(255,255,255,.68);margin-top:1px">Un Bon d’achat PayEnCash, <b style="color:#fff">acheté au comptoir d'un commerce ou à un distributeur qui se déplace</b> : <span class="js-moyens-sans-carte">le seul moyen</span> règle la totalité, quel que soit le montant. Il n'existe <b style="color:#fff">aucun cas</b> où l'on te demande une carte, et <b style="color:#fff">un bon d’achat suffit</b> pour commander.</span></div>
+          </div>
+          <div class="no">
+            <span class="x">✕</span>
+            <div style="min-width:0"><b style="display:block;font-size:12.5px;font-weight:800;color:#fff;line-height:1.3">Aucune donnée de paiement chez nous</b><span style="display:block;font-size:11px;line-height:1.45;color:rgba(255,255,255,.68);margin-top:1px">Le paiement en ligne se passe sur la page du prestataire : nous n'en recevons que la confirmation. <b style="color:#fff">Ce qui n'est pas stocké ne peut pas être volé.</b> Le seul élément bancaire possible est un RIB, si un remboursement doit t'être viré — il sert à te verser, jamais à te prélever.</span></div>
+          </div>
+          <div class="no">
+            <span class="x">✕</span>
+            <div style="min-width:0"><b style="display:block;font-size:12.5px;font-weight:800;color:#fff;line-height:1.3">Aucun prélèvement, aucun abonnement caché</b><span style="display:block;font-size:11px;line-height:1.45;color:rgba(255,255,255,.68);margin-top:1px">Rien ne peut être débité à ton insu : sans mandat de prélèvement, aucun renouvellement automatique n'est techniquement possible. Tout ce qui se paie chez nous <b style="color:#fff">expire au lieu de se renouveler</b>.</span></div>
+          </div>
+          <div class="no">
+            <span class="x">✕</span>
+            <div style="min-width:0"><b style="display:block;font-size:12.5px;font-weight:800;color:#fff;line-height:1.3">Aucun crédit, aucun paiement fractionné</b><span style="display:block;font-size:11px;line-height:1.45;color:rgba(255,255,255,.68);margin-top:1px">Tu ne peux pas t'endetter chez nous : on ne vend que ce que tu peux payer aujourd'hui. Pas de « 4 fois sans frais », pas de découvert, pas d'impayé possible.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═════ 5 · LES RÈGLES ═════ -->
+    <div class="sec">
+      <p class="pec-section-label" style="margin:0 0 9px">5 · Les règles</p>
+      <div class="card" id="mp-regles">
+        <div class="cardp">
+          <div class="rule">
+            <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-ticket"/></svg></span>
+            <div style="min-width:0">
+              <b class="tt" style="font-size:13px">Les plafonds d'un bon d’achat</b>
+              <!-- (18/09, soir) Ici se tenait « 1 000 € maximum en espèces par commande (art. L112-6 CMF) ».
+                   Cette règle visait le paiement d'une DETTE en espèces à un professionnel : elle ne décrit plus
+                   rien, puisque la cliente ne remet aucune espèce à PayEnCash. Les plafonds qui valent sont ceux
+                   du Bon (LCB-FT), et ils viennent de bonsRef(). -->
+              <p class="tx" id="mp-regle-bon">—</p>
+            </div>
+          </div>
+          <div class="rule">
+            <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-banknote"/></svg></span>
+            <div style="min-width:0">
+              <b class="tt" style="font-size:13px">Le plafond d'un ticket anonyme</b>
+              <p class="tx" id="mp-regle-neo">—</p>
+            </div>
+          </div>
+          <div class="rule">
+            <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-clock"/></svg></span>
+            <div style="min-width:0">
+              <b class="tt" style="font-size:13px">Ton prix est bloqué <span data-prixbloque-h>1 heure</span></b>
+              <p class="tx">Dès que tu valides, le prix ne bouge plus pendant <span data-prixbloque-min>60 minutes</span> — le temps d'aller acheter un bon d’achat ou un ticket, et de revenir saisir son code.</p>
+            </div>
+          </div>
+          <div class="rule">
+            <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-refresh"/></svg></span>
+            <div style="min-width:0">
+              <b class="tt" style="font-size:13px">Un remboursement ne se fait jamais en espèces</b>
+              <p class="tx" id="mp-regle-remb">—</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═════ 6 · TES JUSTIFICATIFS ═════ -->
+    <div class="sec">
+      <p class="pec-section-label" style="margin:0 0 9px">6 · Tes justificatifs</p>
+      <div class="card">
+        <div class="cardp">
+          <div class="rule">
+            <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-receipt"/></svg></span>
+            <div style="min-width:0"><b class="tt" style="font-size:13px">Le reçu, tout de suite</b><p class="tx">Réglé par un bon d’achat, ton reçu s'affiche <b style="color:var(--color-ink)">dès la validation</b> : le bon est débité et la commande soldée dans la seconde. Réglé en ligne, dès la confirmation du prestataire, avec le <b style="color:var(--color-ink)">numéro de transaction</b>.</p></div>
+          </div>
+          <div class="rule">
+            <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-file"/></svg></span>
+            <div style="min-width:0"><b class="tt" style="font-size:13px">Ta facture, dans Réservations</b><p class="tx">Chaque commande payée garde sa facture dans l'onglet <b style="color:var(--color-ink)">Réservations</b> : montant, date, moyen de règlement et sa preuve (numéro de transaction, ou code du bon masqué). Elle reste disponible même après ton voyage.</p></div>
+          </div>
+          <div class="rule">
+            <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-ticket"/></svg></span>
+            <div style="min-width:0"><b class="tt" style="font-size:13px">Ton billet, par SMS et par email</b><p class="tx">Dès l'encaissement, <b style="color:var(--color-ink)">la compagnie émet ton billet</b> — le PNR et l'e-ticket t'arrivent sur les deux canaux (rien à télécharger) et t'attendent dans Réservations.</p></div>
+          </div>
+        </div>
+        <a href="03-mes-codes.html" class="tap" style="display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--color-sep);padding:12px 15px;text-decoration:none">
+          <span style="font-size:12.5px;font-weight:800;color:var(--color-primary-dark)">Ouvrir mes réservations et mes factures</span>
+          <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px;color:var(--color-primary-dark)"><use href="#i-chevron-right"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- ═════ 7 · DÉPENSER À TA MESURE ═════ -->
+    <div class="sec">
+      <p class="pec-section-label" style="margin:0 0 9px">7 · Des dépenses à la hauteur de ton porte-monnaie</p>
+      <div class="card">
+        <div class="cardp">
+          <div class="row">
+            <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-coin"/></svg></span>
+            <div style="min-width:0">
+              <div class="tt">Tu pars du montant que tu as</div>
+              <p class="tx">Sur l'accueil, tu glisses ton budget et on ne te montre <b style="color:var(--color-ink)">que ce que tu peux t'offrir</b>. Pas de suggestion au-dessus de tes moyens, pas de « et pour 200 € de plus… ».</p>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+            <div style="border-radius:14px;background:var(--color-bg);padding:10px 11px">
+              <div style="font-size:11.5px;font-weight:800;color:var(--color-ink)">Payer, c'est fini</div>
+              <p class="tx" style="font-size:10.5px">Une fois le paiement effectué, la commande est soldée. Rien ne reviendra plus tard sur ton compte.</p>
+            </div>
+            <div style="border-radius:14px;background:var(--color-bg);padding:10px 11px">
+              <div style="font-size:11.5px;font-weight:800;color:var(--color-ink)">Zéro impayé</div>
+              <p class="tx" style="font-size:10.5px">Pas de rejet, pas de frais d'incident, pas de relance : on n'encaisse que ce qui est là.</p>
+            </div>
+          </div>
+          <p class="tx" style="margin-top:10px">C'est le sens de PayEnCash : <b style="color:var(--color-ink)">le voyage au comptant</b>, au comptant, sans dette, sans mauvaise surprise à la fin du mois.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═════ 8 · QUESTIONS FRÉQUENTES ═════ -->
+    <div class="sec">
+      <p class="pec-section-label" style="margin:0 0 9px">8 · Questions fréquentes</p>
+      <div class="card">
+        <div class="cardp" id="mp-faq">
+          <details class="q">
+            <summary class="tap">Je n'ai pas de carte bancaire. Je peux quand même commander ?<svg class="pec-ico chev" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-chevron-down"/></svg></summary>
+            <p>Oui, et c'est la raison d'être du service. <b>Un bon d’achat du début à la fin</b> : un Bon d’achat PayEnCash acheté chez un commerçant partenaire, ou à un distributeur qui vient jusqu'à toi. Aucun des deux chemins ne demande de banque.</p>
+          </details>
+          <details class="q">
+            <summary class="tap">Je n'ai pas de compte bancaire non plus. Ça marche quand même ?<svg class="pec-ico chev" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-chevron-down"/></svg></summary>
+            <p>Oui : le Bon d’achat PayEnCash s'achète au comptoir d'un commerce, sans rien ouvrir nulle part. Tu repars avec un code, tu le saisis, c'est réglé — un bon d’achat suffit.</p>
+          </details>
+          <details class="q">
+            <summary class="tap">Je n'ai pas le compte juste. Comment on fait ?<svg class="pec-ico chev" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-chevron-down"/></svg></summary>
+            <!-- (18/09, soir) « L'agent te rend la monnaie » n'existe plus : la question du rendu ne se pose
+                 plus du tout, parce que c'est TOI qui fixes le montant au comptoir. -->
+            <p>La question ne se pose pas : <b>c'est toi qui choisis le montant</b> du bon ou du ticket, au comptoir, et tu le règles au centime. Ce que tu n'utilises pas <b>reste sur ton bon d’achat</b> pour une prochaine commande.</p>
+          </details>
+          <details class="q">
+            <summary class="tap">Et si mon bon ne couvre pas toute la commande ?<svg class="pec-ico chev" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-chevron-down"/></svg></summary>
+            <p>Tu l'appliques quand même : le montant du bon est déduit, et <b>le reste se règle par l'autre moyen</b>. L'écran « Comment payer » recalcule tout seul ce qu'il reste à payer, et ton bon n'est débité qu'au règlement.</p>
+          </details>
+          <details class="q">
+            <summary class="tap">Est-ce que mes coordonnées bancaires risquent d'être piratées ?<svg class="pec-ico chev" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-chevron-down"/></svg></summary>
+            <p>Aucun numéro de carte n'existe dans nos systèmes, et il n'y a nulle part de champ pour en saisir un. Le paiement en ligne se passe sur la page du prestataire : nous n'en recevons que la confirmation. Si un remboursement doit t'être viré, ton RIB est enregistré sur ton compte — un RIB permet de te verser de l'argent, pas d'en prélever.</p>
+          </details>
+          <details class="q">
+            <summary class="tap">Peut-on m'abonner à mon insu ?<svg class="pec-ico chev" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-chevron-down"/></svg></summary>
+            <p>Non. Un abonnement frauduleux suppose un moyen de prélèvement enregistré : il n'y en a pas.</p>
+          </details>
+          <details class="q">
+            <summary class="tap">Ma commande dépasse le montant d'un seul bon. Comment je fais ?<svg class="pec-ico chev" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-chevron-down"/></svg></summary>
+            <p>Tu demandes <b>plusieurs bons</b> à ton commerçant et tu les saisis l'un après l'autre — dans la limite de <span data-bon="plafondClientJour">1 000 €</span> de bons par jour et par compte (règles anti-blanchiment).</p>
+          </details>
+          <details class="q">
+            <summary class="tap">Comment se passe un remboursement ?<svg class="pec-ico chev" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-chevron-down"/></svg></summary>
+            <p><b>Jamais en espèces</b> — la réglementation anti-blanchiment l'interdit. On rembourse par le chemin d'où l'argent est venu : re-crédit de ton Bon d’achat PayEnCash (le solde redevient utilisable), ou un avoir sur ton compte PayEnCash.</p>
+          </details>
+          <details class="q">
+            <summary class="tap">Où retrouver mes factures ?<svg class="pec-ico chev" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-chevron-down"/></svg></summary>
+            <p>Dans l'onglet Réservations, commande par commande. Chaque facture indique le montant, la date, le moyen utilisé et sa preuve — le numéro de transaction en ligne, ou le code de ton bon, masqué.</p>
+          </details>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:8px"></div>
+
+  <div id="fermeture-slot" style="padding:0 16px 18px"></div>
+<script>
+  /* (17/09 — pivot ; 18/09 au soir — deux moyens) TOUT VIENT DE PEC_DATA : tuiles du héro, libellés, aides et
+     étapes des cartes, plafonds du Bon (bonsRef, valeurs vives), fondement
+     légal (bonsRef().fondement) et lien du localisateur. Une carte dont le moyen n'est pas proposé dans le pays
+     du client (iDEAL en France) est RETIRÉE : la page de référence ne promet que ce qui existe ici.
+     TOUT SE REPEINT PAR UNE FONCTION, et la page ÉCOUTE : les plafonds et la validité du bon sont des paramètres
+     vivants (manager/10, bons.*) — une page de référence ne doit pas afficher une règle périmée. */
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.moyensPaiement) return;
+    function esc(t) { return D.esc ? D.esc(t) : String(t == null ? '' : t); }
+    function $(id) { return document.getElementById(id); }
+
+    /* LES ÉTAPES d'un moyen : le parcours concret, avec les chiffres LUS dans le référentiel. C'est là que
+       « chaque moyen sa logique, son texte » se joue — deux moyens, deux parcours qui ne se ressemblent pas. */
+    function etapesBon(R) {
+      return [
+        'Tu entres chez un <b>commerçant partenaire</b> et tu demandes un ' + esc(R.nom || 'Bon d’achat PayEnCash') + ' au <b>montant que tu veux</b> — de ' + esc(D.eur(R.minimum)) + ' à ' + esc(D.eur(R.plafondBon)) + ' par bon.',
+        'Tu le règles au comptoir, <b>comme tu veux</b> : le commerçant encaisse <b>pour le compte de PayEnCash</b>. Il vend le bon, <b>il n\'encaisse jamais une commande</b> pour nous — et nous, on ne te demande qu’un bon d’achat.',
+        'Il te remet un <b>ticket avec un code à 12 caractères</b> (XXXX-XXXX-XXXX). Ce code vaut titre : conserve-le, il ne sera pas remplacé.',
+        'Tu saisis ce code sur « Comment payer » : le solde est vérifié devant toi, puis <b>débité au règlement</b>. Ce qui reste dessus sert à ta prochaine commande.'
+      ];
+    }
+
+    /* LA PHRASE ACPR, DÉRIVÉE : chaque fondement de ref.bons.fondement est rédigé « art. X — explication ».
+       On en extrait la RÉFÉRENCE pour la phrase et on garde le texte entier au survol : rien n'est réécrit. */
+
+    function peindre() {
+      var moyens = D.moyensPaiement(), parK = {};
+      moyens.forEach(function (m) { parK[m.k] = m; });
+
+      // Les tuiles du héro : un moyen, une tuile — dans l'ordre du référentiel (le bon en tête).
+      var ICO = { bon: 'i-ticket' };
+      var tz = $('mp-tuiles');
+      if (tz) tz.innerHTML = moyens.map(function (m) {
+        var ico = ICO[m.k] || 'i-smartphone';
+        return '<div style="border-radius:14px;background:var(--color-mint);padding:10px 8px;text-align:center">' +
+          '<svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px;color:var(--color-primary-dark)"><use href="#' + ico + '"/></svg>' +
+          '<div style="font-size:11px;font-weight:800;color:var(--color-ink);margin-top:3px">' + esc(m.lbl) + '</div>' +
+          '<div style="font-size:9px;font-weight:700;color:var(--color-primary-dark)">' + esc(m.delai || '') + '</div></div>';
+      }).join('');
+      var lead = $('mp-lead');
+      // (18/09, soir — pivot) LA PHRASE MÈRE : « avec un bon d’achat »
+      if (lead && D.moyensPaiementLabel) lead.innerHTML = '<b style="color:var(--color-ink)">' + esc(D.slogan()) + '.</b> ' + esc(D.moyensPaiementLabel().charAt(0).toUpperCase() + D.moyensPaiementLabel().slice(1)) + " — à égalité, à tout montant, tous deux achetés au comptoir d'un commerce. Voici comment marche chacun, et tout ce qu'on ne te demandera jamais.";
+
+      // Une carte par moyen : libellé et aide DÉRIVÉS ; carte retirée si le moyen n'est pas proposé ici.
+      [].forEach.call(document.querySelectorAll('[data-moyen]'), function (c) {
+        var m = parK[c.getAttribute('data-moyen')];
+        if (!m) { c.remove(); return; }
+        var l = c.querySelector('[data-moyen-lbl]'), a = c.querySelector('[data-moyen-aide]');
+        if (l) l.textContent = m.lbl;
+        if (a) a.textContent = m.aide || '';
+      });
+
+      // LE BON : étapes, plafonds, mentions — bonsRef() (valeurs vives), jamais écrits ici
+      var R = D.bonsRef ? D.bonsRef() : null;
+      if (R) {
+        var be = $('mp-bon-etapes');
+        if (be) be.innerHTML = etapesBon(R).map(function (e) { return '<li>' + e + '</li>'; }).join('');
+        var bp = $('mp-bon-plafond');
+        if (bp) bp.innerHTML = 'De <b style="color:var(--color-ink)">' + esc(D.eur(R.minimum)) + '</b> à <b style="color:var(--color-ink)">' + esc(D.eur(R.plafondBon)) + ' par bon</b>, au plus <b style="color:var(--color-ink)">' + esc(D.eur(R.plafondClientJour)) + '</b> de bons par jour et par compte'
+          + (R.plafondClientMois ? ', et <b style="color:var(--color-ink)">' + esc(D.eur(R.plafondClientMois)) + ' sur ' + esc(String(R.fenetrePlafondJours)) + ' jours glissants</b>' : '') + ' (règles anti-blanchiment). Valable <b style="color:var(--color-ink)">' + esc(String(R.validiteMois)) + ' mois</b>, utilisable en une ou plusieurs fois.';
+        var bm = $('mp-bon-mentions');
+        if (bm) bm.innerHTML = (R.mentions || []).map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('');
+        var vals = { plafondBon: D.eur(R.plafondBon), plafondClientJour: D.eur(R.plafondClientJour), minimum: D.eur(R.minimum), validiteMois: String(R.validiteMois) };
+        [].forEach.call(document.querySelectorAll('[data-bon]'), function (e) { var v = vals[e.getAttribute('data-bon')]; if (v != null) e.textContent = v; });
+
+        // LA RÈGLE DU BON (section 5) — les plafonds qui valent vraiment, et POURQUOI ils existent
+        var rb = $('mp-regle-bon');
+        if (rb) rb.innerHTML = 'Un bon va de <b style="color:var(--color-ink)">' + esc(D.eur(R.minimum)) + '</b> à <b style="color:var(--color-ink)">' + esc(D.eur(R.plafondBon)) + '</b>, et un compte ne peut pas en utiliser plus de <b style="color:var(--color-ink)">' + esc(D.eur(R.plafondClientJour)) + ' par jour</b>'
+          + (R.plafondClientMois ? ', ni plus de <b style="color:var(--color-ink)">' + esc(D.eur(R.plafondClientMois)) + ' sur ' + esc(String(R.fenetrePlafondJours)) + ' jours glissants</b>' : '')
+          + '. Ce sont des plafonds <b style="color:var(--color-ink)">anti-blanchiment</b> (LCB-FT), pas un plafond de dépense : au-dessus d\'un bon tu en demandes plusieurs, et au-dessus de la fenêtre glissante <b style="color:var(--color-ink)">ce n\'est pas un mur</b> — une <b style="color:var(--color-ink)">vérification d\'identité</b> ouvre la suite et ton bon reste intact. <a href="19-verification-identite.html" style="color:var(--color-primary-dark);font-weight:700">Vérifier mon identité</a>';
+
+        // LE FONDEMENT LÉGAL — dérivé ; le texte complet de chaque article reste au survol
+        var f = R.fondement || {}, nom = R.nom || 'Bon d’achat PayEnCash';
+        /* (18/09, soir) LA PHRASE DE FONDEMENT VIENT DU DATA-LAYER. Elle était construite à l'identique dans CINQ
+           écrans : cinq endroits à corriger le jour où l'avocat fait bouger un mot, et déjà une page qui avait gardé
+           un ancien nom de produit en repli. `D.bonFondementHTML()` la rend — articles en gras, texte complet en
+           infobulle — et `fondement.especes` (art. L112-6 CMF) n'y figure plus. */
+        var az = $('mp-acpr');
+        if (az) az.innerHTML = D.bonFondementHTML() || ('Le fondement légal du ' + esc(nom) + ' n\'est pas encore renseigné.');
+        var at = $('mp-acpr-toi');
+        if (at) at.innerHTML = 'Ton bon ne s\'utilise que <b style="color:var(--color-ink)">chez nous</b> — il n\'a pas cours ailleurs, et ce n\'est pas un compte de paiement. En contrepartie, <b style="color:var(--color-ink)">un bon d’achat suffit</b> pour l\'acheter et l\'utiliser jusqu\'aux plafonds ci-dessous. Et si une commande te doit de l\'argent, il est <b style="color:var(--color-ink)">re-crédité sur le bon</b>.';
+      }
+
+      // « chacun des deux » — le compte des moyens se DÉRIVE (une promesse ne se recompte pas à la main)
+      var CPT = ['aucun moyen', 'le seul moyen', 'chacun des deux', 'chacun des trois', 'chacun des quatre'];
+      [].forEach.call(document.querySelectorAll('.js-moyens-sans-carte'), function (e) { e.textContent = CPT[moyens.length] || ('chacun des ' + moyens.length); });
+
+      // LE REMBOURSEMENT — une phrase par moyen PROPOSÉ (on rembourse par le chemin d'où l'argent est venu)
+      var rr = $('mp-regle-remb');
+      if (rr) {
+        var parts = moyens.map(function (m) {
+          if (m.k === 'bon') return 'un règlement par <b style="color:var(--color-ink)">' + esc(m.lbl) + '</b> est <b style="color:var(--color-ink)">re-crédité sur le bon</b> — son solde redevient utilisable' + (R && R.validiteMois ? ' pendant ses ' + esc(String(R.validiteMois)) + ' mois de validité' : '');
+          return 'un règlement par <b style="color:var(--color-ink)">' + esc(m.lbl) + '</b> revient sur son moyen d\'origine';
+        });
+        rr.innerHTML = 'La loi anti-blanchiment l\'interdit : on rembourse <b style="color:var(--color-ink)">par le chemin d\'où l\'argent est venu</b>. Ainsi, ' + parts.join(' ; ') + '.';
+      }
+
+    }
+    peindre();
+    window.addEventListener('pec-bus', peindre);
+    window.addEventListener('storage', function (e) { if (!e.key || /^pec-param|^pec-bons|^pec_bus_/.test(e.key)) peindre(); });
+  })();
+</script>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('');})();</script>
+</div>
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" aria-current="page" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+  // PRIX BLOQUÉ sourcé : PEC_DATA.prixBloque.dureeMin — plus aucun plafond d'espèces à remplir ici (18/09, soir)
+  (function () {
+    var PB = (window.PEC_DATA && PEC_DATA.prixBloque) || {}; if (!PB.dureeMin) return;
+    var m = PB.dureeMin, hTxt = m % 60 === 0 ? (m / 60) + ' heure' + (m / 60 > 1 ? 's' : '') : m + ' minutes';
+    [].forEach.call(document.querySelectorAll('[data-prixbloque-h]'), function (e) { e.textContent = hTxt; });
+    [].forEach.call(document.querySelectorAll('[data-prixbloque-min]'), function (e) { e.textContent = m + ' minutes'; });
+  })();
+</script>
+</body>
+</html>

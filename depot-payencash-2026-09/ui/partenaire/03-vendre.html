@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash PARTENAIRE — Vendre un bon d’achat</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-partenaire-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-partenaire-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-partenaire.js"></script>
+<script src="../assets/payencash-fil.js"></script>
+<script src="../assets/payencash-qr.js"></script><!-- le QR du ticket (bonTicketHTML → PEC_QR.svg) -->
+<!-- VENDRE UN BON D’ACHAT (18/09 — Bon d’achat PayEnCash ; 18/09, soir — prélèvement à la vente PUIS pivot de positionnement). POURQUOI : le
+     commerçant vend au comptoir un bon d'achat prépayé à montant libre ; l'app génère le code et imprime le ticket (pas de
+     carte physique, aucun matériel au comptoir).
+     (18/09, soir — pivot de positionnement) COMMENT LE CLIENT RÈGLE SON BON D’ACHAT AU COMPTOIR NE NOUS REGARDE PAS : c'est une vente
+     du commerçant à son client, il règle comme il veut. Cet écran ne nomme donc AUCUN moyen de paiement ; il demande une seule
+     chose, celle qui nous concerne : que le commerçant confirme avoir ENCAISSÉ le montant avant que le bon d’achat existe. Le nom
+     technique du paramètre est `prixRecu` côté data-layer — il dit ce qu'il vérifie : le commerçant a reçu le prix de son client.
+     Flux : montant (raccourcis dérivés de ref.bons — le plus grand est TOUJOURS le plafond par bon d’achat — ou montant libre entre le
+     minimum et le plafond) → ce qui sera PRÉLEVÉ, annoncé AVANT la vente (D.partenaireDu(montant, point) : valeur du bon d’achat, commission
+     gardée, débit sur la carte ••last4) → « J'ai encaissé … € du client » (le bon d’achat ne s'émet qu'une fois encaissé : bonEmettre
+     exige prixRecu === true) → « Émettre le bon d’achat » : bonEmettre DÉBITE LA CARTE DU COMMERCE d'abord, et ne crée le code que si la
+     banque accepte (le bon d’achat naît du paiement) → ticket (bonTicketHTML : UNE source, la même que la réimpression et le manager)
+     + la ligne « prélevé sur ta carte » → « Imprimer le ticket » (window.print, seul le ticket sort) → « Nouveau bon d’achat ».
+     SANS CARTE ENREGISTRÉE, LA VENTE EST FERMÉE : le formulaire cède la place à un renvoi vers 07-mon-point.html#carte —
+     le data-layer refuserait de toute façon (prelevementPartenaire → motif 'carte_absente').
+     Chaque refus du data-layer (montant hors limites, point non actif, encaissement non confirmé, carte refusée, stockage plein)
+     s'affiche TEL QUEL : ces phrases appartiennent au data-layer, on ne les réécrit pas dans un écran — le jour où
+     une formulation change, elle change à UN endroit. (18/09, soir : aucune ne parle plus d'espèces.)
+     Garde du socle (PEC_PART.garde) : point non actif → formulaire masqué, bandeau qui dit pourquoi, rejoué sur le bus. -->
+<style>
+  .v-racc{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:6px 0 10px}
+  .v-racc button{border:1.5px solid var(--color-sep);border-radius:12px;background:var(--color-surface);padding:10px 0;font:inherit;font-size:13px;font-weight:800;color:var(--color-ink);cursor:pointer}
+  .v-racc button[aria-pressed="true"]{border-color:var(--color-primary);background:var(--color-mint);color:var(--color-primary-dark)}
+  .v-hint{font-size:11px;color:var(--color-muted);margin-top:4px;line-height:1.5}
+  .v-check{display:flex;gap:10px;align-items:flex-start;margin:14px 0 4px;padding:11px 12px;border-radius:12px;background:var(--color-card);font-size:13px;line-height:1.45;cursor:pointer}
+  .v-check input{margin-top:2px;width:18px;height:18px;flex:none}
+  .v-err{margin:10px 0 0;padding:10px 12px;border-radius:12px;background:rgba(179,55,43,.1);color:#B3372B;font-size:12px;font-weight:700;line-height:1.45}
+  .v-ok{margin:0 0 10px;font-size:12.5px;font-weight:800;color:var(--color-primary-dark);text-align:center}
+  /* (18/09, soir — prélèvement à la vente) CE QUI SERA PRÉLEVÉ, avant le geste : le commerçant doit savoir ce qui part de sa
+     carte AVANT d'encaisser son client, pas après. Les trois lignes viennent de D.partenaireDu(montant, point). */
+  .v-du{margin:12px 0 0;padding:11px 12px;border-radius:12px;background:var(--color-mint);font-size:12.5px;line-height:1.5;color:var(--color-primary-dark)}
+  .v-du .r{display:flex;justify-content:space-between;gap:10px;padding:3px 0}
+  .v-du .r > span:last-child{flex:none;white-space:nowrap}   /* un montant ne se coupe pas entre le chiffre et l'euro */
+  .v-du .r.tot{font-weight:800;border-top:1px solid rgba(15,42,36,.12);margin-top:3px;padding-top:6px}
+  .v-du .sub{margin-top:5px;font-size:11px;opacity:.85}
+  /* (18/09 — Bon PayEnCash) À L'IMPRESSION, SEUL LE TICKET SORT — pas le cadre, pas la barre d'onglets. Le cadre du téléphone
+     (hauteur fixe, overflow caché) est libéré pour que le ticket ne soit pas coupé. */
+  @media print {
+    body * { visibility: hidden; }
+    .bon-ticket, .bon-ticket * { visibility: visible; }
+    .bon-ticket { position: absolute; left: 0; top: 0; }
+    .pec-scene, .pec-device, .pec-body { overflow: visible !important; height: auto !important; max-height: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll">
+    <div class="pec-info-body" style="padding-top:14px">
+
+      <h1 style="margin:2px 0 2px;font-size:24px;font-weight:800" id="v-titre">Vendre un Bon d’achat PayEnCash</h1>
+      <p style="margin:0 0 14px;font-size:12.5px;color:var(--color-muted)" id="v-sous">Montant libre. Le bon d’achat s'émet une fois le montant encaissé auprès de ton client ; un ticket s'imprime pour lui.</p>
+
+      <!-- GARDE (socle) : #pt-garde est posé ici par PEC_PART.garde() — point non actif (contrat à signer, intégration, suspendu,
+           clos, aucun) → bandeau honnête, formulaire masqué, bouton d'émission désactivé. -->
+      <div id="pt-garde" hidden style="border-radius:16px;background:var(--color-amber-well);padding:14px;margin:0 0 18px;font-size:13px;line-height:1.55;color:var(--color-amber-text)"><b id="pt-garde-titre">—</b><div id="pt-garde-txt" style="margin-top:4px;font-size:12px">—</div></div>
+
+      <!-- (18/09, soir) SANS CARTE, PAS DE VENTE — le renvoi remplace le formulaire : rien ne sert d'encaisser son client
+           pour un bon d’achat que le data-layer refusera d'émettre. -->
+      <div class="pec-card" id="v-sans-carte" hidden style="padding:14px 16px;border:1.5px solid var(--color-amber-text)">
+        <div style="font-weight:800;font-size:13.5px;color:var(--color-amber-text)" id="v-sans-carte-titre">—</div>
+        <p class="meta" style="margin:5px 0 0;line-height:1.55" id="v-sans-carte-txt">—</p>
+        <a class="pec-cta pec-cta--tight tap" href="07-mon-point.html#carte" style="display:block;width:100%;text-align:center;margin-top:12px" id="v-sans-carte-cta">Enregistrer la carte du commerce</a>
+      </div>
+      <!-- une carte encore valide mais qui approche de son échéance : la vente reste OUVERTE, l'alerte est dite (data-layer) -->
+      <div class="pec-card" id="v-carte-bientot" hidden style="padding:11px 14px;margin-bottom:10px;border:1px solid var(--color-sep)">
+        <div class="meta" style="line-height:1.5" id="v-carte-bientot-txt">—</div>
+      </div>
+
+      <!-- (19/09, nuit) LE BANDEAU DE LA RENCONTRE : un distributeur mobile arrive ici depuis son accueil,
+           avec la rencontre en paramètre — le montant est celui que le client a demandé, il ne se ressaisit
+           pas. Le reste est la vente habituelle (encaisser, confirmer, émettre).
+           (Un « flashcode à scanner » a vécu ici une soirée : au comptoir, le client n'a rien à montrer,
+           il demande un bon d'achat de tant. Supprimé le 19/09 au soir, décision fondatrice.)
+           (21/09, fondatrice : « le ticket avec flashcode à présenter au partenaire / à l'agent — Mode, Fly, et
+           également Technologie ») IL REVIENT, dans la carte « À régler » du client : ce bandeau dit alors l'ORDRE
+           DE VENTE qu'il porte (?commande=) — la commande et ce qui reste à y régler, relus au bus. -->
+      <div id="v-demande" hidden style="border-radius:14px;background:var(--color-mint);padding:12px 13px;margin:0 0 12px;font-size:12.5px;line-height:1.5;color:var(--color-mint-ink)"></div>
+
+      <!-- LE FORMULAIRE — montant, ce qui sera prélevé, encaissement confirmé, émettre -->
+      <div class="pec-card pec-card--elevated" id="v-form" style="padding:16px">
+        <label class="pec-input-label" for="v-montant">Montant du bon d’achat</label>
+        <!-- raccourcis DÉRIVÉS : 20/50/100/150 s'ils tiennent entre le minimum et le plafond, puis le PLAFOND lui-même — jamais au-delà -->
+        <div class="v-racc" id="v-raccourcis" role="group" aria-label="Montants rapides"></div>
+        <input class="pec-input" id="v-montant" type="text" inputmode="decimal" placeholder="ou un montant libre, en euros" autocomplete="off">
+        <div class="v-hint" id="v-limites">—</div>
+        <!-- CE QUI SERA PRÉLEVÉ — D.partenaireDu(montant), avant même la case de l'encaissement -->
+        <div class="v-du" id="v-du" hidden></div>
+        <!-- (18/09 ; pivot du soir) LE BON D’ACHAT NE S'ÉMET QU'UNE FOIS ENCAISSÉ : la case dit le MONTANT encaissé — jamais par quel
+             moyen, ce n'est pas notre affaire — et le data-layer refuse sans elle -->
+        <label class="v-check" for="v-recu"><input type="checkbox" id="v-recu"><span id="v-recu-txt">J'ai encaissé le montant auprès du client</span></label>
+        <!-- (23/09, fondatrice : « KYC : dépasse 250 € de bons en espèces, 500 € si CB ») LE MOYEN, NOTÉ POUR LA VIGILANCE.
+             On ne dit toujours pas au client comment il règle (règle du 18/09) ; mais l'app du porteur compte ses bons
+             par moyen pour savoir quand demander sa pièce d'identité. Le comptoir le coche, ou ne le coche pas. -->
+        <div id="v-moyen" style="display:flex;gap:7px;margin-top:8px" role="radiogroup" aria-label="Réglé par">
+          <label class="pec-pill tap" style="flex:1;text-align:center;cursor:pointer"><input type="radio" name="v-moyen" value="especes" style="margin-right:5px">Espèces</label>
+          <label class="pec-pill tap" style="flex:1;text-align:center;cursor:pointer"><input type="radio" name="v-moyen" value="carte" style="margin-right:5px">Carte</label>
+        </div>
+        <button type="button" class="pec-cta pec-cta--tight tap" id="v-emettre" style="display:block;width:100%;text-align:center;margin-top:12px">Émettre le bon d’achat</button>
+        <div class="v-err" id="v-erreur" role="alert" hidden></div>
+      </div>
+
+      <!-- LE TICKET — rendu par bonTicketHTML (une seule source), à imprimer et remettre au client -->
+      <div id="v-resultat" hidden>
+        <div class="v-ok" id="v-ok">✓ Bon d’achat émis</div>
+        <!-- (18/09, soir) LE DÉBIT EST UN FAIT DE LA VENTE : il s'affiche avec le ticket, pas dans un écran à part -->
+        <div class="v-du" id="v-preleve" hidden style="margin:0 0 10px"></div>
+        <div id="v-ticket"></div>
+        <button type="button" class="pec-cta tap" id="v-imprimer" style="margin:14px 0 8px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-file"/></svg>Imprimer le ticket</button>
+        <button type="button" class="pec-btn-secondary tap" id="v-nouveau" style="width:100%">Nouveau bon d’achat</button>
+        <p class="v-hint" style="text-align:center;margin:10px 0 0">Remets le ticket au client : le code vaut titre, il ne sera pas remplacé en cas de perte. Le bon d’achat reste réimprimable dans « Bons d’achat », et annulable au comptoir <span id="v-annul-txt">—</span> s'il n'a pas servi.</p>
+      </div>
+
+      <!-- Cadre, en clair — chiffres du référentiel (bonsRef), jamais écrits ici -->
+      <div class="pec-mint-banner" style="margin:16px 0 18px">
+        <div style="font-size:12.5px;line-height:1.55" id="v-cadre">—</div>
+      </div>
+
+    </div>
+  </div><!-- /pec-body -->
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="02-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-home"/></svg>Accueil</a>
+    <a class="pec-tab" aria-current="page" href="03-vendre.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-ticket"/></svg>Vendre</a>
+    <a class="pec-tab" href="09-marques.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-tag"/></svg>Marques</a>
+    <a class="pec-tab" href="05-releves.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-banknote"/></svg>Mes relevés</a>
+    <a class="pec-tab" href="07-mon-point.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-store"/></svg>Mon point</a>
+  </nav>
+
+</div>
+</div>
+<script>
+  (function () {
+    var D = window.PEC_DATA, P = window.PEC_PART; if (!D || !P || !D.bonEmettre) return;
+    function $(id) { return document.getElementById(id); }
+    function esc(v) { return D.esc(v); }
+    function pct(x) { var n = +x; return (n % 1 ? n.toFixed(2) : String(n)).replace('.', ',') + ' %'; }   // « 1,10 % », « 20 % » — le taux s'écrit comme au contrat
+    // la même lecture que le data-layer (virgule ou point, espaces ignorés, 2 décimales) — pour l'affichage seulement : c'est bonEmettre qui tranche
+    /* (19/09, nuit) LE CHAMP PEUT NE PLUS ÊTRE LÀ : un point suspendu voile la page et retire le formulaire,
+       et `majRef` est rejouée à chaque événement du bus — elle jetait alors une erreur muette, en boucle. */
+    function montantSaisi() { var i = $('v-montant'); if (!i) return 0; return Math.round((parseFloat(String(i.value || '').replace(/\s/g, '').replace(',', '.')) || 0) * 100) / 100; }
+
+    /* (19/09, soir) SERVIR UNE RENCONTRE. Un distributeur mobile arrive ici depuis son accueil, avec la
+       rencontre en paramètre : le montant est celui que le client a demandé, il ne se ressaisit pas. La vente
+       passe par la MÊME caisse (sa carte est débitée, le code naît du paiement) — rencontreServir s'en charge
+       et rattache les codes à la rencontre. */
+    var rdvId = (new URLSearchParams(location.search)).get('rdv') || null;
+    /* (21/09) L'ORDRE DE VENTE D'UNE COMMANDE — lu au flashcode de la carte « À régler » (Mode, Fly). L'adresse ne porte
+       que la RÉFÉRENCE ; ce qui reste à régler se relit au bus (D.ordreVente). Une rencontre prime : elle porte déjà
+       son montant. */
+    var cmdRef = rdvId ? null : ((new URLSearchParams(location.search)).get('commande') || null);
+    // GARDE POINT (socle) : rejouée sur le bus — un point suspendu puis réactivé rouvre l'écran sans rechargement ;
+    // un point coupé pendant qu'un ticket est affiché garde le ticket lisible (le bon d’achat est émis), mais ferme « Nouveau bon d’achat ».
+    P.garde({ masquer: ['v-form', 'v-sans-carte', 'v-carte-bientot'], desactiver: ['v-emettre', 'v-nouveau'] });
+
+    /* (18/09, soir — prélèvement à la vente) LA CARTE OUVRE OU FERME LA VENTE, au même titre que l'état du point : sans elle,
+       `bonEmettre` refuse avant de créer le moindre code. On le dit ICI, avant que le client règle, plutôt que de laisser
+       encaisser pour un bon d’achat qui n'existera pas. La carte est lue au data-layer (D.partenaireCarte). */
+    function carteDuPoint() { var p = P.point(); return (p && D.partenaireCarte) ? D.partenaireCarte(p) : null; }
+    function carteLibelle(c) { return c ? ((c.marque || 'carte') + ' ••' + c.last4) : null; }
+    /* L'ALERTE SUR LA CARTE vient du data-layer (partenairesSansCarte : absente / expirée / bientôt) — jamais d'un délai
+       réinventé ici. Absente ou expirée, `bonEmettre` refusera : la vente se ferme AVANT que le client règle. */
+    function alerteCarte() {
+      var p = P.point(); if (!p) return null;
+      try { var a = (D.partenairesSansCarte() || []).filter(function (x) { return x.point && x.point.id === p.id; })[0]; if (a) return a; } catch (e) {}
+      return carteDuPoint() ? null : { cause: 'absente', txt: 'aucune carte enregistrée' };   // point pas encore actif : la liste du manager ne le voit pas
+    }
+    function majCarte() {
+      var p = P.point(), z = $('v-sans-carte'), zb = $('v-carte-bientot'), f = $('v-form'), res = $('v-resultat');
+      // la garde du socle a le dernier mot : point non actif → elle masque déjà les blocs, on ne les rouvre pas
+      if (window.__ptBloque) { z.hidden = true; zb.hidden = true; return; }
+      var al = alerteCarte(), ferme = !!al && al.cause !== 'bientot';
+      z.hidden = !ferme;
+      zb.hidden = !(al && al.cause === 'bientot');
+      if (al && al.cause === 'bientot') $('v-carte-bientot-txt').textContent = 'Carte du commerce : ' + al.txt + '. Les ventes continuent jusque-là ; passé cette date, plus aucun bon d’achat ne pourra être émis.';
+      if (ferme) {
+        var expiree = al.cause === 'expiree';
+        $('v-sans-carte-titre').textContent = (expiree ? 'Carte expirée' : 'Aucune carte enregistrée') + ' — la vente est fermée';
+        $('v-sans-carte-txt').textContent = (expiree ? 'Ta carte enregistrée a expiré (' + al.txt.replace(/^carte expirée\s*/, '').replace(/[()]/g, '') + ') : PayEnCash ne peut plus être réglée, donc aucun bon d’achat ne peut être émis. ' : 'C\'est ta carte qui règle PayEnCash à chaque bon d’achat vendu : tant qu\'aucune carte n\'est enregistrée, aucun bon d’achat ne peut être émis. ')
+          + 'Enregistre' + (expiree ? ' la nouvelle' : '-la') + ' dans « Mon point » — l\'opération prend une minute, et tu gardes ce que tu encaisses.';
+        $('v-sans-carte-cta').textContent = expiree ? 'Remplacer la carte du commerce' : 'Enregistrer la carte du commerce';
+      }
+      // le formulaire ne se rouvre pas par-dessus un ticket affiché (la vente précédente reste lisible)
+      if (res.hidden) f.style.display = ferme ? 'none' : '';
+    }
+
+    /* LES LIMITES ET LES RACCOURCIS — vifs (le manager ajuste bons d’achat.* dans Configuration) : 20/50/100/150 s'ils tiennent dans
+       [minimum, plafond], puis le plafond — le plus grand raccourci ne dépasse JAMAIS le plafond par bon d’achat. */
+    /* La rencontre pose le montant et le VERROUILLE : c'est celui que le client a demandé, pas une saisie. */
+    function majRdv() {
+      var z = $('v-demande'); if (!rdvId || !D.rencontre) return;
+      var r = D.rencontre(rdvId);
+      if (!r || r.statut !== 'acceptee') {
+        if (z) { z.hidden = false; z.style.background = 'var(--color-amber-well)'; z.style.color = 'var(--color-amber-text)';
+          z.innerHTML = r ? '<b>Cette rencontre est ' + esc(D.rencontreStatutLbl(r.statut).toLowerCase()) + '.</b> Saisis le montant à la main pour une vente libre.'
+                          : '<b>Rencontre introuvable.</b> Saisis le montant à la main.'; }
+        $('v-montant').readOnly = false; rdvId = null; return;
+      }
+      $('v-montant').value = String(r.montant).replace('.', ',');
+      $('v-montant').readOnly = true;
+      if (z) { z.hidden = false; z.style.background = 'var(--color-mint)'; z.style.color = 'var(--color-mint-ink)';
+        z.innerHTML = '<b>Rencontre ' + esc(r.ref) + '</b> — ' + esc(r.lieu) + ' (' + esc(r.ville) + ')'
+          + '<br>Tu lui remets <b>' + esc(D.eur(r.montant)) + '</b> en ' + esc(String(r.nbBons)) + ' bon' + (r.nbBons > 1 ? 's' : '') + ' d’achat. Encaisse-le, puis émets.'; }
+      majEncaissement();
+    }
+    /* L'ORDRE DE VENTE POSE LE MONTANT ET LE VERROUILLE, comme une rencontre : c'est le reste de la commande, pas une
+       saisie. Une commande réglée, annulée ou inconnue le DIT, et la vente redevient libre. */
+    function majOrdre() {
+      var z = $('v-demande'); if (!cmdRef || !D.ordreVente) return;
+      var ov = D.ordreVente(cmdRef);
+      if (!ov || !ov.vendable) {
+        if (z) { z.hidden = false; z.style.background = 'var(--color-amber-well)'; z.style.color = 'var(--color-amber-text)';
+          z.innerHTML = ov ? '<b>La commande ' + esc(ov.ref) + ' est ' + esc(ov.statutLbl) + '</b> — il n’y a rien à lui vendre. Saisis le montant à la main pour une vente libre.'
+                           : '<b>Commande introuvable.</b> Ce flashcode ne correspond à aucune commande en cours — saisis le montant à la main.'; }
+        $('v-montant').readOnly = false; cmdRef = null; return;
+      }
+      var ap = D.bonsVenteApercu ? D.bonsVenteApercu(ov.montant) : null;
+      $('v-montant').value = String(ov.montant).replace('.', ',');
+      $('v-montant').readOnly = true;
+      if (z) { z.hidden = false; z.style.background = 'var(--color-mint)'; z.style.color = 'var(--color-mint-ink)';
+        z.innerHTML = '<b>Ordre de vente · commande ' + esc(ov.app) + ' ' + esc(ov.ref) + '</b>'
+          + '<br>Vends-lui <b>' + esc(D.eur(ov.montant)) + '</b> de <b>' + esc(D.ordreVenteEntite()) + '</b>' + ((ap && ap.ok && ap.n > 1) ? ', en ' + esc(String(ap.n)) + ' bons (' + esc(ap.parts.map(function (x) { return D.eur(x); }).join(' + ')) + ')' : '')
+          + ' : c’est ce qui reste à régler sur sa commande. Encaisse-le, puis émets. <span style="display:block;margin-top:4px;font-size:11px;opacity:.85">Un bon d’une boutique (réseau PayEnCash Solution) ne se vend pas ici : son flashcode ouvre l’espace de ses revendeurs.</span>'; }
+      majEncaissement();
+    }
+    function majRef() {
+      var R = D.bonsRef(), z = $('v-raccourcis');
+      if (!z) return;                       // page voilée (point suspendu, hors session) : il n'y a plus rien à peindre
+      /* (19/09, soir — « dépassé 250 €, ça repart sur l'achat d'un autre bon ») LES RACCOURCIS VONT AU-DELÀ DU
+         PLAFOND PAR BON : la vente se découpe toute seule, il n'y a plus de raison d'arrêter le commerçant à 250 €.
+         Le dernier raccourci est le plafond d'une VENTE (ce qu'un client peut dépenser en un jour). */
+      var base = [20, 50, 100, 150].filter(function (x) { return x >= R.minimum && x < R.plafondBon; })
+        .concat([R.plafondBon, R.plafondBon * 2].filter(function (x) { return x <= R.plafondClientJour; }))
+        .concat([R.plafondClientJour]).filter(function (x, k, a) { return a.indexOf(x) === k; });
+      var cur = montantSaisi();
+      z.style.gridTemplateColumns = 'repeat(' + Math.max(1, base.length) + ',1fr)';
+      z.innerHTML = base.map(function (x) { return '<button type="button" data-montant="' + esc(x) + '" aria-pressed="' + (cur === x ? 'true' : 'false') + '">' + esc(D.eur(x)) + '</button>'; }).join('');
+      $('v-limites').textContent = 'De ' + D.eur(R.minimum) + ' à ' + D.eur(R.plafondClientJour) + ' par vente. Un bon d’achat ne dépasse pas ' + D.eur(R.plafondBon) + ' (plafond LCB-FT) : au-delà, la vente se découpe toute seule en plusieurs bons, sur un seul ticket. Valable ' + R.validiteMois + ' mois, utilisable en une ou plusieurs fois sur payencash.fr.';
+      $('v-titre').textContent = 'Vendre un ' + R.nom;
+      $('v-annul-txt').textContent = 'dans les ' + R.annulationMinutes + ' min';
+      /* (18/09, soir — prélèvement à la vente + pivot) le cadre ne parle plus de reversement mensuel — PayEnCash est réglée
+         DANS LA SECONDE par la carte du commerce — ni du moyen par lequel le client règle : il règle comme il veut. */
+      /* (19/09 — taux par commerce) LE TAUX EST CELUI DE CE POINT, pas celui du réseau : un commerce qui a négocié
+         le sien doit lire le sien — c'est celui qui sera prélevé sur sa carte dans la seconde qui suit. */
+      var C = D.commissionPoint(P.point());
+      $('v-cadre').innerHTML = '<b>Ce que tu vends :</b> un ' + esc(R.nom) + ', bon d\'achat prépayé émis par AJEK, accepté uniquement sur payencash.fr. Ton client te règle comme il veut, c\'est ta vente : tu encaisses le montant et tu le gardes. À l\'émission du bon d’achat, ta carte enregistrée est débitée du montant du bon d’achat moins ta commission de ' + esc(pct(C.pct)) + ' HT (+ TVA ' + esc(pct(C.tvaPct)) + '). Rien à virer ensuite. Un bon d’achat ne se rembourse pas au comptoir : un remboursement se re-crédite sur le bon d’achat.';
+      majEncaissement(); majCarte(); majRdv(); majOrdre();
+    }
+    // la case dit CE QUI A ÉTÉ ENCAISSÉ : elle suit le montant saisi — jamais par quel moyen (pivot du 18/09 au soir)
+    function majEncaissement() {
+      var m = montantSaisi();
+      $('v-recu-txt').textContent = m > 0 ? 'J\'ai encaissé ' + D.eur(m) + ' auprès du client' : 'J\'ai encaissé le montant auprès du client';
+      [].forEach.call($('v-raccourcis').querySelectorAll('[data-montant]'), function (b) { b.setAttribute('aria-pressed', (+b.getAttribute('data-montant') === m) ? 'true' : 'false'); });
+      majDu(m);
+    }
+    /* CE QUI SERA PRÉLEVÉ — D.partenaireDu(montant, point) : valeur du bon d’achat, commission gardée (HT + TVA), débit sur
+       la carte. Aucun calcul ici : les trois montants, ET LE TAUX, sont ceux que le data-layer prélèvera réellement. */
+    function majDu(m) {
+      var z = $('v-du'), c = carteDuPoint();
+      if (!(m > 0) || !D.partenaireDu) { z.hidden = true; return; }
+      var d = D.partenaireDu(m, P.point());   // (19/09) le point est passé : c'est SON taux qui sera prélevé
+      z.hidden = false;
+      /* (19/09, soir) LA DÉCOUPE SE DIT AVANT LA VENTE : le commerçant voit combien de bons il va remettre, et de
+         quels montants, pendant qu'il tape. Un refus (sous le minimum, au-dessus du plafond d'une vente) se lit
+         ici aussi — avant que le client sorte son argent. C'est `bonsVenteApercu` qui tranche, la MÊME fonction
+         que l'émission : l'écran n'a pas sa propre arithmétique. */
+      var ap = D.bonsVenteApercu ? D.bonsVenteApercu(m) : { ok: true, n: 1 };
+      var tete = !ap.ok
+        ? '<div class="r" style="color:#B3372B"><span>' + esc(ap.motif) + '</span><span></span></div>'
+        : (ap.n > 1
+            ? '<div class="r"><span><b>' + esc(String(ap.n)) + ' bons d’achat</b> à remettre — ' + esc(ap.parts.map(function (x) { return D.eur(x); }).join(' + ')) + ' <span style="opacity:.75">(un bon ne dépasse pas ' + esc(D.eur(ap.plafondBon)) + ')</span></span><span></span></div>'
+            : '');
+      z.innerHTML = tete +
+        '<div class="r"><span>Valeur ' + (ap.ok && ap.n > 1 ? 'des bons d’achat' : 'du bon d’achat') + ', encaissée auprès du client</span><span>' + esc(D.eur(d.montant)) + '</span></div>' +
+        '<div class="r"><span>Ta commission ' + esc(pct(d.commissionPct)) + ' HT + TVA ' + esc(pct(d.tvaPct)) + ', gardée</span><span>− ' + esc(D.eur(d.commissionTTC)) + '</span></div>' +
+        '<div class="r tot"><span>Prélevé sur ta carte' + (c ? ' ' + esc(carteLibelle(c)) : '') + '</span><span>' + esc(D.eur(d.net)) + '</span></div>' +
+        '<div class="sub">' + (c ? 'Le prélèvement part à l\'émission du bon d’achat : pas de prélèvement, pas de code.' : 'Aucune carte enregistrée : le bon d’achat ne pourra pas être émis.') + '</div>';
+    }
+    $('v-raccourcis').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-montant]'); if (!b) return;
+      $('v-montant').value = String(b.getAttribute('data-montant')).replace('.', ',');
+      $('v-erreur').hidden = true; majEncaissement();
+    });
+    $('v-montant').addEventListener('input', function () { $('v-erreur').hidden = true; majEncaissement(); });
+
+    function erreur(msg, champ) {
+      var e = $('v-erreur'); e.hidden = !msg; e.textContent = msg || '';
+      // (18/09, soir) un refus de la BANQUE (champ 'prelevement') ne se corrige pas dans un champ : on le laisse se lire,
+      // au lieu de renvoyer le doigt sur le montant comme si le commerçant s'était trompé.
+      if (champ === 'prelevement') { e.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
+      if (champ === 'encaissement') $('v-recu').focus(); else if (champ) $('v-montant').focus();
+    }
+    /* (21/09) LA VENTE SUIVANTE EST LIBRE : le montant posé par une rencontre ou un ordre de vente restait VERROUILLÉ
+       après l'émission — la vente d'après ne pouvait plus se saisir. */
+    function formulaireVierge() {
+      $('v-montant').value = ''; $('v-montant').readOnly = false; $('v-recu').checked = false; $('v-erreur').hidden = true; $('v-du').hidden = true; majEncaissement();
+    }
+
+    /* ÉMETTRE — le data-layer décide (limites, point actif, encaissement confirmé, PRÉLÈVEMENT sur la carte, écriture) ; son
+       motif s'affiche TEL QUEL. (18/09, soir) Un refus de la banque porte champ:'prelevement' : AUCUN bon d’achat n'a été créé, le
+       commerçant rembourse son client — on ne reformule pas la phrase du data-layer, on la montre. */
+    $('v-emettre').addEventListener('click', function () {
+      if (window.__ptBloque) return;
+      var p = P.point(), c = P.compteSession();
+      if (!p) { erreur('Aucun point rattaché à cette session — aucun bon d’achat ne s\'émet sans point.'); return; }
+      var moyenChoisi = (document.querySelector('input[name="v-moyen"]:checked') || {}).value || null;   // (23/09) noté pour la vigilance, jamais imprimé
+      var arg = { moyen: moyenChoisi, montant: $('v-montant').value, origine: 'partenaire', pointId: P.pointId(), par: (c && c.identifiant) || p.enseigne, prixRecu: $('v-recu').checked === true };
+      /* (19/09, soir) LE COMPTOIR PASSE TOUJOURS PAR LA SÉRIE : à 250 € ou moins elle n'émet qu'un bon (elle
+         délègue à bonEmettre), au-dessus elle découpe — le commerçant n'a pas deux gestes à connaître. */
+      var r = rdvId ? D.rencontreServir(rdvId, { par: arg.par, prixRecu: arg.prixRecu }) : D.bonEmettreSerie(arg);
+      if (!r.ok) { erreur(r.motif, r.champ); majCarte(); return; }
+      /* UNE SEULE FEUILLE, UN TICKET PAR BON : le client repart avec tous ses codes d'un coup. */
+      var _lb = (r.bons && r.bons.length) ? r.bons : [r.bon];
+      $('v-ticket').innerHTML = _lb.map(function (b) { return D.bonTicketHTML(b); }).join('');
+      /* (20/09 — « ça crée plusieurs bons et également un code commun ») LE CODE COMMUN SE DIT AU COMPTOIR, parce
+         que c'est le commerçant qui l'explique à sa cliente : un seul code pour toute la série, ou les codes un à
+         un — les deux marchent. Il vient du data-layer (r.codeCommun), il n'est pas reconstruit ici. */
+      $('v-ok').innerHTML = _lb.length > 1
+        ? '✓ ' + _lb.length + ' bons d’achat émis — ' + esc(D.eur(r.montantTotal)) + ' au total (' + _lb.map(function (b) { return esc(D.eur(b.montant)); }).join(' + ') + ')'
+          + (r.codeCommun ? '<br><b>Code commun à la série : <span style="font-family:var(--font-mono,monospace);letter-spacing:.1em">' + esc(r.codeCommun) + '</span></b> — dis-le à ta cliente : elle peut saisir <b>ce seul code</b> pour les ' + _lb.length + ' bons, ou chaque code séparément.' : '')
+        : '✓ Bon d’achat ' + esc(r.bon.ticket) + ' émis — ' + esc(D.eur(r.bon.montant));
+      if (rdvId) {
+        var zr = $('v-demande');
+        if (zr) { zr.hidden = false; zr.style.background = 'var(--color-mint)'; zr.style.color = 'var(--color-mint-ink)';
+          zr.innerHTML = '<b>✓ Rencontre ' + esc(rdvId) + ' servie</b> — remets ' + (_lb.length > 1 ? 'les ' + _lb.length + ' tickets' : 'le ticket') + ' à ton client. Il pourra te noter depuis son app.'; }
+        rdvId = null;
+      }
+      if (cmdRef) {
+        var zo = $('v-demande');
+        if (zo) { zo.hidden = false; zo.style.background = 'var(--color-mint)'; zo.style.color = 'var(--color-mint-ink)';
+          zo.innerHTML = '<b>✓ Ordre de vente de la commande ' + esc(cmdRef) + ' servi</b> — remets ' + (_lb.length > 1 ? 'les ' + _lb.length + ' tickets' : 'le ticket')
+            + ' à ton client : il règle sa commande avec ' + (_lb.length > 1 ? 'leurs codes' : 'son code') + ', dans « En ligne ».'; }
+        cmdRef = null;
+      }
+      // LE DÉBIT RÉELLEMENT PASSÉ : ce que porte le bon d’achat (reversePar), et la carte qui l'a payé (le prélèvement du data-layer)
+      var prl = null;
+      try { prl = D.prelevementsGet(p.id).filter(function (x) { return x.id === r.bon.prelevement; })[0] || null; } catch (e) {}
+      var zp = $('v-preleve');
+      if (prl || r.bon.reversePar != null) {
+        var carte = prl && prl.carte ? (prl.carte.marque || 'carte') + ' ••' + prl.carte.last4 : carteLibelle(carteDuPoint());
+        zp.hidden = false;
+        zp.innerHTML = '<div class="r"><span>Montant encaissé' + (_lb.length > 1 ? ' (' + _lb.length + ' bons d’achat, un seul débit)' : '') + '</span><span>' + esc(D.eur(r.montantTotal != null ? r.montantTotal : r.bon.montant)) + '</span></div>' +
+          (prl ? '<div class="r"><span>Ta commission, gardée</span><span>− ' + esc(D.eur(prl.commissionTTC)) + '</span></div>' : '') +
+          '<div class="r tot"><span>Prélevé sur ta carte' + (carte ? ' ' + esc(carte) : '') + '</span><span>' + esc(D.eur(r.bon.reversePar != null ? r.bon.reversePar : prl.montant)) + '</span></div>' +
+          (prl && prl.reference ? '<div class="sub">Référence ' + esc(prl.reference) + ' — PayEnCash est réglée : plus rien à virer pour ce bon d’achat.</div>' : '');
+      } else { zp.hidden = true; zp.innerHTML = ''; }
+      $('v-form').style.display = 'none';
+      $('v-sans-carte').hidden = true; $('v-carte-bientot').hidden = true;
+      $('v-resultat').hidden = false;
+      formulaireVierge();   // la prochaine vente repart propre
+      var body = document.querySelector('.pec-body'); if (body) body.scrollTop = 0;
+    });
+    $('v-imprimer').addEventListener('click', function () { window.print(); });
+    $('v-nouveau').addEventListener('click', function () {
+      if (window.__ptBloque) return;
+      $('v-resultat').hidden = true; $('v-ticket').innerHTML = '';
+      $('v-preleve').hidden = true; $('v-preleve').innerHTML = '';
+      $('v-form').style.display = '';
+      formulaireVierge(); majCarte();   // la carte a pu être retirée ou expirer entre deux ventes
+      if (!$('v-form').style.display) $('v-montant').focus();
+    });
+
+    majRef();
+    // (écran non sourd) un paramètre bons d’achat.* modifié par le manager (plafond, minimum, commission) se relit ici sans rechargement ;
+    // (18/09, soir) une carte enregistrée depuis « Mon point » (autre onglet compris) rouvre la vente sans rechargement
+    window.addEventListener('pec-bus', majRef);
+    window.addEventListener('storage', majRef);
+  })();
+</script>
+</body>
+</html>

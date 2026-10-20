@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash — Doc 5 : Architecture technique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+  /* Sans ceci, un navigateur en mode sombre rend champs, listes et ascenseurs
+     en sombre sur notre fond creme. La doc est concue en clair, on le declare. */
+  color-scheme: light;
+    --vert: #1F4438; --cuivre: #D8722B; --creme: #F7F5F0; --encre: #1A1A1A;
+    --gris: #6B6966; --gris-clair: #E4E0D6; --blanc: #FFFFFF; --rouge: #C0392B; --bleu: #1A5276; --radius: 10px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; color: var(--encre); background: var(--creme); line-height: 1.7; font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+  .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: var(--vert); color: var(--creme); overflow-y: auto; padding: 24px 0; z-index: 100; }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 0.5px solid rgba(244,241,234,0.15); margin-bottom: 16px; }
+  .sidebar-logo .brand { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 4px; }
+  .sidebar-logo .brand .accent { color: var(--cuivre); }
+  .sidebar-logo .doc-num { font-size: 11px; color: rgba(244,241,234,0.5); margin-top: 4px; }
+  .sidebar nav a { display: block; padding: 7px 20px; font-size: 12.5px; color: rgba(244,241,234,0.7); text-decoration: none; border-left: 2px solid transparent; transition: all 0.15s; }
+  .sidebar nav a:hover, .sidebar nav a.active { color: var(--creme); border-left-color: var(--cuivre); background: rgba(244,241,234,0.06); }
+  .sidebar nav .section-head { padding: 14px 20px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(244,241,234,0.35); font-weight: 600; }
+  .doc-nav { margin-top: 24px; padding: 16px 20px 0; border-top: 0.5px solid rgba(244,241,234,0.15); }
+  .doc-nav p { font-size: 11px; color: rgba(244,241,234,0.4); margin-bottom: 8px; }
+  .doc-nav a { display: block; font-size: 12px; color: rgba(244,241,234,0.6); text-decoration: none; padding: 4px 0; }
+  .doc-nav a:hover { color: var(--cuivre); }
+
+  .main { margin-left: 240px; max-width: 920px; padding: 48px 56px; }
+
+  .doc-header { border-bottom: 1px solid var(--gris-clair); padding-bottom: 24px; margin-bottom: 40px; }
+  .doc-header .doc-tag { display: inline-block; background: var(--cuivre); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px; letter-spacing: 0.04em; }
+  .doc-header h1 { font-family: 'Archivo', sans-serif; font-size: 32px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .doc-header .meta { display: flex; gap: 20px; font-size: 13px; color: var(--gris); flex-wrap: wrap; }
+
+  .section { margin-bottom: 48px; scroll-margin-top: 24px; }
+  h2 { font-family: 'Archivo', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--gris-clair); color: var(--vert); }
+  h3 { font-family: 'Archivo', sans-serif; font-size: 17px; font-weight: 600; margin: 28px 0 12px; color: var(--encre); }
+  h4 { font-family: 'Archivo', sans-serif; font-size: 13px; font-weight: 600; margin: 20px 0 8px; color: var(--gris); text-transform:uppercase; letter-spacing:0.04em; }
+  p { margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 12px 0 20px; }
+  th { background: var(--vert); color: var(--creme); padding: 9px 12px; text-align: left; font-weight: 600; font-size: 12px; }
+  td { padding: 8px 12px; border-bottom: 0.5px solid var(--gris-clair); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(244,241,234,0.5); }
+  tr:last-child td { border-bottom: none; }
+  td code { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: rgba(31,68,56,0.07); color: var(--vert); padding: 2px 6px; border-radius: 4px; }
+  pre { background: #1A1A2E; color: #E8E6E3; border-radius: var(--radius); padding: 18px 20px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; overflow-x: auto; margin: 14px 0; }
+  pre .comment { color: #6B7A8D; }
+  pre .key { color: #82AAFF; }
+  pre .str { color: #C3E88D; }
+  pre .num { color: #F78C6C; }
+  pre .kw { color: #C792EA; }
+  pre .fn { color: #82AAFF; }
+
+  .callout { border-radius: var(--radius); padding: 14px 16px; margin: 16px 0; font-size: 14px; display: flex; gap: 12px; align-items: flex-start; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: rgba(31,68,56,0.06); border-left: 3px solid var(--vert); }
+  .callout.warning { background: rgba(216,114,43,0.08); border-left: 3px solid var(--cuivre); }
+  .callout.danger { background: rgba(192,57,43,0.07); border-left: 3px solid var(--rouge); }
+  .callout.tip { background: #EAF3DE; border-left: 3px solid #27500A; }
+  .callout strong { display: block; font-weight: 600; margin-bottom: 4px; color: var(--encre); }
+
+  .stack-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:14px; margin: 16px 0; }
+  .stack-card { background:#fff; border:0.5px solid var(--gris-clair); border-radius:var(--radius); padding:16px; }
+  .stack-card h4 { margin-top:0; color: var(--vert); }
+  .stack-card .choice { font-family:'Archivo', sans-serif; font-weight:700; font-size:16px; margin-bottom:6px; }
+  .stack-card .why { font-size:13px; color: var(--gris); }
+
+  .arch-diagram {
+    background:#fff; border:1px solid var(--gris-clair); border-radius:var(--radius);
+    padding:20px; margin:16px 0; font-family:'JetBrains Mono', monospace; font-size:12.5px;
+    overflow-x:auto; line-height:1.6;
+  }
+
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+  .tag.green { background: #EAF3DE; color: #27500A; }
+  .tag.amber { background: #FAEEDA; color: #633806; }
+  .tag.coral { background: #FAECE7; color: #712B13; }
+  .tag.blue { background: #E6F1FB; color: #0C447C; }
+
+  .checklist { list-style:none; margin: 12px 0; }
+  .checklist li { padding: 6px 0 6px 28px; position:relative; font-size:14px; }
+  .checklist li::before { content:"☐"; position:absolute; left:0; color: var(--vert); font-size:16px; }
+
+  @media print { .sidebar { display: none; } .main { margin-left: 0; padding: 24px; } }
+  @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; padding: 24px 20px; } .stack-grid{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div style="background:#E6F4EC;border:2px dashed #0C7F54;border-radius:10px;padding:12px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#0F2A24"><b>⚠️ Pivot du 18/09/2026 (soir) — remplace le bandeau du 17/09.</b> Ce document décrit le modèle « espèces à domicile par l'agent » d'août. <b>Ce modèle n'existe plus</b> : l'<b>agent de caisse mobile est supprimé</b>, et avec lui les courses, les tournées, les zones, le planning, la flotte, le fond de caisse, le rendu de monnaie, les dépôts en automate Cash Services et le découpage « 1 000 € d'espèces + complément carte ». Il reste <b>deux moyens de paiement</b>, tous deux achetés au comptoir d'un commerce : le <b>Bon d’achat PayEnCash</b> (bon d'achat prépayé émis par AJEK, vendu par un réseau de commerçants sous contrat — art. L521-3 CMF ; tables <code>gift_cards</code> · <code>gift_card_movements</code>) <i>(20/09 : le rail d'un prestataire en ligne est supprimé — le débit du bon est le seul valideur ; <code>psp_transactions</code> · <code>payment_tenders</code>, dont <code>method</code> vaut désormais <code>bon</code>, et lui seul — plus jamais <code>cash</code> ni <code>card</code>). Côté commerçant, le <b>reversement mensuel est abandonné</b> : sa carte bancaire enregistrée est <b>prélevée à chaque vente</b> du montant moins sa commission (1,10 % HT + TVA), via <b>Stripe</b> ; <b>un refus de la banque = aucun bon d’achat émis</b> (<code>partner_cards</code> · <code>partner_charges</code>). <b>Tout ce qui est écrit ici sur l'agent, la collecte, le dépôt, le dispatch ou un « point d'encaissement » est caduc</b> ; ce qui porte sur le catalogue, le prix, les fournisseurs et la commande reste vrai. Référence à jour : <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html" style="color:#0C7F54;font-weight:700">Étape 4</a> et <code>CLAUDE.md</code>.</div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">PayEn<span class="accent">Cash</span></div>
+    <div class="doc-num">Documentation technique · v2.0 (encaissement à domicile)</div>
+  </div>
+  <nav>
+    <div class="section-head">Document 5</div>
+    <a href="#intro">Introduction</a>
+    <a href="#stack">Stack technique recommandée</a>
+    <a href="#carte-charte">Carte live d'encaissement (charte)</a>
+    <a href="#archi-globale">Architecture globale</a>
+    <a href="#file-attente">File d'attente asynchrone</a>
+    <a href="#jobs-cron">Jobs CRON</a>
+    <a href="#environnements">Environnements</a>
+    <a href="#securite">Sécurité</a>
+    <a href="#auth-manager">Authentification espace manager</a>
+    <a href="#chiffrement">Chiffrement des données voyageurs</a>
+    <a href="#rgpd">Conformité RGPD</a>
+    <a href="#monitoring">Monitoring et alerting</a>
+    <a href="#checklist-lancement">Checklist avant lancement</a>
+  </nav>
+  <div class="doc-nav">
+    <p>Documents</p>
+    <a href="01-flux-metier.html">← Doc 1 : Flux métier</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">← Doc 2 : Schéma BDD</a>
+    <a href="03-api-specs.html">← Doc 3 : Spécifications API</a>
+    <a href="04-pricing.html">← Doc 4 : Logique de pricing</a>
+    <a href="06-segment-maghreb.html">→ Doc 6 : Segment Maghreb</a>
+    <a href="07-annulations-remboursements.html">→ Doc 7 : Annulations &amp; remboursements</a>
+    <a href="08-mecanisme-financier.html">→ Doc 8 : Mécanisme financier</a>
+    <a href="09-espace-manager.html">→ Doc 9 : Espace Manager</a>
+    <a href="10-compte-utilisateur.html">→ Doc 10 : Compte utilisateur</a>
+    <a href="11-ui-v2.html">→ Doc 11 : UI v2 (écrans)</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">📖 Glossaire central des champs</a>
+  </div>
+</aside>
+
+<main class="main">
+<div class="bandeau-socle" style="background:#FDF1E7;border:1px solid #E39A2E;border-left:5px solid #E39A2E;border-radius:10px;padding:13px 17px;margin:0 0 28px;font-size:13.5px;line-height:1.65;color:#7a5410">⚠️ <b>Document socle (juillet 2026)</b> — conservé comme référence technique. Les décisions <b>À JOUR</b> vivent dans le fil rouge (10 étapes)&nbsp;: <a href="../ESPACE-COMMERCANT/documents/diagramme-principal.html" style="color:#0c7f54;font-weight:700">diagramme principal</a>. En cas d'écart, le fil rouge fait foi (ex.&nbsp;: carte bleue en complément, Mondial Relay, F13, codes promo fournisseurs).</div>
+
+
+  <div class="doc-header">
+    <span class="doc-tag">Document 5 / 11</span>
+    <h1>Architecture technique</h1>
+    <div class="meta">
+      <span>Projet PayEnCash</span>
+      <span>Version 1.0</span>
+      <span>Juin 2026</span>
+    </div>
+  </div>
+
+  <section class="section" id="intro">
+    <h2>Introduction</h2>
+    <p>Ce document décrit la stack recommandée, l'architecture globale du système, la stratégie de traitement asynchrone (indispensable pour découpler la <strong>validation de la collecte agent</strong> des appels fournisseurs Duffel/Hotelbeds, Doc 3), le <strong>canal temps réel</strong> du suivi d'encaissement, le service de <strong>dispatch</strong>, l'<strong>espace agent</strong> et le nouveau bounded-context « encaissement », les environnements, et la politique de sécurité et de conformité RGPD pour les données sensibles (voyageurs, géolocalisation, photos de preuve) définies au Doc 2.</p>
+  </section>
+
+  <section class="section" id="stack">
+    <h2>Stack technique recommandée</h2>
+    <div class="stack-grid">
+      <div class="stack-card">
+        <h4>Backend</h4>
+        <div class="choice">Node.js + TypeScript</div>
+        <p class="why">Écosystème mature pour les intégrations API multiples (Duffel, Hotelbeds) et pour le temps réel (WebSocket/SSE) du suivi d'encaissement. TypeScript apporte la sécurité de typage indispensable sur les calculs de prix (Doc 4) où une erreur de type peut coûter de l'argent réel.</p>
+      </div>
+      <div class="stack-card">
+        <h4>Base de données</h4>
+        <div class="choice">PostgreSQL 16+</div>
+        <p class="why">Imposé par le schéma du Doc 2 (JSONB, UUID, extension PostGIS pour les <strong>zones d'encaissement</strong> et le <strong>suivi de position agent</strong>, contraintes CHECK avancées).</p>
+      </div>
+      <div class="stack-card">
+        <h4>File d'attente</h4>
+        <div class="choice">BullMQ (sur Redis)</div>
+        <p class="why">Nécessaire pour découpler la validation de la collecte agent (qui doit répondre vite, Doc 3) des appels Duffel/Hotelbeds et du dispatch (qui peuvent prendre plusieurs secondes). Retry automatique intégré avec backoff exponentiel.</p>
+      </div>
+      <div class="stack-card">
+        <h4>Frontend</h4>
+        <div class="choice">React + Vite (ou Next.js)</div>
+        <p class="why">Cohérent avec les prototypes HTML déjà construits (tunnel de vente) — composants réutilisables pour le slider budget, le stepper voyageurs, la bascule jour/nuit.</p>
+      </div>
+      <div class="stack-card">
+        <h4>Chiffrement</h4>
+        <div class="choice">Chiffrement applicatif AES-256-GCM</div>
+        <p class="why">Pour les colonnes <code>*_enc</code> de <code>order_travelers</code> (Doc 2) — voir section Chiffrement plus bas pour le choix précis et sa justification.</p>
+      </div>
+      <div class="stack-card">
+        <h4>Hébergement</h4>
+        <div class="choice">Auto-hébergé — OVH + CapRover</div>
+        <p class="why">Déploiement sur serveur <strong>OVH</strong> (données en France/UE, conformité RGPD simplifiée) via <strong>CapRover</strong> (PaaS auto-hébergé : build, déploiement, TLS, scaling des conteneurs). Cohérent avec l'architecture de déploiement existante de PayEnCash.</p>
+      </div>
+      <div class="stack-card">
+        <h4>Temps réel</h4>
+        <div class="choice">WebSocket ou SSE</div>
+        <p class="why">Canal temps réel pour la <strong>carte live d'encaissement</strong> (position agent + ETA) côté client, et les notifications de tournée côté <strong>espace agent</strong> (nouvelle tournée, réassignation), style VTC (Doc 1, Doc 3). Alimenté par les heartbeats de position <code>POST /deliveries/{id}/location</code>.</p>
+      </div>
+      <div class="stack-card">
+        <h4>Notifications push</h4>
+        <div class="choice">Firebase Cloud Messaging (FCM)</div>
+        <p class="why">Standard de facto pour les notifications push cross-platform. Nécessite un compte Firebase et l'intégration du SDK dans l'app. Le token FCM par appareil est stocké dans <code>users.push_token</code> (Doc 2) et mis à jour à chaque ouverture de l'app. Utilisé pour les alertes de prix (Doc 10) et les rappels pré-départ (Doc 7).</p>
+      </div>
+      <div class="stack-card">
+        <h4>SMS OTP (authentification)</h4>
+        <div class="choice">Brevo SMS</div>
+        <p class="why">Prestataire retenu (déjà utilisé pour l'email transactionnel PayEnCash). Service tiers indépendant des fournisseurs voyage. À vérifier au paramétrage : coverage France + Maghreb (segment Royal Air Maroc, Air Algérie, Tunisair, Doc 6) et quotas d'envoi. Utilisé pour le flux OTP du Doc 10.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="carte-charte">
+    <h2>Carte live d'encaissement (charte)</h2>
+    <p>Le suivi de l'encaissement (écran <em>suivi agent</em>, UI v2 — Doc 11) s'appuie sur une <strong>carte live</strong> affichant la position de l'agent et l'<strong>ETA</strong>, alimentée en temps réel par <code>delivery_tracking_events (courier_lat, courier_lng)</code> et les zones <code>delivery_zones</code> (Doc 2 ; extension PostGIS pour le dispatch de proximité). Le rendu doit respecter la charte produit (<code>DESIGN_SYSTEM</code>), <strong>jamais le style par défaut du SDK</strong>.</p>
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div><strong>Note d'implémentation — carte en charte</strong>
+        <ul>
+          <li>SDK au choix (MapLibre / Mapbox / Google Maps), mais <strong>markers custom obligatoires</strong> : agent en mouvement vert (<code>#10A06A</code>), domicile du client encre (<code>#0F2A24</code>), position live de l'agent vert foncé (<code>#0C7F54</code>).</li>
+          <li><strong>Interdiction du style par défaut</strong> du SDK (pin bleu/rouge, point bleu de géolocalisation). Aucun bleu/rouge sur la carte ; l'orange est réservé à l'urgence (retard).</li>
+          <li>Affichage temps réel : position de l'agent + <strong>ETA</strong>, poussés via le canal WS/SSE (heartbeats <code>POST /deliveries/{id}/location</code>, Doc 3).</li>
+          <li>Actions : « Appeler l'agent » et suivi du statut de la tournée (assigné → en route → arrivé → collecté), dérivé de <code>deliveries.status</code> (Doc 2).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="archi-globale">
+    <h2>Architecture globale</h2>
+    <svg viewBox="0 0 760 390" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:760px;display:block;margin:12px 0 16px;" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12">
+      <rect width="760" height="390" rx="10" fill="#F7F5F0"/>
+      <defs>
+        <marker id="ga1" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#1F4438"/></marker>
+        <marker id="ga2" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#6B6966"/></marker>
+        <marker id="ga3" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#D8722B"/></marker>
+      </defs>
+
+      <!-- App client -->
+      <rect x="20" y="24" width="140" height="46" rx="8" fill="#1F4438"/>
+      <text x="90" y="45" fill="#F7F5F0" font-weight="700" font-size="12" text-anchor="middle">App client</text>
+      <text x="90" y="61" fill="#9FC2B0" font-size="9.5" text-anchor="middle">React / Vite · carte live</text>
+
+      <!-- Espace agent -->
+      <rect x="20" y="90" width="140" height="46" rx="8" fill="#D8722B"/>
+      <text x="90" y="111" fill="#FFFFFF" font-weight="700" font-size="12" text-anchor="middle">Espace agent</text>
+      <text x="90" y="127" fill="rgba(255,255,255,0.85)" font-size="9.5" text-anchor="middle">tournées · position · collecte</text>
+
+      <!-- Espace manager -->
+      <rect x="20" y="156" width="140" height="46" rx="8" fill="#2E6650"/>
+      <text x="90" y="177" fill="#F7F5F0" font-weight="700" font-size="12" text-anchor="middle">Espace Manager</text>
+      <text x="90" y="193" fill="#9FC2B0" font-size="9.5" text-anchor="middle">sous-domaine isolé</text>
+
+      <!-- Flèches clients → gateway -->
+      <line x1="160" y1="47" x2="255" y2="102" stroke="#1F4438" stroke-width="1.5" marker-end="url(#ga1)"/>
+      <line x1="160" y1="113" x2="255" y2="116" stroke="#D8722B" stroke-width="1.5" marker-end="url(#ga3)"/>
+      <line x1="160" y1="179" x2="255" y2="132" stroke="#2E6650" stroke-width="1.5" marker-end="url(#ga1)"/>
+      <text x="208" y="150" fill="#D8722B" font-size="8.5" text-anchor="middle">POST collect</text>
+      <text x="208" y="160" fill="#D8722B" font-size="8.5" text-anchor="middle">(code + photo)</text>
+
+      <!-- WS/SSE temps réel -->
+      <line x1="256" y1="92" x2="162" y2="52" stroke="#0C7F54" stroke-width="1.3" stroke-dasharray="5,3"/>
+      <text x="212" y="78" fill="#0C7F54" font-size="8.5" text-anchor="middle">WS/SSE position + ETA</text>
+
+      <!-- API Gateway -->
+      <rect x="258" y="82" width="185" height="66" rx="8" fill="#D8722B"/>
+      <text x="350" y="104" fill="#FFFFFF" font-weight="700" font-size="13" text-anchor="middle">API Gateway</text>
+      <text x="350" y="120" fill="rgba(255,255,255,0.85)" font-size="9.5" text-anchor="middle">Node.js + TypeScript</text>
+      <text x="350" y="134" fill="rgba(255,255,255,0.75)" font-size="9" text-anchor="middle">REST + WS/SSE (temps réel)</text>
+
+      <!-- Gateway → dépendances -->
+      <line x1="350" y1="148" x2="350" y2="188" stroke="#6B6966" stroke-width="1.5" marker-end="url(#ga2)"/>
+      <line x1="418" y1="148" x2="520" y2="188" stroke="#6B6966" stroke-width="1.5" marker-end="url(#ga2)"/>
+      <line x1="278" y1="148" x2="150" y2="236" stroke="#6B6966" stroke-width="1.5" marker-end="url(#ga2)"/>
+
+      <!-- PostgreSQL -->
+      <rect x="258" y="190" width="185" height="52" rx="8" fill="#1F4438"/>
+      <text x="350" y="212" fill="#F7F5F0" font-weight="700" text-anchor="middle">PostgreSQL 16</text>
+      <text x="350" y="228" fill="#9FC2B0" font-size="9" text-anchor="middle">tables Doc 2 + PostGIS (zones/tracking)</text>
+
+      <!-- Redis/BullMQ -->
+      <rect x="470" y="190" width="185" height="52" rx="8" fill="#6B6966"/>
+      <text x="562" y="211" fill="#FFFFFF" font-weight="700" text-anchor="middle">Redis / BullMQ</text>
+      <text x="562" y="227" fill="rgba(255,255,255,0.85)" font-size="9" text-anchor="middle">dispatch · booking · tracking · rating</text>
+
+      <!-- Vault -->
+      <rect x="20" y="236" width="150" height="48" rx="8" fill="#444444"/>
+      <text x="95" y="258" fill="#FFFFFF" font-weight="700" text-anchor="middle">Vault / Secrets</text>
+      <text x="95" y="274" fill="rgba(255,255,255,0.8)" font-size="9.5" text-anchor="middle">clés API + chiffrement</text>
+
+      <!-- Redis → fournisseurs -->
+      <line x1="520" y1="242" x2="518" y2="300" stroke="#D8722B" stroke-width="1.5" marker-end="url(#ga3)"/>
+      <line x1="605" y1="242" x2="625" y2="300" stroke="#D8722B" stroke-width="1.5" marker-end="url(#ga3)"/>
+
+      <!-- Fournisseurs -->
+      <rect x="470" y="302" width="90" height="48" rx="8" fill="#D8722B"/>
+      <text x="515" y="322" fill="#FFFFFF" font-weight="600" text-anchor="middle">Duffel</text>
+      <text x="515" y="338" fill="rgba(255,255,255,0.85)" font-size="8.5" text-anchor="middle">vols · solde prépayé</text>
+
+      <rect x="568" y="302" width="120" height="48" rx="8" fill="#D8722B"/>
+      <text x="628" y="322" fill="#FFFFFF" font-weight="600" text-anchor="middle">Hotelbeds</text>
+      <text x="628" y="338" fill="rgba(255,255,255,0.85)" font-size="8.5" text-anchor="middle">hôtels · post-payé</text>
+
+      <!-- Note déclencheur -->
+      <text x="380" y="375" fill="#6B6966" font-size="9.5" text-anchor="middle">La validation de collecte (espace agent : code + photo) remplace l'ancien webhook et déclenche la Phase 5 (booking Duffel/Hotelbeds).</text>
+    </svg>
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div><strong>Point clé</strong> Il n'y a plus de webhook de prestataire de paiement. C'est la <strong>validation de la collecte par l'agent</strong> (route <code>POST /deliveries/{id}/collect</code> depuis l'espace agent, Doc 3) qui pousse immédiatement le job de Phase 5 dans la file d'attente, plutôt que de traiter la logique métier en synchrone. Le suivi d'encaissement (position + ETA) transite par un canal <strong>temps réel WS/SSE</strong> exposé par le même API Gateway.</div>
+    </div>
+  </section>
+
+  <section class="section" id="file-attente">
+    <h2>File d'attente asynchrone</h2>
+    <p>Trois jobs distincts doivent être mis en file après la <strong>validation de la collecte agent</strong> (Doc 1, Phase 5) :</p>
+    <table>
+      <thead><tr><th>Job</th><th>Déclenché par</th><th>Tentatives max</th><th>Backoff</th></tr></thead>
+      <tbody>
+        <tr><td><code>book-flight</code></td><td>Validation collecte agent</td><td>3</td><td>2s, 8s, 30s</td></tr>
+        <tr><td><code>book-stay</code></td><td>Validation collecte agent (parallèle au précédent)</td><td>3</td><td>2s, 8s, 30s</td></tr>
+        <tr><td><code>send-confirmation</code></td><td>Succès des deux jobs précédents</td><td>5</td><td>5s, 15s, 60s, 300s, 900s</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Implémentation (pseudo-code)</h4>
+    <pre><span class="comment">// Dans le handler de validation de collecte (POST /deliveries/{id}/collect), après transaction DB réussie (Doc 2)</span>
+<span class="kw">await</span> flightQueue.add(<span class="str">'book-flight'</span>, { orderId }, {
+  attempts: <span class="num">3</span>,
+  backoff: { type: <span class="str">'exponential'</span>, delay: <span class="num">2000</span> }
+});
+
+<span class="kw">if</span> (order.hasAccommodation) {
+  <span class="kw">await</span> stayQueue.add(<span class="str">'book-stay'</span>, { orderId }, {
+    attempts: <span class="num">3</span>,
+    backoff: { type: <span class="str">'exponential'</span>, delay: <span class="num">2000</span> }
+  });
+}
+
+<span class="comment">// Worker séparé, écoute les deux queues</span>
+flightQueue.on(<span class="str">'completed'</span>, <span class="kw">async</span> (job) => {
+  <span class="kw">await</span> checkAndFinalizeOrder(job.data.orderId);
+});
+
+<span class="kw">async function</span> <span class="fn">checkAndFinalizeOrder</span>(orderId) {
+  <span class="kw">const</span> bookings = <span class="kw">await</span> db.supplier_bookings.findByOrderId(orderId);
+  <span class="kw">const</span> allDone = bookings.every(b => b.status === <span class="str">'success'</span>);
+  <span class="kw">if</span> (allDone) {
+    <span class="kw">await</span> db.orders.update(orderId, { status: <span class="str">'CONFIRMED'</span>, confirmed_at: now() });
+    <span class="kw">await</span> confirmationQueue.add(<span class="str">'send-confirmation'</span>, { orderId });
+  }
+}</pre>
+
+    <h4>Jobs d'encaissement (agent)</h4>
+    <p>Le sous-système encaissement ajoute ses propres jobs, déclenchés à différents moments du flux :</p>
+    <table>
+      <thead><tr><th>Job</th><th>Déclenché par</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>dispatch-courier</code></td><td>Génération du code (<code>AWAITING_COURIER</code>)</td><td>Sélection de l'agent (zone · distance prioritaire · note · limites) et attribution</td></tr>
+        <tr><td><code>reassign-courier</code></td><td>Timeout d'acceptation / indisponibilité</td><td>Réaffecte la tournée à un autre agent (exclut le précédent)</td></tr>
+        <tr><td><code>notify-tracking</code></td><td>Heartbeat de position agent</td><td>Pousse position + ETA au client via WS/SSE</td></tr>
+        <tr><td><code>request-rating</code></td><td>Commande <code>CONFIRMED</code></td><td>Invite le client à noter l'agent (1-5★)</td></tr>
+        <tr><td><code>lock-courier-on-cash</code></td><td>Validation de collecte</td><td>Incrémente <code>couriers.cash_on_hand_cents</code> et <strong>retire l'agent du dispatch de collecte</strong> jusqu'à déclaration de son dépôt (D15). <strong>Le verrou ne porte que sur les tournées d'encaissement</strong> : les tournées de retour (<code>is_return = true</code>) restent proposables, et ne sont proposables qu'aux agents dont l'encours couvre le montant à rendre — c'est précisément cet encours qui les finance (D18). Appliquer le verrou sans cette distinction rendrait tout remboursement impossible : les seuls agents en mesure de rendre des espèces seraient les seuls exclus</td></tr>
+        <tr><td><code>reconcile-deposits</code></td><td>Import du rapport <strong>Cash Services</strong></td><td>Rapproche les dépôts <code>declared</code> (passage à l'état <code>on_account</code> une fois confirmés) avec les lignes du rapport du réseau <strong>Cash Services</strong>, impute aux encaissements, remonte les écarts au manager</td></tr>
+        <tr><td><code>run-courier-payouts</code></td><td>Échéance de ventilation</td><td>Virements de paie depuis Qonto — <strong>uniquement</strong> sur des fonds confirmés présents sur le compte. Idempotent par période et par agent</td></tr>
+        <tr><td><code>retry-supplier-settlement</code></td><td>Échec fournisseur après collecte (D4)</td><td>Met en attente puis retente ; si irrésoluble → remboursement par retour cash agent</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="jobs-cron">
+    <h2>Jobs CRON planifiés</h2>
+    <table>
+      <thead><tr><th>Fréquence</th><th>Job</th><th>Référence</th></tr></thead>
+      <tbody>
+        <tr><td>Toutes les minutes</td><td>Expiration de la fenêtre de collecte — commandes dépassant <code>collection_deadline_at</code> sans collecte → <code>EXPIRED</code></td><td>Doc 2, requête type n°5</td></tr>
+        <tr><td>Toutes les 5 minutes</td><td>Nettoyage des commandes <code>DRAFT</code> &gt; 30 min — purge aussi les lignes <code>flight_search_results</code> et <code>stay_search_results</code> associées (Doc 2)</td><td>Doc 1, table cas d'erreur</td></tr>
+        <tr><td>Toutes les 15 minutes</td><td>Synchronisation du solde <code>provider_wallets</code> — <strong>Duffel uniquement</strong> (Hotelbeds est post-payé, hors wallet)</td><td>Doc 3, section Duffel Balance</td></tr>
+        <tr><td>Toutes les heures</td><td>Vérification des alertes de prix actives (<code>price_alerts.is_active = true</code>, non expirées) — appel Duffel GET /air/offers pour chaque route surveillée (grouper les alertes par route pour minimiser les appels API), notification push FCM si prix sous le seuil (Doc 10)</td><td>Doc 10, section alertes prix</td></tr>
+        <tr><td>Toutes les 2 minutes</td><td>Réévaluation du dispatch — encaissements <code>AWAITING_COURIER</code> sans agent assigné : relance <code>dispatch-courier</code>, et <code>reassign-courier</code> sur timeout d'acceptation</td><td>Doc 1 (dispatch) · Doc 3</td></tr>
+        <tr><td>Quotidien (8h du matin)</td><td>Rappel email/SMS pré-départ J-7 : pour chaque commande <code>CONFIRMED</code> dont <code>flight_offers.departure_at</code> est dans 7 jours ± 12h (Doc 7, section Rappel pré-départ)</td><td>Doc 7, section Rappel pré-départ</td></tr>
+        <tr><td>Quotidien (8h du matin)</td><td>Rappel email/SMS pré-départ J-1 : pour chaque commande <code>CONFIRMED</code> dont <code>flight_offers.departure_at</code> est dans 24h ± 6h — insertion simultanée dans <code>customer_calls</code> (type <code>pre_departure_reminder</code>) si aucun appel de ce type n'existe déjà (Doc 7 + Doc 9)</td><td>Doc 7 + Doc 9</td></tr>
+        <tr><td>Quotidien (3h du matin)</td><td>Réconciliation comptable : <code>wallet_transactions</code> vs solde Duffel réel ; contrôle des écarts entre cash collecté, déposé (<code>declared</code>) et rapproché (<code>reconciled</code>) ; agrégation de la <strong>TVA collectée</strong> (∑ <code>vat_amount_cents</code>) pour la période</td><td>Doc 2 · Doc 8</td></tr>
+        <tr><td>Quotidien (6h du matin)</td><td><strong>Import du rapport de dépôts Cash Services</strong> — récupération des dépôts confirmés auprès du réseau <strong>Cash Services</strong> (carte nominative par agent), parsing idempotent (clé = référence de dépôt), passage des dépôts <code>declared</code> à l'état <code>on_account</code>, puis rapprochement avec les dépôts agents déclarés. Un format inattendu met le fichier en <code>failed</code> : <strong>jamais d'import partiel silencieux</strong></td><td>Doc 3 §8 · Doc 8</td></tr>
+        <tr><td>Quotidien (7h du matin)</td><td><strong>Synchronisation Qonto</strong> — confirme quels virements sont réellement arrivés sur le compte (<code>treasury_transfers.status = confirmed</code>). Seuls ces fonds deviennent ventilables en paie</td><td>Doc 3 §9 · Doc 9</td></tr>
+        <tr><td>Quotidien (4h du matin)</td><td>Purge des <code>otp_codes</code> expirés et utilisés (> 24h) — éviter la croissance non bornée de cette table qui reçoit des inserts fréquents (Doc 10)</td><td>Doc 10, section inscription</td></tr>
+        <tr><td>Hebdomadaire (dimanche)</td><td>Recalcul des marges de sécurité calibrées (percentile 95)</td><td>Doc 4, section Calibrage</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="environnements">
+    <h2>Environnements</h2>
+    <table>
+      <thead><tr><th>Environnement</th><th>Duffel</th><th>Hotelbeds</th><th>Usage</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Local / Dev</strong></td><td>Sandbox (<code>duffel_test_</code>)</td><td>Test environment</td><td>Développement quotidien, aucune transaction réelle</td></tr>
+        <tr><td><strong>Staging</strong></td><td>Sandbox</td><td>Test environment</td><td>Tests d'intégration de bout en bout avant mise en prod</td></tr>
+        <tr><td><strong>Production</strong></td><td>Live (<code>duffel_live_</code>)</td><td>Production</td><td>Transactions réelles, solde Duffel réellement débité</td></tr>
+      </tbody>
+    </table>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Isolation stricte des clés</strong> Les clés API <code>test</code> et <code>live</code> ne doivent jamais coexister dans la même configuration de déploiement. Recommandation : variables d'environnement distinctes par environnement (jamais de clé live committée, même chiffrée, dans un dépôt accessible aux environnements non-production).</div>
+    </div>
+  </section>
+
+  <section class="section" id="securite">
+    <h2>Sécurité</h2>
+    <table>
+      <thead><tr><th>Domaine</th><th>Mesure</th></tr></thead>
+      <tbody>
+        <tr><td>Validation de collecte</td><td>Agent authentifié (JWT), code de sécurité vérifié contre son hash, photo de preuve exigée, idempotence sur <code>deliveries.id</code> — avant tout achat fournisseur (Doc 3)</td></tr>
+        <tr><td>Géolocalisation &amp; photos</td><td>Position live (client + agent) et photos de preuve = données personnelles sensibles : stockage chiffré, bucket à accès restreint, rétention bornée (D10, voir RGPD)</td></tr>
+        <tr><td>Secrets API</td><td>Stockage en vault (ex. HashiCorp Vault, ou solution managée de l'hébergeur) — jamais en clair dans le code ou les logs</td></tr>
+        <tr><td>Rate limiting</td><td>Limitation des requêtes sur les endpoints publics (génération de code, recherche d'offres) pour prévenir les abus</td></tr>
+        <tr><td>Logs</td><td>Aucune donnée personnelle (nom, date de naissance, numéro de téléphone) ne doit apparaître en clair dans les logs applicatifs</td></tr>
+        <tr><td>Accès base de données</td><td>Comptes applicatifs avec permissions minimales (pas de superuser pour le service API), accès admin séparé et audité</td></tr>
+        <tr><td>Communication interne</td><td>TLS obligatoire pour tous les échanges, y compris entre l'API et la file d'attente Redis si hébergés séparément</td></tr>
+        <tr><td>Logiciel de caisse</td><td>Système d'enregistrement du cash encaissé par les agents <strong>sécurisé, inaltérable et archivé</strong>, conforme à l'obligation de certification des logiciels de caisse (<strong>art. 286-I-3° bis du CGI</strong>) — attestation individuelle de conformité (éditeur ou certification type NF525) à obtenir avant mise en production</td></tr>
+        <tr><td>KYC client (gradué)</td><td>Vérification d'identité par paliers : simple déclaratif jusqu'à <strong>3 achats</strong> ou <strong>1 000 € cumulés sur 7 jours</strong> ; au-delà, pièce d'identité (<strong>PVID</strong>, vérification d'identité à distance) exigée avant toute nouvelle commande. Commun aux lignes Voyage et Mode.</td></tr>
+        <tr><td>KYB fournisseurs</td><td>Vérification des tiers avant intégration (statut, SIRET le cas échéant, contrat) — fournisseurs voyage (Duffel, Hotelbeds) et, pour la ligne Mode, les fournisseurs (voir <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html"><code>Étape 4 · flux F11/F12</code></a>)</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Assurances de la société (AJEK SASU)</strong> AJEK souscrit, en tant qu'employeur et exploitant, les couvertures nécessaires à l'activité de collecte de cash : <strong>RC professionnelle</strong> société, <strong>RC exploitation</strong>, assurance <strong>vol d'espèces</strong> (flotte, en transit et en dépôt), et assurance <strong>auto mission</strong> pour les déplacements des agents salariés. Ces assurances sont portées par la société, à distinguer d'une éventuelle RC professionnelle individuelle d'agent — <strong>supprimée</strong>, l'agent étant salarié (voir Doc 8 pour le détail financier).</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div><strong>Assujettissement LCB-FT</strong> À ce stade, AJEK est considérée <strong>non assujettie</strong> aux obligations LCB-FT (à <strong>confirmer par un avis juridique</strong>) — l'encadrement du risque repose sur le plafond de 1 000 €/transaction, l'anti-fractionnement et le KYC/KYB ci-dessus, et non sur un dispositif LCB-FT formel porté par PayEnCash.</div>
+    </div>
+  </section>
+
+  <section class="section" id="auth-manager">
+    <h2>Authentification de l'espace manager</h2>
+    <p>L'espace manager (Doc 9) est une application web distincte de l'app client, avec son propre système d'authentification basé sur la table <code>manager_users</code> (Doc 2). Elle n'est accessible que par la fondatrice (rôle <code>owner</code>) et, à terme, d'éventuels employés (rôle <code>operator</code>).</p>
+    <table>
+      <thead><tr><th>Domaine</th><th>Implémentation recommandée</th></tr></thead>
+      <tbody>
+        <tr><td>Authentification</td><td>Session JWT signée côté serveur — email + mot de passe hashé en bcrypt/argon2 (<code>manager_users.password_hash</code>). Pas de OAuth tiers pour ne pas dépendre d'un service externe pour un accès aussi sensible.</td></tr>
+        <tr><td>Durée de session</td><td>Token d'accès à courte durée (ex. 2h), refresh token en cookie HttpOnly. Pas de "rester connecté" illimité.</td></tr>
+        <tr><td>Séparation des routes</td><td>Les routes <code>/manager/*</code> doivent être sur un sous-domaine ou une application serveur distincte — jamais exposées par le même processus que l'app cliente publique. Pas de partage de session entre l'app client et l'espace manager.</td></tr>
+        <tr><td>Contrôle de rôle</td><td>Vérifier le rôle <code>manager_users.role</code> à chaque requête sensible côté serveur — pas uniquement côté UI. En particulier : modification de <code>margin_config</code>, <code>delivery_fee_config</code>, du taux de TVA (<code>vat_rate</code>) et des zones/limites, ainsi que la <strong>validation des inscriptions agent</strong>, strictement réservée au rôle <code>owner</code> (Doc 9).</td></tr>
+        <tr><td>Logs d'accès</td><td>Toute connexion, déconnexion, et action sensible (modification de marge, annulation manuelle de commande) doit être écrite dans <code>audit_log</code> avec <code>actor</code> = <code>manager_users.display_name</code>.</td></tr>
+        <tr><td>Accès en dehors des locaux</td><td>Considérer un accès restreint par IP ou VPN si l'espace manager est géré depuis un lieu fixe — simple couche supplémentaire au-delà du couple email/mot de passe.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="chiffrement">
+    <h2>Chiffrement des données voyageurs</h2>
+    <p>Les colonnes <code>given_name_enc</code>, <code>family_name_enc</code>, <code>born_on_enc</code> de la table <code>order_travelers</code> (Doc 2) doivent être chiffrées au repos.</p>
+
+    <h4>Choix recommandé : chiffrement applicatif AES-256-GCM</h4>
+    <p>Plutôt que <code>pgcrypto</code> (chiffrement côté PostgreSQL), un chiffrement applicatif est recommandé pour garder la clé de chiffrement totalement hors de la base de données — une fuite de la base seule (dump SQL volé) ne suffit alors pas à exposer les données.</p>
+
+    <pre><span class="kw">const</span> crypto = require(<span class="str">'crypto'</span>);
+
+<span class="kw">function</span> <span class="fn">encryptField</span>(plaintext, key) {
+  <span class="kw">const</span> iv = crypto.randomBytes(<span class="num">12</span>);
+  <span class="kw">const</span> cipher = crypto.createCipheriv(<span class="str">'aes-256-gcm'</span>, key, iv);
+  <span class="kw">const</span> encrypted = Buffer.concat([cipher.update(plaintext, <span class="str">'utf8'</span>), cipher.final()]);
+  <span class="kw">const</span> authTag = cipher.getAuthTag();
+  <span class="comment">// Stocker iv + authTag + encrypted ensemble dans la colonne BYTEA</span>
+  <span class="kw">return</span> Buffer.concat([iv, authTag, encrypted]);
+}
+
+<span class="kw">function</span> <span class="fn">decryptField</span>(stored, key) {
+  <span class="kw">const</span> iv = stored.slice(<span class="num">0</span>, <span class="num">12</span>);
+  <span class="kw">const</span> authTag = stored.slice(<span class="num">12</span>, <span class="num">28</span>);
+  <span class="kw">const</span> encrypted = stored.slice(<span class="num">28</span>);
+  <span class="kw">const</span> decipher = crypto.createDecipheriv(<span class="str">'aes-256-gcm'</span>, key, iv);
+  decipher.setAuthTag(authTag);
+  <span class="kw">return</span> Buffer.concat([decipher.update(encrypted), decipher.final()]).toString(<span class="str">'utf8'</span>);
+}</pre>
+
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Gestion de la clé de chiffrement</strong> La clé AES doit elle-même être stockée dans le vault (jamais dans le code), avec idéalement une rotation périodique gérée par un service de gestion de clés (KMS) plutôt qu'une clé statique unique sur toute la durée de vie du projet.</div>
+    </div>
+
+    <p>Les données déchiffrées ne doivent exister en mémoire que le temps strictement nécessaire à l'appel API (transmission à Duffel, Phase 5 du Doc 1) — jamais mises en cache, jamais journalisées même temporairement.</p>
+  </section>
+
+  <section class="section" id="rgpd">
+    <h2>Conformité RGPD</h2>
+    <table>
+      <thead><tr><th>Obligation</th><th>Application chez PayEnCash</th></tr></thead>
+      <tbody>
+        <tr><td>Minimisation des données</td><td>Seules les données strictement requises par Duffel (nom, prénom, date de naissance) sont collectées — pas de champ "facultatif" superflu</td></tr>
+        <tr><td>Durée de conservation</td><td>Données voyageurs des commandes <strong>sans suite</strong> : purge automatique après 90 jours via job CRON dédié. Les états concernés sont <code>EXPIRED</code>, <code>CANCELLED</code>, <code>COLLECTION_FAILED</code> et <code>REFUNDED</code> — les deux derniers ont été ajoutés par la refonte agent et relèvent de la même règle : aucun voyage n'a eu lieu, rien ne justifie de conserver l'état civil. <code>FAILED</code> est <strong>exclu</strong> de la purge : c'est un état d'attente de résolution, pas un état final, et les données y sont encore nécessaires au retry fournisseur</td></tr>
+        <tr><td>Droit d'accès et de rectification</td><td>Le compte utilisateur (table <code>users</code>) doit permettre la consultation et modification des informations du voyageur principal</td></tr>
+        <tr><td>Droit à l'effacement</td><td>Procédure d'anonymisation des commandes <code>CONFIRMED</code> anciennes (remplacement des champs chiffrés par des valeurs nulles, conservation des montants pour comptabilité légale)</td></tr>
+        <tr><td>Localisation des données</td><td>Hébergement en UE (voir section Stack) — pas de transfert hors UE sauf nécessité strictement liée aux appels API Duffel/Hotelbeds eux-mêmes</td></tr>
+        <tr><td>Géolocalisation &amp; photos de preuve</td><td>Position live (client + agent) et photos de collecte = données personnelles : chiffrées, accès restreint, <strong>rétention bornée</strong> (purge des photos et des traces de position après clôture de la commande / du litige) — décision D10</td></tr>
+        <tr><td>Registre des traitements</td><td>Document interne distinct (hors périmètre technique) à tenir à jour, listant cette base de données comme traitement de données voyageurs</td></tr>
+      </tbody>
+    </table>
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div><strong>Recommandation</strong> Consulter un professionnel du droit pour la rédaction des mentions légales et de la politique de confidentialité — ce document couvre l'implémentation technique de la conformité, pas sa formalisation juridique complète.</div>
+    </div>
+  </section>
+
+  <section class="section" id="monitoring">
+    <h2>Monitoring et alerting</h2>
+    <table>
+      <thead><tr><th>Métrique surveillée</th><th>Seuil d'alerte</th><th>Canal</th></tr></thead>
+      <tbody>
+        <tr><td>Solde Duffel Balance</td><td>&lt; seuil configuré (Doc 2, <code>low_balance_threshold_cents</code>)</td><td>Email + Slack immédiat</td></tr>
+        <tr><td>Échec de règlement Hotelbeds (post-payé)</td><td><code>supplier_bookings.settlement_status = 'failed'</code></td><td>Email + Slack immédiat</td></tr>
+        <tr><td>Taux d'échec <code>supplier_bookings</code></td><td>&gt; 5% sur 1h</td><td>Slack + investigation</td></tr>
+        <tr><td>Validations de collecte en échec (code sécurité erroné / photo manquante)</td><td>&gt; seuil configuré</td><td>Alerte sécurité + supervision manager</td></tr>
+        <tr><td>Aucun agent disponible (dispatch en échec)</td><td>Fenêtre de collecte proche de l'expiration</td><td>Alerte supervision — réassignation / élargissement de zone</td></tr>
+        <tr><td>Écart cash collecté vs déposé</td><td>Tout écart non justifié</td><td>Alerte + rapprochement (conformité cash, Doc 8)</td></tr>
+        <tr><td>Commandes <code>FAILED</code> non remboursées après 1h</td><td>Tout cas</td><td>Alerte critique — remboursement client garanti par retour cash agent</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="checklist-lancement">
+    <h2>Checklist avant lancement en production</h2>
+    <ul class="checklist">
+      <li>Comptes Duffel et Hotelbeds passés en mode <code>live</code>, clés API production en vault</li>
+      <li>Duffel Balance préfinancé avec un capital de départ suffisant — <strong>Duffel uniquement</strong> ; Hotelbeds est post-payé (voir Doc 8 pour le dimensionnement de l'avance)</li>
+      <li>Modalités de règlement Hotelbeds post-payé (facture / VCC) confirmées et testées</li>
+      <li>Réseau d'agents constitué : parcours d'inscription + <strong>validation manager</strong> opérationnel, zones et limites (rayon / tournées simultanées / cash max) configurées</li>
+      <li>Dispatch automatique testé (sélection zone · distance prioritaire · note · limites) + réassignation sur timeout</li>
+      <li>Suivi temps réel (carte live position + ETA) et notifications push agent testés de bout en bout</li>
+      <li>Validation de collecte testée : code de sécurité + photo de preuve, idempotence sur <code>deliveries.id</code>, déclenchement effectif de la Phase 5</li>
+      <li>Clés SDK carto, service de notifications push et bucket de photos (chiffré, rétention bornée) provisionnés</li>
+      <li>Procédure de dépôt du cash par les agents et rapprochement collecté → déposé en place</li>
+      <li>Taux de TVA (<code>vat_rate</code>) configuré et génération de facture HT + TVA + TTC vérifiée (Doc 4 / Doc 10)</li>
+      <li>Test de bout en bout réel : commande complète, cash réel collecté par un agent à domicile, vérification de la réservation effective</li>
+      <li>Jobs CRON activés et vérifiés en environnement de staging avant bascule</li>
+      <li>Politique de confidentialité et mentions légales publiées, validées juridiquement (incl. géolocalisation + photos)</li>
+      <li>Procédure de remboursement par retour cash agent documentée pour l'équipe support</li>
+      <li>Alerting Slack/email opérationnel et testé avant le premier client réel</li>
+    </ul>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div><strong>Cinq surfaces à construire</strong> Le modèle d'encaissement à domicile implique un backend et <strong>quatre frontends</strong> : app client, <strong>espace agent</strong>, espace manager et site vitrine — cinq surfaces au total. Les documents fonctionnels (Doc 6 à Doc 10) détaillent le segment Maghreb, les annulations/remboursements, l'espace manager et le compte utilisateur. Le plan d'implémentation (backend / app client / manager / vitrine / espace agent) sera établi une fois la documentation validée.</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">👗</span>
+      <div><strong>Ligne Mode — hors périmètre de cette architecture</strong> Cette architecture couvre la ligne <strong>Voyage</strong>. La ligne <strong>Mode</strong> (fournisseurs, registre des objets mobiliers, expédition Mondial Relay) n'est pas construite ici et ne doit pas être ajoutée au schéma/API sans cadrage dédié — voir la note séparée <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html"><code>Étape 4 · flux F11/F12</code></a> pour son propre modèle de données (tables <code>partners</code>, <code>mode_articles</code>, <code>mobile_objects_register</code>, <code>shipments</code>).</div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

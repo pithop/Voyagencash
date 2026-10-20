@@ -1,0 +1,173 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Feuille de route — J+40 · PayEnCash</title>
+<style>
+:root{--ajek:#0f7a4d;--ajek-d:#0b5c3a;--ink:#1a1f1c;--muted:#5b675f;--line:#d9e5dd;--bg:#f4f7f5;--card:#fff;--chip:#e8f3ec;--gold:#b8860b;--goldbg:#fdf5e6;--blue:#1d6fa5;--red:#b3261e;
+ --done:#0f7a4d;--doing:#b8860b;--todo:#1d6fa5}
+@media(prefers-color-scheme:dark){:root{--ink:#e8efe9;--muted:#9fb0a6;--line:#254034;--bg:#0d1512;--card:#121d18;--chip:#173026;--goldbg:#241d0f}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.sheet{max-width:1120px;margin:0 auto 60px;background:var(--card);border:1px solid var(--line)}
+header{background:linear-gradient(120deg,var(--ajek),var(--ajek-d));color:#fff;padding:26px 36px}.brand{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.9}header h1{margin:6px 0 2px;font-size:24px}header p{margin:3px 0 0;opacity:.94;font-size:13.5px}
+nav.j{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:8px 36px;display:flex;gap:8px;overflow-x:auto;white-space:nowrap}
+nav.j a{font-size:12.5px;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 11px;flex:none}nav.j a:hover{border-color:var(--ajek);color:var(--ajek)}
+.body{padding:22px 30px 40px}
+h2{font-size:17px;color:var(--ajek-d);margin:30px 0 8px;border-bottom:2px solid var(--line);padding-bottom:6px}@media(prefers-color-scheme:dark){h2{color:#5fd39a}}
+p{margin:8px 0}ul{margin:6px 0 6px 2px;padding-left:20px}li{margin:5px 0}
+.goal{display:flex;gap:14px;flex-wrap:wrap;align-items:center;background:var(--goldbg);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:12px;padding:14px 16px;margin:8px 0}
+.goal .big{font-size:20px;font-weight:800}.goal .d{font-size:13px;color:var(--muted)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;margin:14px 0 6px;align-items:center}
+.legend b{display:inline-flex;align-items:center;gap:6px;font-weight:600}
+.sw{width:22px;height:12px;border-radius:3px;display:inline-block}
+.done{background:var(--done)}.doing{background:var(--doing)}.todo{background:var(--todo)}
+/* GANTT */
+.gwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:10px 0}
+.gantt{min-width:820px}
+.grow{display:grid;grid-template-columns:190px 1fr;border-bottom:1px solid var(--line)}
+.grow:last-child{border-bottom:none}
+.glab{padding:8px 12px;font-size:12.5px;font-weight:700;border-right:1px solid var(--line);display:flex;align-items:center;background:var(--chip)}
+.glab small{font-weight:500;color:var(--muted)}
+.ghead .glab{background:var(--ajek-d);color:#fff}
+.gtrack{position:relative;height:40px}
+.ghead .gtrack{height:30px;background:var(--ajek-d)}
+.gcols{position:absolute;inset:0;display:grid;grid-template-columns:repeat(6,1fr);pointer-events:none}
+.gcols span{border-right:1px dashed var(--line)}
+.ghead .gcell{color:#fff;font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;border-right:1px solid rgba(255,255,255,.2)}
+.gbar{position:absolute;top:8px;height:24px;border-radius:6px;color:#fff;font-size:10.8px;font-weight:700;display:flex;align-items:center;padding:0 7px;overflow:hidden;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.15);text-decoration:none;cursor:pointer}
+a.gbar:hover{filter:brightness(1.12);box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.gbar.done{background:var(--done)}.gbar.doing{background:var(--doing)}.gbar.todo{background:var(--todo)}
+.gms{position:absolute;top:4px;width:0;height:0}
+.gms .star{position:absolute;transform:translate(-50%,0);font-size:18px}
+.gnow{position:absolute;top:0;bottom:0;width:2px;background:var(--red);z-index:2}
+.gnow b{position:absolute;top:-2px;left:4px;font-size:10px;color:var(--red);white-space:nowrap}
+.gend{position:absolute;top:0;bottom:0;width:2px;background:var(--gold);z-index:2}
+.gend b{position:absolute;top:-2px;right:4px;font-size:10px;color:var(--gold);white-space:nowrap}
+/* status table */
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12.8px}th,td{text-align:left;padding:7px 9px;border:1px solid var(--line);vertical-align:top}th{background:var(--chip);font-weight:600}
+.st{font-weight:800;white-space:nowrap}.st.ok{color:var(--done)}.st.go{color:var(--doing)}.st.td{color:var(--todo)}
+.note{background:var(--chip);border:1px solid var(--line);border-left:3px solid var(--ajek);border-radius:8px;padding:12px 14px;font-size:13.5px;color:var(--muted);margin:12px 0}
+.red{background:#fbeae8;border:1px solid var(--line);border-left:3px solid var(--red);border-radius:8px;padding:11px 14px;font-size:13px;color:var(--red);margin:12px 0}@media(prefers-color-scheme:dark){.red{background:#2a1512;color:#e08a80}}
+.ms{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.mi{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:9px 13px}.mi .d{flex:none;font-weight:800;color:var(--ajek-d);min-width:64px}@media(prefers-color-scheme:dark){.mi .d{color:#5fd39a}}
+.toolbar{max-width:1120px;margin:16px auto 0;display:flex;gap:10px;justify-content:flex-end;padding:0 8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 12px;font-size:12.5px;text-decoration:none}.btn.p{background:var(--ajek);color:#fff;border-color:var(--ajek)}
+/* ARBRE — diagramme principal */
+.tree{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:8px 2px}
+.troot{align-self:center;background:linear-gradient(135deg,var(--ajek),var(--ajek-d));color:#fff;border-radius:12px;padding:14px 16px;font-weight:800;font-size:14px;flex:none;text-align:center;box-shadow:0 4px 14px rgba(15,122,77,.3)}
+.troot small{display:block;font-weight:500;font-size:11px;opacity:.9;margin-top:3px}
+.tstem{align-self:center;width:28px;height:3px;background:var(--line);flex:none}
+.tcol{border-left:3px solid var(--line);display:flex;flex-direction:column;gap:12px;padding:8px 0;flex:none}
+.tbranch{display:flex;align-items:center;gap:6px;position:relative;padding-left:24px}
+.tbranch::before{content:'';position:absolute;left:0;top:50%;width:22px;height:3px;background:var(--line)}
+.tbt{font-weight:800;font-size:12.5px;background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:6px 10px;flex:none;white-space:nowrap}
+.tstep{font-size:11.5px;font-weight:700;color:#fff;border-radius:9px;padding:6px 10px;text-decoration:none;flex:none;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.tstep:hover{filter:brightness(1.12)}
+.tstep.d{background:var(--ajek)}.tstep.g{background:var(--gold)}.tstep.t{background:#1d6fa5}
+.tstep.goal{background:var(--gold);color:#fff;border:2px solid #fff;box-shadow:0 0 0 2px var(--gold)}
+.tarr{color:var(--muted);font-weight:800;flex:none;font-size:13px}
+@media print{body{background:#fff}.toolbar,nav.j{display:none}.sheet{border:none}}
+</style><style>/*fresh*/
+:root{--ajek:#10A06A;--ajek-d:#0C7F54;--gold:#E39A2E}
+body{background:
+ radial-gradient(1100px 520px at 92% -12%, rgba(63,217,155,.16), transparent 62%),
+ radial-gradient(900px 460px at -12% 34%, rgba(227,154,46,.09), transparent 58%),
+ radial-gradient(700px 420px at 50% 115%, rgba(16,160,106,.10), transparent 60%),
+ var(--bg)}
+.head{background:linear-gradient(115deg,#0F2A24 0%,#0C7F54 55%,#10A06A 100%)!important;position:relative;overflow:hidden}
+.head::after{content:"";position:absolute;right:-40px;top:-60px;width:220px;height:220px;border-radius:50%;
+ background:radial-gradient(circle,rgba(63,217,155,.35),transparent 65%);pointer-events:none}
+h2{border-bottom:none!important;position:relative;padding-bottom:9px!important}
+h2::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:4px;border-radius:2px;
+ background:linear-gradient(90deg,#10A06A,#3FD99B)}
+.card,.flux,.app,.part,.tbl{transition:transform .16s ease,box-shadow .16s ease}
+.card:hover,.flux:hover,.app:hover,.tbl:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(15,42,36,.13)}
+.btn{transition:transform .12s ease,box-shadow .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(16,160,106,.22)}
+.pill{background:linear-gradient(120deg,#E6F4EC,#d8f3e6)}
+.ok{background:linear-gradient(120deg,#E6F4EC,#f0faf4)}
+.note{background:linear-gradient(120deg,#FDF1E7,#fdf7ee)}
+.gbar .bar i,.part .g i,.lab .g i{background:linear-gradient(90deg,#10A06A,#3FD99B)!important}
+th{background:linear-gradient(115deg,#0C7F54,#10A06A)!important}
+</style>
+<!-- (18/09, soir) Cette feuille de route faisait reposer l'ouverture des paiements avec un bon d’achat sur l'embauche
+     d'un agent de caisse mobile. Cette branche est abandonnée : envoyer un salarié encaisser des espèces au
+     domicile du client expose l'entreprise à un risque humain et à un cadre CNAPS que le projet ne veut pas
+     assumer. Le jalon de lancement ne dépend donc plus d'un recrutement mais de la signature des premiers
+     commerçants partenaires, et d'une condition technique nouvelle : leur carte de règlement doit être enregistrée,
+     puisque le reversement mensuel est remplacé par un prélèvement à chaque vente. -->
+</head><body>
+<div class="toolbar"><a class="btn" href="diagramme-principal.html">🧭 Fil rouge</a><a class="btn" href="diagramme-principal.html">🗺️ Diagramme principal</a><a class="btn p" href="#" onclick="window.print();return false">Imprimer / PDF</a></div>
+<div class="sheet">
+<header><div class="brand">AJEK · PayEnCash — pilotage</div><h1>Feuille de route — J+40</h1><p>Où on en est · qui fait quoi · pour quand · la finalité. Échelle de temps + chantiers + statut.</p></header>
+<nav class="j"><a href="#but">La finalité</a><a href="#gantt">Diagramme principal</a><a href="#statut">Statut par chantier</a><a href="#jalons">Jalons</a><a href="#comptes">Comptes &amp; accès</a><a href="#methode">Tenir les délais</a></nav>
+<div class="body">
+
+<h2 id="but">0 · La finalité (le cap)</h2>
+<div class="goal"><div><div class="big">🎯 J+40 → présenter l'application grand public</div><div class="d">Objectif : <strong>~27 septembre 2026</strong> (40 jours à partir du 18/08). Une app B2C où le client choisit son voyage et <b>paie avec un bon d’achat</b> — un Bon d’achat PayEnCash ou un Bon d’achat PayEnCash , achetés au comptoir d'un commerce. <i>(17/09 : plus de borne · 18/09 au soir : plus d'agent à domicile ; l'app partenaire revient pour VENDRE le bon d’achat, avec un contrat de distribution à faire signer.)</i></div></div></div>
+<p>Ce document répond à ce que le catalogue (l'<a href="index.html">index</a>) ne dit pas : <strong>où on en est, ce qui est fait, ce qui reste, et pour quand</strong>. Il se lit dans le temps, par <strong>chantiers</strong> (branches), avec un <strong>statut</strong> par tâche.</p>
+<div class="legend"><b><span class="sw done"></span>✅ Fait</b><b><span class="sw doing"></span>🔄 En cours / à lancer</b><b><span class="sw todo"></span>⬜ À faire</b><b>★ Jalon</b></div>
+
+<h2 id="gantt">1 · Le diagramme principal — branches &amp; étapes</h2>
+<p>Un seul schéma : la <strong>racine</strong> (notre objectif) → les <strong>branches</strong> (les chantiers) → sur chaque branche, les <strong>étapes</strong> dans l'ordre. Chaque étape est <strong>cliquable</strong> (mène au document) et <strong>colorée par statut</strong>.</p>
+<div class="gwrap"><div class="tree">
+  <div class="troot">🎯 PayEnCash<small>App grand public · J+40</small></div>
+  <div class="tstem"></div>
+  <div class="tcol">
+    <div class="tbranch"><span class="tbt">⚖️ Juridique</span><span class="tarr">→</span><a class="tstep d" href="contrat-cadre-achat-fournisseur.html">Contrats fournisseurs ✓</a><span class="tarr">→</span><a class="tstep t" href="partie-2-juridique-socle.html">Contrat de distribution</a><span class="tarr">→</span><a class="tstep t" href="checklist-atout-france.html">Immatriculation</a></div>
+    <div class="tbranch"><span class="tbt">📱 App client</span><span class="tarr">→</span><a class="tstep d" href="spec-duffel-offres.html">Spec Duffel ✓</a><span class="tarr">→</span><a class="tstep t" href="spec-duffel-offres.html">Développement</a><span class="tarr">→</span><a class="tstep g" href="spec-duffel-offres.html">Intégrer Duffel</a><span class="tarr">→</span><a class="tstep t" href="spec-duffel-offres.html">Tests</a></div>
+    <div class="tbranch"><span class="tbt">💳 Paiement en ligne</span><span class="tarr">→</span><a class="tstep d" href="partie-4-flux.html">Flux F1/F7 ✓</a><span class="tarr">→</span><a class="tstep t" href="partie-6b-specs-dev.html">Pingback en recette</a></div>
+    <div class="tbranch"><span class="tbt">📣 Marketing</span><span class="tarr">→</span><a class="tstep d" href="../marketing/positionnement-cash-cartes-cadeau.html">Positionnement ✓</a><span class="tarr">→</span><a class="tstep d" href="../marketing/analyse-clientele.html">Analyse ✓</a><span class="tarr">→</span><a class="tstep d" href="../marketing/plan-marketing.html">Plan + objectifs ✓</a></div>
+    <div class="tbranch"><span class="tbt">📲 Réseaux</span><span class="tarr">→</span><a class="tstep t" href="../marketing/reseaux-sociaux.html">Créer TikTok</a><span class="tarr">→</span><a class="tstep t" href="../marketing/reseaux-sociaux.html">Contenus</a><span class="tarr">→</span><a class="tstep t" href="../marketing/reseaux-sociaux.html">Publier</a></div>
+    <div class="tbranch"><span class="tbt">🖼️ Supports</span><span class="tarr">→</span><a class="tstep d" href="brochure-commerciale.html">Brochure « Régler avec un bon d’achat » ✓</a><span class="tarr">→</span><a class="tstep t" href="script-video-commerciale.html">Vidéo</a></div>
+    <div class="tbranch"><span class="tbt">🚀 Lancement</span><span class="tarr">→</span><a class="tstep t" href="../marketing/plan-lancement.html">Ouvrir le paiement en ligne + les premiers commerces vendeurs</a><span class="tarr">→</span><span class="tstep goal">★ App grand public (J+40)</span></div>
+  </div>
+</div></div>
+<p style="font-size:12px;color:var(--muted)">Lecture : de gauche à droite, chaque branche est un chantier ; les étapes s'enchaînent vers l'objectif. ✓ = fait. Le ★ = la finalité à J+40.</p>
+
+<h2 id="statut">2 · Statut par chantier (ce qui est fait / ce qui reste)</h2>
+<div class="tw"><table>
+<thead><tr><th>Chantier</th><th>Statut</th><th>Fait</th><th>À faire</th><th>Doc lié</th></tr></thead>
+<tbody>
+<tr><td>⚖️ <strong>Contrats</strong></td><td class="st go">🔄 En cours</td><td>Contrat-cadre fournisseur, CGU, CGV MODE — rédigés (v1)</td><td>Relecture avocat du contrat de distribution</td><td><a href="partie-2-juridique-socle.html">socle juridique</a></td></tr>
+<tr><td>🛂 <strong>Immatriculation / marque</strong></td><td class="st go">🔄 À lancer</td><td>Checklist prête</td><td>Déposer la demande Atout France (sous 3 mois) · déposer la marque INPI</td><td><a href="checklist-atout-france.html">checklist</a></td></tr>
+<tr><td>📱 <strong>App client (grand public)</strong></td><td class="st td">⬜ À faire</td><td>Spec Duffel (offres), parcours reçu+code</td><td>Développer l'app · intégrer Duffel</td><td><a href="spec-duffel-offres.html">spec Duffel</a></td></tr>
+<tr><td>💳 <strong>Paiement en ligne</strong></td><td class="st go">🔄 En cours</td><td>Flux F1/F7, table psp_transactions, endpoints psp-intent / pingback, page hébergée simulée</td><td><i>(20/09 — supprimé avec le réseau tiers et son rail en ligne)</i></td><td><a href="partie-6b-specs-dev.html">specs dev</a></td></tr>
+<tr><td>🔌 <strong>Intégration Duffel</strong></td><td class="st go">🔄 À lancer</td><td>Spec + script de test</td><td>Générer clé Live · sortir les vrais tarifs · intégrer Stays</td><td><a href="spec-duffel-offres.html">spec Duffel</a></td></tr>
+<tr><td>📣 <strong>Marketing (socle)</strong></td><td class="st ok">✅ Fait</td><td>Positionnement, analyse clientèle, plan marketing complet, objectifs chiffrés, stratégie, identité</td><td>—</td><td><a href="../marketing/plan-marketing.html">plan</a></td></tr>
+<tr><td>📲 <strong>Réseaux (TikTok)</strong></td><td class="st td">⬜ À faire</td><td>Plan réseaux sociaux</td><td>Créer le compte · produire les Reels</td><td><a href="../marketing/reseaux-sociaux.html">plan social</a></td></tr>
+<tr><td>🖼️ <strong>Supports</strong></td><td class="st go">🔄 En cours</td><td>Brochure « Régler avec un bon d’achat », script vidéo, flyers-jeu</td><td>Impression des flyers · tournage</td><td><a href="brochure-commerciale.html">brochure</a></td></tr>
+<tr><td>🚀 <strong>Lancement pilote</strong></td><td class="st td">⬜ À faire</td><td>Plan de lancement, scénarios</td><td>Ouvrir le paiement en ligne · signer et équiper les premiers commerçants partenaires (contrat de distribution, carte de règlement enregistrée)</td><td><a href="../marketing/plan-lancement.html">plan lancement</a></td></tr>
+</tbody></table></div>
+<div class="note"><strong>Logique d'ensemble :</strong> le <strong>contrat prestataire</strong> ouvre le paiement en ligne (Bon d’achat PayEnCash), le <strong>contrat de distribution</strong> ouvre le Bon d’achat PayEnCash chez les commerçants — et son prélèvement à la vente suppose la <strong>carte du commerce enregistrée</strong> (Stripe) ; la <strong>stratégie (faite)</strong> déclenche les <strong>réseaux</strong> (compte TikTok + contenus) ; l'<strong>app client</strong> s'appuie sur <strong>Duffel</strong> ; tout converge vers la <strong>présentation grand public à J+40</strong>.</div><!-- (18/09, soir) ce <div class="note"> se fermait par </p></div> : la </p> orpheline, repérée en relisant la page, est retirée -->
+
+<h2 id="jalons">3 · Jalons clés</h2>
+<div class="ms">
+<div class="mi"><div class="d">S1</div><div>Créer le <strong>compte TikTok</strong> · <strong>signer</strong> le contrat <strong>déposer</strong> marque INPI · <strong>générer la clé Duffel</strong> Live · démarrer le dev.</div></div>
+<div class="mi"><div class="d">S1–S2</div><div>Déposer la <strong>demande Atout France</strong> · sortir les <strong>vrais tarifs Duffel</strong> → figer l'affiche destinations.</div></div>
+<div class="mi"><div class="d">S2–S4</div><div><strong>Développement</strong> app client · <strong>production de contenus</strong> (Reels) · <strong>impression</strong> des flyers.</div></div>
+<div class="mi"><div class="d">S4–S5</div><div><strong>Intégration Duffel</strong> (offres + Stays) · <strong>tests</strong> (banc : scénarios psp_* et bons d’achat).</div></div>
+<div class="mi"><div class="d">S5–S6</div><div><strong>Ouverture du paiement en ligne + premiers commerçants vendeurs de bons d’achat</strong> · répétition · <strong>★ présentation de l'application grand public (J+40)</strong>.</div></div>
+</div>
+
+<h2 id="comptes">4 · Comptes &amp; accès (registre)</h2>
+<div class="red"><strong>⚠️ Sécurité — aucun mot de passe en clair ici.</strong> Ce document est servi/partagé : on n'y écrit <strong>jamais</strong> un mot de passe. On note seulement le <strong>statut</strong> et l'<strong>identifiant public</strong> (handle, e-mail). Les mots de passe vivent dans un <strong>gestionnaire</strong> (Bitwarden / 1Password / Dashlane), partagé de façon sécurisée.</div>
+<div class="tw"><table>
+<thead><tr><th>Compte</th><th>Statut</th><th>Identifiant public</th><th>Mot de passe</th></tr></thead>
+<tbody>
+<tr><td>TikTok</td><td class="st td">⬜ À créer</td><td>@[handle à définir]</td><td>→ gestionnaire</td></tr>
+<tr><td>Instagram</td><td class="st td">⬜ À créer / relier</td><td>@[handle]</td><td>→ gestionnaire</td></tr>
+<tr><td>Google Business</td><td class="st td">⬜ À créer</td><td>[e-mail pro]</td><td>→ gestionnaire</td></tr>
+<tr><td>Duffel</td><td class="st go">🔄 Compte ouvert</td><td>[e-mail]</td><td>clé API → variable d'env serveur</td></tr>
+<tr><td>Odoo</td><td class="st td">⬜ Plan à confirmer</td><td>[e-mail]</td><td>→ gestionnaire</td></tr>
+<tr><td>Domaine payencash.fr</td><td class="st td">⬜ À confirmer</td><td>[registrar]</td><td>→ gestionnaire</td></tr>
+</tbody></table></div>
+<p style="font-size:12px;color:var(--muted)">Quand un compte est créé, on passe le statut à <strong>✅</strong> et on renseigne le <strong>handle</strong> — le mot de passe reste dans le gestionnaire.</p>
+
+<h2 id="methode">5 · Comment on tient les délais (la méthode)</h2>
+<ul>
+<li><strong>Une convention de statut simple, partout :</strong> ✅ fait · 🔄 en cours · ⬜ à faire. On l'applique dans cette feuille de route (source de vérité de l'avancement).</li>
+<li><strong>Marquer « fait » puis avancer :</strong> dès qu'une tâche est terminée (ex. « compte TikTok créé »), on passe son statut à ✅ ici, et on enchaîne sur la suivante — pas de tâche « en suspens » invisible.</li>
+<li><strong>Le chemin critique = le dev + Duffel :</strong> c'est ce qui conditionne la présentation à J+40. À démarrer en S1, en parallèle du reste.</li>
+<li><strong>Ce qui peut avancer en parallèle sans bloquer :</strong> signatures, TikTok, supports, immatriculation — à lancer tout de suite.</li>
+<li><strong>Revue hebdo :</strong> chaque semaine, on met à jour le diagramme (statuts + positions) → on voit immédiatement si on tient le cap.</li>
+</ul>
+<div class="note">Cette feuille de route est <strong>vivante</strong> : dis-moi ce qui est fait (ex. « TikTok créé, handle @payencash »), et je passe le statut à ✅ + j'ajuste le diagramme. C'est ça, « avancer sur la suite ».</div>
+
+<p style="font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:12px;margin-top:22px">PayEnCash — marque d'AJEK SAS · feuille de route J+40 · 18 août 2026. Vue temporelle de l'avancement ; complète le <a href="index.html">catalogue (index)</a> et le <a href="diagramme-navigation.html">diagramme de navigation</a>.</p>
+</div></div></body></html>

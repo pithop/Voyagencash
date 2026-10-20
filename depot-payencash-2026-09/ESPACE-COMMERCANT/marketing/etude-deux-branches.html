@@ -1,0 +1,234 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Étude des deux branches — FLY × MODE · PayEnCash</title>
+<style>
+:root{--ajek:#10A06A;--ajek-d:#0C7F54;--vif:#3FD99B;--gold:#E39A2E;--ink:#0f2a24;--muted:#5c6b64;--line:#d9e5dd;--bg:#f4f7f5;--card:#fff;--chip:#e6f4ec;--goldbg:#fdf1e7}
+@media(prefers-color-scheme:dark){:root{--ink:#e8efe9;--muted:#9fb0a6;--line:#254034;--bg:#0d1512;--card:#121d18;--chip:#173026;--goldbg:#241d0f}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:
+ radial-gradient(1100px 520px at 92% -12%, rgba(63,217,155,.16), transparent 62%),
+ radial-gradient(900px 460px at -12% 34%, rgba(227,154,46,.09), transparent 58%),
+ radial-gradient(700px 420px at 50% 115%, rgba(16,160,106,.10), transparent 60%),
+ var(--bg)}
+.sheet{max-width:1020px;margin:0 auto 60px;background:var(--card);border:1px solid var(--line)}
+header{background:linear-gradient(115deg,#0F2A24 0%,#0C7F54 55%,#10A06A 100%);color:#fff;padding:26px 36px;position:relative;overflow:hidden}
+header::after{content:"";position:absolute;right:-40px;top:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(63,217,155,.35),transparent 65%);pointer-events:none}
+.brand{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.9}header h1{margin:6px 0 2px;font-size:24px}header p{margin:3px 0 0;opacity:.93;font-size:13.5px}
+nav.j{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:8px 36px;display:flex;gap:8px;overflow-x:auto;white-space:nowrap}
+nav.j a{font-size:12.5px;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 11px;flex:none}nav.j a:hover{border-color:var(--ajek);color:var(--ajek)}
+.body{padding:22px 36px 40px}
+h2{font-size:18px;color:var(--ajek-d);margin:32px 0 8px;position:relative;padding-bottom:9px}
+h2::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:4px;border-radius:2px;background:linear-gradient(90deg,#10A06A,#3FD99B)}
+h3{font-size:14.5px;color:var(--ajek-d);margin:16px 0 4px}
+@media(prefers-color-scheme:dark){h2,h3{color:#5fd39a}}
+p{margin:8px 0}ul{margin:6px 0 6px 2px;padding-left:20px}li{margin:5px 0}
+.need{background:var(--chip);border:1px solid var(--line);border-left:4px solid var(--ajek);border-radius:8px;padding:10px 14px;font-size:13px;margin:8px 0}.need b{color:var(--ajek-d)}@media(prefers-color-scheme:dark){.need b{color:#5fd39a}}
+.note{background:var(--chip);border:1px solid var(--line);border-left:3px solid var(--ajek);border-radius:8px;padding:12px 14px;font-size:13.5px;margin:12px 0}
+.warn{background:var(--goldbg);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--ink);margin:12px 0}
+.est{display:inline-block;background:var(--goldbg);border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:11px;color:var(--gold);font-weight:700}
+.kpis{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.kpi{flex:1;min-width:140px;border:1px solid var(--line);border-radius:12px;padding:10px 13px;background:var(--card)}
+.kpi b{display:block;font-size:20px;color:var(--ajek-d)}@media(prefers-color-scheme:dark){.kpi b{color:#5fd39a}}.kpi span{font-size:11.5px;color:var(--muted)}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12.6px}
+th,td{text-align:left;padding:7px 9px;border:1px solid var(--line);vertical-align:top}
+th{background:linear-gradient(115deg,#0C7F54,#10A06A);color:#fff;font-weight:600;border-color:var(--ajek-d)}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0}@media(max-width:720px){.duo{grid-template-columns:1fr}}
+.branche{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--card);transition:transform .16s ease,box-shadow .16s ease}
+.branche:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(15,42,36,.13)}
+.branche .h{font-weight:800;font-size:16px;color:var(--ajek-d)}@media(prefers-color-scheme:dark){.branche .h{color:#5fd39a}}
+.branche .s{font-size:12.5px;color:var(--muted)}
+.tag{display:inline-block;background:var(--chip);border-radius:999px;padding:3px 10px;font-size:11.5px;font-weight:700;color:var(--ajek-d);margin:2px}
+@media(prefers-color-scheme:dark){.tag{color:#5fd39a}}
+.tag.g{background:var(--goldbg);color:#a8701c}@media(prefers-color-scheme:dark){.tag.g{color:#e0b352}}
+.funnel{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.tier{border:1px solid var(--line);border-radius:10px;padding:9px 14px;background:linear-gradient(90deg,var(--chip),transparent)}
+.tier .lbl{font-weight:800;font-size:13px}.tier .num{float:right;font-weight:800;color:var(--ajek-d)}@media(prefers-color-scheme:dark){.tier .num{color:#5fd39a}}.tier .d{font-size:12.5px;color:var(--muted)}
+.hero-arg{background:linear-gradient(115deg,#0F2A24,#0C7F54);color:#fff;border-radius:14px;padding:18px 22px;margin:14px 0}
+.hero-arg .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--vif);font-weight:800}
+.hero-arg .t{font-size:17px;font-weight:800;margin:6px 0 4px}
+.hero-arg p{margin:4px 0 0;font-size:13px;color:#c9d8d0}
+.chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0}
+.chain .st{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600}.chain .a{color:var(--ajek-d);font-weight:800}
+.toolbar{max-width:1020px;margin:16px auto 0;display:flex;gap:10px;justify-content:flex-end;padding:0 8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 12px;font-size:12.5px;text-decoration:none;font-weight:700;transition:transform .12s ease,box-shadow .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(16,160,106,.22)}
+.btn.p{background:var(--ajek);color:#fff;border-color:var(--ajek)}
+a.doc{color:var(--ajek-d);font-weight:700;text-decoration:none;border-bottom:1px dashed var(--ajek)}@media(prefers-color-scheme:dark){a.doc{color:#5fd39a}}
+@media print{body{background:#fff}.toolbar,nav.j{display:none}.sheet{border:none}}
+</style></head><body>
+<div style="background:#E6F4EC;border:2px dashed #0C7F54;border-radius:10px;padding:10px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#0F2A24"><b>Pivot du 17/09/2026, complété le 18/09 :</b> ce document de cadrage date du modèle « points partenaires (tabacs) qui encaissent ». Depuis le 17/09 il n'y a plus de borne ni de commerçant qui encaisse une commande ; depuis le 18/09 au soir le client <b>paie avec un bon d’achat par deux moyens</b>, tous deux achetés au comptoir d'un commerce : le <b>Bon d’achat PayEnCash</b> (titre prépayé émis par AJEK, vendu par un <b>commerçant partenaire</b> sous contrat de distribution, art. L521-3 CMF — sa commission de 1,10 % lui est retenue à la vente, par le débit de la carte de son commerce) et le <b>Bon d’achat PayEnCash</b> (vendu par notre réseau de distribution, sous contrat). <b>L'agent de caisse mobile est supprimé</b> : la « mutualisation des agents entre FLY et MODE », qui était l'une des synergies de ce document, n'existe plus — et la logistique MODE passe de toute façon par Mondial Relay depuis le 31/08. Les hypothèses « 3 tabacs qui encaissent », « passage tabac → ventes », « part au point » sont à relire ainsi : les partenaires vendent des bons, jamais des commandes — référence à jour : <a href="../documents/partie-4-flux.html" style="color:#0C7F54;font-weight:700">Étape 4 (F4 · F6)</a>, <a href="../documents/partie-1b-financier.html" style="color:#0C7F54;font-weight:700">Étape 2 §1b</a> et <a href="../documents/partie-2-juridique-socle.html#bon" style="color:#0C7F54;font-weight:700">Étape 3 §2b</a>.</div>
+<div class="toolbar"><a class="btn" href="../documents/diagramme-principal.html">🧭 Fil rouge</a><a class="btn" href="../documents/partie-1-marketing.html">← Étape 1 · Marketing</a><a class="btn" href="index.html">Pôle marketing</a><a class="btn" href="plan-marketing.html">Plan marketing</a><a class="btn" href="audit-zara.html">Audit Zara × Vinted</a><a class="btn p" href="#" onclick="window.print();return false">Imprimer / PDF</a></div>
+<div class="sheet">
+<header><div class="brand">PayEnCash · AJEK — étude marketing</div><h1>📊 Étude des deux branches — ✈️ FLY × 👟 MODE</h1>
+<p>Une marque, un principe, deux applications : ce que vend chaque branche, à qui, comment elles se renforcent — et ce que cela impose aux vitrines · 21 août 2026</p></header>
+<nav class="j"><a href="#vue">Vue d'ensemble</a><a href="#fly">Branche FLY</a><a href="#mode">Branche MODE</a><a href="#matrice">Matrice comparative</a><a href="#synergies">Synergies &amp; séquencement</a><a href="#vitrines">Ce que ça impose aux vitrines</a><a href="#concurrence">Face à qui on se bat</a></nav>
+<div class="body">
+
+<h2 id="vue">1 · Vue d'ensemble — une marque, un principe, deux branches</h2>
+<div class="need"><b>Besoin :</b> dire en une page pourquoi PayEnCash porte <b>deux applications</b> — et pourquoi ce n'est pas de la dispersion mais un effet de levier.</div>
+<!-- (18/09, soir) Le principe fondateur est réénoncé : ce qui unit les deux branches n'est pas le
+     numéraire (que nous n'encaissons pas) mais l'absence de carte bancaire exigée. La donnée de
+     marché qui suit — 43 % des paiements, 60 % des Français — reste écrite telle quelle : c'est un
+     fait sourcé sur le marché du cash, pas une description de notre service. -->
+<p><strong>Le principe fondateur est unique : payer avec un bon d’achat.</strong> Les espèces représentent encore <strong>43 %</strong> des paiements en point de vente en France (2024) et <strong>60 %</strong> des Français tiennent à pouvoir payer en espèces (Banque de France / BCE — voir <a class="doc" href="analyse-clientele.html">Analyse de clientèle</a>). Personne ne sert cette clientèle ni sur le voyage, ni sur le prêt-à-porter à distance. PayEnCash la sert sur les deux, avec <strong>deux applications distinctes</strong> :</p>
+<div class="duo">
+<div class="branche"><div class="h">✈️ PayEnCash FLY</div><div class="s">Vols &amp; hébergements réels — Duffel (<b>plus de 200 compagnies</b>) + Nuitée — réservés dans l'app, payés avec un bon d’achat, au meilleur prix.</div></div>
+<div class="branche"><div class="h">👟 PayEnCash MODE</div><div class="s">Prêt-à-porter, accessoires, sneakers — <b>neufs ou reconditionnés</b>, esprit Zara × Vinted, chaque pièce vérifiée par l'atelier PayEnCash, payée avec un bon d’achat.</div></div>
+</div>
+<h3>Pourquoi les deux branches se renforcent</h3>
+<ul>
+<li><strong>Le client de FLY est le client de MODE.</strong> Une seule cible — celle qui n'a pas de carte bancaire, ou ne veut pas s'en servir — et deux occasions d'achat très différentes (le billet 1–2 fois par an, la pièce mode toute l'année). Chaque branche amortit le coût d'acquisition de l'autre.</li>
+<li><strong>Cagnotte et Bon d’achat PayEnCash communs.</strong> Le Bon d’achat PayEnCash — acheté chez un commerçant partenaire, ou offert — est <b>valable FLY et MODE</b> (promesse P4) ; la cagnotte de points se nourrit des commandes des deux branches (ex. canonique MODE : 90 € encaissés = 90 points) et alimente le concours mensuel. C'est le pont entre les univers — sans mélanger les apps.</li>
+<li><strong>Mêmes moyens de paiement.</strong> Les deux branches partagent exactement les deux moyens : <b>« Avec un Bon d’achat PayEnCash — zéro frais »</b> (acheté au comptoir d'un commerçant partenaire) et <b>« En ligne, avec un Bon d’achat PayEnCash — zéro frais »</b> (notre réseau de distribution, sous contrat). Un bon d’achat acheté pour un billet sert aussi bien à une paire de sneakers : même code, même solde, même reçu (<a class="doc" href="../documents/partie-1b-financier.html">Étape 2 §3</a>).</li>
+<li><strong>Deux saisonnalités qui se compensent</strong> : FLY culmine l'été et aux fêtes (saison diaspora) ; MODE vit de la rentrée, de Noël et des drops sneakers toute l'année — le réseau de commerces partenaires vend des bons en continu.</li>
+</ul>
+<div class="chain"><span class="st">Un principe : avec un bon d’achat</span><span class="a">→</span><span class="st">Une cible : ceux que la carte exclut</span><span class="a">→</span><span class="st">Deux apps : FLY · MODE</span><span class="a">→</span><span class="st">Deux moyens de payer, communs</span><span class="a">→</span><span class="st">Cagnotte &amp; Bon d’achat PayEnCash = le pont</span></div>
+
+<h2 id="fly">2 · Branche ✈️ FLY — le voyage payé sans carte</h2>
+<div class="need"><b>Besoin :</b> qui achète, ce qu'on lui promet, ce qui nous différencie, comment l'inconnu devient client.</div>
+<h3>La cible</h3>
+<ul>
+<li><strong>Cœur de volume : la préférence / le budget cash</strong> — le « 60 % des Français attachés aux espèces » : maîtrise du budget, anti-prélèvement, anti-arnaque en ligne, habitude. Nombreux, au comptoir, servis par personne sur le voyage.</li>
+<li><strong>Pointe d'entrée : la diaspora</strong> — deux segments distincts, à ne pas confondre :
+  <ul>
+  <li><b>Maghreb = court/moyen courrier</b> — panier billet <b>60–120 €</b> (moyenne <b>85 €</b>), compagnies couvertes par Duffel (Royal Air Maroc, Air Algérie, Tunisair), fréquence saisonnière élevée (été, fêtes), bénéfice par inscrit ~8× supérieur au généraliste ; attache hébergement faible (20 %) → ne pas pousser l'hôtel sur ce segment.</li>
+  <li><b>Afrique subsaharienne = long courrier</b> — panier <b>280–450 €</b>, cœur de cible du long courrier, décisions familiales et communautaires (bouche-à-oreille quasi gratuit).</li>
+  </ul></li>
+</ul>
+<h3>Les promesses P1–P10 (le tableau moteur de l'Étape 1)</h3>
+<div class="tw"><table>
+<tr><th>#</th><th>Promesse</th><th>#</th><th>Promesse</th></tr>
+<tr><td><b>P1</b></td><td>Payer son voyage <b>avec un bon d’achat, près de chez soi</b></td><td><b>P6</b></td><td>Un réseau de <b>commerces partenaires qui vendent le Bon d’achat PayEnCash</b> (1,10 % par bon) — jamais des encaisseurs</td></tr>
+<tr><td><b>P2</b></td><td><b>Au meilleur prix</b> (comparaison réelle Duffel)</td><td><b>P7</b></td><td><b>La confiance</b> : reçu + code, suivi, données protégées</td></tr>
+<tr><td><b>P3</b></td><td><b>« En ligne, avec un Bon d’achat PayEnCash — zéro frais »</b> — le second réseau, sans compte ni carte</td><td><b>P8</b></td><td><b>Faire télécharger l'app</b> — jeu concours « un voyage à gagner », influenceurs, flyers tracés</td></tr>
+<tr><td><b>P4</b></td><td><b>Bon d’achat PayEnCash</b> (acheté chez un partenaire, ou offert) — valable <b>FLY et MODE</b></td><td><b>P9</b></td><td><b>La ligne MODE</b> — même cible, payée avec un bon d’achat (branche 2, §3)</td></tr>
+<tr><td><b>P5</b></td><td><b>Codes promo, parrainage, cagnotte</b> de points</td><td><b>P10</b></td><td><b>Les promos « toujours moins cher qu'en normal »</b> — éditées à J−45 minimum</td></tr>
+</table></div>
+<h3>Les différenciateurs</h3>
+<div class="kpis">
+<div class="kpi"><b>+ de 200</b><span>compagnies aériennes via Duffel (NDC + GDS + low-cost)</span></div>
+<div class="kpi"><b>+ de 4 000</b><span>destinations dans le monde via le réseau Duffel / Hahn Air</span></div>
+<div class="kpi"><b>0 €</b><span>zéro frais dans les deux réseaux — bon d’achat comme Bon d’achat PayEnCash, il n'y a plus qu'un seul niveau de prix</span></div>
+<div class="kpi"><b>1 h</b><span>prix bloqué : le temps d'aller chercher son ticket au comptoir sans que le tarif bouge</span></div>
+<div class="kpi"><b>J−45</b><span>promos A/R + hébergement éditées 3 semaines à l'avance minimum, 4 modes de voyage</span></div>
+</div>
+<ul>
+<li><strong>Le seul acteur</strong> qui réunit voyage réel + paiement par bon d’achat + réseau de proximité + conseil (la « case vide » du <a class="doc" href="plan-marketing.html">plan marketing §3</a>).</li>
+<li><strong>Les promos en 4 modes de voyage</strong> (Spartiate · Baroudeur · Futé · Grand air) : offres A/R + hébergement négociées, toujours sous le « prix en normal » (prix de référence Omnibus).</li>
+<li><strong>Tout compris, zéro frais surprise</strong> : taxes et marge incluses, et <strong>plus aucun supplément</strong> à afficher avant validation depuis la suppression des frais de déplacement (18/09).</li>
+</ul>
+<h3>L'entonnoir FLY (pilote 3 points × 3 mois)</h3>
+<div class="funnel">
+<div class="tier"><span class="num">500 000 impressions</span><span class="lbl">1 · Notoriété</span><div class="d">Pub sociale (TikTok · Snap · Insta) + influenceurs + flyers ciblés par typologie de quartier, autour des 3 commerces partenaires du pilote.</div></div>
+<div class="tier"><span class="num">2 000 téléchargements tracés</span><span class="lbl">2 · Téléchargement</span><div class="d">Le jeu concours « un voyage à gagner chaque mois » — chaque source tracée (QR flyer, lien pub, code influenceur).</div></div>
+<div class="tier"><span class="num">go / no-go</span><span class="lbl">3 · 1ʳᵉ commande</span><div class="d">Code BIENVENUE + un commerce partenaire près de chez soi + « au meilleur prix » — seuils chiffrés dans <a class="doc" href="objectifs-chiffres.html">Objectifs</a>.</div></div>
+<div class="tier"><span class="num">≥ 25 %</span><span class="lbl">4 · Fidélité</span><div class="d">2ᵉ commande à 90 jours — portée par le reçu-code, le Bon d’achat PayEnCash et la cagnotte.</div></div>
+<div class="tier"><span class="num">≥ 0,3</span><span class="lbl">5 · Parrainage</span><div class="d">Code parrain 10 € / 10 € — coefficient viral visé.</div></div>
+</div>
+
+<h2 id="mode">3 · Branche 👟 MODE — le prêt-à-porter payé sans carte</h2>
+<div class="need"><b>Besoin :</b> un positionnement lisible en une phrase, un argument central assumé, des prix défendables — et un levier d'acquisition gratuit.</div>
+<h3>Le positionnement : Zara × Vinted (audit réel des deux sites)</h3>
+<p>MODE emprunte à <b>Zara</b> la grammaire éditoriale — hero plein cadre, catégories numérotées <b>|01| TOUT VOIR · |02| PRÊT-À-PORTER · |03| SNEAKERS · |04| ACCESSOIRES · |05| RECONDITIONNÉ</b> (le reconditionné est <b>natif</b>, pas un rayon honteux), grille photo d'abord, nom en majuscules, prix sec — et à <b>Vinted</b> le langage que la cible parle déjà : l'échelle d'état (<span class="tag">Neuf sans étiquette</span><span class="tag">Très bon état</span><span class="tag">Bon état</span>) affichée dès la grille, en ligne d'identité « taille · état ». La charte reste <b>verte PayEnCash</b> — le noir/blanc Zara reste chez Zara. Relevé complet : <a class="doc" href="audit-zara.html">Audit Zara × Vinted</a>.</p>
+<h3>La cible</h3>
+<ul>
+<li><strong>Les mêmes clients cash</strong> que FLY — c'est le principe des deux branches : une cible, deux univers d'achat.</li>
+<li><strong>Les chasseurs de sneakers</strong> — drops, modèles recherchés, contenu social parfait (hauls TikTok/Insta, avant/après reconditionnement).</li>
+<li><strong>Les acheteurs de seconde main</strong> — habitués de Vinted, qui en connaissent le langage… et les déceptions.</li>
+</ul>
+<div class="hero-arg">
+<div class="k">L'argument central — le différenciateur absolu</div>
+<div class="t">Chaque produit est VÉRIFIÉ PAR L'ATELIER PAYENCASH.</div>
+<p>Contrôlé, <b>authentifié</b>, défauts <b>photographiés</b>, <b>facture d'origine exigée</b> sur les sneakers neuves. Sur Vinted, l'état est déclaré par le vendeur et l'authentification est une option payante : on achète à l'aveugle. Chez PayEnCash MODE, l'inspection est faite par un professionnel, <b>incluse d'office</b>, sur chaque pièce. On parle le langage d'états de Vinted — avec une garantie que Vinted n'a pas.</p>
+</div>
+<h3>Les prix — défendables ligne à ligne</h3>
+<div class="kpis">
+<div class="kpi"><b>−30 à −40 %</b><span>le reconditionné vs le neuf — ex. Air Max <b>150 €</b> vs <b>240 €</b> neuve</span></div>
+<div class="kpi"><b>Incluse</b><span>livraison <b>Mondial Relay</b> — comprise dans le prix client, réseau de relais et lockers partout en France</span></div>
+<!-- (18/09, soir) Deux mentions tombent ensemble. Le remboursement « en espèces au point » supposait
+     une caisse chez le partenaire, qui n'encaisse plus rien ; et le plafond de l'art. L112-6 CMF ne
+     nous concerne pas, puisque nous n'encaissons pas de numéraire — il s'applique au commerçant qui
+     vend le ticket, pas à nous. Le plafond qui nous engage est celui du référentiel : 1 000 € de bons
+     utilisés par client et par jour. -->
+<div class="kpi"><b>14 j</b><span>retour — le montant est <b>re-crédité sur le bon d’achat</b>, réutilisable sur FLY comme sur MODE</span></div>
+<div class="kpi"><b>1 000 €</b><span>bons d’achat utilisables par client et par jour (référentiel PayEnCash)</span></div>
+</div>
+<p>Économie de la branche (grille canonique, <a class="doc" href="../documents/partie-1b-financier.html">Étape 2 §1</a>) : achat ferme au fournisseur <b>123 €</b> → prix client <b>141,80 €</b> livraison incluse (marge 7 % = 8,61 €, + Mondial Relay 7,99 € pour un colis de 1,2 kg, + contrôle atelier 2,20 € refacturés en sus) → <b>8,61 € nets</b>, quel que soit le poids du colis (grille du 12/09/2026). Le prix est <b>tout compris</b> : zéro frais au paiement — le « incl. » de Vinted, en mieux.</p>
+<h3>Le levier fournisseur-influenceur — l'acquisition gratuite</h3>
+<div class="note"><b>Chaque fournisseur est un influenceur potentiel.</b> Le fournisseur MODE (dépôt-vente, revendeuse — jamais de particulier) apporte son catalogue <em>et son audience</em> : chaque pièce a un <b>lien tracé</b> à partager sur Instagram, TikTok, Snap ou WhatsApp — « disponible sur PayEnCash MODE ». Clics et ventes attribués, visibles dans son espace. Plus il partage, plus il vend, plus il fournit : un canal d'acquisition à <b>coût nul</b>, mesuré comme les flyers partenaires. Vitrine dédiée : <a class="doc" href="landing-fournisseurs.html">Devenir fournisseur</a>.</div>
+
+<h2 id="matrice">4 · Matrice comparative des deux branches</h2>
+<div class="need"><b>Besoin :</b> tout comparer d'un regard — pour arbitrer les budgets et lire les complémentarités.</div>
+<div class="tw"><table>
+<tr><th style="width:15%"></th><th>✈️ FLY — voyage</th><th>👟 MODE — prêt-à-porter</th></tr>
+<tr><td><b>Cible</b></td><td>Clientèle cash (préférence/budget, 60 % attachés aux espèces) + <b>pointe diaspora</b> (Maghreb court/moyen courrier · subsaharien long courrier)</td><td>Les <b>mêmes clients cash</b> + chasseurs de sneakers + acheteurs de seconde main (habitués Vinted)</td></tr>
+<tr><td><b>Panier moyen</b></td><td>Maghreb <b>60–120 €</b> (moy. 85 €) · Europe ~80–200 € · long courrier subsaharien <b>280–450 €</b></td><td>Exemple canonique <b>141,80 €</b> (Air Max, achat 123 €, colis 1,2 kg) ; plus de prix plancher technique — les frais étant refacturés à part, aucune pièce n'est vendue à perte (plancher commercial 5 €)</td></tr>
+<tr><td><b>Fréquence</b></td><td>1–2 voyages / an, fortement saisonnière (été, fêtes) <span class="est">EST.</span></td><td>Achats répétés toute l'année (drops, occasions, cadeaux) — potentiel de récurrence supérieur <span class="est">EST.</span></td></tr>
+<tr><td><b>Marge</b> (<a class="doc" href="../documents/partie-1b-financier.html">Étape 2 §1</a>)</td><td>Vol <b>max(3 €, 15 %)</b> · hôtel <b>10 %</b> · package <b>8 %</b> — ex. Marseille→Barcelone : <b>62,35 €</b>, prix unique (le second prix « avec agent » n'existe plus depuis le 18/09)</td><td><b>7 % du prix d'achat</b>, livraison et atelier refacturés en sus — ex. achat 123 € → client 141,80 €, <b>8,61 € nets</b> par pièce</td></tr>
+<tr><td><b>Canaux d'acquisition</b></td><td>PLV chez les commerces partenaires (Bon d’achat PayEnCash) · bouche-à-oreille communautaire · jeu concours « un voyage à gagner » · pub sociale géociblée · flyers tracés par zone</td><td><b>Fournisseurs-influenceurs</b> (liens tracés, coût nul) · contenu social sneakers (hauls, drops) · les mêmes commerces partenaires (bon d’achat) · la cagnotte venue de FLY</td></tr>
+<tr><td><b>Saisonnalité</b></td><td>Pics été + fêtes (saison diaspora) ; creux hors saison</td><td>Rentrée, Noël, drops — <b>lisse les creux de FLY</b> ; soldes/occasions en continu</td></tr>
+<tr><td><b>Risques</b></td><td>Avance Duffel (prépayé) à dimensionner · immatriculation Atout France en cours · dépendance saison · recul tendanciel du cash</td><td>Extension de l'objet social à lancer · qualité/constance de l'atelier (authentification) · registre 321-7 · pièces sous le prix plancher · plafond d'utilisation des bons (1 000 €/client/jour)</td></tr>
+</table></div>
+
+<h2 id="synergies">5 · Synergies &amp; séquencement — FLY d'abord, MODE s'appuie dessus</h2>
+<div class="need"><b>Besoin :</b> dans quel ordre on construit, et par où passent les ponts entre les branches.</div>
+<div class="chain"><span class="st">1 · FLY au pilote<br><small style="font-weight:500;color:var(--muted)">Bon d’achat PayEnCash chez 3 commerces partenaires + Bon d’achat PayEnCash en ligne (Aix-Encagnane, Marseille), sans borne ni matériel</small></span><span class="a">→</span><span class="st">2 · Le circuit de paiement tourne<br><small style="font-weight:500;color:var(--muted)">prestataire branché, prélèvement à la vente rodé chez les commerçants</small></span><span class="a">→</span><span class="st">3 · MODE branche dessus<br><small style="font-weight:500;color:var(--muted)">mêmes moyens, mêmes commerces, zéro coût réseau additionnel</small></span></div>
+<ul>
+<li><strong>FLY ouvre la voie</strong> : le pilote (3 commerces partenaires vendeurs du bon d’achat + le réseau de distribution, 3 mois, budget marketing 10 000 €) valide les deux moyens, la confiance au comptoir et le prélèvement à la vente. MODE ne crée <b>aucun moyen de paiement nouveau</b> : il réutilise les mêmes commerces partenaires et les mêmes bons — son coût marginal de distribution est quasi nul.</li>
+<li><strong>Le cross-sell passe par la cagnotte et le Bon d’achat PayEnCash</strong>, pas par les apps : le bon d’achat est valable FLY et MODE ; les points de cagnotte gagnés sur une commande MODE nourrissent le concours « un voyage à gagner » — c'est le client qui traverse, pas l'interface.</li>
+<li><strong>Décision verrouillée : deux apps séparées, pas de cross-promo dans les apps.</strong> Chaque univers reste pur (un voyageur n'a pas de sneakers dans son tunnel de réservation, et inversement). Les ponts sont <b>hors app</b> : le commerce partenaire (le bon d’achat), la landing grand public, les réseaux sociaux, la cagnotte et le Bon d’achat PayEnCash communs.</li>
+<!-- (18/09, soir) Cette synergie reposait sur une tournée d'agents qui n'existe plus — et elle était
+     déjà caduque depuis le pivot du 31/08, qui fait expédier le fournisseur lui-même via Mondial
+     Relay. Ce qui reste vraiment mutualisé entre les deux branches, ce n'est pas de la logistique :
+     c'est le réseau de vente (les mêmes comptoirs) et l'atelier. -->
+<li><strong>Ce qui se mutualise vraiment</strong> : le <b>réseau de vente</b> (les mêmes comptoirs vendent le bon d’achat, qu'il serve à un billet ou à une paire) et l'<b>atelier</b> (contrôle et authentification des pièces MODE). La logistique, elle, ne se mutualise pas : le fournisseur expédie lui-même via <b>Mondial Relay</b> depuis le pivot du 31/08. Un seul réseau de vente, deux flux de valeur.</li>
+<li><strong>Ouverture stratégique</strong> : la revente en nom propre est interdite pour le voyage mais permise pour la mode (biens) — un commerce partenaire pourra à terme revendre du MODE au point de vente, futur relais de gamme (aujourd'hui il ne vend que le bon d’achat).</li>
+</ul>
+
+<h3 id="lancement">Lancement séquencé &amp; pré-ouverture MODE</h3>
+<div class="need"><b>La séquence :</b> ✈️ <b>FLY est actif immédiatement</b> — 👟 <b>MODE ouvre à J-59</b>, et les 59 jours servent à remplir le catalogue ET la liste d'attente : <b>concours d'ouverture 1 000 € d'achats sur PayEnCash</b> (inscription à l'ouverture = participation, tirage au jour du lancement).</div>
+<p><b>Scénario chiffré fournisseurs</b> — l'objectif du jour J se construit à rebours, chaque étage a son taux de passage :</p>
+<div class="funnel">
+<div class="tier"><span class="num">300</span><span class="lbl">Commerçants contactés</span><div class="d">terrain + réseaux — la prospection Commercial</div></div>
+<div class="tier"><span class="num">120</span><span class="lbl">Candidatures reçues</span><div class="d">app Fournisseur — SIREN + identité du gérant</div></div>
+<div class="tier"><span class="num">90</span><span class="lbl">KYB validés</span><div class="d">société + gérant vérifiés, contrat-cadre signé</div></div>
+<div class="tier"><span class="num">60</span><span class="lbl">Catalogues publiés (≥ 3 pièces)</span><div class="d">wizard 6 étapes, photos + états conformes</div></div>
+<div class="tier"><span class="num">40</span><span class="lbl">Fournisseurs ACTIFS au jour J</span><div class="d">pièces contrôlables, ramassage planifié — le socle de l'ouverture</div></div>
+</div>
+<p>Le remplissage se <b>suit hebdo dans le cockpit Commercial · Concours</b> (carte « Prélancement MODE » : jauge inscrits / 120, KYB, catalogues, pièces).</p>
+<div class="warn"><b>Animation réseaux :</b> chaque <b>collab signée</b> (ligne spéciale avec un fournisseur de qualité — esprit Ligne ANONYME, CASH COURT) déclenche <b>une vague</b> : annonce → coulisses atelier → drop. Et des <b>paliers publics</b> rythment l'attente : <b>25 · 50 · 100 fournisseurs inscrits</b> annoncés sur les réseaux. Détail opérationnel du pilote 3 points : <a class="doc" href="plan-lancement.html">plan de lancement</a>.</div>
+
+<h2 id="vitrines">6 · Ce que l'étude impose aux vitrines</h2>
+<div class="need"><b>Besoin :</b> traduire les deux branches en consignes concrètes pour les pages publiques.</div>
+<div class="warn"><b>Règle n°1 — la landing grand public présente LES DEUX apps.</b> Puisque la cible est unique et les apps séparées, c'est la <b>vitrine</b> (payencash.fr) qui fait le travail de présentation croisée : elle raconte le principe (payer avec un bon d’achat), montre les deux univers ✈️ FLY et 👟 MODE côte à côte, et donne envie de télécharger <b>l'une, l'autre ou les deux</b> — avec les deux boutons de téléchargement au même niveau.</div>
+<ul>
+<li><strong>Un principe en tête de page</strong> : « payez avec un bon d’achat » d'abord, les univers ensuite — c'est le principe qui unit, pas les produits.</li>
+<li><strong>Deux blocs équivalents</strong> : FLY (plus de 200 compagnies, plus de 4 000 destinations via le réseau Duffel/Hahn Air, prix bloqué 1 h, promos J−45) · MODE (vérifié par l'atelier, reconditionné −30 à −40 %, Mondial Relay incluse, retour 14 j re-crédité sur le bon d’achat).</li>
+<li><strong>Les ponts affichés</strong> : le Bon d’achat PayEnCash valable sur les deux, cagnotte commune, mêmes moyens de payer (« Avec un Bon d’achat PayEnCash — zéro frais » / « En ligne, avec un Bon d’achat PayEnCash — zéro frais »).</li>
+<li><strong>Les vitrines spécialisées restent mono-branche</strong> : <a class="doc" href="landing-fournisseurs.html">landing fournisseurs</a> (MODE, B2B) et supports point de vente — chacune parle à son public, la landing principale fait la synthèse.</li>
+<li><strong>Les règles de formulation valent partout</strong> : « au meilleur prix » (jamais « les meilleurs prix ») · « plus de 200 compagnies » · terminologie fournisseur verrouillée (jamais « ma boutique », jamais « payez-moi »).</li>
+</ul>
+
+<h2 id="concurrence">7 · Face à qui on se bat</h2>
+<div class="need"><b>Besoin :</b> nommer les concurrents réels de chaque branche — leur force (réelle), leur faiblesse face au client cash, et l'angle qu'on prend. Des faits vérifiables, aucun dénigrement.</div>
+<h3>✈️ FLY — le paysage voyage</h3>
+<div class="tw"><table>
+<tr><th style="width:20%">Concurrent</th><th>Leur force</th><th>Leur faiblesse face au cash</th><th>Notre angle</th></tr>
+<tr><td><b>Comparateurs en ligne</b><br>Kayak · Skyscanner</td><td>Imbattables en choix : quasi toute l'offre mondiale, comparaison instantanée, gratuite.</td><td>Paiement par carte obligatoire ; chez certains revendeurs référencés, des frais n'apparaissent qu'en fin de tunnel ; aucun contact humain.</td><td>On ne rivalise pas sur l'exhaustivité — on sert le client qu'ils excluent : comparaison réelle (plus de 200 compagnies via Duffel), prix tout compris affiché d'emblée, payé avec un bon d’achat.</td></tr>
+<tr><td><b>Agences physiques de quartier</b></td><td>Acceptent le cash ; conseil humain, confiance de proximité — la preuve que le comptoir marche.</td><td>Frais de dossier élevés, prix rarement comparés ; horaires de bureau ; réseau en recul.</td><td>Le même accueil de proximité, adossé à une comparaison en temps réel et aux horaires du commerce — le Bon d’achat PayEnCash s'achète chez les commerces partenaires, sans rendez-vous.</td></tr>
+<tr><td><b>Guichets des compagnies</b></td><td>Vente directe officielle ; certaines agences de compagnie acceptent les espèces.</td><td>Mono-compagnie — aucune comparaison possible ; guichets rares (aéroports, quelques agences en ville).</td><td>Plus de 200 compagnies au même comptoir, près de chez soi.</td></tr>
+</table></div>
+<h3>👟 MODE — le paysage prêt-à-porter</h3>
+<div class="tw"><table>
+<tr><th style="width:20%">Concurrent</th><th>Leur force</th><th>Leur faiblesse face au cash</th><th>Notre angle</th></tr>
+<tr><td><b>Vinted</b></td><td>Choix immense entre particuliers, prix bas, langage d'états devenu la norme du marché.</td><td>Achat à l'aveugle : état déclaré par le vendeur, authentification en option payante, litiges entre particuliers ; paiement en ligne uniquement.</td><td>Le même langage d'états — avec l'inspection atelier incluse d'office sur chaque pièce, et le paiement par bon d’achat.</td></tr>
+<tr><td><b>Zara</b></td><td>Neuf maîtrisé, collections rapides, grammaire éditoriale de référence (celle que MODE emprunte).</td><td>Neuf plein tarif ; l'achat à distance passe par la carte.</td><td>L'esthétique éditoriale du neuf, appliquée à un reconditionné vérifié à −30/−40 % — payé avec un bon d’achat.</td></tr>
+<tr><td><b>Plateformes sneakers</b><br>StockX</td><td>Authentification réelle des paires, cote fiable des modèles recherchés.</td><td>Carte obligatoire ; frais d'achat et de traitement ajoutés au prix affiché ; parcours et service encore largement en anglais.</td><td>L'authentification incluse dans un prix tout compris, en français, payée avec un bon d’achat avec un ticket acheté près de chez soi.</td></tr>
+</table></div>
+<div class="hero-arg">
+<div class="k">La conclusion de la carte concurrentielle</div>
+<div class="t">Notre terrain : personne ne sert le client cash de bout en bout.</div>
+<p>Chacun de ces acteurs est excellent sur son axe — le choix, la proximité, le neuf, l'authentification. Aucun ne réunit comparaison réelle + paiement par bon d’achat + réseau de proximité + vérification incluse. C'est la case vide que PayEnCash occupe, sur les deux branches.</p>
+</div>
+
+<p style="font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:12px;margin-top:22px">PayEnCash — marque d'AJEK · étude marketing des deux branches FLY × MODE · 21 août 2026. Chiffres sourcés : <a class="doc" href="analyse-clientele.html">Analyse de clientèle</a> (cash, paniers, diaspora) · <a class="doc" href="../documents/partie-1b-financier.html">Étape 2</a> (marges, grille MODE, Mondial Relay) · <a class="doc" href="../documents/partie-1-marketing.html">Étape 1</a> (promesses P1–P10, entonnoir) · <a class="doc" href="audit-zara.html">Audit Zara × Vinted</a> (relevés réels). Fréquences et récurrence = estimations <span class="est">EST.</span> à valider au pilote.</p>
+</div></div>
+<div class="toolbar" style="margin:0 auto 40px;justify-content:flex-start"><a class="btn" href="../documents/diagramme-principal.html">🧭 Fil rouge</a><a class="btn" href="../documents/partie-1-marketing.html">← Étape 1 · Marketing</a></div>
+</body></html>

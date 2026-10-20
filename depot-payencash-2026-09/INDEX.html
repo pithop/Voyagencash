@@ -1,0 +1,87 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PayEnCash — portail technique (annexe)</title>
+<!-- (18/09, soir) TOUS LES COMPTEURS DE CETTE PAGE ÉTAIENT FAUX, et ils l'étaient de deux façons : ils
+     recopiaient des totaux d'août (« 116 vues », « 127 tables ») et ils annonçaient une app qui n'existe
+     plus. L'agent de caisse mobile est supprimé — l'app coursier (19 écrans) et huit écrans manager ont
+     quitté le disque, la galerie « Livreur / Agent » avec eux. Les chiffres ci-dessous sont comptés sur le
+     disque (`ls ui/*/*.html` = 140 vues) et dans `server/db/schema.sql` (128 tables + 3 vues).
+     (23/09) Recomptés : 153 vues — PayEnCash Solution (12, l'espace des MARQUES, AJEK grossiste) et l'app Mes bons (5)
+     sont entrées ; la section « API de mise en relation » disait l'inverse de ce que nous sommes, elle est réécrite. -->
+<style>
+:root{--p:#10A06A;--pd:#0C7F54;--ink:#0F2A24;--muted:#5C6B64;--mint:#E6F4EC;--bg:#F4F7F5;--card:#fff;--vif:#3FD99B}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);font:15px/1.55 "Hanken Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:radial-gradient(1100px 520px at 92% -12%, rgba(63,217,155,.16), transparent 62%),var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:30px 22px 60px}
+.logo{font-size:24px;font-weight:800;letter-spacing:-0.03em}.logo em{font-style:normal;color:var(--p)}
+.logo small{display:block;font-size:11px;font-weight:600;color:var(--muted)}
+.prim{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:22px 0}
+.prim a{background:linear-gradient(115deg,#0F2A24,#0C7F54);color:#fff;border-radius:20px;padding:22px 24px;text-decoration:none;font-weight:800;font-size:17px}
+.prim a small{display:block;font-weight:500;font-size:12px;color:#c9d8d0;margin-top:4px}
+h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.g a{background:var(--card);border-radius:14px;padding:13px 15px;text-decoration:none;color:var(--ink);font-weight:700;font-size:13.5px;box-shadow:0 1px 4px rgba(15,42,36,.08)}
+.g a small{display:block;font-weight:500;font-size:11.5px;color:var(--muted);margin-top:2px}
+.note{background:var(--mint);border-radius:14px;padding:12px 16px;font-size:12.5px;color:var(--pd);margin-top:22px}
+@media(max-width:640px){.prim{grid-template-columns:1fr}}
+</style></head><body><div class="wrap">
+<div class="logo">pay<em>En</em>Cash<small>portail technique — ANNEXE · la navigation officielle passe par l'index principal et le fil rouge</small></div>
+<div class="prim">
+  <a href="ESPACE-COMMERCANT/documents/index.html">🏠 Index principal<small>tous les documents du projet</small></a>
+  <a href="ESPACE-COMMERCANT/documents/diagramme-principal.html">🧭 Diagramme principal — le fil rouge<small>les 10 étapes, de la stratégie aux maquettes</small></a>
+</div>
+<h2>Maquettes — l'unique lieu de consultation des pages des apps</h2>
+<div class="g">
+  <a href="ESPACE-COMMERCANT/documents/partie-7-maquettes.html">🖼️ Partie 7 · toutes les apps<small>153 vues · 9 apps · principe du clic</small></a>
+  <a href="ESPACE-COMMERCANT/documents/maquette-app-fly.html">✈️ FLY<small>33 écrans (21 client + 8 paiement + 4 parcours)</small></a>
+  <a href="ESPACE-COMMERCANT/documents/maquette-app-mode.html">👟 MODE<small>23 écrans</small></a>
+  <a href="ESPACE-COMMERCANT/documents/maquette-app-fournisseur.html">📦 Fournisseur<small>19 écrans</small></a>
+  <a href="ESPACE-COMMERCANT/documents/maquette-app-partenaire.html">🏪 Partenaire<small>9 écrans — vend le Bon d’achat PayEnCash (18/09) et les bons des marques (23/09)</small></a>
+  <a href="ESPACE-COMMERCANT/documents/maquette-app-manager.html">🧑‍💼 Manager<small>39 écrans (dont 29 · commerces partenaires, 46 · marques, 45 · règlements Solution)</small></a>
+  <a href="ESPACE-COMMERCANT/documents/maquette-app-commercial.html">🤝 Commercial<small>11 écrans</small></a>
+  <a href="ESPACE-COMMERCANT/documents/maquette-app-hotline.html">🎧 Hotline<small>2 écrans</small></a>
+  <!-- LA SECONDE LIGNE A SA GALERIE (19/09, nuit ; 23/09 : l'espace des marques, 12 écrans) ET L'APP DU PORTEUR (23/09).
+       Elles manquaient ici, et c’est ici qu’on regarde les apps : une app absente de cette grille est une app que
+       personne ne voit. -->
+  <a href="ESPACE-COMMERCANT/documents/maquette-app-solution.html">🗝️ PayEnCash Solution<small>12 écrans — l'espace des marques : nous achetons leurs bons, notre réseau les vend (19-23/09)</small></a>
+  <a href="ESPACE-COMMERCANT/documents/maquette-app-bons.html">🎟️ Mes bons<small>5 écrans — le porteur range et utilise les bons des marques (23/09)</small></a>
+  <a href="ESPACE-COMMERCANT/documents/maquette-app-vitrines.html">🌐 Sites vitrine<small>4 pages publiques</small></a>
+  <a href="ESPACE-COMMERCANT/marketing/landing-page.html">🌐 LA PAGE PRINCIPALE — payencash.fr<small>(23/09) PayEnCash Solution, adressée aux jeunes marques de mode : ce que nous leur achetons, ce que nous leur payons</small></a>
+</div>
+<h2>Le Bon d’achat PayEnCash — espace partenaire (18/09)</h2>
+<div class="g">
+  <a href="ui/partenaire/01-connexion.html">🏪 Espace partenaire — connexion<small>le commerçant qui vend le bon d’achat : ticket imprimé, carte du commerce prélevée à la vente, relevés</small></a>
+  <a href="ui/partenaire/00-inscription.html">📝 Devenir partenaire — inscription<small>4 étapes : dossier · code e-mail · pièces · transmis</small></a>
+  <a href="ui/manager/29-partenaires.html">🧑‍💼 Manager 29 · Commerces partenaires<small>candidatures, activation, relevés mensuels, commerces sans carte</small></a>
+  <a href="ESPACE-COMMERCANT/documents/contrat-distribution-bons.html">📜 Contrat de distribution du bon d’achat<small>miroir du modèle signé dans l'app · à relire par l'avocat</small></a>
+  <a href="ESPACE-COMMERCANT/documents/cgu-espace-partenaire.html">📜 CGU espace partenaire<small>compte, carte du commerce, vendre / annuler / relevé</small></a>
+  <a href="ESPACE-COMMERCANT/documents/conditions-bon-payencash.html">📜 Conditions du bon d’achat (consommateur)<small>mentions du ticket, re-crédit, médiateur</small></a>
+  <a href="ESPACE-COMMERCANT/documents/partie-2-juridique-socle.html#bon">⚖️ Étape 3 §2b — fondement<small>art. L521-3 CMF, L315-1, seuil ACPR, TVA 256 ter</small></a>
+  <a href="GUIDE-DEMARRAGE.html#tester-bon">🧪 Tester le bon d’achat en 5 minutes<small>inscription → dossier → contrat → activation → carte → vente → paiement</small></a>
+</div>
+<h2>PayEnCash Solution — l'espace des marques (19/09 → 23/09)</h2>
+<p style="margin:-6px 0 10px;font-size:13px;line-height:1.6;color:#5d7570">Seconde ligne, distincte de Mode et Fly : une <b>marque</b> émet <b>ses propres bons d'achat</b>, utilisables uniquement chez elle (« réseau limité », art. L521-3 I 1° CMF). AJEK est <b>grossiste</b> : elle <b>achète</b> ces bons à la marque au moment où un commerce de son réseau les vend, avec une remise sur le prix d'achat figée à la vente, et <b>paie</b> la marque à l'échéance de l'offre choisie (24 h · 7 jours ouvrés · 10 jours) ; le logiciel d'édition des bons s'abonne à part (10 bons offerts · 50 bons · Illimité* avec site web). Elle n'encaisse rien pour le compte de la marque et ne demande aucun paiement à ses clients : un bon de marque s'achète au comptoir et s'utilise depuis l'app Mes bons.</p>
+<div class="g">
+  <a href="ui/tech/00-inscription.html">📝 Rejoindre le réseau des marques<small>l'entreprise, le dirigeant (c'est lui qui signe), la déclaration « réseau limité », la pièce d'identité (KYC) — compte inactif tant que le dossier n'est pas contrôlé</small></a>
+  <a href="ui/tech/01-connexion.html">🔑 Connexion des marques<small>seules les marques entrent ici ; « Monter le jeu de démonstration » (MCH-00001)</small></a>
+  <a href="ui/tech/02-espace.html">🗝️ Bon d’achat — l'espace de la marque<small>compteurs, offre, carte de tout le réseau, quota du mois, les bons 20 par 20</small></a>
+  <a href="ui/tech/06-demandes.html">🎫 Bons proposés<small>la marque propose un bon d'un montant précis (commande, devis) : page, ticket, flashcode — rien n'est encaissé</small></a>
+  <a href="ui/tech/07-lien.html">📄 Le bon proposé (page du client)<small>où l'acheter, avec quoi l'utiliser : l'app Mes bons (obligatoire), un commerce du réseau, un mandataire qui se déplace</small></a>
+  <a href="ui/tech/04-boutique-demo.html">🛒 Le bouton bon d’achat en situation<small>une boutique de démonstration tierce : au clic, la fenêtre du bon proposé</small></a>
+  <a href="ui/tech/10-compte.html">👤 Compte<small>sept pages : documents lus jusqu'au bout puis « lu et accepté », contrat-cadre signé par le dirigeant après KYC, paiement, abonnement, intégration, seuils, mentions</small></a>
+  <a href="ui/tech/03-documentation.html">📚 Documentation de l'API<small>les 16 points d'entrée et ce que l'API refuse : aucun encaissement pour compte de tiers, aucun réseau mutualisé</small></a>
+  <a href="ui/manager/46-marques.html">🧑‍💼 Manager 46 · les marques<small>dossier, déclaration, contresignature du contrat-cadre, validation / suspension, formule, seuil ACPR, RIB</small></a>
+  <a href="ui/manager/45-solution-paiements.html">🧑‍💼 Manager 45 · prélèvements et règlements<small>arrêté 20:00, remise SEPA, retour bancaire, virement à la marque, comptes d'avance</small></a>
+  <a href="ui/partenaire/09-marques.html">🏪 Partenaire 09 · Marques<small>le comptoir des bons de marque dans l'app du commerce (SEPA pour le sédentaire, avance pour le nomade)</small></a>
+  <a href="ui/bons/01-mes-bons.html">🎟️ App Mes bons<small>le porteur range ses bons de marque par code et les utilise chez la marque, sous son compte</small></a>
+  <a href="ESPACE-COMMERCANT/documents/cgu-espace-solution.html">📜 CGU de l'espace Solution<small>+ annexes : conditions des bons de marque, conditions du logiciel, charte de communication (versions 2026-09-23)</small></a>
+  <a href="ESPACE-COMMERCANT/documents/audit-app-solution-2309.html">🔍 Audit critique du 23/09<small>les défauts corrigés, la seconde passe, la soirée du 23/09</small></a>
+</div>
+<h2>Annexes techniques (développeur)</h2>
+<div class="g">
+  <a href="GUIDE-DEMARRAGE.html">Guide de démarrage<small>env, comptes, ordre de dev</small></a>
+  <a href="ESPACE-COMMERCANT/documents/partie-6-donnees.html">Tables &amp; relations<small>128 tables + 3 vues, miroir du schéma</small></a>
+  <a href="NOTE-DEVELOPPEUR.html">Note développeur<small>pricing exact, sessionStorage, checklist</small></a>
+  <a href="SYNTHESE-MODIFICATIONS.html">Synthèse des modifications<small>avant → cible, décisions d'août</small></a>
+  <a href="outils-integration/outils-a-integrer.html">Outils à intégrer<small>Duffel, Hotelbeds, Cash Services…</small></a>
+  <a href="docs/01-flux-metier.html">Docs techniques 01 → 11<small>flux, BDD, API, pricing, architecture…</small></a>
+</div>
+<div class="note"><b>Règle de non-doublon :</b> aucun fichier hors « Maquettes » ne liste ou n'affiche les écrans des apps. Si vous en trouvez un, c'est un doublon à signaler.</div>
+</div></body></html>

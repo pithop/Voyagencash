@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash MODE — Suivi</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-mode-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-mode-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-filters.js"></script><!-- (07/09) recherche · tri · pagination par convention -->
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-panier-badge.js"></script><!-- (19/09) la pastille « commande en cours / pièces au sac » sur l'onglet Commandes -->
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-satisfaction.js"></script><!-- (08/09) « note ton échange » — la carte partagée Fly / Mode -->
+<!-- LIVRAISONS (fondatrice 04/09) : « Favoris » quitte la tabbar (il reste accessible en haut
+     de page) au profit du SUIVI DE LIVRAISON — le client suit ici les commandes PAYÉES en
+     route Mondial Relay, avec tous les détails transporteur (n° de suivi, relais, arrivée
+     estimée, garde), et retrouve ses commandes LIVRÉES. Deux onglets, zéro dur : tout vient
+     de PEC_DATA.mode.commandes (statuts en_cours / livree) + livraisonInfo/estimationLivraison. -->
+<style>
+  .caps{letter-spacing:.13em;text-transform:uppercase}
+  /* (fondatrice 06/09 « c'est moche, pas harmonieux ») La page empilait DEUX barres vertes
+     pleines, de même poids : on ne savait pas laquelle commandait l'autre. On revient au
+     segment de la maison (actif sombre sur piste claire, comme .pec-segmented partout
+     ailleurs) pour la barre principale, et le second niveau devient un FILTRE — plus léger,
+     visiblement subordonné. */
+  .seg{display:flex;gap:3px;background:var(--color-segment);border-radius:13px;padding:4px;margin-top:14px}
+  .seg .sg{flex:1;text-align:center;border-radius:10px;padding:10px 4px;font-size:12.5px;font-weight:700;color:var(--color-ink);cursor:pointer;transition:background .15s,color .15s}
+  .seg .sg[aria-selected="true"]{background:var(--color-ink);color:#fff;box-shadow:var(--shadow-segment)}
+  .seg--filtre{background:transparent;padding:0;gap:7px;margin-top:11px}
+  .seg--filtre .sg{flex:0 1 auto;padding:6px 13px;border-radius:999px;font-size:11.5px;font-weight:700;color:var(--color-muted);background:var(--color-surface);box-shadow:var(--shadow-card)}
+  .seg--filtre .sg[aria-selected="true"]{background:var(--color-mint);color:var(--color-primary-dark);box-shadow:none}
+  .tik{border:1px solid var(--color-sep);border-radius:10px;padding:11px 12px;margin-top:10px}
+  .tik .hd{display:flex;align-items:center;gap:9px}
+  .tik .hd b{font-size:12.5px;font-weight:800;color:var(--color-ink)}
+  .tik .sb{margin-top:3px;font-size:11px;color:var(--color-muted);line-height:1.5}
+  .tik .pill{flex:none;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:3px 8px;background:var(--color-mint);color:var(--color-primary-dark)}
+  .lcard{border:1px solid var(--color-sep);border-radius:10px;padding:12px;margin-top:12px}
+  .lcard .top{display:flex;gap:10px;align-items:flex-start}
+  .lcard .ph{flex:none;width:54px;height:68px;border-radius:6px;overflow:hidden;background:#E8E5E0}
+  .lcard .ph img{width:100%;height:100%;object-fit:cover}
+  .lcard .nm{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+  .lcard .idl{margin-top:2px;font-size:10.5px;color:var(--color-muted)}
+  .chip{display:inline-block;margin-top:6px;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border-radius:3px;padding:3px 7px}
+  .chip--route{background:var(--color-mint);color:var(--color-primary-dark)}
+  .chip--ok{background:var(--color-ink);color:#fff}
+  .mrbloc{margin-top:10px;border-top:1px solid var(--color-sep);padding-top:9px;font-size:11.5px;line-height:1.65}
+  .mrbloc .lg{display:flex;justify-content:space-between;gap:10px}
+  .mrbloc .lg b{font-weight:800;text-align:right}
+  .mono{font-variant-numeric:tabular-nums;letter-spacing:.02em}
+  .lcard .acts{display:flex;gap:8px;margin-top:10px}
+  .lcard .acts a{flex:1;text-align:center;font-size:11px;font-weight:800;border-radius:8px;padding:9px 4px;text-decoration:none}
+  .a1{background:var(--color-primary);color:#fff}
+  .a2{border:1.5px solid var(--color-sep);color:var(--color-ink)}
+  /* MENU TOUJOURS VISIBLE : tabbar fixe, contenu défile dessous */
+  /* (06/09) l'épinglage local de la barre d'onglets (position:fixed + padding-bottom:96px) est
+     RETIRÉ : le cadre a désormais une hauteur réelle, la barre est son dernier enfant en flux et
+     reste donc en bas par construction. Six pages portaient ce même bricolage, chacune avec ses
+     valeurs — c'est ce qui créait le décalage et le vide sous la barre. */
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:14px 18px 8px">
+
+    <div style="display:flex;align-items:center;gap:10px">
+      <a href="01-accueil.html" class="tap" aria-label="Retour" style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-chevron-left"/></svg>
+      </a>
+      <span style="min-width:0">
+        <!-- (fondatrice 06/09 « le titre adapte, aussi le menu, pour que ça rentre les deux sans
+             être grossier ») La page tient DEUX choses : où en est mon colis, et j'ai un souci.
+             Le titre les nomme toutes les deux ; l'onglet de la barre reste « Suivi », court
+             et stable — une barre d'onglets n'est pas un endroit où le libellé change. -->
+        <h1 style="font-size:20px;font-weight:800;letter-spacing:-0.02em;line-height:1.15">Suivi &amp; assistance</h1>
+        <span style="display:block;font-size:11px;color:var(--color-muted);margin-top:2px">Tes colis et tes demandes, au même endroit.</span>
+      </span>
+    </div>
+
+    <div id="lv-note" style="margin-top:8px;font-size:11.5px;color:var(--color-muted);line-height:1.5"></div>
+
+    <!-- (fondatrice 05/09) DEUX VOLETS : le colis et l'aide. Un seul endroit pour « où en est
+         ma commande » et « j'ai un souci » — d'où le nom « Suivi ». -->
+    <div class="seg seg--haut" role="tablist">
+      <span class="sg tap" role="tab" id="onglet-liv" aria-selected="true">Livraisons <span id="n-liv">·</span></span>
+      <span class="sg tap" role="tab" id="onglet-ass" aria-selected="false">Assistance <span id="n-ass">·</span></span>
+    </div>
+
+    <section id="volet-liv">
+      <div class="seg seg--filtre" role="tablist" aria-label="Filtrer les livraisons">
+        <span class="sg tap" role="tab" id="tab-encours" aria-selected="true">En cours <span id="n-encours">·</span></span>
+        <span class="sg tap" role="tab" id="tab-livrees" aria-selected="false">Livrées <span id="n-livrees">·</span></span>
+      </div>
+      <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+      <input class="pec-search" type="search" data-fsearch="#liste > *" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+      <div class="meta" data-fvide="#liste > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+      <div id="liste" data-fpage="15"></div>
+    </section>
+
+    <section id="volet-ass" hidden>
+      <!-- (fondatrice 06/09 « reprends le contenu de l'assistance de Fly pour Mode ») Le volet
+           n'offrait qu'une liste de demandes et deux boutons : aucun moyen de JOINDRE quelqu'un.
+           Il reprend les sections de l'assistance Fly — Contact, puis les échanges, puis les
+           questions fréquentes — avec les motifs partagés (.seclbl / .canal) et le contenu de
+           Mode : livraison, retours, tailles. Numéro et horaires viennent du référentiel. -->
+      <div class="seclbl"><span class="t">Contact</span><span class="s">réponse en minutes, pas en jours</span></div>
+      <div class="pec-card" style="padding:2px 15px">
+        <a href="#" id="ass-tel" class="canal tap" style="text-decoration:none">
+          <span class="tuile" style="background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-phone"/></svg></span>
+          <span class="txt"><b>Appeler — gratuit</b><span id="ass-horaires">—</span></span>
+          <span id="ass-num" style="flex:none;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--color-primary-dark);white-space:nowrap">—</span>
+        </a>
+        <a href="13-retour.html" class="canal tap" style="text-decoration:none">
+          <span class="tuile" style="background:var(--color-amber-well);color:var(--color-amber-text)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-package"/></svg></span>
+          <span class="txt"><b>Un souci avec une pièce reçue ?</b><span>Ouvre un retour depuis la commande — étiquette Mondial Relay fournie</span></span>
+          <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:14px;color:var(--color-muted)"><use href="#i-chevron-right"/></svg>
+        </a>
+        <a href="#" id="ass-mail" class="canal tap" style="text-decoration:none">
+          <span class="tuile" style="background:var(--color-segment);color:var(--color-ink)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-mail"/></svg></span>
+          <span class="txt"><b>Écrire</b><span id="ass-mail-lbl">—</span></span>
+          <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:14px;color:var(--color-muted)"><use href="#i-chevron-right"/></svg>
+        </a>
+      </div>
+
+      <div class="seclbl"><span class="t">Tes échanges</span><span class="s" id="ass-note">—</span></div>
+      <!-- (08/09 — boucle hotline) les questionnaires SMS en attente de note, en tête des échanges (PEC_SAT) -->
+      <div id="sat-cartes" style="display:none"></div>
+      <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+      <input class="pec-search" type="search" data-fsearch="#ass-liste > *" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+      <div class="meta" data-fvide="#ass-liste > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+      <div id="ass-liste" data-fpage="15"></div>
+      <div id="ass-vide" class="pec-vide" style="display:none">
+        <span class="pec-vide-ico"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-chat"/></svg></span>
+        <p class="pec-vide-t">Aucune demande en cours</p>
+        <p class="pec-vide-s">Si une pièce ne va pas, ouvre un retour depuis la commande concernée.</p>
+      </div>
+      <div class="seclbl"><span class="t">Questions fréquentes</span><a href="15-comment-tu-paies.html" class="tap s" style="text-decoration:none;color:var(--color-primary-dark);font-weight:800">Comment je paie →</a></div>
+      <div class="pec-card" id="ass-faq" style="padding:2px 15px"></div>
+
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+        <a class="pec-cta pec-cta--tight tap" href="13-retour.html" style="text-align:center">Signaler un problème sur une commande</a>
+        <a class="pec-btn-secondary tap" href="17-politiques.html" style="text-align:center">Retours, remboursements : les règles</a>
+      </div>
+    </section>
+
+    <div id="vide" class="pec-vide" style="display:none">
+      <span class="pec-vide-ico"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-package"/></svg></span>
+      <p class="pec-vide-t">Aucune livraison</p>
+      <p class="pec-vide-s" id="vide-txt"></p>
+      <div class="pec-vide-actions"><a class="pec-cta pec-cta--tight tap" href="01-accueil.html">Parcourir la boutique</a></div>
+    </div>
+
+    <div style="height:14px"></div>
+  </div><!-- /pec-body -->
+
+    <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="10-tendances.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-flame"/></svg>Tendances</a>
+    <a class="pec-tab" aria-current="page" href="22-livraisons.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-package"/></svg>Suivi</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Mode</a>
+    <a class="pec-tab" href="03-panier.html" style="position:relative"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-basket"/></svg>Commandes</a>
+    <a class="pec-tab" href="08-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+  (function () {
+    var D = window.PEC_DATA, M = D.mode;
+    var L = D.livraisonInfo ? D.livraisonInfo() : {};
+    var est = D.estimationLivraison ? D.estimationLivraison() : null;
+    var transporteur = L.transporteur || 'Mondial Relay';
+
+    // Sous-titre SOURCÉ : les détails viennent du transporteur (référentiel livraison, jamais écrits ici)
+    /* (06/09) la phrase d'intro suit le VOLET : elle parlait de colis même sur l'onglet
+       Assistance, où elle ne veut rien dire. */
+    window.__noteLiv = 'Commandes <b style="color:var(--color-ink)">payées</b>, expédiées par le fournisseur et suivies <b style="color:var(--color-ink)">' + transporteur + '</b> — n° de colis, point relais, arrivée estimée, ' + (L.garde || 'garde au relais') + '.';
+    window.__noteAss = 'Une question, un souci sur une commande — <b style="color:var(--color-ink)">on répond</b>. Appelle, écris, ou ouvre un retour depuis la commande : la réponse se suit ici.';
+    document.getElementById('lv-note').innerHTML = window.__noteLiv;
+
+    // DEUX ONGLETS (fondatrice 04/09) : payées NON livrées ↔ livrées. Les « à payer »,
+    // remboursées et annulées vivent dans Panier → Commandes, pas ici.
+    // (05/09) les VRAIES commandes réglées d'abord — leur étape SUIT le fournisseur
+    // (préparation → étiquette → en route MR, commandesEnLivraison) — puis les seed de démo.
+    function enCours() {
+      var reelles = D.commandesEnLivraison ? D.commandesEnLivraison() : [];
+      return reelles.concat((M.commandes || []).filter(function (c) { return c.statut === 'en_cours'; }));
+    }
+    function livrees() { return (M.commandes || []).filter(function (c) { return c.statut === 'livree'; }); }
+    var tab = /[?&]t=livrees/.test(location.search) ? 'livrees' : 'encours';
+
+    function ligne(k, v, mono) { return v ? '<div class="lg"><span style="color:var(--color-muted)">' + k + '</span><b' + (mono ? ' class="mono"' : '') + '>' + v + '</b></div>' : ''; }
+
+    function carte(c, livree) {
+      var a = D.article(c.articleId) || {};
+      var relaisNom = (c.relais || '').split(' · ')[0], relaisAdr = (c.relais || '').split(' · ')[1] || '';
+      var h = '<div class="lcard" data-ref="' + c.ref + '">';
+      h += '<div class="top">';
+      h += '<span class="ph">' + (a.photo ? '<img loading="lazy" decoding="async" src="' + D.photoSrc(a.photo) + '" alt="">' : '') + '</span>';
+      h += '<span style="min-width:0;flex:1">';
+      // (05/09) une commande GROUPÉE n'est pas « un article » : on l'annonce pour ce qu'elle est,
+      // et chaque ligne porte SA taille (a.taille est la taille affichée de la fiche, pas la commandée).
+      var lg = c.lignes || [];
+      h += '<div class="nm">' + (lg.length > 1 ? lg.length + ' articles' : (lg[0] && lg[0].nom) || a.nom || 'Commande') + '</div>';
+      var det = lg.length ? lg.map(function (l) { return (l.nom || '') + (l.taille ? ' · T. ' + l.taille : '') + (l.qte > 1 ? ' ×' + l.qte : ''); }).join(' · ')
+                          : [a.marque, a.taille ? 'T. ' + a.taille : ''].filter(Boolean).join(' · ');
+      h += '<div class="idl">' + [det, c.ref].filter(Boolean).join(' · ') + ' · ' + D.eur(c.paye) + ' — règlement effectué</div>';
+      h += '<span class="chip ' + (livree ? 'chip--ok' : 'chip--route') + '">' + (c.etape || (livree ? 'Retirée au relais' : 'En route')) + (livree && c.date ? ' · ' + c.date : '') + '</span>';
+      h += '</span></div>';
+      // Détails TRANSPORTEUR — tout vient de la commande + du référentiel Mondial Relay
+      h += '<div class="mrbloc">';
+      h += ligne('N° de colis ' + transporteur, c.mr, true);
+      h += ligne('Point relais', relaisNom);
+      h += ligne('Adresse du relais', relaisAdr);
+      if (!livree && est) h += ligne('Arrivée estimée', 'entre ' + est.de + ' et ' + est.a);
+      if (!livree) h += ligne('Garde au relais', (c.gardeJours || L.gardeJours) + ' jours');
+      if (!livree && L.retrait) h += ligne('Retrait', L.retrait.replace('retrait avec ', ''));
+      if (livree && c.date) h += ligne('Retirée le', c.date);
+      h += '</div>';
+      if (livree) {
+        h += '<div class="acts"><a class="a2 tap" href="13-retour.html">Un souci ? Retour sous ' + (L.retourJours || 14) + ' j</a></div>';
+      } else {
+        h += '<div class="acts">';
+        h += '<a class="a1 tap" href="04-commande.html?ref=' + c.ref + '">Suivi détaillé</a>';
+        if (c.mr) h += '<a class="a2 tap" href="https://www.mondialrelay.fr/suivi-de-colis?numeroExpedition=' + c.mr + '" target="_blank" rel="noopener">' + transporteur + '</a>';
+        h += '</div>';
+      }
+      return h + '</div>';
+    }
+
+    function rendre() {
+      var ec = enCours(), lv = livrees();
+      document.getElementById('n-encours').textContent = String(ec.length);
+      var nl = document.getElementById('n-liv'); if (nl) nl.textContent = String(ec.length + lv.length);
+      document.getElementById('n-livrees').textContent = String(lv.length);
+      document.getElementById('tab-encours').setAttribute('aria-selected', tab === 'encours' ? 'true' : 'false');
+      document.getElementById('tab-livrees').setAttribute('aria-selected', tab === 'livrees' ? 'true' : 'false');
+      var liste = tab === 'encours' ? ec : lv;
+      document.getElementById('liste').innerHTML = liste.map(function (c) { return carte(c, tab === 'livrees'); }).join('');
+      var vide = document.getElementById('vide');
+      vide.style.display = liste.length ? 'none' : 'block';
+      document.getElementById('vide-txt').innerHTML = tab === 'encours'
+        ? 'Aucune livraison en cours — tes prochaines commandes payées apparaîtront ici avec leur suivi ' + transporteur + '.'
+        : 'Aucune commande livrée pour l\'instant.';
+    }
+
+    document.getElementById('tab-encours').addEventListener('click', function () { tab = 'encours'; rendre(); });
+    document.getElementById('tab-livrees').addEventListener('click', function () { tab = 'livrees'; rendre(); });
+
+    /* ── VOLET ASSISTANCE (fondatrice 05/09 : « la page livraison doit être un mix livraison et
+          assistance ») : les demandes du CLIENT CONNECTÉ, vivantes, lues au bus — la décision du
+          manager y est DITE (remboursée en avoir, réponse motivée), jamais un simple « clôturée ».
+          Zéro dur : sans demande, un état vide qui explique quoi faire. ── */
+    /* (08/09 — audit hotline) le libellé d'état vient de la LISTE PARTAGÉE (PEC_DATA.statutDemande(d).client) :
+       le même mot ici, dans l'assistance Fly, à la hotline et chez le manager. */
+    function mesDemandes() {
+      if (!window.PEC_BUS || !PEC_BUS.demandesSav) return [];
+      var moi = (D.clientCourant && D.clientCourant()) || null;
+      var nom = moi ? (moi.nomComplet || ((moi.prenom || '') + ' ' + (moi.nom || '')).trim()) : null;
+      var refs = {};
+      (D.commandesEnLivraison ? D.commandesEnLivraison() : []).forEach(function (c) { refs[c.ref] = 1; });
+      (D.commandesRegleesGet ? D.commandesRegleesGet() : []).forEach(function (c) { refs[c.ref] = 1; });
+      (M.commandes || []).forEach(function (c) { refs[c.ref] = 1; });
+      return PEC_BUS.demandesSav().filter(function (d) {
+        // les MIENNES : celles de mon COMPTE (09/09 — lot 1 socle), à défaut ouvertes à mon nom, ou portant la réf d'une de mes commandes
+        if (d.clientId) return PEC_DATA.estAMoi(d);
+        return (nom && d.client === nom) || (d.ref && refs[d.ref]);
+      });
+    }
+    function quand(ts) {
+      if (!ts) return '';
+      var j = Math.floor((Date.now() - ts) / 86400000);
+      return j <= 0 ? "aujourd'hui" : (j === 1 ? 'hier' : 'il y a ' + j + ' jours');
+    }
+    function carteDemande(d) {
+      var clos = String(d.statut || '').indexOf('clot') === 0;
+      var typeLbl = d.type === 'reclamation' ? 'Réclamation' : d.type === 'conversation' ? 'Conversation' : 'Demande';
+      var dernier = (d.echanges || [])[(d.echanges || []).length - 1];
+      return '<div class="tik">' +
+        '<div class="hd"><b>' + typeLbl + ' · ' + (d.sujet || d.id) + '</b>' +
+          '<span style="flex:1"></span><span class="pill">' + D.statutDemande(d).client + '</span></div>' +
+        '<div class="sb">' + d.id + (d.ref ? ' · commande ' + d.ref : '') + ' · ouverte ' + quand(d.at) +
+          (d.assigne ? ' · suivie par ' + d.assigne : '') +
+          (clos ? ' · close ' + quand(d.cloAt) : (d.due ? ' · ' + d.due : '')) + '</div>' +
+        (dernier ? '<div class="sb" style="color:var(--color-ink)">« ' + String(dernier.texte).slice(0, 120) + ' »</div>' : '') +
+        (clos && d.statut === 'clot_rembourse' ? '<div class="sb" style="color:var(--color-primary-dark);font-weight:700">Ton avoir est crédité — utilisable sur Mode et Fly.</div>' : '') +
+      '</div>';
+    }
+    function rendreAssistance() {
+      var l = mesDemandes();
+      document.getElementById('n-ass').textContent = String(l.length);
+      document.getElementById('ass-liste').innerHTML = l.map(carteDemande).join('');
+      document.getElementById('ass-vide').style.display = l.length ? 'none' : 'block';
+      var ouvertes = l.filter(function (d) { return String(d.statut || '').indexOf('clot') !== 0; }).length;
+      document.getElementById('ass-note').textContent = l.length
+        ? (ouvertes + ' en cours sur ' + l.length)
+        : 'rien en cours';
+    }
+
+    /* CONTACT + FAQ (06/09) — le numéro, les horaires et l'adresse viennent du référentiel
+       (D.serviceClient) : rien d'écrit en dur, et un changement se répercute partout. */
+    (function () {
+      var SC = (D && D.serviceClient) || {};
+      var tel = String(SC.tel || '').replace(/\s/g, '');
+      var a = document.getElementById('ass-tel');
+      if (a && tel) { a.setAttribute('href', 'tel:' + tel); document.getElementById('ass-num').textContent = SC.tel; }
+      var h = document.getElementById('ass-horaires'); if (h) h.textContent = 'Ouvert ' + (SC.horaires || '—');
+      var m = document.getElementById('ass-mail');
+      /* (11/09) « 24 h ouvrées » était écrit ICI, et nulle part ailleurs : tous les autres écrans annoncent
+         2 h — la valeur que la hotline TIENT vraiment (ref.hotline.slaHoteH, échéance calculée, retard dérivé,
+         superviseure alertée). Le client lisait deux promesses différentes selon la page. Une seule source. */
+      var slaH = (D && D.ref && D.ref.hotline) ? ((D.param ? D.param('ref.hotline.slaHoteH', D.ref.hotline.slaHoteH) : D.ref.hotline.slaHoteH)) : null;
+      if (m && SC.email) { m.setAttribute('href', 'mailto:' + SC.email); document.getElementById('ass-mail-lbl').textContent = SC.email + (slaH ? ' · réponse sous ' + slaH + ' h ouvrées' : ''); }
+      else if (m) { m.hidden = true; }
+
+      /* Les questions fréquentes de MODE — livraison, retours, tailles, paiement — reprises du
+         registre de l'assistance Fly (question repliée, réponse au clic). Les réponses citent
+         les référentiels déjà affichés ailleurs sur les fiches : on ne réinvente pas les règles. */
+      var LIV = (D.livraisonInfo && D.livraisonInfo()) || {};
+      var faq = [
+        ['Où en est mon colis ?', 'Dès que ta commande est réglée, le fournisseur l\'expédie en <b>' + (LIV.transporteur || 'Mondial Relay') + '</b>. Le n° de colis, le point relais et l\'arrivée estimée s\'affichent dans l\'onglet <b>Livraisons</b> de cette page.'],
+        ['La pièce ne me va pas — je peux la renvoyer ?', 'Oui. Tu as <b>' + (LIV.retourJoursTxt || '14 jours') + '</b> après réception pour te rétracter. L\'étiquette Mondial Relay est fournie : <b>gratuite si la pièce n\'est pas conforme</b>, à ta charge en cas de changement d\'avis. La demande se fait depuis la commande.'],
+        ['Comment je suis remboursé·e ?', 'Au choix : <b>avoir immédiat</b> ou <b>virement</b> sur un RIB à ton nom. Aucun RIB n’est conservé chez nous — c\'est toi qui donnes le RIB au moment du remboursement.'],
+        ['Je me suis trompé·e de taille', 'Les tailles proposées sur une fiche sont celles <b>réellement en stock</b>. Si la tienne n\'y est pas, demande à être prévenu·e : on t\'alerte dès qu\'elle revient. Sinon, c\'est un retour classique.'],
+        ['Une pièce est-elle vérifiée avant de partir ?', 'Ce qui est vérifié est écrit <b>sur la fiche de chaque pièce</b>, sans rien sur-promettre : photos vérifiées, contrôle en atelier ou authentification, selon le cas. Un contrôle n\'est pas une garantie — la réserve est indiquée avec la mention.'],
+        // (17/09 — pivot) les moyens viennent du référentiel (moyensPaiementLabel) ; plus de point partenaire
+        ['Je paie comment ?', '<b>Avec un bon d’achat</b> — ' + (D.moyensPaiementLabel ? D.moyensPaiementLabel() : 'un bon d’achat suffit') + '. En ligne, tu es redirigé vers la page sécurisée de notre prestataire de paiement ; l\'agent, lui, vient chez toi compter tes espèces contre reçu. Au-delà du plafond légal des espèces, le complément passe par carte sur le terminal de l\'agent. Le détail est sur <a href="../ecrans/15-moyens-paiement.html" style="color:var(--color-primary-dark);font-weight:800">Moyens de paiement</a>.']
+      ];
+      var box = document.getElementById('ass-faq');
+      if (box) {
+        box.innerHTML = faq.map(function (f, i) {
+          return '<button type="button" class="canal tap" aria-expanded="false" data-faq="' + i + '">' +
+              '<span class="txt" style="padding-right:4px"><b style="font-size:12.5px">' + f[0] + '</b></span>' +
+              '<span class="chev"></span></button>' +
+            '<div class="pli" id="faq-' + i + '" hidden style="font-size:12px;line-height:1.6;color:var(--color-muted)">' + f[1] + '</div>';
+        }).join('');
+        box.addEventListener('click', function (e) {
+          var b = e.target.closest('[data-faq]'); if (!b) return;
+          var z = document.getElementById('faq-' + b.getAttribute('data-faq'));
+          var on = b.getAttribute('aria-expanded') === 'true';
+          b.setAttribute('aria-expanded', String(!on)); z.hidden = on;
+        });
+      }
+    })();
+    function volet(v) {
+      document.getElementById('onglet-liv').setAttribute('aria-selected', v === 'liv' ? 'true' : 'false');
+      document.getElementById('onglet-ass').setAttribute('aria-selected', v === 'ass' ? 'true' : 'false');
+      document.getElementById('volet-liv').hidden = v !== 'liv';
+      document.getElementById('volet-ass').hidden = v === 'liv';
+      var n = document.getElementById('lv-note');
+      if (n) n.innerHTML = (v === 'ass' ? window.__noteAss : window.__noteLiv) || '';
+      if (v === 'ass') rendreAssistance();
+    }
+    document.getElementById('onglet-liv').addEventListener('click', function () { volet('liv'); });
+    document.getElementById('onglet-ass').addEventListener('click', function () { volet('ass'); });
+    if (/[?&]v=assistance/.test(location.search)) volet('ass');
+
+    // (08/09) « Note ton échange » : la carte partagée, alimentée par les questionnaires SMS en attente
+    if (window.PEC_SAT) PEC_SAT.carte('sat-cartes', {
+      client: function () { return (D.clientCourant && D.clientCourant()) || { nomComplet: (D.profil || {}).nomComplet }; },
+      onDone: function () { rendreAssistance(); }
+    });
+
+    rendre(); rendreAssistance();
+    function tout() { rendre(); rendreAssistance(); }
+    window.addEventListener('storage', tout);
+    window.addEventListener('pec-bus', tout);
+    if (D.scrollMemo) D.scrollMemo('pec-livraisons-scroll');
+  })();
+</script>
+</body>
+</html>

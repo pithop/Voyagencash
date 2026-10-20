@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash — Doc 7 : Annulations, remboursements et communications client</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+  /* Sans ceci, un navigateur en mode sombre rend champs, listes et ascenseurs
+     en sombre sur notre fond creme. La doc est concue en clair, on le declare. */
+  color-scheme: light;
+    --vert: #1F4438; --cuivre: #D8722B; --creme: #F7F5F0; --encre: #1A1A1A;
+    --gris: #6B6966; --gris-clair: #E4E0D6; --blanc: #FFFFFF; --rouge: #C0392B; --radius: 10px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; color: var(--encre); background: var(--creme); line-height: 1.7; font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+  .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: var(--vert); color: var(--creme); overflow-y: auto; padding: 24px 0; z-index: 100; }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 0.5px solid rgba(244,241,234,0.15); margin-bottom: 16px; }
+  .sidebar-logo .brand { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 4px; }
+  .sidebar-logo .brand .accent { color: var(--cuivre); }
+  .sidebar-logo .doc-num { font-size: 11px; color: rgba(244,241,234,0.5); margin-top: 4px; }
+  .sidebar nav a { display: block; padding: 7px 20px; font-size: 12.5px; color: rgba(244,241,234,0.7); text-decoration: none; border-left: 2px solid transparent; }
+  .sidebar nav a:hover { color: var(--creme); border-left-color: var(--cuivre); background: rgba(244,241,234,0.06); }
+  .sidebar nav .section-head { padding: 14px 20px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(244,241,234,0.35); font-weight: 600; }
+  .doc-nav { margin-top: 24px; padding: 16px 20px 0; border-top: 0.5px solid rgba(244,241,234,0.15); }
+  .doc-nav p { font-size: 11px; color: rgba(244,241,234,0.4); margin-bottom: 8px; }
+  .doc-nav a { display: block; font-size: 12px; color: rgba(244,241,234,0.6); text-decoration: none; padding: 4px 0; }
+  .doc-nav a:hover { color: var(--cuivre); }
+
+  .main { margin-left: 240px; max-width: 920px; padding: 48px 56px; }
+
+  .doc-header { border-bottom: 1px solid var(--gris-clair); padding-bottom: 24px; margin-bottom: 40px; }
+  .doc-header .doc-tag { display: inline-block; background: var(--cuivre); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px; letter-spacing: 0.04em; }
+  .doc-header h1 { font-family: 'Archivo', sans-serif; font-size: 30px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .doc-header .meta { display: flex; gap: 20px; font-size: 13px; color: var(--gris); flex-wrap: wrap; }
+
+  .section { margin-bottom: 48px; scroll-margin-top: 24px; }
+  h2 { font-family: 'Archivo', sans-serif; font-size: 21px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--gris-clair); color: var(--vert); }
+  h3 { font-family: 'Archivo', sans-serif; font-size: 16.5px; font-weight: 600; margin: 26px 0 12px; color: var(--encre); }
+  p { margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0 20px; }
+  th { background: var(--vert); color: var(--creme); padding: 9px 11px; text-align: left; font-weight: 600; font-size: 11.5px; }
+  td { padding: 8px 11px; border-bottom: 0.5px solid var(--gris-clair); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(244,241,234,0.5); }
+  td code { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: rgba(31,68,56,0.07); color: var(--vert); padding: 2px 6px; border-radius: 4px; }
+  pre { background: #1A1A2E; color: #E8E6E3; border-radius: var(--radius); padding: 16px 18px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7; overflow-x: auto; margin: 14px 0; }
+  pre .comment { color: #6B7A8D; }
+  pre .key { color: #82AAFF; }
+  pre .str { color: #C3E88D; }
+
+  .callout { border-radius: var(--radius); padding: 14px 16px; margin: 16px 0; font-size: 13.5px; display: flex; gap: 12px; align-items: flex-start; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: rgba(31,68,56,0.06); border-left: 3px solid var(--vert); }
+  .callout.warning { background: rgba(216,114,43,0.08); border-left: 3px solid var(--cuivre); }
+  .callout.danger { background: rgba(192,57,43,0.07); border-left: 3px solid var(--rouge); }
+  .callout strong { display: block; font-weight: 600; margin-bottom: 4px; color: var(--encre); }
+
+  .source-tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--gris-clair); color: var(--gris); margin-left: 6px; }
+
+  .checklist { list-style:none; margin: 12px 0; }
+  .checklist li { padding: 6px 0 6px 28px; position:relative; font-size:14px; }
+  .checklist li::before { content:"☐"; position:absolute; left:0; color: var(--vert); font-size:16px; }
+
+  @media print { .sidebar { display: none; } .main { margin-left: 0; padding: 24px; } }
+  @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; padding: 24px 20px; } }
+</style>
+</head>
+<body>
+<div style="background:#fdf5e6;border:2px dashed #b8860b;border-radius:10px;padding:12px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#8a6508"><b>⚠️ Mise à jour août 2026, révisée au pivot du 18/09 (soir) — remplace la révision du 17/09.</b> La « course de retour cash » est <b>abandonnée</b>, et l'<b>agent de caisse mobile est supprimé</b> : <b>plus aucune espèce ne circule</b>, ni à l'aller ni au retour. Le client paie sans carte par <b>Bon d’achat PayEnCash</b> ou par <b>Bon d’achat PayEnCash</b>, tous deux achetés au comptoir d'un commerce. Circuit de restitution, désormais entièrement dématérialisé : <b>le remboursement re-crédite le Bon d’achat PayEnCash</b> (<code>gift_card_movements</code>) — ou, à défaut de bon, un virement au RIB du client. <b>Jamais d'espèces, jamais de rendu de monnaie</b>, et plus aucun « point » ni agent. ⚠️ <b>À valider par l'avocat</b> : un avoir re-crédité vaut-il remboursement au sens de la rétractation légale de 14 jours, qui impose le même moyen de paiement qu'à l'achat ? Voir <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html" style="color:#0b5c3a;font-weight:700">Étape 4 · F10</a>.</div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">PayEn<span class="accent">Cash</span></div>
+    <div class="doc-num">Documentation technique · v2.0 (encaissement à domicile)</div>
+  </div>
+  <nav>
+    <div class="section-head">Document 7</div>
+    <a href="#intro">Introduction</a>
+    <a href="#conditions-duffel">Conditions d'annulation — Duffel</a>
+    <a href="#conditions-hotelbeds">Conditions d'annulation — Hotelbeds</a>
+    <a href="#remboursement">Remboursement — selon conditions fournisseur</a>
+    <a href="#processus-par-phase">Processus d'annulation par phase</a>
+    <a href="#emails">Catalogue des emails transactionnels</a>
+    <a href="#rappel-expiration">Rappel avant fin de fenêtre de collecte</a>
+    <a href="#rappel-pre-depart">Rappel pré-départ (enregistrement)</a>
+    <a href="#livraison-documents">Encaissement des documents client</a>
+    <a href="#espace-client">Espace client — contenu attendu</a>
+    <a href="#checklist">Checklist avant développement</a>
+  </nav>
+  <div class="doc-nav">
+    <p>Documents</p>
+    <a href="01-flux-metier.html">← Doc 1 : Flux métier</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">← Doc 2 : Schéma BDD</a>
+    <a href="03-api-specs.html">← Doc 3 : Spécifications API</a>
+    <a href="04-pricing.html">← Doc 4 : Logique de pricing</a>
+    <a href="05-architecture.html">← Doc 5 : Architecture technique</a>
+    <a href="06-segment-maghreb.html">← Doc 6 : Segment Maghreb</a>
+    <a href="08-mecanisme-financier.html">→ Doc 8 : Mécanisme financier</a>
+    <a href="09-espace-manager.html">→ Doc 9 : Espace Manager</a>
+    <a href="10-compte-utilisateur.html">→ Doc 10 : Compte utilisateur</a>
+    <a href="11-ui-v2.html">→ Doc 11 : UI v2 (écrans)</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">📖 Glossaire central des champs</a>
+  </div>
+</aside>
+
+<main class="main">
+<div class="bandeau-socle" style="background:#FDF1E7;border:1px solid #E39A2E;border-left:5px solid #E39A2E;border-radius:10px;padding:13px 17px;margin:0 0 28px;font-size:13.5px;line-height:1.65;color:#7a5410">⚠️ <b>Document socle (juillet 2026)</b> — conservé comme référence technique. Les décisions <b>À JOUR</b> vivent dans le fil rouge (10 étapes)&nbsp;: <a href="../ESPACE-COMMERCANT/documents/diagramme-principal.html" style="color:#0c7f54;font-weight:700">diagramme principal</a>. En cas d'écart, le fil rouge fait foi (ex.&nbsp;: carte bleue en complément, Mondial Relay, F13, codes promo fournisseurs).</div>
+
+
+  <div class="doc-header">
+    <span class="doc-tag">Document 7 / 11</span>
+    <h1>Annulations, remboursements et communications client</h1>
+    <div class="meta">
+      <span>Projet PayEnCash</span>
+      <span>Version 1.0</span>
+      <span>Juin 2026</span>
+    </div>
+  </div>
+
+  <section class="section" id="intro">
+    <h2>Introduction</h2>
+    <p>Ce document décrit la logique d'annulation et de remboursement — qui n'apparaissait dans le Doc 1 que sous forme d'états (<code>CANCELLED</code>, <code>REFUNDED</code>) sans processus réel — ainsi que le catalogue des emails transactionnels. Dans le modèle d'encaissement à domicile, le cash est collecté <strong>physiquement au domicile</strong>, hors de tout prestataire de paiement externe. Le remboursement, lorsqu'il est dû, suit les <strong>conditions d'annulation réelles des fournisseurs</strong> (Duffel, Hotelbeds) : si un tarif n'est pas remboursable, ou que l'information n'est pas disponible, le client doit le voir affiché explicitement comme <strong>NON REMBOURSÉ</strong> avant de payer — aucune promesse implicite de remboursement intégral ne doit être faite.</p>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>DÉCISION REQUISE — canal de restitution des espèces</strong> Ce document explorait jusqu'ici une <strong>« tournée de retour cash »</strong> (un agent rapporte les espèces au domicile) comme mécanisme unique de remboursement. Ce choix <strong>n'est pas tranché</strong> : il ne doit pas être présenté comme acquis tant qu'il n'a pas été validé (coût d'une tournée dédiée, délai, sécurité de l'agent porteur d'espèces). Les alternatives (virement bancaire, crédit sur compte client, autre) restent ouvertes. La section « Remboursement » ci-dessous détaille ce point.</div>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Vérification à refaire avant développement</strong> Les conditions d'annulation Duffel et Hotelbeds ci-dessous proviennent de leur documentation publique (consultée en 2026) — revalider les comportements exacts au moment de l'implémentation, comme rappelé au Doc 3.</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">📄</span>
+      <div><strong>Ce document ne traite pas du droit de rétractation</strong> Tout ce qui précède concerne les <strong>politiques d'annulation contractuelles</strong> des fournisseurs (Duffel, Hotelbeds), pas le <strong>droit de rétractation légal</strong> (art. L221-18 / L221-28 du Code de la consommation). Sur la ligne <strong>Voyage</strong>, les prestations de transport et d'hébergement à date déterminée sont <strong>exclues</strong> du droit de rétractation par exception légale — seules les conditions d'annulation ci-dessus s'appliquent. La rétractation de <strong>14 jours</strong> ne s'applique qu'aux articles de la ligne <strong>Mode</strong> — voir <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html"><code>Étape 4 · flux F11/F12</code></a>, hors périmètre de ce document.</div>
+    </div>
+  </section>
+
+  <section class="section" id="conditions-duffel">
+    <h2>Conditions d'annulation — Duffel</h2>
+    <p>Duffel expose un objet <code>conditions</code> à la fois sur les offres (avant achat) et sur les commandes (après achat), indiquant si un changement ou un remboursement est autorisé, avec d'éventuels frais de pénalité. Ces conditions sont disponibles via l'API sans appel supplémentaire et doivent être affichées au client avant qu'il ne paie, pas seulement découvertes après coup.</p>
+    <table>
+      <thead><tr><th>Règle</th><th>Détail</th></tr></thead>
+      <tbody>
+        <tr><td>Fenêtre de remboursement intégral</td><td>Certaines commandes payées sont éligibles à l'annulation, généralement dans les 24 heures suivant le paiement, avec remboursement intégral dans cette fenêtre.</td></tr>
+        <tr><td>Restriction proche du départ</td><td>Les commandes créées à moins de 7 jours de la date de départ peuvent ne pas être éligibles à l'annulation, indépendamment de la fenêtre des 24h.</td></tr>
+        <tr><td>Processus technique</td><td>Création d'un <code>order_cancellation</code> (donne le montant remboursable sans engager l'annulation) puis confirmation via <code>POST /air/order_cancellations/{id}/actions/confirm</code> pour exécuter réellement l'annulation.</td></tr>
+        <tr><td>Destination du remboursement</td><td>Le montant remboursé revient sur le solde Duffel (Duffel Balance) de PayEnCash — PayEnCash doit ensuite reverser ce montant à son propre client, ce remboursement n'étant pas automatique côté client final.</td></tr>
+        <tr><td>Crédits compagnie</td><td>Certaines compagnies proposent un crédit voyage plutôt qu'un remboursement monétaire — Duffel modélise cela comme une entité "Airline Credit" distincte, avec sa propre date d'expiration.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Implication pour le schéma de données</strong> Le champ <code>conditions</code> de l'offre devrait être stocké au moment de la sélection (Phase 1) pour pouvoir l'afficher au client avant paiement, sans nouvel appel API. La colonne existe : <code>flight_offers.conditions_json</code> (Doc 2), et son équivalent hôtel <code>stay_offers.cancel_penalties_json</code>. Ce qui reste à garantir, c'est qu'elles soient <strong>renseignées dès la Phase 1</strong> — une colonne présente mais vide au moment d'afficher les conditions revient exactement au même qu'une colonne absente.</div>
+    </div>
+  </section>
+
+  <section class="section" id="conditions-hotelbeds">
+    <h2>Conditions d'annulation — Hotelbeds</h2>
+    <p>Chaque tarif d'hébergement porte sa propre politique d'annulation, déterminée par les objets <code>cancel_penalties</code> et <code>nonrefundable_date_ranges</code> retournés dès l'appel de recherche de disponibilité (Phase 1) — donc avant même la réservation, comme pour Duffel.</p>
+    <table>
+      <thead><tr><th>Règle</th><th>Détail</th></tr></thead>
+      <tbody>
+        <tr><td>Indicateur de remboursabilité</td><td>Le champ <code>refundable</code> (booléen) est présent dans la réponse de disponibilité — tout tarif qui n'est pas intégralement remboursable au moment de la réservation affichera <code>refundable: false</code>.</td></tr>
+        <tr><td>Annulation</td><td>La réponse de réservation (Phase 5) inclut un lien direct pour annuler la réservation, en plus du lien de récupération des détails.</td></tr>
+        <tr><td>Délai de confirmation</td><td>Après une demande d'annulation, le statut doit être revérifié via une requête de récupération d'itinéraire — le statut d'une réservation de type RECHECK doit être confirmé via une vérification explicite des tarifs avant toute confirmation finale, comme détaillé au Doc 3.</td></tr>
+        <tr><td>Annulation initiée par l'établissement</td><td>Un établissement peut annuler une réservation de son côté (fermeture, erreur de stock) — ce cas doit être traité comme les autres erreurs fournisseur du Doc 1, pas comme une annulation demandée par le client.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Afficher explicitement « NON REMBOURSÉ »</strong> Dès que <code>refundable = false</code> (Hotelbeds) ou que les conditions Duffel n'autorisent pas l'annulation (hors fenêtre 24h, ou moins de 7 jours du départ), l'écran de prix (Doc 4) doit afficher la mention explicite <strong>« NON REMBOURSÉ »</strong> avant que le client ne paie — jamais un silence ou une formulation ambiguë laissant croire à un remboursement possible. Quand l'information de remboursabilité n'est pas disponible dans la réponse fournisseur, traiter par défaut comme <strong>NON REMBOURSÉ</strong> (position prudente) plutôt que de supposer le contraire.</div>
+    </div>
+  </section>
+
+  <section class="section" id="remboursement">
+    <h2>Remboursement — selon les conditions fournisseur</h2>
+    <div class="callout info">
+      <span class="callout-icon">💶</span>
+      <div><strong>Principe : le remboursement suit les conditions d'annulation réelles</strong> Un remboursement n'est dû que dans la mesure où le tarif acheté le permet (Duffel : fenêtre 24h / hors 7 jours du départ ; Hotelbeds : <code>refundable = true</code>, voir sections précédentes). Quand le tarif n'est pas remboursable, ou que l'information n'est pas disponible, le prix a été affiché au client <strong>en NON REMBOURSÉ avant paiement</strong> — dans ce cas, aucune promesse de remboursement ne doit être faite après coup.</div>
+    </div>
+    <p>Quand un remboursement est dû, son montant se calcule sur le <strong>TTC</strong> payé (<code>orders.total_price_cents</code>) au prorata de la part effectivement remboursable. La <strong>TVA</strong> correspondante (<code>vat_amount_cents</code>) suit le même sort que le principal remboursé et sort de la TVA collectée de la période (voir Doc 8).</p>
+    <table>
+      <thead><tr><th>Situation</th><th>Remboursement dû au client</th><th>Récupération fournisseur</th></tr></thead>
+      <tbody>
+        <tr><td>Collecte validée mais Phase 5 pas encore exécutée (ou échec avant booking)</td><td>Intégral — rien n'a été engagé auprès des fournisseurs, aucune politique d'annulation à appliquer</td><td>Sans objet</td></tr>
+        <tr><td>Échec fournisseur après collecte (D4)</td><td>Mise en attente / retry ; si irrésoluble, intégral (le fournisseur n'a rien exécuté)</td><td>Selon le point d'échec (souvent rien débité)</td></tr>
+        <tr><td>Annulation après confirmation (vol et/ou hôtel), tarif remboursable</td><td>À hauteur de la part remboursable selon les conditions Duffel / Hotelbeds</td><td>Correspond au montant remboursé au client</td></tr>
+        <tr><td>Annulation après confirmation, tarif non remboursable</td><td><strong>NON REMBOURSÉ</strong> sur cette composante — affiché comme tel, aucun remboursement automatique</td><td>Sans objet</td></tr>
+        <tr><td>Annulation partielle (une seule composante remboursable)</td><td>Remboursement limité à la composante remboursable ; l'autre reste NON REMBOURSÉE</td><td>Récupération de la seule composante annulable</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Pas d'absorption systématique par PayEnCash</strong> Contrairement à une version antérieure de ce document, PayEnCash n'a <strong>pas vocation à absorber par défaut</strong> l'écart entre ce qu'il récupère des fournisseurs et ce qu'il rembourserait au client sur un tarif non remboursable — le client a vu la mention NON REMBOURSÉ avant de payer. Un geste commercial exceptionnel reste une décision au cas par cas, pas une règle automatique.</div>
+    </div>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>DÉCISION REQUISE — canal de restitution des espèces</strong> Le mécanisme concret par lequel un remboursement dû est physiquement rendu au client <strong>n'est pas tranché</strong>. Une piste explorée dans une version antérieure de ce document était une <strong>« tournée de retour »</strong> dédiée (<code>deliveries.is_return = true</code>, un agent rapporte les espèces au domicile) — voir l'encadré technique ci-dessous pour ce que cela impliquerait <em>si</em> cette option était retenue. Elle n'est <strong>pas validée</strong> à ce stade (coût d'une tournée dédiée, délai, sécurité de l'agent porteur d'espèces) et doit être confirmée — ou remplacée par une alternative (virement bancaire vers un compte déclaré, crédit sur le compte client, autre) — avant toute implémentation.</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">🛵</span>
+      <div><strong>Si la tournée de retour est retenue — implications techniques (non validées)</strong>
+      <ul style="margin:8px 0 0;padding-left:18px;">
+        <li>Elle serait dispatchée comme un encaissement normale (Doc 1 / Doc 3) : agent assigné, suivi sur la carte live, remise des espèces tracée.</li>
+        <li>Elle fonctionnerait à l'envers du circuit du cash : elle <strong>consommerait</strong> des espèces plutôt que d'en rapporter. Le montant rendu se <strong>retrancherait</strong> de <code>couriers.cash_on_hand_cents</code> au lieu de s'y ajouter, sans obligation de dépôt associée.</li>
+        <li>Un agent ne pourrait l'accepter que s'il détient déjà la somme dans son encours non déposé — aucun circuit d'avance de fonds n'est envisagé. Le dispatch devrait donc vérifier la disponibilité des fonds, pas seulement la distance.</li>
+        <li>La sortie de caisse devrait apparaître dans la vue trésorerie (Doc 9), et le verrou de dispatch D15 (encours positif ⇒ retiré du dispatch) ne s'appliquerait qu'aux tournées de <em>collecte</em>, pas de retour.</li>
+      </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="processus-par-phase">
+    <h2>Processus d'annulation par phase</h2>
+    <p>Reprend les 5 phases du Doc 1, en précisant pour chacune ce qui doit réellement se passer en cas de demande d'annulation du client — ce qui manquait jusqu'ici.</p>
+    <table>
+      <thead><tr><th>Phase / statut</th><th>Annulation possible ?</th><th>Processus</th></tr></thead>
+      <tbody>
+        <tr><td>Phase 1-2 (<code>DRAFT</code>)</td><td>Oui, sans condition</td><td>Aucune collecte n'a eu lieu — suppression ou abandon simple de la commande, aucun appel fournisseur nécessaire.</td></tr>
+        <tr><td>Phase 3 (<code>AWAITING_COURIER</code> / <code>COURIER_ASSIGNED</code>)</td><td>Oui, sans condition</td><td>Le code interne est invalidé et le dispatch annulé ; la commande passe en <code>EXPIRED</code> ou <code>CANCELLED</code> — aucune espèce collectée, aucun fournisseur de voyage engagé.</td></tr>
+        <tr><td>Phase 4 (<code>CASH_COLLECTED</code> / <code>PAID</code>), avant déclenchement Duffel/Hotelbeds</td><td>Oui</td><td>Le cash est déjà collecté mais rien n'a encore été engagé auprès des fournisseurs. Si l'annulation arrive avant que la file d'attente (Doc 5) n'ait déclenché les appels fournisseurs, annuler le traitement en attente et rembourser intégralement (TTC) — <strong>canal de restitution des espèces : DÉCISION REQUISE</strong> (voir section Remboursement).</td></tr>
+        <tr><td>Phase 5 (<code>CONFIRMED</code>)</td><td>Selon les conditions fournisseur</td><td>Vérifier l'objet <code>conditions</code> Duffel (stocké à la Phase 1) et la politique Hotelbeds (<code>cancellationPolicies</code>) pour lancer <code>order_cancellation</code> Duffel et/ou l'annulation Hotelbeds selon ce qu'elles autorisent. Le client n'est remboursé qu'à hauteur de la part remboursable ; sur la part <strong>non remboursable</strong>, afficher <strong>NON REMBOURSÉ</strong> — pas de remboursement intégral automatique.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Transparence client recommandée</strong> Étant donné que le remboursement après confirmation dépend des conditions tarifaires Duffel/Hotelbeds (parfois non remboursables), il est recommandé d'afficher clairement cette politique au client avant le paiement (Phase 2 ou 3), plutôt que de le découvrir au moment d'une demande d'annulation.</div>
+    </div>
+  </section>
+
+  <section class="section" id="emails">
+    <h2>Catalogue des emails transactionnels</h2>
+    <p>Aucun email n'était formellement spécifié dans la documentation existante — seul un nom de fonction (<code>notifyClient</code>) apparaissait dans un exemple de code du Doc 4, sans contenu défini. Liste minimale à implémenter, dans l'ordre du parcours :</p>
+    <table>
+      <thead><tr><th>Déclencheur</th><th>Moment</th><th>Contenu minimal attendu</th></tr></thead>
+      <tbody>
+        <tr><td>Commande validée, code généré</td><td>Fin de Phase 3 (<code>AWAITING_COURIER</code>)</td><td>Code interne (image), montant exact TTC (dont TVA), information « un agent va être attribué » + lien de suivi live, fenêtre de collecte</td></tr>
+        <tr><td>Rappel avant fin de fenêtre de collecte</td><td>Voir section suivante</td><td>Temps restant avant la fin de la fenêtre de collecte, rappel du montant TTC et du code</td></tr>
+        <tr><td>Agent attribué / en route</td><td>Phase 3-4 (dispatch → <code>OUT_FOR_COLLECTION</code>)</td><td>Agent assigné (prénom, note), ETA, lien vers la carte live de suivi</td></tr>
+        <tr><td>Collecte validée (paiement confirmé)</td><td>Phase 4 (validation agent : code + photo)</td><td>Confirmation que le cash est encaissé, indication que la réservation définitive est en cours</td></tr>
+        <tr><td>Réservation confirmée</td><td>Fin de Phase 5, succès</td><td>Billet électronique (PJ ou lien), voucher hébergement le cas échéant, référence de commande, lien vers l'espace client</td></tr>
+        <tr><td>Échec de réservation / remboursement</td><td>Phase 5, échec fournisseur, ou suite à demande d'annulation</td><td>Explication claire du motif ; si un remboursement est dû, montant (TTC) et modalité de restitution des espèces (canal non tranché — voir Doc 7, section Remboursement) ; si le tarif était non remboursable, rappel explicite <strong>NON REMBOURSÉ</strong></td></tr>
+        <tr><td>Fenêtre de collecte expirée</td><td><code>EXPIRED</code></td><td>Confirmation qu'aucune collecte n'a eu lieu (aucun cash encaissé), invitation à recommencer une réservation si toujours intéressé</td></tr>
+        <tr><td>Rappel pré-départ J-7</td><td>7 jours avant <code>flight_offers.departure_at</code> (Doc 2)</td><td>Anticipation du voyage, rappel des informations pratiques déjà fournies (voucher, billet)</td></tr>
+        <tr><td>Rappel pré-départ J-1 / ouverture enregistrement</td><td>24 à 48h avant le départ selon la compagnie</td><td>Rappel explicite d'effectuer l'enregistrement directement sur le site de la compagnie, avec le PNR ; formulation ne laissant pas penser que PayEnCash gère cette étape (voir section dédiée ci-dessous)</td></tr>
+        <tr><td>Invitation à noter l'agent</td><td>Après <code>CONFIRMED</code> (job <code>request-rating</code>)</td><td>Lien pour attribuer une note 1-5★ à la collecte effectuée (Doc 1 / Doc 3)</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Pas de spécification de contenu rédactionnel exact</strong> Ce tableau fixe le contenu minimal fonctionnel de chaque email, pas leur rédaction finale (objet, ton, mise en page). La rédaction reste à produire séparément, idéalement en cohérence avec le ton déjà établi sur le prototype d'accueil (registre professionnel, type service financier).</div>
+    </div>
+  </section>
+
+  <section class="section" id="rappel-expiration">
+    <h2>Rappel avant la fin de la fenêtre de collecte</h2>
+    <p>Cette fonctionnalité était présente dans les premières itérations visuelles du produit ("pre-payment reminders") mais avait disparu de la documentation technique relue. Elle est réintroduite ici comme exigence explicite.</p>
+    <ul class="checklist">
+      <li>Déclenchement par job CRON planifié (voir Doc 5, section Jobs CRON) — vérification périodique des commandes en statut <code>AWAITING_COURIER</code> dont la fin de la fenêtre de collecte (<code>collection_deadline_at</code>) approche</li>
+      <li>Envoi à un seuil fixe avant la fin de la fenêtre de collecte (par exemple aux deux tiers de la fenêtre) — valeur de référence configurable</li>
+      <li>Canal : email a minima ; SMS en complément si un numéro de téléphone vérifié est disponible (voir <code>users.phone_verified_at</code>, Doc 2)</li>
+      <li>Un seul rappel par commande — éviter la sursollicitation, qui dégraderait l'expérience plutôt que de la soutenir</li>
+    </ul>
+  </section>
+
+  <section class="section" id="rappel-pre-depart">
+    <h2>Rappel pré-départ (enregistrement en ligne)</h2>
+    <p>Identifié par audit de l'expérience proposée par les apps de compagnies aériennes et d'OTA concurrentes (Delta, American Airlines, JetBlue, agrégateurs de cartes d'embarquement) — toutes envoient un rappel d'enregistrement avant le départ. Cette fonctionnalité n'existait pas dans la documentation PayEnCash avant cet audit.</p>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Limite technique vérifiée — à comprendre avant de concevoir l'écran</strong> L'API Duffel n'expose aucun événement webhook lié à l'enregistrement en ligne, à la carte d'embarquement ou au suivi de bagages. Les seuls événements webhook actuellement supportés sont <code>order.created</code>, <code>order.creation_failed</code>, <code>payment.created</code>, et <code>order.airline_initiated_change_detected</code> (changement d'horaire détecté). L'enregistrement et l'embarquement restent entièrement gérés par chaque compagnie aérienne sur son propre site ou sa propre application — PayEnCash ne peut techniquement pas réaliser cet enregistrement à la place du client, ni afficher une carte d'embarquement dans son propre espace personnel.</div>
+    </div>
+    <p>Ce que PayEnCash peut raisonnablement faire, dans les limites de ce qui est exposé par Duffel :</p>
+    <ul class="checklist">
+      <li>Envoyer une notification J-7 avant le départ (donnée disponible : <code>flight_offers.departure_at</code>, déjà stockée à la Phase 1 — voir Doc 2) avec un message générique d'anticipation du voyage</li>
+      <li>Envoyer une notification J-1 ou à l'ouverture effective de l'enregistrement selon la compagnie (généralement 24 à 48h avant le départ selon la compagnie — variable, non garantie par Duffel) rappelant au client de procéder à son enregistrement</li>
+      <li>Inclure dans cette notification un lien direct vers la page d'enregistrement en ligne de la compagnie concernée, avec le <code>booking_reference</code> de la compagnie (PNR) déjà stocké en base, pour que le client n'ait pas à le ressaisir</li>
+      <li>Formuler clairement le message pour ne pas laisser penser que PayEnCash gère l'enregistrement : par exemple "Votre vol approche — pensez à effectuer votre enregistrement directement sur le site de [compagnie] avec la référence [PNR]"</li>
+    </ul>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Si une notification de changement d'horaire arrive après ce rappel</strong> L'événement <code>order.airline_initiated_change_detected</code> (Doc 3) peut survenir après l'envoi du rappel J-7 ou J-1. Dans ce cas, un email correctif immédiat doit être envoyé en complément, indépendamment du calendrier de rappel normal — ne pas attendre le prochain rappel planifié.</div>
+    </div>
+  </section>
+
+  <section class="section" id="livraison-documents">
+    <h2>Encaissement des documents client</h2>
+    <p>Le billet électronique (PNR Duffel) et le voucher d'hébergement (confirmation Hotelbeds) doivent être livrés par les deux canaux suivants, sans que l'un ne remplace l'autre :</p>
+    <table>
+      <thead><tr><th>Canal</th><th>Contenu</th><th>Source des données</th></tr></thead>
+      <tbody>
+        <tr><td>Email de confirmation finale</td><td>Pièce jointe ou lien vers le billet électronique et le voucher</td><td><code>supplier_bookings.confirmation_code</code> et <code>provider_booking_ref</code> (Doc 2)</td></tr>
+        <tr><td>Espace personnel de l'app</td><td>Mêmes documents accessibles à tout moment, sans dépendre de la boîte mail du client</td><td>Même source, interrogée à la demande plutôt qu'envoyée</td></tr>
+        <tr><td>Facture (PDF)</td><td>Facture détaillée <strong>HT + TVA + TTC</strong>, numéro séquentiel, mentions légales</td><td><code>orders</code> (montants, <code>vat_rate</code>, <code>vat_amount_cents</code>) + identité société</td></tr>
+      </tbody>
+    </table>
+    <p>Avec la TVA (Doc 4), une <strong>facture</strong> détaillant HT + TVA + TTC est générée pour chaque commande <code>CONFIRMED</code> et mise à disposition (email + espace client). Elle doit porter une <strong>numérotation séquentielle</strong> et les mentions légales requises — le format exact et les obligations précises restent à valider avec un expert-comptable ou juriste.</p>
+  </section>
+
+  <section class="section" id="espace-client">
+    <h2>Espace client — contenu attendu</h2>
+    <p>"Mes codes", visible dans la barre de navigation du prototype <code>accueil.html</code>, n'avait jamais été spécifié au-delà de son nom. Contenu minimal attendu :</p>
+    <ul class="checklist">
+      <li>Liste des commandes du client, triée par date, avec le statut actuel de chacune (reprenant l'ENUM <code>order_status</code> du Doc 2, affiché en langage clair plutôt que le nom technique)</li>
+      <li>Pour une commande en <code>AWAITING_COURIER</code> / <code>COURIER_ASSIGNED</code> / <code>OUT_FOR_COLLECTION</code> : code interne + <strong>suivi live de l'agent</strong> (carte, position, ETA), identique au suivi communiqué en Phase 3-4</li>
+      <li>Pour une commande <code>CONFIRMED</code> : accès au billet électronique et au voucher (voir section précédente)</li>
+      <li>Pour une commande <code>CONFIRMED</code> : possibilité de <strong>noter l'agent (1-5★)</strong> de la collecte, et accès à la <strong>facture</strong> détaillée (HT + TVA + TTC)</li>
+      <li>Pour une commande <code>CANCELLED</code> ou <code>REFUNDED</code> : statut du remboursement (ou mention <strong>NON REMBOURSÉ</strong> si le tarif ne l'autorisait pas), montant TTC le cas échéant, et suivi de sa restitution (canal non tranché — voir Doc 7, section Remboursement)</li>
+      <li>Action de demande d'annulation, lorsque les conditions du Doc 1 (section processus par phase, ci-dessus) la permettent encore — sinon, le bouton doit être désactivé avec une explication plutôt qu'absent sans justification</li>
+      <li>Pour une commande <code>CONFIRMED</code> avec un vol associé : encart « Bagages » affichant la franchise incluse dans le billet (donnée stockée dans <code>flight_offers.baggages_json</code> dès la Phase 1, voir Doc 2 et Doc 3), accompagné d'un lien vers le site de la compagnie pour tout suivi en temps réel ou ajout de bagage supplémentaire — PayEnCash affiche une information figée au moment de l'achat, pas un suivi dynamique</li>
+    </ul>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Pourquoi un encart figé plutôt qu'un suivi en temps réel</strong> Comme indiqué à la section précédente, Duffel n'expose aucun webhook ni endpoint de suivi de bagage en temps réel — cette donnée est propriétaire à chaque compagnie aérienne. L'encart de l'espace personnel doit donc se limiter à la franchise contractuelle connue à l'achat, sans donner l'impression d'un suivi actif que PayEnCash ne peut pas fournir.</div>
+    </div>
+  </section>
+
+  <section class="section" id="checklist">
+    <h2>Checklist avant développement</h2>
+    <ul class="checklist">
+      <li><strong>Trancher le canal de restitution des espèces</strong> pour les remboursements dus (tournée de retour dédiée, virement, crédit compte, autre — voir Doc 7, section Remboursement) avant toute spécification détaillée du parcours et du dispatch</li>
+      <li>Implémenter l'affichage explicite <strong>« NON REMBOURSÉ »</strong> avant paiement partout où le tarif Duffel/Hotelbeds n'est pas remboursable ou l'information absente (voir sections Conditions d'annulation)</li>
+      <li>Prévoir la génération de <strong>facture HT + TVA + TTC</strong> (numérotation séquentielle, mentions légales) et son accès par email + espace client — cadrer le format avec un expert-comptable (Doc 4)</li>
+      <li><s>Ajouter une colonne de stockage des conditions Duffel/Hotelbeds sur <code>flight_offers</code> et <code>stay_offers</code></s> — <strong>déjà fait</strong> : <code>flight_offers.conditions_json</code> et <code>stay_offers.cancel_penalties_json</code> + <code>stay_offers.refundable</code> existent au Doc 2. Il reste à <strong>les renseigner dès la Phase 1</strong> et à les afficher avant paiement</li>
+      <li>Valider le contenu rédactionnel final de chaque email du catalogue avec la fondatrice avant développement, ce document ne fixant que le contenu fonctionnel minimal</li>
+      <li>Implémenter le job CRON de rappel avant expiration, en cohérence avec les jobs déjà prévus au Doc 5</li>
+      <li>Spécifier l'écran "Mes codes" en maquette avant développement, ce document n'en fixant que le contenu fonctionnel, pas la disposition visuelle</li>
+      <li>Implémenter le job CRON de rappel pré-départ (J-7 et J-1), distinct du job de rappel avant expiration — déclenché sur <code>flight_offers.departure_at</code> plutôt que sur <code>orders.collection_deadline_at</code></li>
+      <li>Vérifier que <code>flight_offers.baggages_json</code> (Doc 2) est bien renseigné dès la Phase 1 à partir de la réponse Duffel, pour alimenter l'encart bagages sans appel API supplémentaire au moment de l'affichage</li>
+    </ul>
+  </section>
+
+</main>
+
+</body>
+</html>

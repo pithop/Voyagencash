@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Compte</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-notif.js"></script>
+<script src="../assets/payencash-verif.js"></script>
+<!--
+  COMPTE — route `/compte`. Maquette RELEVÉE SUR L'ÉCRAN RÉEL (`compte/page.tsx`), dans
+  son ordre réel : carte profil, Voyageurs, Préférences, Confidentialité, Informations
+  légales, Aide & confiance, Actions, version.
+
+  C'est ici que vivent les droits RGPD — et ils sont répartis à TROIS endroits, ce qui
+  n'est pas évident en lisant la doc :
+   - RECTIFICATION → le crayon de la carte profil (bottom sheet), pas une rangée ;
+   - ACCÈS / PORTABILITÉ → « Exporter mes données », section Confidentialité ;
+   - EFFACEMENT → « Supprimer mon compte », section Actions, en rouge.
+  Le rouge est réservé à cette seule rangée dans tout l'écran.
+-->
+</head>
+<body>
+
+<div class="pec-scene">
+<div class="pec-device" style="position:relative">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-root-header">
+    <h1>Compte</h1>
+  </div>
+
+  <div class="pec-body">
+
+    <!-- ── COMPTE RÉEL (protocole unique 03/09, même bloc que mode/08) : session `pec-session` (Client Mode) ou client
+         actif ≠ défaut → titulaire + « Se déconnecter » (compteDeconnecter + clientActifSet('cl01')) ; sinon → « Créer mon
+         compte » (../mode/21-inscription) et « J'ai déjà un compte » : téléphone + code SMS → compteConnecter('client', …).
+         Code attendu = compteCode(compte, 'sms'), affiché en « code de démo » (pas d'envoi réel). ── -->
+    <div class="pec-card" id="cpt-bloc" style="padding:14px 16px;margin-bottom:12px">
+      <div id="cpt-connecte" hidden>
+        <div style="display:flex;align-items:center;gap:11px">
+          <span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:15px;font-weight:800" id="cpt-initiales">—</span>
+          <span style="min-width:0;flex:1">
+            <span style="display:block;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--color-primary-dark)">Connecté</span>
+            <b id="cpt-nom" style="display:block;font-size:14px;color:var(--color-ink)">—</b>
+            <span id="cpt-tel" style="display:block;font-size:11.5px;color:var(--color-muted)">—</span>
+          </span>
+          <button type="button" id="cpt-deconnecter" class="pec-btn-secondary tap" style="flex:none;padding:0 13px;font-size:12px">Se déconnecter</button>
+        </div>
+        <div id="cpt-source" style="margin-top:8px;font-size:10px;line-height:1.5;color:var(--color-muted-2)"></div>
+      </div>
+      <div id="cpt-anon" hidden>
+        <div style="font-size:13.5px;font-weight:800;color:var(--color-ink)">Ton compte PayEnCash</div>
+        <div style="font-size:11.5px;color:var(--color-muted);margin-top:3px;line-height:1.5">Un seul compte pour Fly et Mode — ton téléphone suffit, aucune carte bancaire.</div>
+        <a class="pec-cta pec-cta--tight tap" id="cpt-creer" href="../mode/21-inscription.html" style="display:block;text-align:center;margin-top:11px">Créer mon compte</a>
+        <button type="button" id="cpt-ouvrir-login" class="pec-btn-secondary tap" style="width:100%;margin-top:8px" aria-expanded="false">J'ai déjà un compte</button>
+        <div id="cpt-login" hidden style="margin-top:10px;border-top:1px solid var(--color-sep);padding-top:10px">
+          <label class="pec-input-label" for="cpt-tel-in">Téléphone <span style="font-weight:600;color:var(--color-muted-2);text-transform:none;letter-spacing:0">— ton identifiant</span></label>
+          <input class="pec-input" id="cpt-tel-in" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="14" placeholder="10 chiffres, commence par 0" style="width:100%;margin:5px 0 8px">
+          <div id="cpt-demo" hidden style="border:1.5px dashed var(--color-primary);border-radius:12px;background:var(--color-mint);padding:8px 11px;font-size:11px;line-height:1.5;color:var(--color-mint-ink);margin-bottom:8px">Compte de démonstration <b id="cpt-demo-nom" style="color:var(--color-ink)">—</b> — mot de passe : <b id="cpt-demo-code" style="font-size:14px;color:var(--color-primary-dark)">—</b></div>
+          <label class="pec-input-label" for="cpt-code-in">Mot de passe</label>
+          <input class="pec-input" id="cpt-code-in" type="password" autocomplete="current-password" placeholder="••••••••" style="width:100%;margin:5px 0 8px">
+          <div id="cpt-erreur" hidden role="alert" style="border-radius:12px;background:rgba(179,55,43,.10);padding:8px 11px;font-size:11.5px;font-weight:700;color:#B3372B;margin-bottom:8px"></div>
+          <button type="button" id="cpt-connecter" class="pec-cta pec-cta--tight tap" style="width:100%;text-align:center">Me connecter</button>
+          <button type="button" id="cpt-oubli" class="tap" style="display:block;width:100%;margin-top:8px;border:none;background:none;font:inherit;font-size:11.5px;font-weight:700;color:var(--color-primary-dark);cursor:pointer;text-align:center">Mot de passe oublié ?</button>
+
+          <!-- RÉINITIALISATION — le SEUL moment, avec l'inscription, où un SMS part. -->
+          <div id="cpt-reset" hidden style="margin-top:10px;border-top:1px solid var(--color-sep);padding-top:10px">
+            <div style="font-size:12px;font-weight:800;color:var(--color-ink)">Nouveau mot de passe</div>
+            <div id="cpt-reset-sub" style="font-size:11px;color:var(--color-muted);line-height:1.5;margin-top:3px">—</div>
+            <label class="pec-input-label" for="cpt-reset-code" style="margin-top:8px">Code reçu par SMS</label>
+            <input class="pec-input" id="cpt-reset-code" type="text" inputmode="numeric" maxlength="6" placeholder="______" style="width:100%;margin:5px 0 8px;text-align:center;font-size:18px;letter-spacing:.4em;font-weight:800">
+            <label class="pec-input-label" for="cpt-reset-mdp">Ton nouveau mot de passe</label>
+            <input class="pec-input" id="cpt-reset-mdp" type="password" autocomplete="new-password" placeholder="••••••••" style="width:100%;margin:5px 0 8px">
+            <div id="cpt-reset-err" hidden role="alert" style="border-radius:12px;background:rgba(179,55,43,.10);padding:8px 11px;font-size:11.5px;font-weight:700;color:#B3372B;margin-bottom:8px"></div>
+            <button type="button" id="cpt-reset-go" class="pec-cta pec-cta--tight tap" style="width:100%;text-align:center">Changer et me connecter</button>
+          </div>
+
+          <!-- (fondatrice 06/09) « il peut se connecter avec son compte Google, Apple etc. » —
+               aucun SMS, aucun mot de passe à retenir. La fenêtre du fournisseur est SIMULÉE :
+               il n'y a pas d'OAuth réel dans la maquette, et l'écran le dit. Ce qui est vrai,
+               c'est le LIEN identité ↔ compte, posé et rejoué. -->
+          <div style="display:flex;align-items:center;gap:9px;margin:14px 0 10px">
+            <span style="flex:1;height:1px;background:var(--color-sep)"></span>
+            <span style="flex:none;font-size:10.5px;font-weight:700;color:var(--color-muted-2)">ou sans mot de passe</span>
+            <span style="flex:1;height:1px;background:var(--color-sep)"></span>
+          </div>
+          <div id="cpt-sso" style="display:flex;flex-direction:column;gap:8px"></div>
+          <div id="cpt-sso-panneau" hidden style="margin-top:10px;border:1.5px dashed var(--color-sep);border-radius:12px;padding:11px 12px">
+            <div style="font-size:11px;color:var(--color-muted);line-height:1.5" id="cpt-sso-avert">—</div>
+            <label class="pec-input-label" for="cpt-sso-mail" style="margin-top:8px">Adresse du compte</label>
+            <input class="pec-input" id="cpt-sso-mail" type="email" autocomplete="email" placeholder="prenom.nom@…" style="width:100%;margin:5px 0 8px">
+            <div id="cpt-sso-err" hidden role="alert" style="border-radius:12px;background:rgba(179,55,43,.10);padding:8px 11px;font-size:11.5px;font-weight:700;color:#B3372B;margin-bottom:8px"></div>
+            <button type="button" id="cpt-sso-go" class="pec-cta pec-cta--tight tap" style="width:100%;text-align:center">Continuer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFIL + STATUT VIP en UNE carte propre (fondatrice 24/08 : plus de fusion moche,
+         le badge du niveau est un VRAI badge, et les avantages en € se voient TOUT DE SUITE) -->
+    <div class="pec-card" id="fidelite" style="padding:15px 16px">
+      <div style="display:flex;align-items:center;gap:13px">
+        <span id="pr-initiales" style="position:relative;flex:none;display:flex;align-items:center;justify-content:center;width:54px;height:54px;border-radius:999px;background:var(--color-mint);font-size:18px;font-weight:800;color:var(--color-primary-dark);box-shadow:0 0 0 2.5px var(--color-card),0 0 0 5px var(--color-primary)">—</span>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+            <span id="pr-carte-nom" style="font-size:17px;font-weight:800;color:var(--color-ink)">À compléter</span>
+          </div>
+          <!-- téléphone et e-mail ne se répètent PAS ici : ils vivent dans le bloc
+               « Contact & vérification » ci-dessous, avec leur badge (fondatrice 30/08). -->
+          <div id="pr-carte-age" hidden style="font-size:12px;color:var(--color-muted);margin-top:4px"></div>
+        </div>
+      </div>
+
+      <!-- ── CONTACT & VÉRIFICATION — toujours visible : un BADGE + un BOUTON par
+           canal (téléphone, e-mail). La vérification est INDISPENSABLE avant toute
+           commande. Dérivé de l'état réel (PEC_DATA), jamais figé. ── -->
+      <div style="border-top:1px solid var(--color-sep);margin-top:13px;padding-top:12px;display:flex;flex-direction:column;gap:11px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:15px;color:var(--color-primary-dark)"><use href="#i-phone"/></svg>
+            <span style="flex:1;min-width:0;font-size:12.5px;font-weight:700;color:var(--color-ink)" id="pr-c-tel">—</span>
+            <span id="pr-tel-etat" style="flex:none"></span>
+          </div>
+          <div id="pr-tel-verif-row" style="margin-top:7px"><button type="button" class="tap" data-verif="sms" style="width:100%;border:1px solid var(--color-primary);border-radius:12px;background:var(--color-mint);color:var(--color-primary-dark);font-size:12.5px;font-weight:800;padding:9px;cursor:pointer">Vérifier votre numéro de portable</button></div>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:15px;color:var(--color-primary-dark)"><use href="#i-mail"/></svg>
+            <span style="flex:1;min-width:0;font-size:12.5px;font-weight:700;color:var(--color-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="pr-c-mail">—</span>
+            <span id="pr-mail-etat" style="flex:none"></span>
+          </div>
+          <div id="pr-mail-verif-row" style="margin-top:7px"><button type="button" class="tap" data-verif="mail" style="width:100%;border:1px solid var(--color-primary);border-radius:12px;background:var(--color-mint);color:var(--color-primary-dark);font-size:12.5px;font-weight:800;padding:9px;cursor:pointer">Vérifier votre mail</button>
+            <p style="margin:6px 2px 0;font-size:10px;line-height:1.5;color:var(--color-muted-2)">Le code arrive par e-mail — pense à regarder tes <b>spams / courriers indésirables</b>.</p></div>
+        </div>
+        <button type="button" id="pr-modifier" class="tap" style="width:100%;border:1px solid var(--color-sep);border-radius:12px;background:var(--color-surface);color:var(--color-ink);font-size:12.5px;font-weight:800;padding:10px;cursor:pointer">Modifier vos informations de compte</button>
+        <!-- (fondatrice 06/09) « il a un mot de passe réinitialisable […] et sur son compte il le change » -->
+        <button type="button" id="pr-mdp" class="tap" style="width:100%;margin-top:8px;border:1px solid var(--color-sep);border-radius:12px;background:var(--color-surface);color:var(--color-ink);font-size:12.5px;font-weight:800;padding:10px;cursor:pointer" aria-expanded="false">Changer mon mot de passe</button>
+        <div id="pr-mdp-zone" hidden style="margin-top:10px;border-top:1px solid var(--color-sep);padding-top:10px;text-align:left">
+          <div id="pr-mdp-sub" style="font-size:11px;color:var(--color-muted);line-height:1.5;margin-bottom:8px">—</div>
+          <label class="pec-input-label" for="pr-mdp-ancien">Mot de passe actuel</label>
+          <input class="pec-input" id="pr-mdp-ancien" type="password" autocomplete="current-password" placeholder="••••••••" style="width:100%;margin:5px 0 8px">
+          <label class="pec-input-label" for="pr-mdp-nouveau">Nouveau mot de passe</label>
+          <input class="pec-input" id="pr-mdp-nouveau" type="password" autocomplete="new-password" placeholder="••••••••" style="width:100%;margin:5px 0 8px">
+          <div id="pr-mdp-msg" hidden role="alert" style="border-radius:12px;padding:8px 11px;font-size:11.5px;font-weight:700;margin-bottom:8px"></div>
+          <button type="button" id="pr-mdp-go" class="pec-cta pec-cta--tight tap" style="width:100%;text-align:center">Enregistrer</button>
+          <div id="pr-sso" style="font-size:11px;color:var(--color-muted);line-height:1.5;margin-top:10px"></div>
+        </div>
+        <!-- COORDONNÉES BANCAIRES : le RIB vit sur le COMPTE (clientRibGet/Set), masqué à l'écran, modifiable ici.
+             (18/09, soir — « enlève toute mention de rendu de monnaie ») Il ne servait qu'à recevoir l'écart rendu
+             par l'agent : il n'y a plus d'écart, puisqu'on paie le montant exact au comptoir. Ce qu'il sert encore,
+             et lui seul : RECEVOIR un remboursement par virement. Jamais un prélèvement. -->
+        <div id="pr-rib" style="border-top:1px solid var(--color-sep);padding-top:11px"></div>
+        <p style="margin:-4px 0 0;font-size:10.5px;line-height:1.5;color:var(--color-muted)">Utilisées <b style="color:var(--color-ink)">uniquement pour te rembourser par virement</b>, sur un RIB à ton nom — jamais un prélèvement.</p>
+      </div>
+
+      <!-- RECTIFICATION (RGPD) : le formulaire édite les infos ; l'enregistrement est
+           direct (la vérification SMS/e-mail se fait par les boutons dédiés ci-dessus). -->
+      <div id="pr-edit" hidden style="border-top:1px solid var(--color-sep);margin-top:13px;padding-top:12px">
+        <p style="margin:0 0 9px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted-2)">Identité — exactement comme sur ta pièce</p>
+        <label class="pec-input-label">Civilité</label>
+        <div id="pr-genre" role="radiogroup" aria-label="Civilité" style="display:flex;gap:7px;margin-bottom:11px">
+          <button type="button" role="radio" class="tap" data-genre="homme" aria-checked="true" aria-pressed="true" style="flex:1;border:1px solid var(--color-sep);border-radius:12px;padding:11px 4px;font-size:13.5px;font-weight:700;background:var(--color-bg);color:var(--color-ink);cursor:pointer">Monsieur</button>
+          <button type="button" role="radio" class="tap" data-genre="femme" aria-checked="false" aria-pressed="false" style="flex:1;border:1px solid var(--color-sep);border-radius:12px;padding:11px 4px;font-size:13.5px;font-weight:700;background:var(--color-bg);color:var(--color-ink);cursor:pointer">Madame</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <span style="flex:1;min-width:0"><label class="pec-input-label" for="pr-nom">Nom</label><input class="pec-input" id="pr-nom" type="text" autocomplete="family-name" style="width:100%"></span>
+          <span style="flex:1;min-width:0"><label class="pec-input-label" for="pr-prenom">Prénom</label><input class="pec-input" id="pr-prenom" type="text" autocomplete="given-name" style="width:100%"></span>
+        </div>
+        <label class="pec-input-label" for="pr-naissance">Date de naissance <span id="pr-age" style="font-weight:600;color:var(--color-muted-2);text-transform:none;letter-spacing:0"></span></label>
+        <input class="pec-input" id="pr-naissance" type="date" max="2025-12-31" style="width:100%;margin-bottom:12px">
+        <p style="margin:2px 0 9px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted-2)">Compte &amp; contact</p>
+        <label class="pec-input-label" for="pr-tel">Téléphone <span style="font-weight:600;color:var(--color-muted-2);text-transform:none;letter-spacing:0">— ton identifiant de compte</span></label>
+        <input class="pec-input" id="pr-tel" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="10" placeholder="10 chiffres, commence par 0" style="margin:5px 0 3px">
+        <div id="pr-tel-err" style="display:none;font-size:10.5px;font-weight:700;color:#B3372B;margin:0 2px 8px">Numéro non conforme — 10 chiffres, commençant par 0.</div>
+        <label class="pec-input-label" for="pr-mail" style="margin-top:7px">Email <span style="font-weight:600;color:var(--color-muted-2);text-transform:none;letter-spacing:0">— tes PNR et e-billets y arrivent</span></label>
+        <input class="pec-input" id="pr-mail" type="email" autocomplete="email" style="margin:5px 0 6px">
+        <!-- SUGGESTIONS DE DOMAINE (gain de temps) : apparaissent pendant la saisie -->
+        <div id="pr-mail-sugg" style="display:none;flex-wrap:wrap;gap:6px;margin:0 0 8px"></div>
+        <!-- CONFIRMATION (règle anti-faute de frappe) : deux saisies qui doivent coïncider -->
+        <label class="pec-input-label" for="pr-mail2">Confirme ton email</label>
+        <input class="pec-input" id="pr-mail2" type="email" autocomplete="off" style="margin:5px 0 6px">
+        <!-- même aide de domaine sur la confirmation (fondatrice 30/08 : « format malgré l'aide ») -->
+        <div id="pr-mail2-sugg" style="display:none;flex-wrap:wrap;gap:6px;margin:0 0 8px"></div>
+        <div id="pr-mail-err" style="display:none;font-size:10.5px;font-weight:700;color:#B3372B;margin:0 2px 10px"></div>
+        <div style="display:flex;gap:8px;margin-top:9px">
+          <button type="button" id="pr-enregistrer" class="pec-cta pec-cta--tight tap" style="flex:1;text-align:center">Enregistrer</button>
+          <button type="button" id="pr-annuler" class="pec-btn-secondary tap" style="flex:none;padding:0 16px">Annuler</button>
+        </div>
+        <div id="pr-fait" hidden style="margin-top:10px;border-radius:12px;background:var(--color-mint);padding:10px 12px;font-size:11.5px;font-weight:700;color:var(--color-mint-ink)">✓ Informations enregistrées — partout dans l'app, immédiatement.</div>
+        <p style="margin-top:8px;font-size:10px;line-height:1.55;color:var(--color-muted)">Si tu changes de téléphone ou d'e-mail, il faudra le <b style="color:var(--color-ink)">re-vérifier</b>. Le nom doit rester <b style="color:var(--color-ink)">exactement celui de ta pièce</b> — il sert au 1ᵉʳ paiement et aux remboursements.</p>
+      </div>
+    </div>
+
+    <!-- JEU CONCOURS — le statut de participation SE VOIT (fondatrice 24/08) -->
+      <div id="egeries-sec" style="margin:14px 0 0">
+        <div style="border-radius:24px;overflow:hidden;background:var(--color-card);box-shadow:0 14px 34px rgba(15,42,36,.16)">
+          <div style="position:relative;height:172px;overflow:hidden">
+            <img id="cx-photo" src="" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+            <span aria-hidden="true" style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,8,12,.14) 0%,transparent 34%,rgba(20,8,12,.52) 70%,rgba(20,8,12,.82) 100%)"></span>
+            <span style="position:absolute;left:14px;top:12px;display:inline-flex;align-items:center;gap:5px;border-radius:6px;background:linear-gradient(120deg,#C9223F,#F23B57);color:#fff;font-size:9px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;padding:5px 10px;box-shadow:0 2px 10px rgba(201,34,63,.4)">Concours — <span id="cx-mois">—</span></span>
+            <span id="cx-valeur" style="position:absolute;right:12px;top:12px;border-radius:999px;background:rgba(255,255,255,.94);color:var(--color-ink);font-size:10px;font-weight:800;padding:4px 10px">—</span>
+            <div style="position:absolute;left:15px;right:15px;bottom:11px">
+              <p id="cx-titre" style="font-size:18px;font-weight:800;letter-spacing:-0.02em;line-height:1.15;color:#fff;text-shadow:0 2px 14px rgba(20,8,12,.7)">—</p>
+              <p style="margin-top:4px;display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:rgba(255,255,255,.92)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px"><use href="#i-calendar"/></svg>Séjour <span id="cx-dates">—</span> · tirage <span id="cx-tirage">—</span></p>
+            </div>
+          </div>
+          <div style="padding:11px 13px 13px">
+            <div style="display:flex;align-items:center;gap:9px">
+              <span id="cx-stars" style="flex:none;display:flex;align-items:center"></span>
+              <p style="min-width:0;flex:1;font-size:11px;line-height:1.4;color:var(--color-muted)">Fais comme <b style="color:var(--color-ink)"><span id="cx-star-nom">Oiseau Tyson</span></b> <span id="cx-plus" style="font-weight:700">+3</span> — <b style="color:var(--color-ink)">participe gratuitement</b>, sans achat.</p>
+            </div>
+            <a id="egeries-concours" class="tap" href="../fly/03-jeu-concours.html" style="display:flex;align-items:center;justify-content:center;gap:7px;margin-top:11px;border-radius:14px;background:linear-gradient(120deg,#C9223F,#F23B57);box-shadow:0 8px 18px rgba(201,34,63,.3);color:#fff;font-size:12.5px;font-weight:800;padding:12px;text-decoration:none">Je participe au tirage<svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px"><use href="#i-arrow-right"/></svg></a>
+          </div>
+        </div>
+      </div>
+
+    <p class="pec-section-label">Mes voyages</p>
+    <div class="pec-card" style="padding:0;overflow:hidden">
+      <!-- (09/09 — lot 2 l'argent) MON AVOIR : le même livre de crédits que Mode (D.avoirsGet), déduit au récap Fly -->
+      <div class="pec-row" id="ct-avoir-row" style="display:none">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-banknote"/></svg></span>
+        <span class="pec-row-text"><span class="t">Mon avoir</span><span class="s" id="ct-avoir-sub">—</span></span>
+        <span class="pec-row-value" id="ct-avoir">0,00 €</span>
+      </div>
+      <!-- (18/09 — Bon d’achat PayEnCash) MES BONS D’ACHAT : les bons d’achat rattachés au compte à leur premier usage (bonsDuClient — code masqué, solde,
+           état dérivé, expiration) et le bon d’achat appliqué au sac Mode. Validité vive via [data-info="bonValidite"]. -->
+      <button class="pec-row tap" type="button" id="ct-bons-row" aria-expanded="false">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-ticket"/></svg></span>
+        <span class="pec-row-text"><span class="t">Bon d’achat PayEnCash</span><span class="s" id="ct-bons-sub">—</span></span>
+        <span class="pec-row-value" id="ct-bons">—</span>
+        <svg class="pec-ico pec-row-chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg>
+      </button>
+      <div id="ct-bons-panel" hidden style="padding:4px 15px 13px;border-bottom:1px solid var(--color-sep);font-size:12px;line-height:1.5;color:var(--color-muted)">
+        <div id="ct-bons-liste" style="display:flex;flex-direction:column;gap:6px"></div>
+        <div style="margin-top:8px">Valable FLY et MODE · <span data-info="bonValidite">12 mois</span>. Achète-le chez un commerçant partenaire (<a href="25-ou-acheter-un-bon.html" style="color:var(--color-primary-dark);font-weight:800">où ?</a>) ou reçois-le en cadeau — saisis son code à « Comment payer » ou dans ton sac Mode ; solde utilisable en plusieurs fois, jamais remboursé en espèces.</div>
+      </div>
+      <a class="pec-row tap" href="03-mes-codes.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-ticket"/></svg></span>
+        <span class="pec-row-text"><span class="t">Mes réservations</span><span class="s">Suivi complet — en cours, ticket à présenter, payées, détails</span></span>
+        <span class="pec-row-value" id="ct-resa" hidden>0</span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <a class="pec-row tap" href="16-favoris.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24" style="color:#E23B57"><use href="#i-heart"/></svg></span>
+        <span class="pec-row-text"><span class="t">Mes favoris</span><span class="s">Tes hébergements mis de côté — jamais les vols</span></span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <a class="pec-row tap" href="13-mes-voyageurs.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-users"/></svg></span>
+        <span class="pec-row-text"><span class="t">Mes voyageurs</span><span class="s">Prénoms enregistrés pour réserver vite</span></span>
+        <span class="pec-row-value" id="ct-voy" hidden>0</span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <a class="pec-row tap" href="09-notifications.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-history"/></svg></span>
+        <span class="pec-row-text"><span class="t">Mes notifications</span><span class="s">Ce que tu as reçu, même si tu l’as raté</span></span>
+        <span class="pec-row-value" id="ct-notif" hidden>0</span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+    </div>
+
+    <p class="pec-section-label">Préférences</p>
+    <div class="pec-card" style="padding:0;overflow:hidden">
+      <button class="pec-row tap" type="button" id="aero-ouvrir" aria-expanded="false">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-plane-departure"/></svg></span>
+        <span class="pec-row-text"><span class="t">Aéroport de départ</span><span class="s">Le point de départ proposé par défaut à chaque recherche</span></span>
+        <span class="pec-row-value" id="aero-val">—</span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </button>
+      <!-- SÉLECTEUR RÉEL (28/08 — plus de bouton mort) : la liste vient de
+           PEC_DATA.aeroports, le choix s'enregistre (aeroportDefautSet) et
+           TOUS les flux la lisent (accueil, tunnels). -->
+      <div id="aero-panel" hidden style="padding:4px 15px 13px;border-bottom:1px solid var(--color-sep)">
+        <input class="pec-input" id="aero-q" type="search" placeholder="Cherche ta ville ou son code (ex. Lyon, LYS)" style="width:100%;margin-bottom:8px">
+        <div id="aero-liste" style="display:flex;flex-direction:column"></div>
+      </div>
+
+      <!-- ══ MON CARNET D'ADRESSES (19/09, nuit — décision fondatrice « remets le domicile avec carnet
+           d'adresses ») ════════════════════════════════════════════════════════════════════════════════
+           Il était parti le 18/09 au soir avec l'agent salarié : plus personne ne se déplaçait, donc plus
+           rien à lire. Le DISTRIBUTEUR MOBILE se déplace de nouveau, chez le client qui le demande — le
+           carnet retrouve son lecteur, et les champs d'aide (étage, porte / interphone, instructions) leur
+           raison d'être : qu'il trouve la porte sans téléphoner.
+           RIEN N'EST OBLIGATOIRE : le lieu d'une rencontre n'est pas forcément le domicile — (20/09) c'est
+           L'ADRESSE que le client donne à « Comment payer », celle de son compte par défaut, une autre s'il
+           la saisit ou la relève de sa position — et la position GPS ne s'attache que sur un geste. -->
+      <button class="pec-row tap" type="button" id="adr-ouvrir" aria-expanded="false">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-home"/></svg></span>
+        <span class="pec-row-text"><span class="t">Mes adresses</span><span class="s" id="adr-sous">Où un distributeur peut venir te rejoindre — domicile, travail, ou ailleurs</span></span>
+        <span class="pec-row-value" id="adr-val">—</span>
+        <svg class="pec-ico pec-row-chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg>
+      </button>
+      <div id="adr-panel" hidden style="padding:4px 15px 13px;border-bottom:1px solid var(--color-sep)">
+        <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+        <input class="pec-search" type="search" data-fsearch="#adr-liste > *" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+        <div class="meta" data-fvide="#adr-liste > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+        <div id="adr-liste" data-fpage="15" style="display:flex;flex-direction:column"></div>
+        <button type="button" id="adr-ajouter" class="tap" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px;font-weight:800;color:var(--color-primary-dark);background:none;padding:6px 0"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-plus"/></svg> Ajouter une adresse</button>
+        <div id="adr-form" hidden style="margin-top:8px;border-radius:14px;background:var(--color-bg);padding:12px 13px">
+          <!-- l'enregistrement peut être refusé (stockage plein) : on le DIT plutôt que de vider le
+               formulaire comme si c'était fait — le distributeur partirait vers l'ancienne adresse. -->
+          <p id="adr-err" hidden style="margin:0 0 8px;font-size:11px;font-weight:700;color:#B3261E"></p>
+          <div id="adr-types" style="display:flex;gap:7px;margin-bottom:10px"></div>
+          <!-- (19/09, nuit) L'ADRESSE SE CHERCHE (Base Adresse Nationale) : la suggestion remplit les quatre
+               champs ET arrive géolocalisée. Les champs restent dessous, pour corriger. -->
+          <label class="pec-input-label" for="adr-q">Cherche ton adresse</label>
+          <div style="position:relative;margin-bottom:9px">
+            <input class="pec-input" id="adr-q" type="search" autocomplete="off" placeholder="12 rue des Lilas, Marseille…" style="width:100%">
+          </div>
+          <div style="display:flex;gap:7px;margin-bottom:9px">
+            <input class="pec-input" id="adr-numero" type="text" inputmode="numeric" placeholder="N°" style="flex:0 0 68px;min-width:0">
+            <input class="pec-input" id="adr-voie" type="text" placeholder="Voie (rue, avenue, quai…)" style="flex:1;min-width:0">
+          </div>
+          <div style="display:flex;gap:7px;margin-bottom:9px">
+            <input class="pec-input" id="adr-cp" type="text" inputmode="numeric" maxlength="5" placeholder="Code postal" style="flex:0 0 108px;min-width:0">
+            <input class="pec-input" id="adr-ville" type="text" placeholder="Commune" style="flex:1;min-width:0">
+          </div>
+          <button type="button" id="adr-geoloc" class="tap" style="display:flex;align-items:center;gap:7px;margin-bottom:9px;font-size:11.5px;font-weight:800;color:var(--color-primary-dark);background:none;padding:0"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px"><use href="#i-locate"/></svg> <span id="adr-geoloc-txt">Attacher ma position exacte (GPS)</span></button>
+          <div style="display:flex;gap:8px;margin-bottom:9px">
+            <span style="flex:1;min-width:0"><label class="pec-input-label" for="adr-etage">Étage <span style="font-weight:600;color:var(--color-muted)">(facultatif)</span></label><input class="pec-input" id="adr-etage" type="text" placeholder="ex. 3ᵉ"></span>
+            <span style="flex:1.4;min-width:0"><label class="pec-input-label" for="adr-porte">Porte / interphone <span style="font-weight:600;color:var(--color-muted)">(facultatif)</span></label><input class="pec-input" id="adr-porte" type="text" placeholder="ex. bât. B, sonner Meziane"></span>
+          </div>
+          <label class="pec-input-label" for="adr-instructions">Instructions <span style="font-weight:600;color:var(--color-muted)">(facultatif)</span></label>
+          <input class="pec-input" id="adr-instructions" type="text" placeholder="ex. portail vert, 2ᵉ cour, appelle en bas" style="margin-bottom:10px">
+          <div style="display:flex;gap:8px">
+            <button type="button" id="adr-enregistrer" class="pec-cta pec-cta--tight tap" style="flex:1;text-align:center">Enregistrer l'adresse</button>
+            <button type="button" id="adr-annuler" class="pec-btn-secondary tap" style="flex:none;padding:0 14px">Annuler</button>
+          </div>
+        </div>
+      </div>
+      <div class="pec-row">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-bell"/></svg></span>
+        <span class="pec-row-text"><span class="t">Notifications</span><span class="s">Codes de retrait, rappels de paiement</span></span>
+        <button class="pec-switch tap" role="switch" aria-checked="true" aria-label="Notifications" id="sw-notif"></button>
+      </div>
+      <div class="pec-row">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-mail"/></svg></span>
+        <span class="pec-row-text"><span class="t">Communications</span><span class="s">Offres et bons plans par email</span></span>
+        <button class="pec-switch tap" role="switch" aria-checked="false" aria-label="Communications"></button>
+      </div>
+    </div>
+
+    <p class="pec-section-label">Confidentialité &amp; sécurité</p>
+    <div class="pec-card" style="padding:0;overflow:hidden">
+      <a class="pec-row tap" href="19-verification-identite.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg></span>
+        <span class="pec-row-text"><span class="t">Vérification d'identité (KYC)</span><span class="s">Ton niveau, tes seuils réels — et soumettre la vérification renforcée</span></span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <!-- EXPORT (accès/portabilité, art. 15 & 20) : plus de « ✓ » décoratif — la demande est
+           TRACÉE (consentement 'export-donnees' + journal des flux 'export_rgpd') et le délai
+           annoncé vient de PEC_DATA.ref.rgpd.exportDelaiH, jamais écrit ici. -->
+      <button class="pec-row tap" type="button" id="exp-btn">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-file"/></svg></span>
+        <span class="pec-row-text"><span class="t" id="exp-titre">Exporter mes données</span><span class="s" id="exp-sous">Demander une copie de tout ce qu’on conserve sur toi</span></span>
+      </button>
+      <button class="pec-row tap" type="button" data-cookies-open>
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-lock"/></svg></span>
+        <span class="pec-row-text"><span class="t">Cookies &amp; préférences</span><span class="s">Ouvre le panneau de réglage directement</span></span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </button>
+    </div>
+
+    <p class="pec-section-label">Aide</p>
+    <div class="pec-card" style="padding:0;overflow:hidden">
+      <a class="pec-row tap" href="04-comment-ca-marche.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-bulb"/></svg></span>
+        <span class="pec-row-text"><span class="t">Comment ça marche</span></span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <a class="pec-row tap" href="15-moyens-paiement.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-coin"/></svg></span>
+        <span class="pec-row-text"><span class="t">Moyens de paiement</span><span class="s">Régler avec un bon d’achat — et ce qu'on ne fait jamais</span></span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <!-- (18/09, soir — l'agent de caisse mobile est abandonné) Plus personne ne vient encaisser à domicile : ce qui
+           remplace cette rangée, c'est le réseau des commerces qui VENDENT le Bon d’achat PayEnCash, avec leur carte et leur distance. -->
+      <a class="pec-row tap" href="25-ou-acheter-un-bon.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-map-pin"/></svg></span>
+        <span class="pec-row-text"><span class="t">Où acheter un Bon d’achat PayEnCash</span><span class="s">Les commerces partenaires près de toi, sur la carte</span></span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <!-- (17/09 — pivot) Il n'y a plus de réseau de points d'encaissement : cette rangée mène
+           (20/09) aux commerces de NOTRE réseau, où l'on ACHÈTE un bon d'achat. -->
+      <a class="pec-row tap" href="25-ou-acheter-un-bon.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-ticket"/></svg></span>
+        <span class="pec-row-text"><span class="t">Où acheter un bon d’achat</span><span class="s">Les commerces partenaires, ville par ville</span></span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <a class="pec-row tap" href="06-faq.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-info"/></svg></span>
+        <span class="pec-row-text"><span class="t">Questions fréquentes</span><span class="s">Paiement, billets, annulation — les réponses courtes</span></span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <a class="pec-row tap" href="07-apropos.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-heart"/></svg></span>
+        <span class="pec-row-text"><span class="t">Qui sommes-nous</span><span class="s">Pourquoi PayEnCash existe — l'équipe, la mission</span></span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <a class="pec-row tap" href="08-contact.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg></span>
+        <span class="pec-row-text"><span class="t">Nous contacter</span></span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+    </div>
+
+    <!-- POLITIQUES & LÉGAL (fondatrice 30/08) : nos règles produit ET le cadre légal
+         RÉUNIS (avant dispersés entre « Aide » et « Informations légales »). UNE
+         seule entrée vers la page 18 (elle EST le menu légal, ses 8 volets + ancres).
+         La rangée Cookies a rejoint « Confidentialité & sécurité ». -->
+    <p class="pec-section-label">Politiques &amp; légal</p>
+    <div class="pec-card" style="padding:0;overflow:hidden">
+      <a class="pec-row tap" href="17-politiques.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-file"/></svg></span>
+        <span class="pec-row-text"><span class="t">Nos politiques</span><span class="s">Réserver, annuler, être remboursé — tout est dit avant l'achat</span></span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <a class="pec-row tap" href="21-politique-especes.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-banknote"/></svg></span>
+        <span class="pec-row-text"><span class="t">Ce qu'on ne te demande jamais</span><span class="s">Un bon d’achat suffit — les plafonds, et comment on te rembourse</span></span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <a class="pec-row tap" href="20-mediateur.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-shield"/></svg></span>
+        <span class="pec-row-text"><span class="t">Médiation</span><span class="s">En cas de désaccord — le médiateur indépendant et gratuit</span></span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+      <a class="pec-row tap" href="18-informations-legales.html">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-file"/></svg></span>
+        <span class="pec-row-text"><span class="t">Informations légales</span><span class="s">CGV · conditions d'utilisation · transport · confidentialité · tes droits · médiation · mentions</span></span>
+        <svg class="pec-ico pec-row-go" viewBox="0 0 24 24"><use href="#i-chevron-right"/></svg>
+      </a>
+    </div>
+
+    <p class="pec-section-label">Actions</p>
+    <div class="pec-card" style="padding:0;overflow:hidden">
+      <a class="pec-row tap" href="00-onboarding.html" id="act-deconnecter">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-log-out"/></svg></span>
+        <span class="pec-row-text"><span class="t">Se déconnecter</span><span class="s">Ferme la session du compte sur cet appareil</span></span>
+      </a>
+      <button class="pec-row pec-row--danger tap" type="button" id="sup-ouvrir">
+        <span class="pec-tile pec-tile--danger"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-trash"/></svg></span>
+        <span class="pec-row-text"><span class="t">Supprimer mon compte</span></span>
+      </button>
+    </div>
+
+    <div class="pec-reassure">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-shield"/></svg>
+      <p>
+        Supprimer ton compte demande une <b>confirmation par code SMS</b>. Tes données personnelles
+        sont effacées ; les factures de tes voyages passés sont conservées, la loi l’impose.
+      </p>
+    </div>
+
+    <!-- MOINS CHER QU'OPODO — l'orange reste EXCLUSIF au comparatif -->
+    <a href="../fly/08-comparatif.html" class="tap" id="opodo-compte" style="display:flex;align-items:center;gap:11px;border-radius:14px;background:linear-gradient(120deg,#C2410C,#F26F21);box-shadow:0 8px 20px rgba(194,65,12,.3);padding:12px 14px;margin-top:12px;text-decoration:none">
+      <span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:rgba(255,255,255,.16);color:#fff"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-tag"/></svg></span>
+      <span style="min-width:0;flex:1;line-height:1.35"><span style="display:block;font-size:12.5px;font-weight:800;color:#fff">Moins cher qu'Opodo</span>
+      <span style="display:block;font-size:10.5px;font-weight:600;color:rgba(255,255,255,.9)">Sur les vols comparés aujourd'hui : en moyenne <b id="opodo-ecart">—</b> — voir le comparatif du jour.</span></span>
+      <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:14px;color:#fff"><use href="#i-chevron-right"/></svg>
+    </a>
+
+  <div id="fermeture-slot"></div>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('');})();</script>
+<script>
+  // (09/09 — lot 2 l'argent) l'avoir du compte connecté (solde, échéance la plus proche) — masqué s'il n'y en a pas
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.avoirsGet) return;
+    function maj() {
+      var cid = D.clientActifGet ? D.clientActifGet() : null, row = document.getElementById('ct-avoir-row'); if (!row) return;
+      var avs = cid ? D.avoirsGet(cid).filter(function (a) { return D.avoirValide(a); }) : [], solde = cid ? D.avoirSolde(cid) : 0;
+      row.style.display = solde > 0 ? '' : 'none';
+      document.getElementById('ct-avoir').textContent = solde.toFixed(2).replace('.', ',') + ' €';
+      var prochain = avs.length ? Math.min.apply(null, avs.map(function (a) { return a.expireAt || Infinity; })) : null;
+      document.getElementById('ct-avoir-sub').textContent = avs.length + ' avoir' + (avs.length > 1 ? 's' : '') + ' · valable FLY et MODE' + (prochain && isFinite(prochain) ? ' · jusqu\'au ' + new Date(prochain).toLocaleDateString('fr-FR') : '') + ' — déduit au panier Mode et au récap des offres Fly';
+      /* (18/09 — Bon d’achat PayEnCash) MES BONS D’ACHAT — bonsDuClient(cid) : rattachés au compte à leur PREMIER usage, état dérivé ; le bon d’achat
+         appliqué au sac Mode (panier.bon) se lit aussi. Rien n'est écrit : code masqué, solde, expiration viennent de la table. */
+      var rb = document.getElementById('ct-bons-row'), lb = document.getElementById('ct-bons-liste');
+      if (rb && lb && D.bonsDuClient) {
+        var bons = cid ? D.bonsDuClient(cid) : [], actifs = bons.filter(function (b) { return b.etat === 'actif'; });
+        var soldeB = actifs.reduce(function (s, b) { return s + (b.solde || 0); }, 0);
+        var _cS = D.panierBonsCodes ? D.panierBonsCodes() : [], pb = _cS.length ? { code: _cS[0] } : null;   // (19/09, soir) le sac peut en porter plusieurs
+        document.getElementById('ct-bons').textContent = actifs.length ? D.eur(soldeB) : '—';
+        document.getElementById('ct-bons-sub').textContent = (pb ? (_cS.length > 1 ? _cS.length + ' bons d’achat sont appliqués à ton sac Mode' : 'un bon d’achat est appliqué à ton sac Mode (' + (D.bonMasque ? D.bonMasque(pb.code) : pb.code) + ')') + ' · ' : '')
+          + (actifs.length ? soldeB.toFixed(2).replace('.', ',') + ' € disponibles sur ' + actifs.length + ' bon d’achat' + (actifs.length > 1 ? 's' : '') : 'aucun bon d’achat rattaché — un bon d’achat te rejoint dès sa première utilisation');
+        lb.innerHTML = bons.length ? bons.map(function (b) {
+          return '<div style="display:flex;justify-content:space-between;gap:8px"><span>' + D.esc(D.bonMasque ? D.bonMasque(b.code) : b.code) + ' · <span class="pec-pill ' + D.esc(D.bonEtatPill ? D.bonEtatPill(b.etat) : '') + '" style="font-size:9.5px">' + D.esc(D.bonEtatLbl ? D.bonEtatLbl(b.etat) : b.etat) + '</span><br><small>' + (b.etat === 'expire' ? 'expiré le ' : 'expire le ') + D.esc(new Date(b.expireLe).toLocaleDateString('fr-FR')) + ' · ' + D.esc(D.eur(b.montant)) + ' à l\'émission</small></span><b style="color:var(--color-ink)">' + D.esc(D.eur(b.solde || 0)) + '</b></div>';
+        }).join('') : '<div>Aucun bon d’achat rattaché à ton compte pour l\'instant.</div>';
+      }
+    }
+    maj(); window.addEventListener('pec-bus', maj); window.addEventListener('storage', maj);
+    // la rangée se déplie comme les autres (aéroport, adresses) — un état, pas une navigation
+    (function () { var b = document.getElementById('ct-bons-row'), p = document.getElementById('ct-bons-panel'); if (!b || !p) return; b.addEventListener('click', function () { var o = b.getAttribute('aria-expanded') === 'true'; b.setAttribute('aria-expanded', String(!o)); p.hidden = o; }); })();
+  })();
+</script>
+
+    <p style="margin-top:14px;text-align:center;font-size:12px;font-weight:500;color:var(--color-muted-2)">
+      PayEnCash · version 1.0.4
+    </p>
+</div>
+
+  <!-- MODALE DE SUPPRESSION (audit juriste 28/08) : une action irréversible
+       s'explique AVANT — droits et limites de l'effacement (art. 17 RGPD),
+       sort des réservations (le contrat survit au compte), double confirmation. -->
+  <div id="sup-modal" hidden style="position:absolute;inset:0;z-index:60;display:flex;align-items:flex-end;background:rgba(15,42,36,.45)">
+    <div style="width:100%;max-height:86%;overflow:auto;background:var(--color-surface);border-radius:22px 22px 0 0;padding:18px 18px 16px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:12px;background:var(--color-amber-well);color:var(--color-amber-text)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-trash"/></svg></span>
+        <div style="min-width:0">
+          <div style="font-size:15px;font-weight:800;color:var(--color-ink)">Supprimer ton compte — ce que ça implique</div>
+          <div style="font-size:10.5px;font-weight:600;color:var(--color-muted)">Lis bien : cette action est <b>définitive</b>.</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:11.5px;line-height:1.6;color:var(--color-muted)">
+        <div style="display:flex;gap:8px;margin-top:5px"><b style="flex:none;color:var(--color-primary-dark)">①</b><span><b style="color:var(--color-ink)">Tes données personnelles sont effacées</b> (droit à l'effacement, art. 17 RGPD) : profil, voyageurs enregistrés, favoris, historique de navigation.</span></div>
+        <div style="display:flex;gap:8px;margin-top:5px"><b style="flex:none;color:var(--color-primary-dark)">②</b><span><b style="color:var(--color-ink)">Sauf ce que la loi impose de garder</b> : les factures de tes voyages (10 ans — obligation comptable) et les traces anti-fraude (durées légales), isolées et inaccessibles au quotidien.</span></div>
+        <div style="display:flex;gap:8px;margin-top:5px"><b style="flex:none;color:var(--color-primary-dark)">③</b><span><b style="color:var(--color-ink)">Tes réservations à venir ne sont PAS annulées</b> : le contrat de voyage survit au compte. Tes billets restent valides (PNR &amp; e-billets déjà reçus par SMS/email) et l'Assistance reste joignable par téléphone — mais tu perds le suivi dans l'app.</span></div>
+        <div style="display:flex;gap:8px;margin-top:5px"><b style="flex:none;color:var(--color-primary-dark)">④</b><span><b style="color:var(--color-ink)">Un remboursement en cours</b> continue de t'être dû — garde un moyen de contact à jour avec l'Assistance.</span></div>
+        <div style="display:flex;gap:8px;margin-top:5px"><b style="flex:none;color:var(--color-primary-dark)">⑤</b><span><b style="color:var(--color-ink)">Ta participation au concours du mois est perdue</b>, sans compensation.</span></div>
+        <div style="display:flex;gap:8px;margin-top:5px"><b style="flex:none;color:var(--color-primary-dark)">⑥</b><span>La suppression se confirme par <b style="color:var(--color-ink)">code SMS</b> sur le numéro du compte — c'est lui qui fait foi.</span></div>
+      </div>
+      <div style="border-radius:11px;background:var(--color-mint);padding:9px 11px;margin-top:10px;font-size:10.5px;line-height:1.55;color:var(--color-mint-ink)">Tu veux seulement une copie de tes données ? <b style="color:var(--color-primary-dark)">« Exporter mes données »</b> (section Confidentialité) le fait sans rien supprimer.</div>
+      <div id="sup-etape1" style="display:flex;gap:8px;margin-top:12px">
+        <button type="button" id="sup-confirmer" class="tap" style="flex:1;border-radius:13px;background:var(--color-amber-well);color:var(--color-amber-text);font-size:13px;font-weight:800;padding:13px;border:none">J'ai compris — envoyer le code SMS</button>
+        <button type="button" id="sup-annuler" class="pec-btn-secondary tap" style="flex:none;padding:0 18px">Annuler</button>
+      </div>
+      <!-- ÉTAPE 2 (finalité aboutie 28/08) : LE CODE SE SAISIT ICI -->
+      <div id="sup-etape2" hidden style="margin-top:12px">
+        <label class="pec-input-label" for="sup-code">Le code à 6 chiffres reçu par SMS au <span id="sup-tel">—</span></label>
+        <!-- MAQUETTE : aucun SMS ne part — le code attendu (compteCode) est affiché comme « code de démo », jamais un « ✓ envoyé » -->
+        <div id="sup-demo" hidden style="border:1.5px dashed var(--color-primary);border-radius:12px;background:var(--color-mint);padding:8px 11px;font-size:11px;line-height:1.5;color:var(--color-mint-ink);margin:6px 0 8px"></div>
+        <input class="pec-input" id="sup-code" type="text" inputmode="numeric" maxlength="6" placeholder="______" style="width:100%;text-align:center;font-size:19px;letter-spacing:.4em;font-weight:800">
+        <div id="sup-erreur" hidden role="alert" style="margin-top:8px;border-radius:12px;background:rgba(179,55,43,.10);padding:8px 11px;font-size:11.5px;font-weight:700;color:#B3372B"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button type="button" id="sup-valider-code" class="tap" style="flex:1;border-radius:13px;background:var(--color-amber-well);color:var(--color-amber-text);font-size:13px;font-weight:800;padding:13px;border:none;opacity:.45;pointer-events:none">Supprimer définitivement mon compte</button>
+          <button type="button" id="sup-annuler2" class="pec-btn-secondary tap" style="flex:none;padding:0 18px">Annuler</button>
+        </div>
+        <p style="margin-top:7px;text-align:center;font-size:9.5px;color:var(--color-muted-2)">Rien reçu ? <button type="button" class="tap" id="sup-renvoyer" style="color:var(--color-primary-dark);font-weight:700;background:none;padding:0">Afficher le code de démo</button></p>
+      </div>
+      <!-- ÉTAPE 3 : LA FINALITÉ — le compte est réellement purgé de l'appareil -->
+      <div id="sup-etape3" hidden style="margin-top:12px;text-align:center;padding:8px 0 4px">
+        <div style="font-size:34px">✓</div>
+        <div style="font-size:14px;font-weight:800;color:var(--color-ink);margin-top:4px">Ton compte est supprimé</div>
+        <p style="font-size:11px;line-height:1.55;color:var(--color-muted);margin-top:5px">Tes données personnelles sont effacées de cet appareil et nos systèmes appliquent l'effacement (art. 17). Les factures de tes voyages restent archivées, la loi l'impose. Merci d'avoir voyagé avec nous.</p>
+      </div>
+    </div>
+  </div>
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" aria-current="page" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+
+<script>
+/* Concours × influenceurs — tout vient de PEC_DATA (le lot PUBLIÉ + egeries).
+   (10/09 — lot 8, constat D-38) Comme l'accueil, cette carte lisait le lot de démonstration du
+   référentiel : le lot publié par le cockpit n'y arrivait jamais. Sans lot publié, elle s'efface. */
+(function () {
+  var Dt = window.PEC_DATA; if (!Dt) return;
+  var C = Dt.concoursGet && Dt.concoursGet();
+  var sec = document.getElementById('egeries-sec');
+  if (!C) { if (sec) sec.style.display = 'none'; return; }
+  if (sec) sec.style.display = '';
+  var ph = String(C.lot.photo || '');
+  document.getElementById('cx-photo').src = /^(data:|https?:|\.\.?\/)/.test(ph) ? ph : '../assets/photos/' + ph;
+  document.getElementById('cx-mois').textContent = C.mois;
+  document.getElementById('cx-valeur').textContent = 'valeur ' + C.lot.valeur.toLocaleString('fr-FR') + ' €';
+  document.getElementById('cx-titre').textContent = 'Tente de gagner ' + C.lot.titre;
+  document.getElementById('cx-dates').textContent = C.lot.dates;
+  document.getElementById('cx-tirage').textContent = 'le ' + C.tirageLe;
+  var Eg = Dt.egeries;
+  if (Eg && Eg.length) {
+    var tete = Eg.filter(function (x) { return x.principale; })[0] || Eg[0];
+    var ordre = [tete].concat(Eg.filter(function (x) { return x !== tete; }));
+    document.getElementById('cx-stars').innerHTML = ordre.map(function (x, i) {
+      return '<img loading="lazy" decoding="async" src="../assets/photos/' + x.photo + '" alt="" style="width:30px;height:30px;border-radius:999px;object-fit:cover;box-shadow:0 0 0 2px var(--color-card);position:relative;z-index:' + (ordre.length - i) + (i ? ';margin-left:-11px' : ';object-position:50% 30%') + '">';
+    }).join('');
+    document.getElementById('cx-star-nom').textContent = tete.nom;
+    document.getElementById('cx-plus').textContent = Eg.length > 1 ? '+' + (Eg.length - 1) : '';
+  }
+})();
+
+// COMPTEURS RÉELS (28/08 — zéro chiffre en dur) + panneau de modification du profil
+(function () {
+  // réservations : les commandes vivantes du bus
+  try {
+    var n = window.PEC_BUS ? PEC_BUS.commandes().filter(function (c) { return (window.PEC_DATA && PEC_DATA.estAMoi) ? PEC_DATA.estAMoi(c) : true; }).length : 0;   // (09/09) MES réservations
+    var e = document.getElementById('ct-resa');
+    if (n > 0) { e.hidden = false; e.textContent = String(n); }
+  } catch (e1) {}
+  // voyageurs : les fiches réelles de l'appareil
+  try {
+    var f = JSON.parse(((window.PEC_DATA && PEC_DATA._lireCompte) ? PEC_DATA._lireCompte('pec-voyageurs-fiches') : localStorage.getItem('pec-voyageurs-fiches')) || '[]');   // (09/09) carnet par compte
+    var ev = document.getElementById('ct-voy');
+    if (f.length > 0) { ev.hidden = false; ev.textContent = String(f.length); }
+  } catch (e2) {}
+  // notifications non lues — le MÊME fil que la page 09 (PEC_DATA.notifs, audit
+  // 28/08 : nonVus() renvoie un nombre, l'ancien .length gelait le compteur à 0)
+  try {
+    var nb = window.PEC_DATA && PEC_DATA.notifsNonLues ? PEC_DATA.notifsNonLues() : 0;
+    var en = document.getElementById('ct-notif');
+    if (nb > 0) { en.hidden = false; en.textContent = String(nb); }
+  } catch (e3) {}
+  // sélecteur de genre VISIBLE : le choix actif prend le fond vert (défini tôt pour
+  // que le boot puisse le styler, avant même l'ouverture du formulaire).
+  function styleGenre(b, on) {
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.setAttribute('aria-checked', on ? 'true' : 'false');
+    b.style.fontWeight = on ? '800' : '700';
+    b.style.background = on ? 'var(--color-primary)' : 'var(--color-bg)';
+    b.style.color = on ? '#fff' : 'var(--color-ink)';
+    b.style.borderColor = on ? 'var(--color-primary)' : 'var(--color-sep)';
+  }
+  // ÂGE dérivé de la date de naissance (jamais stocké) : libellé du champ + carte.
+  function majAge(iso) {
+    var age = (window.PEC_DATA && PEC_DATA.ageDe) ? PEC_DATA.ageDe(iso) : null;
+    var lbl = document.getElementById('pr-age');
+    if (lbl) lbl.textContent = age != null ? '· ' + age + ' ans' : '';
+    var carte = document.getElementById('pr-carte-age');
+    if (carte) { if (age != null) { carte.textContent = age + ' ans'; carte.hidden = false; } else carte.hidden = true; }
+  }
+  // CARTE PROFIL au boot — nom, initiales, téléphone depuis le data-layer
+  // (audit 28/08 : après inscription, la carte affichait encore le nom canonique)
+  try {
+    var P0 = window.PEC_DATA && PEC_DATA.profil;
+    if (P0 && P0.nomComplet) {
+      // Carte profil = SOURCE UNIQUE (voyageurParDefaut) — le récap des tunnels
+      // affiche EXACTEMENT la même identité (nom + initiales), plus rien en dur.
+      var _V = (PEC_DATA.voyageurParDefaut ? PEC_DATA.voyageurParDefaut() : { nomComplet: P0.nomComplet, initiales: '' });
+      document.getElementById('pr-carte-nom').textContent = _V.nomComplet || P0.nomComplet;
+      document.getElementById('pr-initiales').textContent = _V.initiales || P0.nomComplet.split(/\s+/).map(function (x) { return x.charAt(0); }).join('').slice(0, 2).toUpperCase();
+      // COHÉRENCE CARTE ↔ FORMULAIRE (30/08) : on n'utilise prenom/nom stockés que
+      // s'ils COMPOSENT bien nomComplet ; sinon (nomComplet posé seul — inscription,
+      // profil hérité) on SCINDE nomComplet, pour que le formulaire dise la même
+      // chose que la carte (avant : carte « Nadia Belkacem », formulaire « Sofiane/M. »).
+      var _full = (P0.nomComplet || '').trim();
+      var _compose = ((P0.prenom || '') + ' ' + (P0.nom || '')).trim() === _full;
+      var _pn = (_compose && P0.prenom) ? P0.prenom : (_full.split(/\s+/)[0] || '');
+      var _nm = (_compose && P0.nom != null) ? P0.nom : _full.split(/\s+/).slice(1).join(' ');
+      var _elP = document.getElementById('pr-prenom'); if (_elP) _elP.value = _pn;
+      document.getElementById('pr-nom').value = _nm;
+      var _g = P0.genre || 'homme';
+      document.querySelectorAll('#pr-genre [data-genre]').forEach(function (b) { styleGenre(b, b.getAttribute('data-genre') === _g); });
+      // DATE DE NAISSANCE → l'ÂGE se calcule (jamais stocké) et se voit sur la carte
+      var _dob = P0.dateNaissance || '';
+      var _elN = document.getElementById('pr-naissance'); if (_elN) _elN.value = _dob;
+      majAge(_dob);
+      if (P0.tel) { var _cta = document.getElementById('pr-carte-tel'); if (_cta) _cta.textContent = P0.tel; var _cct = document.getElementById('pr-c-tel'); if (_cct) _cct.textContent = P0.tel; }
+      // le champ d'ÉDITION reprend le NUMÉRO RÉEL (telComplet) — sinon « on modifie
+      // quoi, y a rien » alors que le numéro est renseigné (fondatrice 30/08)
+      var _elT = document.getElementById('pr-tel'); if (_elT && P0.telComplet) _elT.value = P0.telComplet;
+    }
+  } catch (e0) {}
+  // email du profil — depuis le data-layer, masqué à l'affichage ; les DEUX champs
+  // d'édition (e-mail + confirmation) reprennent la valeur réelle.
+  try {
+    var D = window.PEC_DATA;
+    if (D && D.profil && D.profil.email) {
+      var m = D.profil.email.split('@'), masq = m[0].slice(0, 2) + '•••••@' + m[1];
+      var _pe = document.getElementById('pr-email'); if (_pe) _pe.innerHTML = masq + ' · le PNR &amp; l\'e-billet de la compagnie arrivent ici';
+      document.getElementById('pr-mail').value = D.profil.email;
+      var _m2 = document.getElementById('pr-mail2'); if (_m2) _m2.value = D.profil.email;
+      var _ccm = document.getElementById('pr-c-mail'); if (_ccm) _ccm.textContent = masq;
+    }
+  } catch (e4) {}
+  // AÉROPORT DE DÉPART : sélecteur RÉEL relié à la base (28/08)
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.aeroports) return;
+    var val = document.getElementById('aero-val'), panel = document.getElementById('aero-panel'),
+        btn = document.getElementById('aero-ouvrir'), liste = document.getElementById('aero-liste'),
+        q = document.getElementById('aero-q');
+    function maj() { val.textContent = D.aeroportDefautGet(); }
+    function rendre(filtre) {
+      var f = (filtre || '').toLowerCase();
+      liste.innerHTML = D.aeroports
+        .filter(function (a) { return !f || a.toLowerCase().indexOf(f) !== -1; })
+        .map(function (a) {
+          var actif = a === D.aeroportDefautGet();
+          return '<button type="button" class="tap aero-choix" data-aero="' + a + '" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 2px;border:none;background:none;font-size:13px;font-weight:' + (actif ? '800' : '600') + ';color:' + (actif ? 'var(--color-primary-dark)' : 'var(--color-ink)') + ';border-bottom:1px solid var(--color-sep);text-align:left">' + a + (actif ? ' <span style="font-size:11px">✓ par défaut</span>' : '') + '</button>';
+        }).join('') || '<div style="padding:10px 2px;font-size:12px;color:var(--color-muted)">Aucun aéroport ne correspond — le réseau s\'étend, dis-le-nous via l\'Assistance.</div>';
+    }
+    btn.addEventListener('click', function () {
+      panel.hidden = !panel.hidden;
+      btn.setAttribute('aria-expanded', String(!panel.hidden));
+      if (!panel.hidden) { rendre(''); q.value = ''; q.focus(); }
+    });
+    q.addEventListener('input', function () { rendre(q.value); });
+    liste.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-aero]'); if (!b) return;
+      D.aeroportDefautSet(b.getAttribute('data-aero'));
+      maj(); rendre(q.value);
+      setTimeout(function () { panel.hidden = true; btn.setAttribute('aria-expanded', 'false'); }, 350);
+    });
+    maj();
+  })();
+  /* ══ MON CARNET D'ADRESSES (19/09, nuit) — CRUD réel sur `adresses` : domicile / travail / autre, UNE par
+     défaut, champs d'aide au distributeur, autocomplétion Base Adresse Nationale et géoposition RÉELLE
+     (PEC_GEO, jamais sans le geste du client). Les libellés de type viennent du data-layer : l'écran
+     n'écrit pas « Domicile », et le jour où un quatrième type apparaît, il apparaît ici tout seul. ══ */
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.adresses) return;
+    var geoCourante = null;
+    var TY = D.ADRESSE_TYPES || { domicile: 'Domicile' };
+    var ICO = { domicile: 'i-home', travail: 'i-briefcase', autre: 'i-map-pin' };
+    function esc2(v) { return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+    // les pastilles de type se CONSTRUISENT depuis le référentiel — jamais recopiées dans le balisage
+    document.getElementById('adr-types').innerHTML = Object.keys(TY).map(function (k, i) {
+      return '<button type="button" class="pec-pill tap' + (i === 0 ? ' pec-pill--done' : '') + '" data-adr-type="' + esc2(k) + '" aria-pressed="' + (i === 0) + '" style="font-weight:' + (i === 0 ? '800' : '700') + '">' + esc2(TY[k]) + '</button>';
+    }).join('');
+    function majRangee() {
+      var d = D.adresseDefaut(), n = D.adresses().length;
+      document.getElementById('adr-val').textContent = n ? (n > 1 ? n + ' adresses' : '1 adresse') : 'à créer';
+      document.getElementById('adr-sous').textContent = d
+        ? 'Par défaut : ' + d.adresse
+        : 'Où un distributeur peut venir te rejoindre — domicile, travail, ou ailleurs';
+    }
+    function rendre() {
+      var l = D.adresses();
+      document.getElementById('adr-liste').innerHTML = l.length ? l.map(function (a) {
+        return '<div style="display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid var(--color-sep)">' +
+          '<svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;margin-top:2px;font-size:15px;color:var(--color-primary-dark)"><use href="#' + (ICO[a.type] || 'i-map-pin') + '"/></svg>' +
+          '<span style="min-width:0;flex:1"><b style="font-size:12.5px;color:var(--color-ink)">' + esc2(D.adresseTypeLbl(a.type)) + '</b>' +
+          (a.defaut ? ' <span class="pec-pill pec-pill--done" style="font-size:9px;padding:2px 7px">Par défaut</span>' : '') +
+          /* LE GPS ATTACHÉ SE VOIT : c'est lui qui permet au distributeur d'être guidé au mètre plutôt
+             qu'au centre de la ville — le client doit savoir laquelle de ses adresses en a un. */
+          (a.geo ? ' <span class="pec-pill" style="font-size:9px;padding:2px 7px;background:var(--color-mint);color:var(--color-primary-dark)">Position attachée</span>' : '') +
+          '<span style="display:block;font-size:11.5px;color:var(--color-muted);margin-top:1px">' + esc2(a.adresse) + '</span>' +
+          (D.adresseAide(a) ? '<span style="display:block;font-size:10.5px;color:var(--color-muted-2);margin-top:1px">Il lira : ' + esc2(D.adresseAide(a)) + '</span>' : '') + '</span>' +
+          '<span style="flex:none;display:flex;flex-direction:column;gap:4px;align-items:flex-end">' +
+          (!a.defaut ? '<button type="button" class="tap" data-adr-defaut="' + esc2(a.id) + '" style="font-size:10.5px;font-weight:800;color:var(--color-primary-dark);background:none;padding:2px 0">Par défaut</button>' : '') +
+          '<button type="button" class="tap" data-adr-suppr="' + esc2(a.id) + '" style="font-size:10.5px;font-weight:700;color:var(--color-muted);background:none;padding:2px 0">Supprimer</button></span></div>';
+      }).join('') : '<div style="padding:10px 0;font-size:11.5px;color:var(--color-muted)">Aucune adresse enregistrée — ajoute celle où un distributeur peut te rejoindre. Ce n\'est pas forcément ton domicile : c\'est l\'adresse que tu veux, et tu peux en donner une autre au moment de payer.</div>';
+      majRangee();
+    }
+    document.getElementById('adr-ouvrir').addEventListener('click', function () {
+      var p = document.getElementById('adr-panel');
+      p.hidden = !p.hidden;
+      this.setAttribute('aria-expanded', String(!p.hidden));
+      if (!p.hidden) rendre();
+    });
+    document.getElementById('adr-liste').addEventListener('click', function (e) {
+      var d = e.target.closest('[data-adr-defaut]'), s2 = e.target.closest('[data-adr-suppr]');
+      if (d) { D.adresseDefautSet(d.getAttribute('data-adr-defaut')); rendre(); }
+      if (s2) { D.adresseSupprimer(s2.getAttribute('data-adr-suppr')); rendre(); }
+    });
+    document.getElementById('adr-ajouter').addEventListener('click', function () {
+      document.getElementById('adr-form').hidden = false;
+      document.getElementById('adr-q').value = '';
+      document.getElementById('adr-q').focus();   // on commence par CHERCHER, pas par taper
+    });
+    document.getElementById('adr-annuler').addEventListener('click', function () { document.getElementById('adr-form').hidden = true; });
+    document.getElementById('adr-types').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-adr-type]'); if (!b) return;
+      [].forEach.call(document.querySelectorAll('#adr-types [data-adr-type]'), function (x) {
+        var on = x === b;
+        x.setAttribute('aria-pressed', String(on)); x.style.fontWeight = on ? '800' : '700'; x.classList.toggle('pec-pill--done', on);
+      });
+    });
+    /* L'ADRESSE SE CHERCHE (Base Adresse Nationale) : la suggestion remplit les quatre champs et pose la
+       géoposition. Le champ dédié est en tête ; « Voie » la garde en secours pour qui commence à taper là. */
+    function remplir(sug) {
+      if (sug.numero) document.getElementById('adr-numero').value = sug.numero;
+      document.getElementById('adr-voie').value = sug.voie || sug.label || '';
+      if (sug.cp) document.getElementById('adr-cp').value = sug.cp;
+      if (sug.ville) document.getElementById('adr-ville').value = sug.ville;
+      if (sug.geo) { geoCourante = sug.geo; document.getElementById('adr-geoloc-txt').textContent = '✓ Adresse géolocalisée — « ma position exacte » peut affiner'; }
+      var e0 = document.getElementById('adr-err'); if (e0) e0.hidden = true;
+    }
+    if (window.PEC_GEO && PEC_GEO.autocompleteAdresse) {
+      PEC_GEO.autocompleteAdresse(document.getElementById('adr-q'), remplir);
+      PEC_GEO.autocompleteAdresse(document.getElementById('adr-voie'), remplir);
+    }
+    // GÉOPOSITION RÉELLE — PEC_GEO, avec le consentement natif du navigateur ; refus ou échec = message
+    // honnête, jamais de coordonnées inventées.
+    document.getElementById('adr-geoloc').addEventListener('click', function () {
+      var t = document.getElementById('adr-geoloc-txt');
+      if (!window.PEC_GEO) { t.textContent = 'Position indisponible sur cet appareil — l\'adresse suffit.'; return; }
+      t.textContent = 'Recherche de ta position…';
+      PEC_GEO.localiser(function (f2) {
+        PEC_GEO.noterAccord();
+        geoCourante = { lat: f2.lat, lng: f2.lng };
+        t.textContent = '✓ Position attachée' + (f2.precision ? ' (~' + f2.precision + ' m)' : '') + ' — il sera guidé jusqu’à ta porte.';
+      }, function (msg) { t.textContent = msg; });
+    });
+    document.getElementById('adr-enregistrer').addEventListener('click', function () {
+      var numero = document.getElementById('adr-numero').value.trim(),
+          voie = document.getElementById('adr-voie').value.trim(),
+          cp = document.getElementById('adr-cp').value.trim(),
+          ville = document.getElementById('adr-ville').value.trim();
+      var manque = [];
+      if (!numero) manque.push('le numéro de voie');
+      if (!voie) manque.push('la voie');
+      if (!/^\d{5}$/.test(cp)) manque.push('le code postal (5 chiffres)');
+      if (!ville) manque.push('la commune');
+      var eAdr = document.getElementById('adr-err');
+      if (manque.length) {
+        eAdr.hidden = false; eAdr.textContent = 'Il manque ' + manque.join(', ') + ' — un distributeur doit pouvoir te trouver sans téléphoner.';
+        document.getElementById(!numero ? 'adr-numero' : !voie ? 'adr-voie' : !/^\d{5}$/.test(cp) ? 'adr-cp' : 'adr-ville').focus();
+        return;
+      }
+      var type = (document.querySelector('#adr-types [aria-pressed="true"]') || {}).getAttribute
+        ? document.querySelector('#adr-types [aria-pressed="true"]').getAttribute('data-adr-type') : 'domicile';
+      var resAdr = D.adresseEnregistrer({
+        type: type, adresse: numero + ' ' + voie + ', ' + cp + ' ' + ville,
+        numero: numero, voie: voie, cp: cp, ville: ville,
+        etage: document.getElementById('adr-etage').value.trim(),
+        porte: document.getElementById('adr-porte').value.trim(),
+        instructions: document.getElementById('adr-instructions').value.trim(),
+        geo: geoCourante,
+        defaut: D.adresses().length === 0
+      });
+      if (!resAdr) { eAdr.hidden = false; eAdr.textContent = 'L\'adresse n\'a PAS été enregistrée : le stockage de cet appareil est plein. Libère de la place et recommence.'; return; }
+      eAdr.hidden = true;
+      geoCourante = null;
+      document.getElementById('adr-geoloc-txt').textContent = 'Attacher ma position exacte (GPS)';
+      ['adr-q', 'adr-numero', 'adr-voie', 'adr-cp', 'adr-ville', 'adr-etage', 'adr-porte', 'adr-instructions'].forEach(function (id) { document.getElementById(id).value = ''; });
+      document.getElementById('adr-form').hidden = true;
+      rendre();
+    });
+    majRangee();
+  })();
+  // MODALE de suppression : information PUIS confirmation (audit juriste 28/08)
+  var supM = document.getElementById('sup-modal');
+  document.getElementById('sup-ouvrir').addEventListener('click', function () { supM.hidden = false; });
+  document.getElementById('sup-annuler').addEventListener('click', function () { supM.hidden = true; });
+  supM.addEventListener('click', function (e) { if (e.target === supM) supM.hidden = true; });
+  // LE COMPTE À SUPPRIMER = celui du client CONNECTÉ (protocole comptes 03/09) : retrouvé par son identifiant
+  // (téléphone). Peut être un compte de démo (seed) — sa suppression marque « supprimé » dans pec-comptes-statut.
+  function compteClient() {
+    try {
+      var D0 = window.PEC_DATA; if (!D0 || !D0.compteParIdentifiant) return null;
+      var cl = D0.clientCourant ? D0.clientCourant() : null;
+      var tel = (cl && cl.telComplet) || (D0.profil && D0.profil.telComplet) || '';
+      return tel ? D0.compteParIdentifiant('client', tel) : null;
+    } catch (e) { return null; }
+  }
+  // le numéro sur lequel le code « arrive » = celui du profil (jamais écrit en dur)
+  (function () {
+    var t = document.getElementById('sup-tel'), P1 = window.PEC_DATA && PEC_DATA.profil;
+    if (t) t.textContent = (P1 && P1.tel) || 'numéro du compte';
+  })();
+  // MAQUETTE : aucun SMS ne part — le code attendu est celui du protocole (compteCode), montré en « code de démo »
+  function supMontrerDemo() {
+    var z = document.getElementById('sup-demo'); if (!z) return;
+    var c = compteClient();
+    z.hidden = false;
+    z.innerHTML = c ? 'Mode démo — aucun SMS n\'est envoyé. Code de démo pour <b style="color:var(--color-ink)">' + ((c.profil && c.profil.nom) || c.identifiant) + '</b> : <b style="font-size:16px;letter-spacing:.3em;color:var(--color-primary-dark)">' + PEC_DATA.compteCode(c, 'sms') + '</b>'
+      : 'Mode démo — aucun SMS n\'est envoyé et aucun compte n\'est lié à ce numéro : saisis 6 chiffres pour poursuivre la démonstration.';
+  }
+  document.getElementById('sup-confirmer').addEventListener('click', function () {
+    if (window.PEC_DATA && PEC_DATA.consentir) PEC_DATA.consentir('suppression-compte', 'Demande de suppression — informations ①-⑥ lues et acceptées, code SMS demandé');
+    document.getElementById('sup-etape1').style.display = 'none';
+    document.getElementById('sup-etape2').hidden = false;
+    supMontrerDemo();
+    document.getElementById('sup-code').focus();
+  });
+  document.getElementById('sup-renvoyer').addEventListener('click', supMontrerDemo);
+  document.getElementById('sup-annuler2').addEventListener('click', function () { supM.hidden = true; });
+  // le CODE se saisit ICI (finalité aboutie 28/08) — 6 chiffres déverrouillent
+  document.getElementById('sup-code').addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '').slice(0, 6);
+    var ok = this.value.length === 6, b = document.getElementById('sup-valider-code');
+    b.style.opacity = ok ? '1' : '.45'; b.style.pointerEvents = ok ? 'auto' : 'none';
+    var er = document.getElementById('sup-erreur'); if (er) er.hidden = true;
+  });
+  document.getElementById('sup-valider-code').addEventListener('click', function () {
+    var D1 = window.PEC_DATA, c = compteClient();
+    // les consentements sont rangés PAR COMPTE (pec-consentements:<client>) : on capture la clé du
+    // compte connecté AVANT sa fermeture (compteSupprimer remet la session sur le compte de démo,
+    // la clé ne serait plus la bonne). Clé dérivée par le data-layer, jamais recopiée ici.
+    var cleConsentements = null;
+    try { cleConsentements = D1 && D1._cleConsentements ? D1._cleConsentements() : null; } catch (eC) {}
+    // un compte créé dans l'app exige SON code (compteCode) ; un compte de démo (seed) accepte les 6 chiffres saisis
+    if (c && !c.seed && D1.compteCode && document.getElementById('sup-code').value !== D1.compteCode(c, 'sms')) {
+      var er = document.getElementById('sup-erreur'); er.hidden = false; er.textContent = 'Code incorrect — reporte le code de démo affiché ci-dessus.';
+      return;
+    }
+    // LA FINALITÉ : le compte est fermé dans le protocole (statut « supprimé », client retiré du référentiel,
+    // session purgée — compteSupprimer), PUIS purge réelle de l'appareil (bus, profil, fiches, préférences,
+    // consentements, états Mode). La trace de suppression part au serveur AVANT en prod.
+    try { if (c && D1.compteSupprimer) D1.compteSupprimer(c.id); else if (D1 && D1.compteDeconnecter) D1.compteDeconnecter(); } catch (e0) {}
+    try {
+      if (window.PEC_BUS && PEC_BUS.reset) PEC_BUS.reset();
+      // (09/09 — lot 1 socle) l'effacement RGPD emporte AUSSI les clés du compte (base + « base:<id> ») : les données
+      // personnelles suivent désormais le compte, elles ne doivent pas survivre à sa suppression.
+      var idSup = (window.PEC_DATA && PEC_DATA.clientActifGet) ? PEC_DATA.clientActifGet() : null;
+      ['pec-profil', 'pec-voyageurs-fiches', 'pec-consentements', 'pec-cookies-prefs', 'pec-aeroport-defaut', 'pec-cmd-en-cours', 'pec-kyc', 'pec-notif-lues', 'pec-adresses', 'pec-lieu-choisi', 'pec-derniere-pos', 'pec-geo-ok', 'pec-chat-vu-client', 'pec-mode-cmd-annulees',
+        'pec-mode-favoris', 'pec-mode-panier', 'pec-mode-fidelite', 'pec-compte-verif', 'pec-favoris-heb', 'pec-client-actif', 'pec-session'].forEach(function (k) { localStorage.removeItem(k); if (idSup) localStorage.removeItem(k + ':' + idSup); });
+      Object.keys(localStorage).filter(function (k) { return k.indexOf('pec-voyageurs:') === 0; }).forEach(function (k) { localStorage.removeItem(k); });
+      if (cleConsentements) localStorage.removeItem(cleConsentements);   // consentements DU compte supprimé (les autres comptes gardent les leurs)
+    } catch (e) {}
+    document.getElementById('sup-etape2').hidden = true;
+    document.getElementById('sup-etape3').hidden = false;
+    setTimeout(function () { window.location = '00-onboarding.html'; }, 2400);
+  });
+  /* CONSENTEMENTS = ceux du COMPTE CONNECTÉ (03/09 : D.consentir/consentements sont scopés sur
+     clientActifGet). Les interrupteurs se repeignent au retour sur l'onglet et quand la session
+     client change ailleurs (Manager, autre onglet) : sans ça, ils garderaient à l'écran l'accord
+     du compte précédent. Chaque interrupteur enregistre sa fonction de repeinture ici. */
+  var repeintureConsentements = [];
+  // le switch Communications ÉCRIT le consentement (et son retrait) — horodaté, prouvable
+  (function () {
+    var sw = document.querySelector('.pec-switch[aria-label="Communications"]');
+    if (!sw || !window.PEC_DATA) return;
+    repeintureConsentements.push(function () { sw.setAttribute('aria-checked', String(PEC_DATA.consentementActif('communications'))); });
+    sw.setAttribute('aria-checked', String(PEC_DATA.consentementActif('communications')));
+    sw.addEventListener('click', function () {
+      var on = sw.getAttribute('aria-checked') === 'true';
+      if (on) { PEC_DATA.retirerConsentement('communications'); sw.setAttribute('aria-checked', 'false'); }
+      else { PEC_DATA.consentir('communications', 'Recevoir les offres et bons plans (SMS, email, notifications)'); sw.setAttribute('aria-checked', 'true'); }
+    });
+  })();
+  // le switch Notifications (codes, rappels — transactionnel) : ON par défaut (exécution du contrat) ; un refus
+  // est TRACÉ comme un consentement retiré ('notifications'), un retour à ON comme un consentement donné.
+  (function () {
+    var sw = document.getElementById('sw-notif');
+    if (!sw || !window.PEC_DATA || !PEC_DATA.consentements) return;
+    function etatNotif() { return !PEC_DATA.consentements().some(function (c) { return c.type === 'notifications'; }) || PEC_DATA.consentementActif('notifications'); }
+    repeintureConsentements.push(function () { sw.setAttribute('aria-checked', String(etatNotif())); });
+    sw.setAttribute('aria-checked', String(etatNotif()));
+    sw.addEventListener('click', function () {
+      var on = sw.getAttribute('aria-checked') === 'true';
+      if (on) {
+        if (!PEC_DATA.consentementActif('notifications')) PEC_DATA.consentir('notifications', 'Notifications de suivi (codes de retrait, rappels de paiement)');
+        PEC_DATA.retirerConsentement('notifications'); sw.setAttribute('aria-checked', 'false');
+      } else { PEC_DATA.consentir('notifications', 'Notifications de suivi (codes de retrait, rappels de paiement)'); sw.setAttribute('aria-checked', 'true'); }
+    });
+  })();
+  // repeinture des interrupteurs : retour sur l'onglet, ou session client changée ailleurs
+  (function () {
+    function repeindre() { repeintureConsentements.forEach(function (f) { try { f(); } catch (e) {} }); }
+    window.addEventListener('focus', repeindre);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) repeindre(); });
+    window.addEventListener('storage', function (e) { if (!e.key || /^pec-(client-actif|session|consentements)/.test(e.key)) repeindre(); });
+  })();
+  // l'EXPORT (accès/portabilité) : consentement tracé + demande consignée au journal des flux (vu par le manager),
+  // délai annoncé = PEC_DATA.ref.rgpd.exportDelaiH — plus de « 30 jours » écrit en page.
+  (function () {
+    var b = document.getElementById('exp-btn'); if (!b || !window.PEC_DATA) return;
+    var D2 = window.PEC_DATA, R = (D2.ref && D2.ref.rgpd) || {};
+    function delai() { return R.exportDelaiH ? R.exportDelaiH + ' h' : (R.reponseJours ? R.reponseJours + ' jours' : '—'); }
+    function quand(iso) { var d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + ' à ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+    function etat() {
+      var l = D2.consentements ? D2.consentements().filter(function (c) { return c.type === 'export-donnees' && !c.retire; }) : [];
+      var der = l[l.length - 1];
+      /* (11/09) AVANT le clic, le libellé disait « Télécharger tout ce qu'on conserve sur toi » : rien ne se
+         télécharge — la demande est enregistrée et la copie arrive dans le délai légal. On annonce le délai
+         DÈS LE DÉPART (et il vient du référentiel), au lieu de promettre un fichier immédiat. */
+      if (!der) {
+        var sd = document.getElementById('exp-sous');
+        if (sd) sd.textContent = 'Demander une copie de tout ce qu\'on conserve sur toi — réponse sous ' + delai() + ' (art. 15 & 20 RGPD)';
+        return;
+      }
+      document.getElementById('exp-titre').textContent = '✓ Demande d\'export enregistrée';
+      document.getElementById('exp-sous').textContent = 'Le ' + quand(der.at) + ' — délai : ' + delai() + ' (art. 15 & 20 RGPD). Tu seras prévenu dans l\'app.';
+    }
+    b.addEventListener('click', function () {
+      if (D2.consentir) D2.consentir('export-donnees', 'Demande d\'export (accès/portabilité — art. 15 et 20 RGPD)');
+      var cl = D2.clientCourant ? D2.clientCourant() : null;
+      if (window.PEC_BUS && PEC_BUS.noter) PEC_BUS.noter('export_rgpd', (cl && cl.telComplet) || (D2.profil && D2.profil.telComplet) || '—', { par: 'client', client: (D2.profil || {}).nomComplet, delaiH: R.exportDelaiH || null });
+      etat();
+    });
+    etat();
+  })();
+  // « Se déconnecter » (Actions) ferme VRAIMENT la session avant de renvoyer à l'onboarding
+  (function () {
+    var a = document.getElementById('act-deconnecter'); if (!a || !window.PEC_DATA) return;
+    a.addEventListener('click', function () {
+      try { if (PEC_DATA.compteDeconnecter) PEC_DATA.compteDeconnecter(); else if (PEC_DATA.deconnecter) PEC_DATA.deconnecter(); if (PEC_DATA.clientActifSet) PEC_DATA.clientActifSet('cl01'); } catch (e) {}
+    });
+  })();
+  // bannière Opodo : l'écart moyen vient du comparatif du jour (comparatifMoyenne), jamais un « −1,4 % » figé
+  (function () {
+    var e = document.getElementById('opodo-ecart'); if (!e || !window.PEC_DATA || !PEC_DATA.comparatifMoyenne) return;
+    var m = PEC_DATA.comparatifMoyenne();
+    if (typeof m === 'number' && isFinite(m)) e.textContent = (m > 0 ? '−' : '+') + String(Math.abs(m)).replace('.', ',') + ' %';
+  })();
+  // ENREGISTREMENT DIRECT (fondatrice 30/08) : « Enregistrer » applique tout de suite —
+  // plus de code SMS pour SAUVEGARDER. La vérification (SMS + e-mail) a ses boutons
+  // dédiés. Changer le téléphone ou l'e-mail RÉINITIALISE sa vérification (à re-valider).
+  function majCartesCompte(nom, email, tel) {
+    if (nom) {
+      var carteNom = document.getElementById('pr-carte-nom'); if (carteNom) carteNom.textContent = nom;
+      var ini = document.getElementById('pr-initiales'); if (ini) ini.textContent = nom.split(/\s+/).map(function (m) { return m[0] || ''; }).join('').slice(0, 2).toUpperCase();
+    }
+    if (tel) { var ct = document.getElementById('pr-carte-tel'); if (ct) ct.textContent = tel; var cct = document.getElementById('pr-c-tel'); if (cct) cct.textContent = tel; }
+    if (email) {
+      var m = email.split('@'), masq = m[0].slice(0, 2) + '•••••@' + m[1];
+      var pe = document.getElementById('pr-email'); if (pe) pe.innerHTML = masq + ' · le PNR &amp; l\'e-billet de la compagnie arrivent ici';
+      var cm = document.getElementById('pr-c-mail'); if (cm) cm.textContent = masq;
+    }
+  }
+  (function () {
+    var enr = document.getElementById('pr-enregistrer'); if (!enr) return;
+    enr.addEventListener('click', function () {
+      var prenom = (document.getElementById('pr-prenom') || { value: '' }).value.trim();
+      var nomFam = document.getElementById('pr-nom').value.trim();
+      var nom = (prenom + ' ' + nomFam).trim();
+      var mail = document.getElementById('pr-mail').value.trim();
+      var mail2 = (document.getElementById('pr-mail2') || { value: '' }).value.trim();
+      var telRaw = document.getElementById('pr-tel').value.replace(/\D/g, '');
+      var telErr = document.getElementById('pr-tel-err'), mailErr = document.getElementById('pr-mail-err');
+      telErr.style.display = 'none'; mailErr.style.display = 'none';
+      // CONFORMITÉ (fondatrice 30/08) : numéro 10 chiffres commençant par 0 ; e-mail au
+      // bon format ; et la CONFIRMATION doit coïncider (règle anti-faute de frappe).
+      if (telRaw && !/^0\d{9}$/.test(telRaw)) { telErr.style.display = 'block'; document.getElementById('pr-tel').focus(); return; }
+      if (mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) { mailErr.textContent = 'E-mail non conforme — vérifie le format (nom@domaine.fr).'; mailErr.style.display = 'block'; document.getElementById('pr-mail').focus(); return; }
+      if (mail && mail !== mail2) { mailErr.textContent = 'Les deux e-mails ne correspondent pas — corrige la confirmation.'; mailErr.style.display = 'block'; document.getElementById('pr-mail2').focus(); return; }
+      var telMask = telRaw ? telRaw.slice(0, 2) + ' •• •• •• ' + telRaw.slice(-2) : undefined;
+      var gsel = document.querySelector('#pr-genre [aria-pressed="true"]');
+      var genre = gsel ? gsel.getAttribute('data-genre') : undefined;
+      var dob = (document.getElementById('pr-naissance') || { value: '' }).value;
+      var av = PEC_DATA.profil || {};
+      // un nouveau numéro / e-mail doit être RE-VÉRIFIÉ (vraie logique, jamais figé)
+      if (telMask && telMask !== av.tel) PEC_DATA.compteVerifSet('sms', false);
+      if (mail && mail !== av.email) PEC_DATA.compteVerifSet('mail', false);
+      /* (11/09) LA COCHE VERTE SE MÉRITE : profilSet rend faux quand le stockage refuse — annoncer
+         « enregistré partout, immédiatement » aurait été faux au premier rechargement. */
+      var prisProfil = PEC_DATA.profilSet({ prenom: prenom || undefined, nom: nomFam || undefined, genre: genre || undefined, dateNaissance: dob || undefined, nomComplet: nom || undefined, email: mail || undefined, tel: telMask, telComplet: telRaw || undefined });
+      if (!prisProfil) {
+        var zEch = document.getElementById('pr-fait');
+        if (zEch) { zEch.hidden = false; zEch.style.background = '#FDECEA'; zEch.style.color = '#8E2A1E';
+          zEch.textContent = 'Rien n\'a été enregistré : le stockage de cet appareil est plein. Libère de la place et recommence.'; }
+        return;
+      }
+      majAge(dob);
+      if (PEC_DATA.consentir) PEC_DATA.consentir('modification-profil', 'Informations de compte modifiées');
+      majCartesCompte(nom, PEC_DATA.profil.email, PEC_DATA.profil.tel);
+      majVerifBadges();
+      document.getElementById('pr-fait').hidden = false;
+      setTimeout(function () {
+        document.getElementById('pr-edit').hidden = true;
+        document.getElementById('pr-fait').hidden = true;
+      }, 1500);
+    });
+  })();
+  // ── SUGGESTIONS DE DOMAINE E-MAIL (gain de temps) : gmail, hotmail, outlook… ──
+  // Attachées au champ e-mail ET au champ de CONFIRMATION (fondatrice 30/08 :
+  // « pourquoi pas d'aide gmail sur la confirmation »).
+  (function () {
+    var DOMAINES = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.fr', 'icloud.com', 'orange.fr'];
+    function brancher(inputId, suggId, suivantId) {
+      var mail = document.getElementById(inputId), sugg = document.getElementById(suggId);
+      if (!mail || !sugg) return;
+      function render() {
+        var v = mail.value.trim(), at = v.indexOf('@');
+        var local = at >= 0 ? v.slice(0, at) : v, apres = at >= 0 ? v.slice(at + 1) : '';
+        if (!local || (at >= 0 && apres.indexOf('.') > 0)) { sugg.style.display = 'none'; sugg.innerHTML = ''; return; }
+        var liste = apres ? DOMAINES.filter(function (d) { return d.indexOf(apres.toLowerCase()) === 0; }) : DOMAINES;
+        if (!liste.length) { sugg.style.display = 'none'; sugg.innerHTML = ''; return; }
+        sugg.style.display = 'flex';
+        sugg.innerHTML = liste.slice(0, 4).map(function (d) {
+          return '<button type="button" class="tap" data-dom="' + local + '@' + d + '" style="border:1px solid var(--color-sep);border-radius:999px;background:var(--color-bg);color:var(--color-primary-dark);font-size:11.5px;font-weight:700;padding:5px 11px;cursor:pointer">' + local + '@' + d + '</button>';
+        }).join('');
+      }
+      mail.addEventListener('input', render);
+      mail.addEventListener('focus', render);
+      sugg.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-dom]'); if (!b) return;
+        mail.value = b.getAttribute('data-dom');
+        sugg.style.display = 'none'; sugg.innerHTML = '';
+        var nx = suivantId && document.getElementById(suivantId); if (nx) nx.focus();
+      });
+    }
+    brancher('pr-mail', 'pr-mail-sugg', 'pr-mail2');
+    brancher('pr-mail2', 'pr-mail2-sugg', null);
+  })();
+  // sélecteur de genre (Homme / Femme / Autre) — une seule active, fond vert visible
+  var pg = document.getElementById('pr-genre');
+  if (pg) pg.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-genre]'); if (!b) return;
+    pg.querySelectorAll('[data-genre]').forEach(function (x) { styleGenre(x, x === b); });
+  });
+  // date de naissance → l'âge se recalcule en direct pendant la saisie
+  var pn = document.getElementById('pr-naissance');
+  if (pn) pn.addEventListener('input', function () { majAge(this.value); });
+  // ── BADGES VÉRIFIÉ / NON VÉRIFIÉ (téléphone + e-mail) ── dérivés de l'état réel
+  // (PEC_DATA.smsVerifie / mailVerifie), jamais en dur. Le bouton « Vérifier … »
+  // n'apparaît que tant que le canal n'est pas validé.
+  function pillVerif(ok) {
+    return '<span style="border-radius:999px;padding:3px 9px;font-size:10px;font-weight:800;' +
+      (ok ? 'background:var(--color-mint);color:var(--color-primary-dark)">✓ Vérifié' : 'background:rgba(179,55,43,.12);color:#B3372B">Non vérifié') + '</span>';
+  }
+  function majVerifBadges() {
+    var okS = !!(window.PEC_DATA && PEC_DATA.smsVerifie()), okM = !!(window.PEC_DATA && PEC_DATA.mailVerifie());
+    var t = document.getElementById('pr-tel-etat'); if (t) t.innerHTML = pillVerif(okS);
+    var m = document.getElementById('pr-mail-etat'); if (m) m.innerHTML = pillVerif(okM);
+    var tr = document.getElementById('pr-tel-verif-row'); if (tr) tr.style.display = okS ? 'none' : '';
+    var mr = document.getElementById('pr-mail-verif-row'); if (mr) mr.style.display = okM ? 'none' : '';
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-verif]'); if (!b) return;
+    if (window.PEC_VERIF) PEC_VERIF.ouvrir(b.getAttribute('data-verif'));
+  });
+  window.addEventListener('pec-verif', majVerifBadges);
+  majVerifBadges();
+  // rangée « Coordonnées bancaires » : RIB masqué + Modifier/Ajouter (modale partagée), repeinte sur pec-bus
+  // (18/09, soir — l'agent de caisse mobile est abandonné) le RIB ne sert plus qu'au REMBOURSEMENT par virement :
+  // l'écart d'un encaissement en espèces, qu'il servait à virer le jour même, ne peut plus naître
+  // ouvrir/fermer le formulaire de modification (crayon OU bouton « Modifier … »)
+  var pe = document.getElementById('pr-edit');
+  function toggleEdit() { if (!pe) return; pe.hidden = !pe.hidden; if (!pe.hidden) pe.scrollIntoView({ block: 'nearest' }); }
+  var cr = document.getElementById('pr-crayon'); if (cr && pe) cr.addEventListener('click', function () { toggleEdit(); cr.setAttribute('aria-expanded', String(!pe.hidden)); });
+  var mo = document.getElementById('pr-modifier'); if (mo && pe) mo.addEventListener('click', toggleEdit);
+  var an = document.getElementById('pr-annuler'); if (an && pe) an.addEventListener('click', function () { pe.hidden = true; if (cr) cr.setAttribute('aria-expanded', 'false'); });
+})();
+</script>
+<script>
+  // BLOC COMPTE RÉEL (protocole unique 03/09) — session / connexion / déconnexion par le data-layer, rien de simulé.
+  // Même logique que mode/08-compte : un seul compte client pour Fly et Mode (ESPACES_COMPTE.client).
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.compteConnecter) return;
+    var $ = function (id) { return document.getElementById(id); };
+    var LBL = ((D.ESPACES_COMPTE || {}).client || {}).sessionLabel;
+    function sessionClient() { var s = D.session && D.session(); return (s && s.espace === LBL) ? s : null; }
+    function connecte() { return !!sessionClient() || (D.clientConnecte ? D.clientConnecte() : false); }
+    // (05/09) se déconnecter = plus AUCUN client actif (avant, on devenait « cl01 », donc Sofiane M.)
+    function deconnecter() { D.compteDeconnecter(); if (D.clientActifSet) D.clientActifSet(null); }
+
+    function render() {
+      var on = connecte(), c = on && D.clientCourant ? D.clientCourant() : null;
+      $('cpt-connecte').hidden = !on; $('cpt-anon').hidden = on;
+      if (on && c) {
+        var nom = c.nomComplet || ((c.prenom || '') + ' ' + (c.nom || '')).trim();
+        $('cpt-nom').textContent = nom;
+        $('cpt-initiales').textContent = nom.split(/\s+/).map(function (x) { return x.charAt(0); }).join('').slice(0, 2).toUpperCase();
+        $('cpt-tel').textContent = (c.tel || '—') + ' · ' + (c.email || '');
+        var s = sessionClient();
+        $('cpt-source').textContent = s ? 'Session ouverte par téléphone + code SMS' + (c.compteId ? ' · compte créé dans l\'app (' + c.compteId + ')' : '') : 'Session ouverte depuis le Manager (« ouvrir l\'app en tant que »)';
+      }
+    }
+    render();
+
+    /* CHANGER SON MOT DE PASSE depuis son compte — l'ancien est exigé. Un compte du référentiel
+       qui n'en a jamais choisi voit le sien, de démonstration, rappelé : sinon il ne pourrait
+       pas répondre à « mot de passe actuel ». Les identités Google/Apple liées sont listées. */
+    (function () {
+      var b = $('pr-mdp'), z = $('pr-mdp-zone'); if (!b || !z) return;
+      function moi() { var s = D.session ? D.session() : null; return s ? D.compteParIdentifiant('client', s.identifiant) : null; }
+      function msg(txt, ok) {
+        var m = $('pr-mdp-msg'); m.hidden = !txt; m.textContent = txt || '';
+        m.style.background = ok ? 'var(--color-mint)' : 'rgba(179,55,43,.10)';
+        m.style.color = ok ? 'var(--color-primary-dark)' : '#B3372B';
+      }
+      b.addEventListener('click', function () {
+        z.hidden = !z.hidden; b.setAttribute('aria-expanded', String(!z.hidden));
+        if (z.hidden) return;
+        var c = moi(), min = (D.ref && D.ref.connexion && D.ref.connexion.motDePasseMin) || 8;
+        $('pr-mdp-sub').innerHTML = min + ' caractères minimum.' +
+          (c && !c.motdepasse ? ' Ce compte de démonstration n\'en a jamais choisi — le sien est <b>' + D.compteMdpDemo(c) + '</b>.' : '');
+        /* (06/09 — nettoyage) L'écran LISTAIT les comptes Google/Apple liés sans jamais
+           permettre de les délier : on pouvait rattacher une identité à son compte et plus
+           jamais l'en détacher. compteSsoDelier existait côté données, appelé nulle part. */
+        var l = c ? D.ssoDuCompte(c.id) : [];
+        var zSso = $('pr-sso');
+        if (!l.length) zSso.textContent = 'Aucune connexion Google ou Apple liée à ce compte.';
+        else {
+          zSso.innerHTML = 'Connexion sans mot de passe active :' + l.map(function (x) {
+            var f = D.ssoFournisseur(x.fournisseur);
+            return '<div style="display:flex;align-items:center;gap:8px;margin-top:6px">' +
+              '<span style="flex:1;min-width:0;color:var(--color-ink)"><b>' + ((f ? f.nom : x.fournisseur)) + '</b> · ' + x.email + '</span>' +
+              '<button type="button" class="pec-pill tap" data-delier="' + x.fournisseur + '|' + x.email + '" style="flex:none;font-size:10px;cursor:pointer">Délier</button></div>';
+          }).join('');
+          zSso.querySelectorAll('[data-delier]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              var parts = btn.getAttribute('data-delier').split('|');
+              /* On ne laisse JAMAIS quelqu'un sans aucun moyen d'entrer : délier la dernière
+                 identité d'un compte sans mot de passe l'enfermerait dehors. */
+              if (l.length === 1 && c && !c.motdepasse) {
+                msg('Choisis d\'abord un mot de passe : sinon, délier cette connexion te fermerait l\'accès à ton compte.');
+                return;
+              }
+              D.compteSsoDelier(c.id, parts[0], parts[1]);
+              b.click(); b.click();        // on replie/déplie pour repeindre la liste
+              msg('✓ Connexion déliée — elle ne donne plus accès à ton compte.', true);
+            });
+          });
+        }
+        msg('');
+        $('pr-mdp-ancien').focus();
+      });
+      $('pr-mdp-go').addEventListener('click', function () {
+        var c = moi(); if (!c) return msg('Aucune session ouverte.');
+        var r = D.compteMotDePasseChanger(c.id, $('pr-mdp-ancien').value, $('pr-mdp-nouveau').value);
+        if (!r.ok) return msg(r.motif);
+        $('pr-mdp-ancien').value = ''; $('pr-mdp-nouveau').value = '';
+        msg('✓ Mot de passe changé — c\'est lui qui te connectera désormais.', true);
+      });
+    })();
+
+    $('cpt-deconnecter').addEventListener('click', function () { deconnecter(); location.reload(); });
+    $('cpt-ouvrir-login').addEventListener('click', function () { var z = $('cpt-login'); z.hidden = !z.hidden; this.setAttribute('aria-expanded', String(!z.hidden)); if (!z.hidden) $('cpt-tel-in').focus(); });
+    function erreur(msg) { var e = $('cpt-erreur'); e.textContent = msg || ''; e.hidden = !msg; }
+    /* (06/09) Un compte du RÉFÉRENTIEL n'a jamais choisi de mot de passe : on affiche le sien,
+       de démonstration, comme le fait la connexion fournisseur avec son code d'accès. Un compte
+       créé dans l'app a le sien : on n'affiche évidemment rien. */
+    $('cpt-tel-in').addEventListener('input', function () {
+      erreur('');
+      var tel = this.value.replace(/\D/g, ''), c = tel.length >= 10 ? D.compteParIdentifiant('client', tel) : null;
+      var demo = c && !c.motdepasse;
+      $('cpt-demo').hidden = !demo;
+      if (demo) { $('cpt-demo-nom').textContent = (c.profil && c.profil.nom) || c.identifiant; $('cpt-demo-code').textContent = D.compteMdpDemo(c); }
+    });
+    $('cpt-code-in').addEventListener('input', function () { erreur(''); });
+
+    /* ── MOT DE PASSE OUBLIÉ ── le SEUL SMS du parcours de connexion (avec l'inscription).
+       La maquette n'envoie rien : le code attendu est affiché, comme partout ailleurs. */
+    var resetCompte = null;
+    function erreurReset(m) { var e = $('cpt-reset-err'); e.textContent = m || ''; e.hidden = !m; }
+    $('cpt-oubli').addEventListener('click', function () {
+      erreur('');
+      var tel = $('cpt-tel-in').value.replace(/\D/g, '');
+      if (!/^0\d{9}$/.test(tel)) return erreur('Entre d\'abord ton numéro — c\'est là qu\'on envoie le code.');
+      var r = D.compteMotDePasseOublie('client', tel);
+      if (!r.ok) return erreur(r.motif);
+      resetCompte = r.compte;
+      $('cpt-reset').hidden = false;
+      var min = (D.ref && D.ref.connexion && D.ref.connexion.motDePasseMin) || 8;
+      $('cpt-reset-sub').innerHTML = 'Un SMS part au ' + tel.slice(0, 2) + ' •• •• •• ' + tel.slice(-2) +
+        '. Rien n\'est réellement envoyé dans la maquette — ton code : <b style="color:var(--color-primary-dark)">' + r.code + '</b>. ' +
+        min + ' caractères minimum pour le nouveau mot de passe.';
+      $('cpt-reset-code').focus();
+    });
+    $('cpt-reset-code').addEventListener('input', function () { this.value = this.value.replace(/\D/g, '').slice(0, 6); erreurReset(''); });
+    $('cpt-reset-go').addEventListener('click', function () {
+      erreurReset('');
+      if (!resetCompte) return erreurReset('Redemande un code.');
+      var r = D.compteMotDePasseReinitialiser(resetCompte.id, $('cpt-reset-code').value, $('cpt-reset-mdp').value);
+      if (!r.ok) return erreurReset(r.motif);
+      // le mot de passe est changé : on entre avec, par la MÊME fonction que le formulaire
+      var co = D.compteConnecter('client', resetCompte.identifiant, $('cpt-reset-mdp').value);
+      if (!co.ok) return erreurReset(co.motif);
+      if (D.compteVerifSet && co.compte && co.compte.verifs) { D.compteVerifSet('sms', !!co.compte.verifs.sms); D.compteVerifSet('mail', !!co.compte.verifs.email); }
+      location.reload();
+    });
+
+    /* ── GOOGLE / APPLE ── les fournisseurs viennent du référentiel (ref.connexion.sso) : un
+       fournisseur retiré du référentiel disparaît de l'écran, on n'en écrit aucun en dur. */
+    var ssoCourant = null;
+    (function () {
+      var l = (D.ref && D.ref.connexion && D.ref.connexion.sso) || [], z = $('cpt-sso');
+      if (!l.length) { z.hidden = true; return; }
+      z.innerHTML = l.map(function (f) {
+        return '<button type="button" class="pec-btn-secondary tap" data-sso="' + f.id + '" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px">' +
+          '<span aria-hidden="true" style="flex:none;width:16px;height:16px;border-radius:4px;background:' + f.couleur + '"></span>Continuer avec ' + f.nom + '</button>';
+      }).join('');
+      Array.prototype.forEach.call(z.querySelectorAll('[data-sso]'), function (b) {
+        b.addEventListener('click', function () {
+          ssoCourant = D.ssoFournisseur(b.getAttribute('data-sso'));
+          $('cpt-sso-panneau').hidden = false;
+          $('cpt-sso-err').hidden = true;
+          $('cpt-sso-avert').innerHTML = 'La fenêtre ' + ssoCourant.nom + ' est <b>simulée</b> ici — la maquette ne parle pas à ' + ssoCourant.nom + '. ' +
+            'Indique l\'adresse de ton compte ' + ssoCourant.nom + ' : on la rapproche de ton compte PayEnCash. Aucun SMS.';
+          $('cpt-sso-mail').focus();
+        });
+      });
+    })();
+    $('cpt-sso-go').addEventListener('click', function () {
+      var e = $('cpt-sso-err'); e.hidden = true;
+      if (!ssoCourant) return;
+      var r = D.compteSsoConnecter(ssoCourant.id, $('cpt-sso-mail').value);
+      if (!r.ok) {
+        e.hidden = false;
+        e.innerHTML = r.motif + (r.inscription ? ' — <a href="../mode/21-inscription.html" style="color:#B3372B;text-decoration:underline">créer mon compte</a> (ton téléphone reste nécessaire : c\'est lui qui sert au règlement).' : '');
+        return;
+      }
+      if (D.compteVerifSet && r.compte && r.compte.verifs) { D.compteVerifSet('sms', !!r.compte.verifs.sms); D.compteVerifSet('mail', !!r.compte.verifs.email); }
+      location.reload();
+    });
+    $('cpt-connecter').addEventListener('click', function () {
+      var tel = $('cpt-tel-in').value.replace(/\D/g, ''), code = $('cpt-code-in').value;
+      if (!/^0\d{9}$/.test(tel)) return erreur('Numéro non conforme — 10 chiffres, commençant par 0.');
+      if (!code) return erreur('Entre ton mot de passe — ou « Mot de passe oublié ? ».');
+      var r = D.compteConnecter('client', tel, code);
+      if (!r.ok) return erreur(r.motif || 'Connexion impossible.');
+      if (D.compteVerifSet && r.compte && r.compte.verifs) { D.compteVerifSet('sms', !!r.compte.verifs.sms); D.compteVerifSet('mail', !!r.compte.verifs.email); }
+      location.reload();   // le boot du data-layer hydrate le profil du compte (carte, formulaire, voyageur par défaut)
+    });
+  })();
+</script>
+
+<!-- mode connexion (?connexion=1) : logé dans payencash-garde.js (07/09) -->
+</body>
+</html>

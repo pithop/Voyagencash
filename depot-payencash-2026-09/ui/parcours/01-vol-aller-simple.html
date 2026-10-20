@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Tunnel vol aller simple</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<link rel="stylesheet" href="../assets/vendor/maplibre-gl.css">
+<script src="../assets/vendor/maplibre-gl.js"></script>
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-verif.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<!--
+  TUNNEL A — VOL ALLER SIMPLE. Structure calquée sur l'app réelle :
+    app/(tunnel)/vols/vols-comparator.tsx · app/(tunnel)/recap/page.tsx · lib/tunnel-steps.ts
+  Flow `flight_oneway` = [1. Aller simple · 2. Récap · 3. Encaissement].
+  Écran fixe : TunnelStepper + TunnelHeader (+ filtres) en haut, contenu scrollable, CTA fixe en bas.
+  Voyageurs = BOTTOM SHEET (carnet + formulaire), jamais un écran séparé.
+  Dernière étape = Paiement, AVEC UN BON D’ACHAT (18/09, soir — pivot : un bon d’achat suffit, les
+  moyens sont DÉRIVÉS de moyensPaiementLabel) ; les montants sont « à régler ».
+-->
+<style>
+  .screen { display:none; flex-direction:column; flex:1; min-height:0; }
+  .screen.active { display:flex; }
+  .tf-field { display:flex; flex-direction:column; gap:4px; flex:1; min-width:0; }
+  .tf-label { font-size:11px; font-weight:500; color:var(--color-muted-2); }
+  .tf-input { width:100%; border-radius:12px; background:var(--color-surface); padding:12px 13px;
+    font-size:14px; font-weight:600; color:var(--color-ink); border:none; outline:none; }
+  .tf-input::placeholder { font-weight:400; color:var(--color-muted-2); }
+  /* Bottom sheet (BottomSheet.tsx) */
+  .sheet-scrim { position:fixed; inset:0; z-index:50; display:none; align-items:flex-end; justify-content:center; background:rgba(15,42,36,0.4); }
+  .sheet-scrim.on { display:flex; }
+  .sheet { display:flex; flex-direction:column; width:100%; max-width:var(--frame-max); max-height:85vh;
+    background:var(--color-surface); border-radius:28px 28px 0 0; box-shadow:var(--shadow-sheet); }
+  .sheet-head { flex-shrink:0; padding:8px 16px 12px; }
+  .sheet-head h2 { margin-top:6px; padding:0 4px; font-size:18px; font-weight:800; color:var(--color-ink); }
+  .sheet-body { min-height:0; overflow-y:auto; padding:0 16px 28px; }
+  #loading { position:fixed; inset:0; z-index:60; display:none; align-items:center; justify-content:center;
+    background:rgba(15,42,36,0.55); backdrop-filter:blur(3px); }
+  #loading.show { display:flex; }
+  .spin { width:34px; height:34px; border-radius:50%; border:3px solid rgba(255,255,255,0.25);
+    border-top-color:var(--color-bright); animation:spin .8s linear infinite; margin:0 auto 12px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+<style>/* bandeau tunnel v2 — épuré (points + barre fine), clair, sans numéros */
+.pec-tstepper{background:var(--color-card);border-bottom:1px solid var(--color-sep)}
+.pec-tstep--done,.pec-tstep--current{background:transparent;box-shadow:none}
+.pec-tstep{flex-direction:row;justify-content:center;align-items:center;gap:7px;padding:13px 6px 11px;position:relative}
+.pec-tstep .pec-ico{display:none}
+.pec-tstep .sub{display:none}
+.pec-tstep .lbl{font-size:11.5px;color:var(--color-muted);font-weight:600;letter-spacing:.01em}
+.pec-tstep::before{content:"";width:7px;height:7px;border-radius:999px;background:#C2CBC5;flex:none}
+.pec-tstep::after{content:"";position:absolute;left:10%;right:10%;bottom:0;height:3px;border-radius:2px;background:transparent}
+.pec-tstep--done::before{background:var(--color-primary)}
+.pec-tstep--done .lbl{color:var(--color-primary-dark)}
+.pec-tstep--current::before{background:var(--color-primary);box-shadow:0 0 0 4px rgba(16,160,106,.16)}
+.pec-tstep--current .lbl{color:var(--color-ink);font-weight:800}
+.pec-tstep--current::after{background:var(--color-bright)}
+.pec-tbanner{background:var(--color-mint);padding:8px 14px;display:flex;gap:12px;align-items:baseline;justify-content:space-between}
+.pec-tbanner .t{margin:0;font-size:12px;color:var(--color-primary-dark);font-weight:700;white-space:nowrap}
+.pec-tbanner .t b{color:var(--color-ink)}
+.pec-tbanner .s{margin:0;font-size:10.5px;color:var(--color-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head>
+<body>
+
+<div class="pec-scene">
+<div class="pec-device" style="height:100dvh;overflow:hidden">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <!-- ===== STEPPER (fixe) — flow flight_oneway ===== -->
+  <div class="pec-tstepper">
+    <div class="pec-tstepper-row">
+      <div class="pec-tstep pec-tstep--current" id="st1" aria-current="step">
+        <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-plane-departure"/></svg>
+        <span class="lbl">Aller simple</span><span class="sub">Choisis ton vol</span>
+      </div>
+      <div class="pec-tstep" id="st2">
+        <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-file"/></svg>
+        <span class="lbl">Récap</span><span class="sub">Vérifie ta commande</span>
+      </div>
+      <!-- (18/09, soir) l'icône du scooter disait l'agent qui se déplace : la dernière étape est un PAIEMENT, pas une course -->
+      <div class="pec-tstep" id="st3">
+        <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-banknote"/></svg>
+        <span class="lbl">Paiement</span><span class="sub">Choisis comment payer</span>
+      </div>
+    </div>
+    <div class="pec-tbanner">
+      <p class="t" id="banner-t" style="display:none"></p>
+      <p class="t" id="banner-s" style="white-space:normal;overflow:visible;text-overflow:clip"></p>
+    </div>
+  </div>
+
+  <!-- ══════════ ÉCRAN 1 — RÉSULTATS VOLS ══════════ -->
+  <div class="screen active" id="screen-1">
+    <div class="pec-header">
+      <a class="pec-back tap" href="../ecrans/01-accueil.html" aria-label="Retour à l'accueil"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-chevron-left"/></svg></a>
+      <div class="pec-header-title"><div class="t" id="hdr-trajet"></div></div>
+    </div>
+
+    <!-- Filtres (fixes) -->
+    <div class="no-scrollbar" style="display:flex;flex-shrink:0;gap:8px;overflow-x:auto;background:var(--color-surface);padding:0 16px 12px">
+      <span class="pec-filter" aria-pressed="true" style="gap:6px;flex:none"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-coin"/></svg> Budget <button type="button" class="tap" onclick="chgBudget(-25)" aria-label="Baisser le budget" style="display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:999px;background:rgba(255,255,255,.25);color:inherit;font-weight:800;font-size:12px">−</button><b id="budget-val">350 €</b><button type="button" class="tap" onclick="chgBudget(25)" aria-label="Augmenter le budget" style="display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:999px;background:rgba(255,255,255,.25);color:inherit;font-weight:800;font-size:12px">+</button></span>
+      <button type="button" class="pec-filter tap" aria-pressed="false" data-f="prix" onclick="toggleFilter(this)"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-coin"/></svg> Prix croissant</button>
+      <button type="button" class="pec-filter tap" aria-pressed="false" data-f="direct" onclick="toggleFilter(this)"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-arrow-right"/></svg> Vol direct</button>
+      <button type="button" class="pec-filter tap" aria-pressed="false" data-f="horaires" onclick="toggleFilter(this)"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-clock"/></svg> Horaires</button>
+    </div>
+
+    <!-- Liste (scrollable) -->
+    <div style="flex:1;min-height:0;overflow-y:auto;padding:12px 16px 16px">
+      <p style="font-size:13px;font-weight:600;color:var(--color-muted-2);margin-bottom:12px">
+        <span id="nb-vols" style="font-size:20px;font-weight:800;letter-spacing:-0.4px;color:var(--color-ink)">—</span> payables par bon d’achat
+      </p>
+      <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+      <input class="pec-search" type="search" data-fsearch="#flights > *" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+      <div class="meta" data-fvide="#flights > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+      <ul id="flights" data-fpage="15" style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px"></ul>
+    </div>
+
+    <div class="pec-sticky">
+      <button class="pec-cta tap" id="cta1" onclick="goRecap()" disabled style="opacity:.5">Sélectionne un vol</button>
+    </div>
+  </div>
+
+  <!-- ══════════ ÉCRAN 2 — RÉCAPITULATIF ══════════ -->
+  <div class="screen" id="screen-2">
+    <div class="pec-header">
+      <button class="pec-back tap" onclick="goToScreen(1)" aria-label="Retour"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-chevron-left"/></svg></button>
+      <div class="pec-header-title"><div class="t">Vérifie — avant de payer</div><div class="s">Récap avant l'encaissement — ta référence est émise à la confirmation</div></div>
+    </div>
+
+    <div style="flex:1;min-height:0;overflow-y:auto;padding:16px">
+
+      <!-- BANDEAU REPRISE (fondatrice 30/08) : arrivée par « Relancer » depuis une
+           réservation annulée/expirée — infos reprises, tarif du moment recalculé. -->
+      <div id="reprise-banner" hidden style="display:flex;align-items:flex-start;gap:9px;border-radius:14px;background:var(--color-mint);padding:11px 13px;margin-bottom:14px">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:18px;color:var(--color-primary-dark)"><use href="#i-refresh"/></svg>
+        <div style="min-width:0"><div style="font-size:12.5px;font-weight:800;color:var(--color-ink)">Recherche reprise — tarif du moment</div>
+        <div style="font-size:11px;line-height:1.5;color:var(--color-mint-ink);margin-top:1px">On a repris ta destination, tes dates et tes voyageurs. Voici le récap au <b>tarif réactualisé</b> — vérifie et confirme.</div></div>
+      </div>
+
+      <!-- TON VOL -->
+      <section style="margin-bottom:18px">
+        <div class="pec-section-head">
+          <span class="pec-section-label" style="margin:0"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px;color:var(--color-primary);vertical-align:-1px;margin-right:4px"><use href="#i-plane"/></svg>Ton vol</span>
+          <button type="button" onclick="goToScreen(1)">Modifier</button>
+        </div>
+        <div class="pec-card" style="padding:15px">
+          <div style="margin-bottom:13px;display:flex;align-items:center;gap:8px">
+            <span style="display:flex;height:26px;width:26px;flex-shrink:0;align-items:center;justify-content:center;border-radius:8px;background:var(--color-primary);color:#fff"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px"><use href="#i-plane"/></svg></span>
+            <div style="min-width:0;flex:1">
+              <p style="font-size:15px;font-weight:800;color:var(--color-ink)" id="r-trajet">—</p>
+              <p style="font-size:11.5px;font-weight:500;color:var(--color-muted-2)" id="r-carrier">—</p>
+            </div>
+          </div>
+          <div style="border-radius:13px;background:var(--color-bg);padding:12px 14px">
+            <div class="pec-leg">
+              <div class="pec-leg-side"><div class="h" id="r-dep-h">—</div><div class="c" id="r-dep-iata">—</div><div class="n" id="r-dep-name">—</div></div>
+              <div class="pec-leg-mid"><span class="d" id="r-duree"></span>
+                <div class="pec-leg-line-row"><span class="pec-leg-dot"></span><span class="pec-leg-line"></span><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px;color:var(--color-disabled)"><use href="#i-plane"/></svg><span class="pec-leg-line"></span><span class="pec-leg-dot"></span></div>
+                <span class="s">Direct</span></div>
+              <div class="pec-leg-side"><div class="h" id="r-arr-h">—</div><div class="c" id="r-dest-iata">—</div><div class="n" id="r-dest-name">—</div></div>
+            </div>
+          </div>
+          <!-- Bagages -->
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;border-radius:12px;background:var(--color-bg);padding:12px 14px">
+            <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-muted-2)">Bagages</p>
+            <p style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:500;color:var(--color-muted)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:15px;color:var(--color-primary)"><use href="#i-briefcase"/></svg> Bagage cabine inclus</p>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <span style="display:flex;min-width:0;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12.5px;font-weight:600;color:var(--color-ink)">
+                <span style="display:flex;align-items:center;gap:8px"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px;color:var(--color-primary)"><use href="#i-luggage"/></svg> Bagage en soute</span>
+                <span style="font-weight:800;color:var(--color-primary-dark)" id="r-bag-prix">—</span>
+                <span id="r-bag-tag" hidden style="border-radius:999px;background:var(--color-mint);padding:2px 8px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--color-primary-dark)">Ajouté</span>
+              </span>
+              <button type="button" class="tap" id="r-bag-btn" onclick="toggleBag()" aria-pressed="false" style="display:inline-flex;flex-shrink:0;align-items:center;gap:4px;border-radius:999px;background:var(--color-primary);color:#fff;padding:6px 12px;font-size:12px;font-weight:700;box-shadow:var(--shadow-cta-tight)">
+                <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px"><use href="#i-plus"/></svg> Ajouter
+              </button>
+            </div>
+          </div>
+          <!-- Enregistrement compagnie -->
+          <div style="margin-top:10px;display:flex;align-items:flex-start;gap:10px;border-radius:12px;background:var(--color-mint);padding:10px 12px">
+            <svg class="pec-ico" viewBox="0 0 24 24" style="margin-top:1px;flex-shrink:0;font-size:16px;color:var(--color-primary)"><use href="#i-info"/></svg>
+            <p style="font-size:12px;font-weight:500;color:var(--color-mint-ink)"><span style="font-weight:700;color:var(--color-primary-dark)" id="r-cie">La compagnie</span> gère ton enregistrement — tes informations voyageur sont transmises directement à la compagnie.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- VOYAGEUR -->
+      <section style="margin-bottom:18px">
+        <div class="pec-section-head">
+          <span class="pec-section-label" style="margin:0">Voyageur(s)</span>
+          <button type="button" onclick="openSheet()">Modifier</button>
+        </div>
+        <div class="pec-card" style="display:flex;align-items:center;gap:12px;padding:14px">
+          <span style="display:flex;height:42px;width:42px;flex-shrink:0;align-items:center;justify-content:center;border-radius:13px;background:var(--color-mint);font-size:17px;font-weight:800;text-transform:uppercase;color:var(--color-primary-dark)" id="r-initial">?</span>
+          <div style="min-width:0">
+            <p style="font-size:15px;font-weight:700;color:var(--color-ink)" id="r-name">À compléter</p>
+            <p style="font-size:12px;font-weight:500;color:var(--color-muted-2)" id="r-sub">1 voyageur</p>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- TON PACK (fondatrice 22/08, benchmark Opodo Basique/Flex/Super Flex ;
+           conditions portées par les fares Duffel : change/refund_before_departure) -->
+      <section style="margin-bottom:18px">
+        <p class="pec-section-label">Ton tarif</p>
+        <div id="packs" style="display:flex;flex-direction:column;gap:8px"></div>
+      </section>
+
+      <!-- CODE PROMO (fondatrice 22/08 : « comment je l'associe à mon paiement ? »). (18/09) Le Bon d’achat PayEnCash ne se saisit
+           pas ici mais à « Comment payer » (fly/01), où il règle tout ou partie de la réservation. -->
+      <section style="margin-bottom:18px">
+        <p class="pec-section-label">Un code promo ?</p>
+        <div style="border-radius:var(--radius-card);background:var(--color-surface);box-shadow:var(--shadow-card);padding:12px 14px">
+          <input id="promo-in" type="text" placeholder="Renseigne ton code — le prix se met à jour tout seul" autocapitalize="characters" oninput="appliquerCode()" style="width:100%;border:1.5px dashed var(--color-primary);border-radius:12px;background:var(--color-bg);padding:13px 14px;font-size:14.5px;font-weight:700;letter-spacing:.06em;color:var(--color-ink);outline:none;text-transform:uppercase">
+          <div id="promo-msg" style="margin-top:7px;font-size:11.5px;font-weight:700;min-height:15px"></div>
+        </div>
+      </section>
+
+      <!-- DÉTAIL DU PRIX -->
+      <section style="margin-bottom:18px">
+        <p class="pec-section-label">Détail du prix</p>
+        <div style="overflow:hidden;border-radius:var(--radius-card);background:var(--color-surface);box-shadow:var(--shadow-card)">
+          <div style="display:flex;flex-direction:column;gap:11px;padding:15px">
+            <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13.5px;font-weight:500;color:var(--color-muted)" id="p-vol-lbl">Tarif de base</span><span style="font-size:13.5px;font-weight:700;color:var(--color-ink)" id="p-vol">41,74 €</span></div>
+            <div id="p-bag-row" hidden style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13.5px;font-weight:500;color:var(--color-muted)" id="p-bag-lbl">Bagage en soute · jusqu’à 23 kg</span><span style="font-size:13.5px;font-weight:700;color:var(--color-ink)" id="p-bag-mnt">20,00 €</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13.5px;font-weight:500;color:var(--color-muted)" id="p-taxes-lbl">Taxes et frais compagnies</span><span style="font-size:13.5px;font-weight:700;color:var(--color-ink)" id="p-taxes">14,35 €</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13.5px;font-weight:500;color:var(--color-muted)" id="p-fees-lbl">Nos frais de service</span><span style="font-size:13.5px;font-weight:700;color:var(--color-primary-dark)" id="p-fees">6,26 €</span></div>
+            <div id="p-pack-row" hidden style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13.5px;font-weight:500;color:var(--color-muted)" id="p-pack-nom">Tarif Flex</span><span style="font-size:13.5px;font-weight:700;color:var(--color-ink)" id="p-pack-mnt">12,00 €</span></div>
+            <div id="p-promo-row" hidden style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13.5px;font-weight:500;color:var(--color-primary-dark)" id="p-promo-nom">Code promo</span><span style="font-size:13.5px;font-weight:700;color:var(--color-primary-dark)" id="p-promo-mnt">−10,00 €</span></div>
+            <a id="cmp-opodo" class="tap" href="../fly/08-comparatif.html" style="display:block;position:relative;overflow:hidden;border-radius:16px;background:linear-gradient(115deg,#C2410C 0%,#F26F21 62%,#FF8A3C 100%);padding:18px 16px 16px;margin-top:10px;text-decoration:none;box-shadow:0 14px 34px rgba(194,65,12,.35)">
+  <span style="position:absolute;right:-30px;top:-42px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,rgba(255,214,170,.5),transparent 65%);pointer-events:none"></span>
+  <span style="display:inline-block;border-radius:6px;background:#fff;color:#C2410C;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:4px 9px">Notre engagement prix</span>
+  <span style="display:block;font-size:23px;font-weight:800;letter-spacing:-0.02em;line-height:1.05;color:#fff;margin-top:9px;text-transform:uppercase">Moins cher<br>qu'Opodo.<span style="color:#FFD9A8"> Point.</span></span>
+  <span style="display:block;font-size:11.5px;font-weight:600;color:rgba(255,255,255,.78);margin-top:7px">On fait tout pour ça — et on le prouve, chaque matin.</span>
+  <span style="display:inline-flex;align-items:center;gap:6px;margin-top:11px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);padding:7px 13px;font-size:11.5px;font-weight:800;color:#fff">Voir le comparatif du jour <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px"><use href="#i-arrow-right"/></svg></span>
+</a>
+          </div>
+          <div class="pec-total-dark">
+            <div><p class="t">Total — tous les voyageurs</p><p class="s" id="p-total-sub">À régler, tout compris · TTC</p></div>
+            <p class="amt"><span class="n" id="p-total">62</span><span class="e">€</span></p>
+          </div>
+          <div id="p-parpax" hidden style="padding:8px 15px 0;font-size:11.5px;color:var(--color-muted);text-align:right"></div>
+          <div style="padding:7px 15px 10px;font-size:10px;color:var(--color-muted)">Prix TTC — TVA sur la marge (art. 297 A) : non détaillée sur la facture.</div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="pec-sticky">
+      <button class="pec-cta tap" onclick="confirmerCommande('cta2-total')">Confirmer — <span id="cta2-total">62 €</span> <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-arrow-right"/></svg></button>
+      <p style="margin-top:7px;text-align:center;font-size:9.5px;line-height:1.5;color:var(--color-muted)">En confirmant, tu acceptes nos <a href="../ecrans/18-informations-legales.html#cgv" style="color:var(--color-primary-dark);font-weight:700">CGV</a>, les <b>conditions de transport de la compagnie</b> et les <b>conditions du tarif</b> affichées ci-dessus.</p>
+
+    </div>
+  </div>
+
+  <!-- ══════════ ÉCRAN 3 — PAIEMENT (18/09, soir : plus de suivi d'agent, l'écran mène à la page de paiement) ══════════ -->
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="../ecrans/03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="../ecrans/01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="../ecrans/14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" href="../ecrans/10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+  
+
+</div>
+</div>
+
+<!-- ===== BOTTOM SHEET VOYAGEURS (carnet + formulaire) ===== -->
+<div class="sheet-scrim" id="scrim" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet">
+    <div class="sheet-head">
+      <button type="button" class="tap" aria-label="Fermer" onclick="closeSheet()" style="display:block;margin:0 auto;padding:6px 0"><span style="display:block;height:5px;width:38px;border-radius:999px;background:var(--color-handle)"></span></button>
+      <h2>Voyageurs</h2>
+    </div>
+    <div class="sheet-body">
+      <p style="margin-bottom:12px;padding:0 4px;font-size:12.5px;font-weight:500;color:var(--color-muted-2)">Les noms doivent correspondre exactement à la pièce d'identité.</p>
+
+      <!-- Depuis ton carnet -->
+      <div style="margin-bottom:12px;display:flex;flex-direction:column;gap:8px;border-radius:13px;background:var(--color-bg);padding:12px">
+        <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-muted-2)">Depuis ton carnet</p>
+        <div id="carnet-chips" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      </div>
+
+      <!-- Formulaire voyageur 1 -->
+      <div style="margin-bottom:10px;border-radius:16px;background:var(--color-bg);padding:14px">
+        <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px">
+          <span style="display:flex;height:34px;width:34px;flex-shrink:0;align-items:center;justify-content:center;border-radius:11px;background:var(--color-mint);font-size:15px;font-weight:800;color:var(--color-primary-dark)" id="sh-initial">1</span>
+          <span style="min-width:0;flex:1;font-size:14.5px;font-weight:800;color:var(--color-ink)">Voyageur 1 <span style="margin-left:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--color-muted-2)">Adulte</span></span>
+          <span style="border-radius:999px;background:var(--color-mint);padding:4px 9px;font-size:10px;font-weight:800;color:var(--color-primary-dark)">Principal</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:8px">
+            <label class="tf-field"><span class="tf-label">Civilité</span><select class="tf-input" id="f-civ"><option value="">Choisir…</option><option>M.</option><option>Mme</option><option>Mlle</option><option>Dr</option></select></label>
+            <label class="tf-field"><span class="tf-label">Genre</span><select class="tf-input" id="f-genre"><option value="">Choisir…</option><option>Masculin</option><option>Féminin</option></select></label>
+          </div>
+          <div style="display:flex;gap:8px">
+            <label class="tf-field"><span class="tf-label">Prénom</span><input class="tf-input" type="text" id="f-given" placeholder="Prénom"></label>
+            <label class="tf-field"><span class="tf-label">Nom</span><input class="tf-input" type="text" id="f-family" placeholder="Nom"></label>
+          </div>
+          <!-- Date de naissance en LISTES (fondatrice 22/08 : « système trop lent,
+               on doit fournir les listes ») — 3 selects, zéro clavier, zéro calendrier -->
+          <div class="tf-field"><span class="tf-label">Date de naissance</span>
+            <div style="display:flex;gap:6px">
+              <select class="tf-input" id="n-jour" aria-label="Jour" style="flex:1"><option value="">Jour</option></select>
+              <select class="tf-input" id="n-mois" aria-label="Mois" style="flex:1.4"><option value="">Mois</option></select>
+              <select class="tf-input" id="n-annee" aria-label="Année" style="flex:1.2"><option value="">Année</option></select>
+            </div>
+          </div>
+          <script>
+            (function () {
+              var j = document.getElementById('n-jour'), m = document.getElementById('n-mois'), a = document.getElementById('n-annee');
+              for (var d = 1; d <= 31; d++) j.insertAdjacentHTML('beforeend', '<option>' + d + '</option>');
+              ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'].forEach(function (mo, i2) {
+                m.insertAdjacentHTML('beforeend', '<option value="' + (i2 + 1) + '">' + mo + '</option>');
+              });
+              for (var y = 2026; y >= 1926; y--) a.insertAdjacentHTML('beforeend', '<option>' + y + '</option>');
+            })();
+          </script>
+          <label class="tf-field"><span class="tf-label">Email</span><input class="tf-input" type="email" id="f-email" placeholder="email@exemple.fr"></label>
+          <label class="tf-field"><span class="tf-label">Téléphone</span>
+            <span style="display:flex;align-items:center;gap:8px;border-radius:12px;background:var(--color-surface);padding:0 13px">
+              <span style="display:flex;flex-shrink:0;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--color-muted-2)">FR <span style="color:var(--color-ink)">+33</span></span>
+              <input class="tf-input" type="tel" id="f-tel" placeholder="6 12 34 56 78" style="padding-left:0;background:transparent">
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <p style="margin-bottom:6px;padding:0 4px;text-align:center;font-size:11.5px;font-weight:500;color:var(--color-muted-2)">Le nombre de voyageurs correspond à l'offre choisie — modifie-le depuis la recherche.</p>
+      <button type="button" class="tap" onclick="saveTravelers()" style="margin-top:4px;display:flex;height:54px;width:100%;align-items:center;justify-content:center;border-radius:15px;background:var(--color-primary);font-size:16px;font-weight:800;color:#fff;box-shadow:var(--shadow-cta)">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+  var D = window.PEC_DATA;
+  /* (17/09 — pivot) CE QUE LE CLIENT LIT SUR LE TOTAL : « avec un bon d’achat — <moyens dérivés> ».
+     (18/09, soir — l'agent de caisse mobile est abandonné, puis pivot de positionnement) LA FONCTION PRENAIT
+     LA RÉPARTITION D'UN RÈGLEMENT À L'AGENT (D.montantARegler : « X € en espèces au plus, Y € par carte sur
+     son terminal ») — plus d'agent, plus de terminal, plus de complément carte : la fonction n'existe plus et
+     la phrase non plus. Ce qui reste est la promesse, et elle tient en une ligne : avec un bon d’achat. */
+  function reglerTxt() {
+    return 'avec un bon d’achat' + ((D && D.moyensPaiementLabel) ? ' — ' + D.moyensPaiementLabel() : '');
+  }
+  // ── LIEUX depuis le référentiel D.places (audit 03/09) : « Ville (IATA) » ou « Ville » → fiche
+  //    aéroport (code, ville, nom) — plus de « Barcelone-El Prat » / « Espagne » posés en dur.
+  function placeDe(lbl) {
+    var P = (D && D.places) || [], s = String(lbl || '');
+    // « Marseille (MRS) », « Paris CDG » (libellés D.aeroports) ou « Barcelone » (accueil) sont tous compris
+    var m = s.match(/\(([A-Z]{3})\)/) || s.match(/\b([A-Z]{3})\b/), ville = s.replace(/\s*\(?[A-Z]{3}\)?\s*$/, '').trim();
+    var norm = function (t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); };
+    var p = null;
+    if (m) p = P.filter(function (x) { return x.iata_code === m[1] && x.type === 'airport'; })[0] || P.filter(function (x) { return x.iata_code === m[1]; })[0];
+    if (!p && ville) p = P.filter(function (x) { return x.type === 'airport' && norm(x.city_name) === norm(ville); })[0] || P.filter(function (x) { return norm(x.city_name) === norm(ville); })[0];
+    if (p && (!ville || m)) ville = p.city_name;
+    return { iata: m ? m[1] : (p ? p.iata_code : ''), ville: ville, nom: (p && p.type === 'airport') ? p.name : ville };
+  }
+  // Durée DÉRIVÉE des horaires (jamais un « 1h03 » figé) : '21h40','22h43' → '1h03'
+  function dureeVol(dep, arr) {
+    var a = String(dep || '').match(/(\d{1,2})h(\d{2})/), b = String(arr || '').match(/(\d{1,2})h(\d{2})/); if (!a || !b) return '';
+    var d = (+b[1] * 60 + +b[2]) - (+a[1] * 60 + +a[2]); if (d < 0) d += 1440;
+    return Math.floor(d / 60) + 'h' + ('0' + d % 60).slice(-2);
+  }
+  // Le CONTEXTE DE RECHERCHE prime sur les défauts (fondatrice 27/08)
+  var QS = new URLSearchParams(location.search);
+  // LE DÉPART vient de ?dep (accueil) sinon de LA PRÉFÉRENCE du compte — plus de dur (28/08)
+  var DEP_LBL = QS.get('dep') || ((D && D.aeroportDefautGet) ? D.aeroportDefautGet() : ''), DEP = placeDe(DEP_LBL);
+  var DEP_IATA = DEP.iata || '—', DEP_VILLE = DEP.ville || '—';
+  // LA DESTINATION vient de ?dest (accueil) — défaut = le scénario canonique (D.scenario : Marseille → Barcelone)
+  var DEST_LBL = QS.get('dest') || 'Barcelone (BCN)', DEST = placeDe(DEST_LBL);
+  var DEST_IATA = DEST.iata || '—', DEST_VILLE = DEST.ville || '—';
+  // DATES : ?dates (l'accueil transmet « 29 août · aller simple » — le type de trajet est retiré, il est
+  // dit ailleurs) ; sans dates, la date du scénario canonique (D.comparatifJour, même route) — sinon rien.
+  var DATES = String(QS.get('dates') || '').replace(/\s*·\s*aller[- ](simple|retour)\s*$/i, '').trim() || (function () {
+    var l = ((D && D.comparatifJour) || []).filter(function (x) { return x.route === DEP_VILLE + ' → ' + DEST_VILLE; })[0];
+    var txt = l ? String(l.detail || '').split('·').pop().trim() : '';
+    // (05/09) le comparatif est un relevé daté : sa date peut être PASSÉE. On ne propose
+    // jamais une date de départ derrière nous — on dérive alors le délai du référentiel.
+    var dd = (D && D.dateDepuisTexte) ? D.dateDepuisTexte(txt) : null;
+    if (txt && dd && dd >= new Date(new Date().toDateString())) return txt;
+    var j = ((D && D.scenario && D.scenario.promosRegleJmoins) || 45);
+    var a = new Date(Date.now() + j * 86400000);
+    return a.getDate() + ' ' + ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][a.getMonth()];
+  })();
+
+  // ── Données (démo) ──
+  var BUDGET = parseInt(QS.get('b'), 10) || 350;
+  // GRILLE sourcée : D.detailVol (le détail canonique 41,74 + 14,35 + 6,26 = 62,35 €) et
+  // D.fiscalite.tvaTauxNeuf — plus de 626 / 0.20 posés en dur. DELIVERY_FEE (3,96 €) = part fixe
+  // des « taxes et frais » de la maquette : aucun référentiel ne la porte encore (cf. compte rendu).
+  var VAT = ((D && D.tvaTauxNeufVif && D.tvaTauxNeufVif()) || 20) / 100;   // (11/09) taux VIF : réglable en 10-configuration
+  var SERVICE_FEE = Math.round((((D && D.detailVol) || {}).fraisService || 6.26) * 100), DELIVERY_FEE = 396;
+  // Bagage soute = le prix du SERVICE compagnie (total_amount Duffel), repris tel quel — une seule constante
+  var BAG_PRIX = 2000, BAG_KG = 23;
+// Budget AJUSTABLE en plein tunnel — tout recalcule (jauges, filtres « dans mon budget »)
+function chgBudget(d) {
+  BUDGET = Math.max(50, Math.min(2000, BUDGET + d));
+  var e = document.getElementById('budget-val'); if (e) e.textContent = BUDGET + ' €';
+  if (typeof renderFlights === 'function') renderFlights();
+  if (typeof renderRecap === 'function') try { renderRecap(); } catch (err) {}
+}
+  // Nombre de voyageurs : transmis par l'accueil (?voy=N) — règle d'affichage Opodo
+  // adoptée (fondatrice 22/08) : liste = prix PAR VOYAGEUR si N>1, récap = TOTAL dominant.
+  var VOY = Math.max(1, Math.min(9, parseInt(QS.get('voy'), 10) || 1));
+  // Offres de démo : o1 = le vol du scénario canonique (tarif de base D.detailVol.base, horaires connus) ;
+  // les autres n'ont PAS d'horaires publiés → la carte affiche « — » (jamais un horaire inventé).
+  var OFFERS = [
+    { id: 'o1', carrier: 'Vueling', price: Math.round((((D && D.detailVol) || {}).base || 41.74) * 100), dep: '21h40', arr: '22h43', best: true, left: 3, flex: true },
+    { id: 'o2', carrier: 'Transavia', price: 4299, best: false, flex: true },
+    { id: 'o3', carrier: 'Ryanair', price: 4680, best: false, flex: true },
+    { id: 'o4', carrier: 'Iberia', price: 5210, best: false, flex: true }
+  ];
+  var selectedId = null, bagAdded = false, safetyCents = 0;
+
+  function eur(c) { return (c / 100).toFixed(2).replace('.', ',') + ' €'; }
+
+  // ── Carte vol (FlightCard) ──
+  function flightCard(o) {
+    var sel = selectedId === o.id;
+    var ttc = ttcAvecBag(o.price, sel && bagAdded);
+    var spentNum = ttc * VOY / 100;                             // le BUDGET se compare au TOTAL tous voyageurs
+    var spent = spentNum.toFixed(2).replace('.', ',');          // chaîne pour l'affichage
+    var pct = Math.min(100, Math.round(spentNum / BUDGET * 100));
+    var rest = String(Math.max(0, Math.round((BUDGET - spentNum) * 100) / 100)).replace('.', ',');
+    var bag = sel
+      ? '<div class="pec-bag">' +
+          '<p style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px"><use href="#i-briefcase"/></svg> Bagage cabine inclus</p>' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+            '<span style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-luggage"/></svg> Bagage en soute · jusqu’à ' + BAG_KG + ' kg <span style="font-weight:800">+' + eur(BAG_PRIX) + '</span></span>' +
+            '<button type="button" onclick="event.stopPropagation();toggleBagCard()" aria-pressed="' + bagAdded + '" class="tap" style="display:inline-flex;flex-shrink:0;align-items:center;gap:4px;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;' +
+              (bagAdded ? 'background:#fff;color:var(--color-primary-dark);box-shadow:var(--shadow-card)' : 'background:var(--color-primary);color:#fff;box-shadow:var(--shadow-cta-tight)') + '">' +
+              '<svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px"><use href="#i-' + (bagAdded ? 'check' : 'plus') + '"/></svg> ' + (bagAdded ? 'Ajoutée' : 'ajouter') + '</button>' +
+          '</div></div>'
+      : '';
+    return '<li><div role="button" tabindex="0" onclick="selectOffer(\'' + o.id + '\')" aria-pressed="' + sel + '" class="tap" ' +
+      'style="width:100%;cursor:pointer;border-radius:18px;background:var(--color-surface);padding:15px 15px 14px;text-align:left;box-shadow:' + (sel ? 'var(--shadow-selected)' : 'var(--shadow-card)') + '">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+        '<div style="display:flex;min-width:0;align-items:center;gap:8px">' +
+          window.PEC_DATA.logoCompagnie(o.carrier, 26) +
+          '<div style="min-width:0"><p style="font-size:15px;font-weight:800;letter-spacing:-0.2px;color:var(--color-ink)">' + DEST_VILLE + '</p>' +
+          '<p style="font-size:11.5px;font-weight:500;color:var(--color-muted-2)">' + o.carrier + ' · ' + (DEST.nom || DEST_VILLE) + '</p></div></div>' +
+        (o.best ? '<span style="display:flex;flex-shrink:0;align-items:center;gap:4px;white-space:nowrap;border-radius:999px;background:linear-gradient(115deg,#C2410C,#F26F21);padding:4px 9px;font-size:10px;font-weight:800;color:#fff;box-shadow:0 3px 8px rgba(194,65,12,.3)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:10px"><use href="#i-star-filled"/></svg> Le moins cher de cette recherche</span>' : '') +
+      '</div>' +
+      '<div style="margin-top:13px"><div class="pec-leg">' +
+        '<div class="pec-leg-side"><div class="h">' + (o.dep || '—') + '</div><div class="c">' + DEP_IATA + '</div><div class="n">' + (DEP.nom || DEP_VILLE) + '</div></div>' +
+        '<div class="pec-leg-mid"><span class="d">' + dureeVol(o.dep, o.arr) + '</span><div class="pec-leg-line-row"><span class="pec-leg-dot"></span><span class="pec-leg-line"></span><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px;color:var(--color-disabled)"><use href="#i-plane"/></svg><span class="pec-leg-line"></span><span class="pec-leg-dot"></span></div><span class="s">Direct</span></div>' +
+        '<div class="pec-leg-side"><div class="h">' + (o.arr || '—') + '</div><div class="c">' + DEST_IATA + '</div><div class="n">' + (DEST.nom || DEST_VILLE) + '</div></div>' +
+      '</div></div>' +
+      '<div class="pec-mint-banner"><div class="row"><div style="min-width:0">' +
+        (VOY > 1
+          ? '<p class="lbl">Prix par voyageur</p><p class="sub">Total ' + VOY + ' voyageurs : <b>' + (ttc * VOY / 100).toFixed(2).replace('.', ',') + ' €</b> · avec un bon d’achat</p>'
+          : '<p class="lbl">À régler</p><p class="sub">Tout compris · zéro frais cachés</p>') +
+        '</div><p class="amt"><span class="n">' + (ttc / 100).toFixed(2).replace('.', ',') + '</span><span class="e">€' + (VOY > 1 ? '<span style="font-size:10px;font-weight:700"> /pers</span>' : '') + '</span></p></div>' + bag + '</div>' +
+      ((o.left ? '<div style="display:flex;align-items:center;gap:5px;margin-top:8px;font-size:10.5px;font-weight:800;color:var(--color-amber-text)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px"><use href="#i-flame"/></svg>Plus que ' + o.left + ' places à ce prix</div>' : '') + (o.flex ? '<div style="display:flex;align-items:center;gap:5px;margin-top:' + (o.left ? '3' : '8') + 'px;font-size:10.5px;font-weight:700;color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px"><use href="#i-shield"/></svg>Annulation possible — tarif Flex au récap</div>' : '')) + '<div style="margin-top:10px"><div class="pec-budget-bar"><div class="budget-bar-fill" style="height:100%;border-radius:999px;width:' + pct + '%"></div></div>' +
+        '<p style="display:inline-flex;align-items:center;gap:5px;margin-top:7px;border-radius:999px;background:var(--color-mint);padding:4px 11px;font-size:11.5px;font-weight:700;color:var(--color-mint-ink)">' + (sel ? 'Budget restant : ' : pct + '% du budget · reste ') + '<b style="font-size:13.5px;color:var(--color-primary-dark)">' + rest + ' €</b></p></div>' +
+      '</div></li>';
+  }
+  function ttcFor(baseCents) {
+    var ht = baseCents + SERVICE_FEE + safetyCents + DELIVERY_FEE;
+    return ht + Math.round(ht * VAT);
+  }
+  // le bagage soute = prix du SERVICE compagnie (total_amount Duffel), tel quel —
+  // jamais re-margé ni re-taxé : +20,00 € affiché = +20,00 € payé
+  function ttcAvecBag(baseCents, avecBag) { return ttcFor(baseCents) + (avecBag ? BAG_PRIX : 0); }
+  // FILTRES VIVANTS (audit 03/09 : les 3 boutons ne faisaient que basculer aria-pressed) —
+  // Prix = tri croissant · Vol direct = seuls les directs (toutes les offres le sont : rien n'est
+  // masqué) · Horaires = tri par heure de départ (horaires non publiés en fin de liste).
+  var FILTRES = { prix: false, direct: false, horaires: false };
+  function offresVisibles() {
+    var l = OFFERS.slice();
+    if (FILTRES.direct) l = l.filter(function (o) { return !o.escales; });
+    if (FILTRES.prix) l.sort(function (a, b) { return a.price - b.price; });
+    if (FILTRES.horaires) l.sort(function (a, b) { return (a.dep ? +a.dep.replace('h', '') : 9999) - (b.dep ? +b.dep.replace('h', '') : 9999); });
+    return l;
+  }
+  function renderFlights() {
+    var l = offresVisibles();
+    document.getElementById('flights').innerHTML = l.map(flightCard).join('') || '<li style="text-align:center;padding:22px 12px;font-size:13px;color:var(--color-muted)">Aucun vol ne correspond — retire un filtre.</li>';
+    var nb = document.getElementById('nb-vols'); if (nb) nb.textContent = l.length + ' vol' + (l.length > 1 ? 's' : '');
+  }
+  function selectOffer(id) {
+    selectedId = id; renderFlights();
+    var o = OFFERS.find(function (x) { return x.id === id; });
+    var cta = document.getElementById('cta1');
+    cta.disabled = false; cta.style.opacity = '1';
+    cta.textContent = 'Confirmer — ' + eur(ttcAvecBag(o.price, bagAdded) * VOY);
+  }
+  function toggleBagCard() { bagAdded = !bagAdded; selectOffer(selectedId); }
+  function toggleFilter(btn) {
+    var k = btn.getAttribute('data-f'); if (k) FILTRES[k] = !FILTRES[k];
+    btn.setAttribute('aria-pressed', btn.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+    renderFlights();
+  }
+
+  // ── Code promo (fondatrice 22/08) : PEC_DATA.validerCodePromo — règle unique partout ──
+  var promoApplique = null;
+  function appliquerCode() {
+    // AUTO-APPLICATION à la saisie (fondatrice 22/08 : pas de bouton) — douce :
+    // on ne râle pas pendant que la personne tape, on fête dès que le code est reconnu.
+    var saisie = document.getElementById('promo-in').value.trim();
+    var o = OFFERS.find(function (x) { return x.id === selectedId; }) || OFFERS[0];
+    var base = o.price;
+    var totalSans = (ttcFor(base) + packSel().plus * 100) * VOY / 100;
+    var v = window.PEC_DATA.validerCodePromo(saisie, totalSans, VOY);
+    var msg = document.getElementById('promo-msg');
+    if (v.ok) {
+      msg.textContent = v.message + ' Le total est à jour.';
+      msg.style.color = 'var(--color-primary-dark)';
+      promoApplique = v.code;
+    } else {
+      promoApplique = null;
+      var connu = (window.PEC_DATA.codesPromoFlyGet ? window.PEC_DATA.codesPromoFlyGet() : []).some(function (c) { return c.code === saisie.toUpperCase(); });
+      if (!saisie) { msg.textContent = ''; }
+      else if (connu) { msg.textContent = v.message; msg.style.color = 'var(--color-amber-text)'; }  // code réel mais conditions non remplies : on explique
+      else if (saisie.length >= 5) { msg.textContent = 'On ne reconnaît pas ce code — vérifie l\'orthographe.'; msg.style.color = 'var(--color-muted)'; }
+      else { msg.textContent = ''; }
+    }
+    renderRecap();
+  }
+
+  // ── Packs (PEC_DATA.packs — le supplément est TTC : +12 € affiché = +12 € payés) ──
+  var packId = 'basique';
+  function packSel() { return (window.PEC_DATA.packs.find(function (p) { return p.id === packId; })) || window.PEC_DATA.packs[0]; }
+  function renderPacks() {
+    document.getElementById('packs').innerHTML = window.PEC_DATA.packs.map(function (p) {
+      var on = p.id === packId;
+      return '<button type="button" class="tap" data-pack="' + p.id + '" aria-pressed="' + on + '" style="position:relative;text-align:left;border-radius:var(--radius-card);background:var(--color-surface);box-shadow:' + (on ? '0 0 0 2px var(--color-primary), var(--shadow-card)' : 'var(--shadow-card)') + ';padding:12px 14px">' +
+        (p.reco ? '<span style="position:absolute;top:-7px;right:12px;border-radius:6px;background:var(--color-primary);color:#fff;font-size:8.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px">Recommandé</span>' : '') +
+        '<span style="display:flex;align-items:center;justify-content:space-between"><b style="font-size:14px;color:var(--color-ink)">' + p.nom + '</b><b style="font-size:13.5px;color:var(--color-primary-dark)">' + (p.plus ? '+ ' + p.plus + ',00 €' : 'Inclus') + '</b></span>' +
+        p.lignes.map(function (l) { return '<span style="display:block;font-size:11px;line-height:1.5;color:var(--color-muted);margin-top:3px">' + (on ? '✓' : '·') + ' ' + l + '</span>'; }).join('') +
+        '<details style="margin-top:7px" onclick="event.stopPropagation()"><summary class="tap" style="list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;color:var(--color-primary-dark)"><span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:var(--color-mint);font-size:9px">i</span> Les conditions complètes</summary>' +
+        '<span style="display:block;font-size:10px;line-height:1.55;color:var(--color-muted);margin-top:5px;border-left:2.5px solid var(--color-mint);padding-left:8px">' + (p.info || '') + '</span></details>' +
+        '</button>';
+    }).join('');
+  }
+  document.getElementById('packs').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-pack]');
+    if (b) { packId = b.getAttribute('data-pack'); renderPacks(); renderRecap(); }
+  });
+
+  // ── Récap ──
+  function renderRecap() {
+    var o = OFFERS.find(function (x) { return x.id === selectedId; }) || OFFERS[0];
+    var base = o.price;
+    var ht = base + SERVICE_FEE + safetyCents + DELIVERY_FEE;
+    var tva = Math.round(ht * VAT);
+    var ttcVol = ht + tva;                              // le vol seul, PAR VOYAGEUR
+    var parPax = ttcVol + packSel().plus * 100 + (bagAdded ? BAG_PRIX : 0);   // payé par voyageur (pack + bagage au prix du service)
+    var ttc = parPax * VOY;                             // TOTAL tous voyageurs — le montant dominant
+    // code promo : validé sur le total AVANT remise, revérifié à chaque re-rendu
+    var pr = document.getElementById('p-promo-row');
+    if (promoApplique) {
+      var v = window.PEC_DATA.validerCodePromo(promoApplique, ttc / 100, VOY);
+      if (v.ok) {
+        ttc -= v.remise * 100;
+        pr.hidden = false;
+        document.getElementById('p-promo-nom').textContent = 'Code ' + v.code;
+        document.getElementById('p-promo-mnt').textContent = '−' + v.remise.toFixed(2).replace('.', ',') + ' €';
+      } else {   // le panier a changé et le code ne s'applique plus : on le dit, on ne le garde pas en douce
+        promoApplique = null; pr.hidden = true;
+        document.getElementById('promo-msg').textContent = v.message + ' Le code a été retiré.';
+        document.getElementById('promo-msg').style.color = 'var(--color-amber-text)';
+      }
+    } else { pr.hidden = true; }
+    var perLbl = VOY > 1 ? ' <span style="font-weight:600;color:var(--color-muted-2)">(×' + VOY + ')</span>' : '';
+    document.getElementById('p-pack-row').hidden = !packSel().plus;
+    document.getElementById('p-pack-nom').innerHTML = 'Tarif ' + packSel().nom + perLbl;
+    document.getElementById('p-pack-mnt').textContent = eur(packSel().plus * 100 * VOY);
+    document.getElementById('r-carrier').textContent = o.carrier + (DATES ? ' · ' + DATES : '') + ' · aller simple';
+    document.getElementById('r-cie').textContent = o.carrier;
+    // TRAJET + AÉROPORTS du récap reprennent la recherche (fondatrice 30/08 : plus de
+    // « Marseille → Barcelone » / « BCN » figé quand la destination change)
+    var _rt = document.getElementById('r-trajet'); if (_rt) _rt.textContent = DEP_VILLE + ' → ' + DEST_VILLE;
+    var _rdi = document.getElementById('r-dep-iata'); if (_rdi) _rdi.textContent = DEP_IATA;
+    var _rdn = document.getElementById('r-dep-name'); if (_rdn) _rdn.textContent = DEP.nom || DEP_VILLE;
+    var _rti = document.getElementById('r-dest-iata'); if (_rti) _rti.textContent = DEST_IATA;
+    var _rtn = document.getElementById('r-dest-name'); if (_rtn) _rtn.textContent = DEST.nom || DEST_VILLE;
+    // horaires et durée = ceux de L'OFFRE retenue (« — » quand la compagnie ne les a pas publiés)
+    var _h1 = document.getElementById('r-dep-h'); if (_h1) _h1.textContent = o.dep || '—';
+    var _h2 = document.getElementById('r-arr-h'); if (_h2) _h2.textContent = o.arr || '—';
+    var _du = document.getElementById('r-duree'); if (_du) _du.textContent = dureeVol(o.dep, o.arr);
+    var _bp = document.getElementById('r-bag-prix'); if (_bp) _bp.textContent = '+' + eur(BAG_PRIX);
+    document.getElementById('p-vol-lbl').innerHTML = 'Tarif de base' + perLbl;
+    document.getElementById('p-vol').textContent = eur(o.price * VOY);
+    document.getElementById('p-bag-row').hidden = !bagAdded;
+    document.getElementById('p-bag-lbl').innerHTML = 'Bagage en soute · jusqu\u2019à ' + BAG_KG + ' kg' + perLbl;
+    document.getElementById('p-bag-mnt').textContent = eur(BAG_PRIX * VOY);
+    document.getElementById('p-taxes-lbl').innerHTML = 'Taxes et frais compagnies' + perLbl;
+    document.getElementById('p-taxes').textContent = eur((ttcVol - base - SERVICE_FEE) * VOY);
+    document.getElementById('p-fees-lbl').innerHTML = 'Nos frais de service' + perLbl;
+    document.getElementById('p-fees').textContent = eur(SERVICE_FEE * VOY);
+    document.getElementById('p-total').textContent = (ttc / 100).toFixed(2).replace('.', ',');
+    var pp = document.getElementById('p-parpax');
+    pp.hidden = VOY < 2;
+    if (VOY > 1) pp.innerHTML = 'soit <b>' + (parPax / 100).toFixed(2).replace('.', ',') + ' €</b> par voyageur (×' + VOY + ')';
+    document.getElementById('cta2-total').textContent = (ttc / 100).toFixed(2).replace('.', ',') + ' €';
+    // bandeau du stepper
+    // (18/09, soir) LE MONTANT EST UN, et son titre ne dépend plus d'un canal : « À régler », point.
+    document.getElementById('banner-t').style.display = ''; document.getElementById('banner-t').innerHTML = 'À régler : <b>' + (ttc / 100).toFixed(2).replace('.', ',') + ' €</b> · ' + reglerTxt();
+    var _ps = document.getElementById('p-total-sub'); if (_ps) _ps.textContent = 'À régler, tout compris · TTC · ' + reglerTxt();
+    document.getElementById('banner-s').textContent = DEP_VILLE + ' → ' + DEST_VILLE + ' · ' + VOY + ' voyageur' + (VOY > 1 ? 's' : '');
+    var _telR = (window.PEC_DATA && PEC_DATA.profil && PEC_DATA.profil.tel) || '';
+    document.getElementById('r-sub').textContent = VOY + ' voyageur' + (VOY > 1 ? 's' : '') + (_telR ? ' · ' + _telR : '');
+    // bagage du récap
+    document.getElementById('r-bag-tag').hidden = !bagAdded;
+    var b = document.getElementById('r-bag-btn');
+    b.setAttribute('aria-pressed', bagAdded);
+    b.innerHTML = '<svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px"><use href="#i-' + (bagAdded ? 'x' : 'plus') + '"/></svg> ' + (bagAdded ? 'Retirer' : 'Ajouter');
+    b.style.background = bagAdded ? 'var(--color-surface)' : 'var(--color-primary)';
+    b.style.color = bagAdded ? 'var(--color-danger)' : '#fff';
+    b.style.boxShadow = bagAdded ? 'var(--shadow-card)' : 'var(--shadow-cta-tight)';
+  }
+  function toggleBag() { bagAdded = !bagAdded; renderRecap(); }
+
+  // ── Bottom sheet voyageurs ──
+  function openSheet() { document.getElementById('scrim').classList.add('on'); }
+  function closeSheet() { document.getElementById('scrim').classList.remove('on'); }
+  function pickSaved(g, f) {
+    document.getElementById('f-given').value = g;
+    document.getElementById('f-family').value = f;
+    document.getElementById('sh-initial').textContent = g.charAt(0).toUpperCase();
+    // la fiche du carnet (civilité, genre, naissance, e-mail, téléphone) pré-remplit le reste — zéro ressaisie
+    var fiche = ((D && D.voyageursCarnet) ? D.voyageursCarnet() : []).filter(function (v) { return v.prenom === g && v.nom === f; })[0];
+    remplirFiche(fiche || {});
+  }
+  function remplirFiche(v) {
+    var set = function (id, val) { var e = document.getElementById(id); if (e) e.value = val || ''; };
+    set('f-civ', v.civ === 'mr' ? 'M.' : v.civ === 'ms' ? 'Mme' : '');
+    set('f-genre', v.genre === 'm' ? 'Masculin' : v.genre === 'f' ? 'Féminin' : '');
+    set('f-email', v.email); set('f-tel', v.tel || v.telComplet);
+    var n = String(v.naissance || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    set('n-jour', n ? String(+n[1]) : ''); set('n-mois', n ? String(+n[2]) : ''); set('n-annee', n ? n[3] : '');
+  }
+  // Le FORMULAIRE est LU en entier (audit 03/09 : civilité, genre, naissance, e-mail, téléphone
+  // n'étaient pas lus) — il voyage avec la commande jusqu'à l'ordre de paiement et au détail.
+  function lireVoyageur() {
+    var v = function (id) { var e = document.getElementById(id); return e ? String(e.value || '').trim() : ''; };
+    var j = v('n-jour'), m = v('n-mois'), a = v('n-annee');
+    return { civ: v('f-civ'), genre: v('f-genre'), prenom: v('f-given'), nom: v('f-family'),
+      naissance: (j && m && a) ? (('0' + j).slice(-2) + '/' + ('0' + m).slice(-2) + '/' + a) : '', email: v('f-email'), tel: v('f-tel') };
+  }
+  // CARNET DE VOYAGEURS RÉEL (fondatrice 30/08) : les chips « Depuis ton carnet »
+  // = titulaire du compte + fiches enregistrées (PEC_DATA.voyageursCarnet) — plus
+  // aucun « Thomas Biemont » posé en dur.
+  (function () {
+    var z = document.getElementById('carnet-chips');
+    if (!z || !window.PEC_DATA || !PEC_DATA.voyageursCarnet) return;
+    function esc(s) { return (window.PEC_DATA && PEC_DATA.esc) ? PEC_DATA.esc(s) : String(s == null ? '' : s); }
+    z.innerHTML = PEC_DATA.voyageursCarnet().map(function (v) {
+      var label = esc((v.prenom || '') + ' ' + (v.nom || '')) + (v.titulaire ? ' <span style="font-weight:700;color:var(--color-primary-dark)">· toi</span>' : '');
+      return '<button type="button" class="tap" data-pr="' + esc(v.prenom || '') + '" data-nm="' + esc(v.nom || '') + '" style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:var(--color-surface);padding:8px 12px;font-size:12.5px;font-weight:600;color:var(--color-ink);box-shadow:var(--shadow-card)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px;color:var(--color-primary)"><use href="#i-user"/></svg> ' + label + '</button>';
+    }).join('');
+    z.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-pr]'); if (!b) return;
+      if (typeof pickSaved === 'function') pickSaved(b.getAttribute('data-pr'), b.getAttribute('data-nm'));
+    });
+  })();
+  function saveTravelers() {
+    var eg = document.getElementById('f-given'), ef = document.getElementById('f-family');
+    var g = eg.value.trim(), f = ef.value.trim();
+    // Le billet part à la compagnie au nom EXACT : prénom ET nom obligatoires,
+    // la feuille ne se ferme pas tant que ce n'est pas complet (règle par canal).
+    eg.style.borderColor = g ? '' : 'var(--color-amber-text)';
+    ef.style.borderColor = f ? '' : 'var(--color-amber-text)';
+    if (!g || !f) return;
+    document.getElementById('r-name').textContent = (g + ' ' + f).trim();
+    document.getElementById('r-initial').textContent = g.charAt(0).toUpperCase();
+    majCtaConfirm();
+    closeSheet();
+  }
+  function voyageurComplet() {
+    var n = document.getElementById('r-name').textContent.trim();
+    return n !== '' && n !== 'À compléter' && n.split(/\s+/).length >= 2;
+  }
+  function majCtaConfirm() {
+    var b = document.querySelector('.screen:last-of-type .pec-cta, #screen-3 .pec-cta');
+    if (!b) return;
+    b.style.opacity = voyageurComplet() ? '1' : '.55';
+  }
+  function confirmerCommande(totalId) {
+    if (!voyageurComplet()) {
+      var carte = document.getElementById('r-name').closest('.pec-card');
+      if (carte) { carte.style.outline = '2px solid var(--color-amber-text)'; setTimeout(function () { carte.style.outline = ''; }, 2200); }
+      openSheet(); return;
+    }
+    // COMPTE VÉRIFIÉ OBLIGATOIRE (fondatrice 30/08) : impossible de passer le récap
+    // sans SMS + e-mail validés — la fenêtre s'ouvre, puis on reprend la confirmation.
+    if (window.PEC_VERIF && !PEC_VERIF.complet()) { PEC_VERIF.exiger(function () { confirmerCommande(totalId); }); return; }
+    var el = document.getElementById(totalId || 'cta2-total');   // filet : jamais bloqué par un id manquant
+    var cents = Math.round(parseFloat(((el ? el.textContent : '').match(/[\d]+[,.]?[\d]*/) || ['62'])[0].replace(',', '.')) * 100);
+    // la COMMANDE COMPLÈTE suit le flux (fondatrice 27/08)
+    try {
+      var f = (typeof OFFERS !== 'undefined' && typeof selectedId !== 'undefined') ? OFFERS.find(function (o) { return o.id === selectedId; }) : null;
+      PEC_DATA.consentir && PEC_DATA.consentir('cgv-commande', 'Confirmation de commande — CGV, conditions de transport et conditions du tarif acceptées');
+      PEC_DATA.commandeEnCoursSet({
+        totalCents: cents, type: 'FLY',
+        trajet: DEP_VILLE + ' → ' + DEST_VILLE + ' · aller simple',
+        dates: DATES || null,
+        voyageurs: VOY,
+        voyageur: lireVoyageur(),   // la fiche saisie (civilité, naissance, e-mail, téléphone) suit la commande
+        // critères de RECHERCHE mémorisés : si le prix bloqué expire, « Relancer »
+        // reprend ces infos et ramène droit au récap réactualisé (fondatrice 30/08).
+        recherche: { t: '01-vol-aller-simple', dep: DEP_LBL, dest: DEST_LBL, dates: DATES || null, voy: VOY, cie: f ? f.carrier : null },
+        compagnie: f ? f.carrier : null, heb: null,
+        bagages: '1 cabine incl.' + (bagAdded ? ' · 1 soute ' + BAG_KG + ' kg' : ''),
+        pack: (typeof packSel === 'function' ? packSel().nom : null),
+      // le DÉTAIL DU PRIX tel qu'affiché — l'ordre de paiement le réaffiche à l'identique
+      detailPrix: (function () {
+        var zone = document.getElementById('price-rows') || (document.getElementById('p-vol') && document.getElementById('p-vol').closest('div[style*="flex-direction:column"]'));
+        if (!zone) return null;
+        return [].map.call(zone.children, function (r) {
+          if (r.hidden || r.style.display === 'none' || r.children.length < 2) return null;
+          return [r.children[0].textContent.trim(), r.children[r.children.length - 1].textContent.trim()];
+        }).filter(Boolean);
+      })(),
+        vols: f ? [{ sens: 'Aller', compagnie: f.carrier, heures: (f.dep && f.arr) ? f.dep + ' → ' + f.arr : null }] : null
+      });
+    } catch (e) {}
+    location.href = '../fly/01-ou-payer.html?m=' + cents;
+  }
+  // PAR DÉFAUT le voyageur du compte est RENSEIGNÉ (fondatrice 24/08) — l'obligation
+  // de remplir ne joue que si on l'efface ou le laisse incomplet.
+  document.addEventListener('DOMContentLoaded', function () {
+    var n = document.getElementById('r-name');
+    if (n && (n.textContent.trim() === 'À compléter' || !n.textContent.trim())) {
+      // Voyageur 1 = titulaire du compte, depuis la SOURCE UNIQUE (profil vivant) —
+      // exactement ce qu'affiche le Compte, plus aucun nom en dur.
+      var V = (window.PEC_DATA && PEC_DATA.voyageurParDefaut) ? PEC_DATA.voyageurParDefaut() : {};
+      if (V.nomComplet) {
+        n.textContent = V.nomComplet;
+        var ini = document.getElementById('r-initial'); if (ini) ini.textContent = V.initiales;
+        document.getElementById('f-given').value = V.prenom || '';
+        document.getElementById('f-family').value = V.nom || '';
+        // le reste de la fiche (civilité, naissance, e-mail, téléphone) vient du carnet/profil — jamais vide « pour faire joli »
+        var t0 = ((D && D.voyageursCarnet) ? D.voyageursCarnet() : [])[0] || {};
+        remplirFiche(Object.assign({}, t0, { email: V.email || t0.email, tel: V.telComplet || t0.tel }));
+      }
+    }
+  });
+
+  // ── Navigation ──
+  function goToScreen(n) {
+    document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('active'); });
+    document.getElementById('screen-' + n).classList.add('active');
+    for (var i = 1; i <= 3; i++) {
+      var c = document.getElementById('st' + i);
+      c.className = 'pec-tstep' + (i < n ? ' pec-tstep--done' : i === n ? ' pec-tstep--current' : '');
+      if (i === n) c.setAttribute('aria-current', 'step'); else c.removeAttribute('aria-current');
+    }
+    if (n === 1) {
+      document.getElementById('banner-t').style.display = 'none'; document.getElementById('banner-t').innerHTML = 'Ton budget : <b>' + BUDGET + ' €</b>';
+      majBanniereRecherche();
+    }
+  }
+  function goRecap() { if (!selectedId) return; renderPacks(); renderRecap(); goToScreen(2); chargementRecap(etapesRecap()); }
+  // Les étapes du chargement sont des FAITS de la commande (audit 03/09 — plus de « sièges
+  // disponibles » affirmé sans donnée) : le vol retenu, la durée réelle du prix bloqué
+  // (D.scenario.prixBloqueMinutes), l'état réel du voyageur et du bagage.
+  function etapesRecap() {
+    var o = OFFERS.find(function (x) { return x.id === selectedId; }) || {};
+    var min = (D && D.scenario && D.scenario.prixBloqueMinutes) || 60;
+    return ['Vol ' + (o.carrier || '') + ' retenu' + (o.left ? ' — ' + o.left + ' places à ce prix' : ''),
+      'Prix bloqué ' + (min >= 60 ? (min / 60) + ' h' : min + ' min') + ' — payable par bon d’achat',
+      'Voyageur ' + (voyageurComplet() ? 'renseigné' : 'à compléter') + (bagAdded ? ' · bagage soute ajouté' : '')];
+  }
+  // « On réunit tes informations » (fondatrice 24/08) : un chargement RAPIDE avant le
+  // récap — l'esprit « on récapitule tout avant confirmation et réservation ».
+  function chargementRecap(etapes) {
+    var ov = document.getElementById('recapload');
+    if (!ov) {
+      ov = document.createElement('div'); ov.id = 'recapload';
+      ov.setAttribute('style', 'position:fixed;inset:0;z-index:85;display:none;align-items:center;justify-content:center;background:rgba(15,42,36,.62);backdrop-filter:blur(4px)');
+      ov.innerHTML = '<div style="width:88%;max-width:330px;background:var(--color-surface);border-radius:22px;padding:24px 20px 20px;box-shadow:0 24px 60px rgba(15,42,36,.4);text-align:center">' +
+        '<div style="width:38px;height:38px;border-radius:50%;border:3.5px solid var(--color-mint);border-top-color:var(--color-primary);animation:pecspin3 .8s linear infinite;margin:0 auto 14px"></div>' +
+        '<div style="font-size:15px;font-weight:800;color:var(--color-ink)">On réunit tes informations</div>' +
+        '<div style="font-size:11px;color:var(--color-muted);margin-top:2px">On récapitule tout avant confirmation et réservation</div>' +
+        '<div style="margin-top:14px;text-align:left;font-size:12px;line-height:2;color:var(--color-muted)"><div id="rl1"></div><div id="rl2" style="opacity:.35"></div><div id="rl3" style="opacity:.35"></div></div></div>';
+      document.body.appendChild(ov);
+      var st = document.createElement('style'); st.textContent = '@keyframes pecspin3{to{transform:rotate(360deg)}}'; document.head.appendChild(st);
+    }
+    ['rl1', 'rl2', 'rl3'].forEach(function (id, i) { var e = document.getElementById(id); e.textContent = '◌ ' + etapes[i]; e.style.opacity = i ? '.35' : '1'; });
+    ov.style.display = 'flex';
+    function coche(i) { var e = document.getElementById('rl' + i); e.innerHTML = '✓ <b style="color:var(--color-primary-dark)">' + etapes[i - 1] + '</b>'; if (i < 3) document.getElementById('rl' + (i + 1)).style.opacity = '1'; }
+    setTimeout(function () { coche(1); }, 420);
+    setTimeout(function () { coche(2); }, 850);
+    setTimeout(function () { coche(3); }, 1250);
+    setTimeout(function () { ov.style.display = 'none'; }, 1650);
+  }
+
+
+  renderFlights();
+  // l'en-tête de la liste reflète la recherche (départ → destination), plus figé
+  (function () { var h = document.getElementById('hdr-trajet'); if (h) h.textContent = DEP_VILLE + ' → ' + DEST_VILLE; })();
+  // Le bandeau reflète TA recherche (fondatrice 27/08) — plus de « Marseille → Barcelone · 29 août » figé.
+  function majBanniereRecherche() {
+    var bv = document.getElementById('budget-val'); if (bv) bv.textContent = BUDGET + ' €';   // le chip suit le budget transmis (?b=)
+    var b = document.getElementById('banner-s');
+    if (b) b.textContent = DEP_VILLE + ' → ' + DEST_VILLE + (DATES ? ' · ' + DATES : '') + ' · ' + VOY + ' voyageur' + (VOY > 1 ? 's' : '') + ' · aller simple';
+  }
+  majBanniereRecherche();
+
+  // REPRISE (fondatrice 30/08) : arrivée par « Relancer » depuis une réservation
+  // annulée/expirée. On ne repart PAS d'une recherche vierge : la destination, les
+  // dates et les voyageurs sont déjà là — on auto-sélectionne l'offre équivalente
+  // (même compagnie si connue) et on ouvre DIRECTEMENT le récap, au tarif du moment.
+  (function () {
+    var q = new URLSearchParams(location.search);
+    if (!q.get('reprise') || typeof OFFERS === 'undefined' || !OFFERS.length) return;
+    var cie = q.get('cie');
+    var off = (cie && OFFERS.filter(function (o) { return o.carrier === cie; })[0]) || OFFERS[0];
+    if (!off) return;
+    var bn = document.getElementById('reprise-banner'); if (bn) bn.hidden = false;
+    selectOffer(off.id);
+    goRecap();
+  })();
+
+</script>
+</body>
+</html>

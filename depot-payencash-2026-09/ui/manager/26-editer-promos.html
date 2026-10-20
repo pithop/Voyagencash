@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash Manager — Éditer les Promos</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-p-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-p-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<link rel="stylesheet" href="../assets/payencash-manager.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-manager-nav.js"></script>
+<!--
+  ÉDITER LES PROMOS — route `/promos/editer` (fondatrice 22/08 : « depuis le manager
+  j'édite ces offres — je cherche et sélectionne À L'AVANCE, ça crée les packs
+  tout compris selon le mode »).
+  Chaîne : recherche vol A/R (Duffel) + hébergement (centrale) → sélection →
+  composition du pack (mode, prix, prix « en normal » Omnibus) → contrôles BLOQUANTS
+  (prix < normal · départ ≥ J+promosRegleJmoins) → INSERT promo_offers → visible dans FLY (06-promos)
+  et Promos & astuces. Dépublication → active = false (jamais de suppression).
+-->
+</head>
+<body>
+<!-- (07/09 — audit manager « connexion table / donnée ») tables du schéma reflétées par cet écran : `promo_offers`, `marketing_events` — miroir server/db/schema.sql (partie 6) -->
+
+<div class="pec-admin">
+
+  <aside class="pec-aside" data-pec-nav></aside>
+
+  <main class="pec-main">
+    <div class="pec-topbar">
+      <div>
+        <h1>Éditer les Promos</h1>
+        <p class="sub">Chercher tôt, composer l'offre, publier — jamais à moins de <span class="pr-j">—</span> jours du départ.</p>
+      </div>
+      <div class="pec-topbar-actions"></div>
+    </div>
+
+    <div class="pec-notice pec-notice--info" style="margin-bottom:16px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-shield"/></svg>
+      <div><b>Deux règles BLOQUANTES, appliquées par la base elle-même</b> (contraintes de <code>promo_offers</code>, pas juste l'écran) : le prix promo doit être <b>strictement inférieur</b> au « prix en normal » (méthodo Omnibus, Partie 5) · le départ doit être à <b><span class="pr-j">—</span> jours minimum</b> de la publication.</div>
+    </div>
+
+    <!-- ① CHERCHER À L'AVANCE -->
+    <div class="pec-panel" style="margin-bottom:16px">
+      <div class="pec-panel-head">
+        <div><h2>1 · Chercher à l'avance</h2><p class="s">Vol A/R + hébergement aux dates creuses — c'est l'anticipation qui fabrique le prix.</p></div>
+      </div>
+      <div class="pec-panel-body">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--color-muted)">Destination
+            <input id="f-dest" class="pec-search" placeholder="Destination"></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--color-muted)">Départ (≥ J+<span class="pr-j">—</span>)
+            <input id="f-date" class="pec-search" type="date"></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--color-muted)">Nuits
+            <input id="f-nuits" class="pec-search" type="number" min="1" max="21" placeholder="Nuits"></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--color-muted)">&nbsp;
+            <button type="button" class="pec-btn tap" onclick="chercherStocks()">Chercher vols + hébergements</button></label>
+        </div>
+        <div id="res-stocks" style="margin-top:12px;display:none">
+          <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+          <input class="pec-search" type="search" data-fsearch="#res-rows tr" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+          <div class="meta" data-fvide="#res-rows tr" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+          <table data-fsortable class="pec-table">
+            <thead><tr><th>Sélection</th><th>Vol A/R (fournisseur)</th><th>Hébergement</th><th>Coût total / pers.</th></tr></thead>
+            <tbody id="res-rows" data-fpage="15"></tbody>
+          </table>
+          <p class="s" style="margin-top:6px;color:var(--color-muted)">Recherche fournisseur non branchée (Duffel / Nuitée) — le coût constaté se saisit à la main, il n'est jamais inventé.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② COMPOSER LE PACK -->
+    <div class="pec-panel" style="margin-bottom:16px">
+      <div class="pec-panel-head">
+        <div><h2>2 · Composer l'offre « Moins cher »</h2><p class="s">Le mode de voyage cadre la promesse — l'offre doit la tenir.</p></div>
+      </div>
+      <div class="pec-panel-body">
+        <div id="mode-pick" style="display:flex;gap:8px;margin-bottom:12px"></div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px">
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--color-muted)">Titre de l'offre
+            <input id="p-titre" class="pec-search" placeholder="Titre de l'offre"></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--color-muted)">Prix promo (€)
+            <input id="p-prix" class="pec-search" type="number" placeholder="—"></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--color-muted)">Prix « en normal » (€)
+            <input id="p-normal" class="pec-search" type="number" placeholder="—"></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--color-muted)">Stock (places)
+            <input id="p-stock" class="pec-search" type="number" min="1" placeholder="—"></label>
+        </div>
+        <div id="ctrl-msg" style="margin-top:10px;font-size:12px;font-weight:700;min-height:16px"></div>
+        <button type="button" class="pec-btn tap" id="btn-publier" onclick="publierPack()" style="margin-top:6px">Publier l'offre — visible dans FLY dès validation</button>
+      </div>
+    </div>
+
+    <!-- ③ OFFRES EN LIGNE -->
+    <div class="pec-panel">
+      <div class="pec-panel-head">
+        <div><h2>3 · Offres en ligne</h2><p class="s">Ce que les clients voient dans Promos : les offres publiées depuis cet écran (dépubliables : active = false, jamais de suppression), puis le catalogue porté par la donnée.</p></div>
+      </div>
+      <div class="pec-panel-body">
+        <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+        <input class="pec-search" type="search" data-fsearch="#offres-rows tr" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+        <div class="meta" data-fvide="#offres-rows tr" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+        <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+        <input class="pec-search" type="search" data-fsearch="#offres-pub-rows tr" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+        <div class="meta" data-fvide="#offres-pub-rows tr" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+        <table data-fsortable class="pec-table">
+          <thead><tr><th>Offre</th><th>Mode</th><th>Prix</th><th>En normal</th><th>Départ</th><th>Stock</th><th></th></tr></thead>
+          <!-- offres publiées DEPUIS CET ÉCRAN (D.promosPubliees) : dépublication réelle (D.promoDepublier) -->
+          <tbody id="offres-pub-rows" data-fpage="15"></tbody>
+          <!-- catalogue porté par la donnée (D.promos, miroir de promo_offers) : pas de setter, pas de dépublication -->
+          <tbody id="offres-rows" data-fpage="15"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- (10/09 — lot 8, constat C33) LES CODES PROMO FLY. « RENTREE10 · jusqu'au 31 août » et « DUO15 » étaient
+         ÉCRITS dans le référentiel : la page « Promos & astuces » les présentait « du moment » des semaines après
+         leur échéance, et aucun écran ne permettait d'en créer un. Ils se créent ici, avec une VRAIE date de fin,
+         et se désactivent. Le tunnel les applique (validerCodePromo — même règle partout). -->
+    <div class="pec-panel" style="margin-top:16px">
+      <div class="pec-panel-head">
+        <div><h2>4 · Codes promo Fly</h2><p class="s">Une remise en euros, un minimum d’achat, une date de fin. Sans code créé, la page client n’en annonce aucun — c’est l’état normal entre deux opérations.</p></div>
+      </div>
+      <div class="pec-panel-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--color-muted)">Code
+            <input id="cp-code" class="pec-search" placeholder="ex. AUTOMNE10" maxlength="16"></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--color-muted)">Remise (€)
+            <input id="cp-remise" class="pec-search" type="number" min="1" placeholder="—"></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--color-muted)">Dès (€ d’achat)
+            <input id="cp-min" class="pec-search" type="number" min="0" placeholder="facultatif"></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--color-muted)">Dès (voyageurs)
+            <input id="cp-voy" class="pec-search" type="number" min="2" placeholder="facultatif"></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--color-muted)">Valable jusqu’au
+            <input id="cp-fin" class="pec-search" type="date"></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:var(--color-muted)">Ce que le client lit
+            <input id="cp-desc" class="pec-search" placeholder="10 € dès 120 € — vols d’automne"></label>
+        </div>
+        <div id="cp-msg" style="margin-top:10px;font-size:12px;font-weight:700;min-height:16px"></div>
+        <button type="button" class="pec-btn tap" id="cp-creer" style="margin-top:6px">Créer le code — visible dans « Promos &amp; astuces »</button>
+        <table data-fsortable class="pec-table" style="margin-top:12px">
+          <thead><tr><th>Code</th><th>Remise</th><th>Conditions</th><th>Jusqu’au</th><th>État</th><th></th></tr></thead>
+          <tbody id="cp-rows" data-fpage="15"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  var modeSel = 'spartiate';
+  /* (10/09 — lot 8, constat C29) LES PLACES SE DÉCOMPTENT. `stock: "4 places"` était un texte : on pouvait
+     vendre quarante fois les quatre places d'un même voyage sans que rien ne bouge. La capacité est un nombre,
+     ce qui reste se dérive des commandes réglées, et une offre complète sort de la liste côté client. */
+  function placesLbl(p) {
+    var D = window.PEC_DATA, pl = (D && D.promoPlaces) ? D.promoPlaces(p) : null;
+    if (!pl || pl.capacite == null) return p.mention || '—';
+    return pl.prises + ' / ' + pl.capacite + (pl.complet ? ' — complet' : '');
+  }
+  // RÈGLE J−N : une seule source, PEC_DATA.promosRegleJmoins (02/09 — « 21 » et « 45 » étaient posés en dur)
+  var REGLE_J = (window.PEC_DATA && PEC_DATA.promosRegleJmoins) || 0;
+  (function () {
+    var D = window.PEC_DATA;
+    document.querySelectorAll('.pr-j').forEach(function (el) { el.textContent = REGLE_J; });
+    // date par défaut = aujourd'hui + règle (le premier départ publiable), plus « 2026-11-15 » figé
+    var dd = new Date(); dd.setDate(dd.getDate() + REGLE_J);
+    var fd = document.getElementById('f-date'); fd.min = dd.toISOString().slice(0, 10); fd.value = fd.min;
+    // ② sélecteur de mode
+    document.getElementById('mode-pick').innerHTML = D.promosModes.map(function (m) {
+      return '<button type="button" class="pec-pill tap' + (m.id === modeSel ? ' pec-pill--done' : '') + '" data-md="' + m.id + '" title="' + m.principe + '">' + m.nom + '</button>';
+    }).join('');
+    document.getElementById('mode-pick').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-md]'); if (!b) return;
+      modeSel = b.getAttribute('data-md');
+      document.querySelectorAll('#mode-pick .pec-pill').forEach(function (x) { x.classList.remove('pec-pill--done'); });
+      b.classList.add('pec-pill--done');
+    });
+    // ③ offres en ligne = PEC_DATA.promos (miroir table promo_offers)
+    rendrePubliees();
+    document.getElementById('offres-rows').innerHTML = D.promos.map(function (p) {
+      var m = D.promosModes.find(function (x) { return x.id === p.mode; });
+      return '<tr><td><b>' + p.titre + '</b></td><td>' + (m ? m.nom : p.mode) + '</td><td>' + p.prix + ' €</td><td><s>' + p.normal + ' €</s></td><td>dans ' + p.semaines + ' sem.</td><td>' + placesLbl(p) + '</td>' +
+        // (03/09) le catalogue seed D.promos n'a PAS de setter : D.promoDepublier ne retire que les offres publiées
+        // depuis cet écran (tbody du dessus) — bouton désactivé ici, raison dite
+        '<td><button type="button" class="pec-pill tap" disabled style="opacity:.45;cursor:not-allowed" title="Offre du catalogue porté par la donnée (D.promos) : la dépublication (D.promoDepublier) ne porte que sur les offres publiées depuis cet écran">Dépublier</button></td></tr>';
+    }).join('');
+    window.addEventListener('storage', rendrePubliees);   // (07/09) une promo publiée / retirée ailleurs se voit ici sans recharger
+    window.addEventListener('pec-bus', rendrePubliees);
+  })();
+
+  function chercherStocks() {
+    // audit 02/09 : « 61 € / 87 € / 118 € · low-cost · 1 escale » étaient INVENTÉS et présentés
+    // comme temps réel — aucune API fournisseur n'est branchée : une seule ligne honnête, à
+    // compléter à la main avec le coût constaté chez Duffel / Nuitée.
+    var d = document.getElementById('f-dest').value || '—';
+    var n = parseInt(document.getElementById('f-nuits').value || '0', 10);
+    document.getElementById('res-stocks').style.display = 'block';
+    document.getElementById('res-rows').innerHTML =
+      '<tr><td><input type="radio" name="stock" value="manuel"></td>' +
+      /* (11/09 — C39) le départ vient du réseau (D.aeroportBase), il n'est plus recopié ici. */
+      '<td>' + ((window.PEC_DATA && PEC_DATA.aeroportBase) || 'MRS') + ' → ' + d + ' A/R — <span class="meta">recherche Duffel non branchée</span></td>' +
+      '<td>' + (n ? n + ' nuit' + (n > 1 ? 's' : '') : '—') + ' — <span class="meta">recherche Nuitée non branchée</span></td>' +
+      '<td><input id="p-cout" class="pec-search" type="number" min="0" step="0.01" placeholder="coût constaté / pers. (€)" style="max-width:190px"></td></tr>';
+  }
+
+  // OFFRES PUBLIÉES DEPUIS CET ÉCRAN (03/09 — setters d'exploitation) : D.promosPubliees() les liste,
+  // D.promoDepublier(id, acteur) les retire. Le catalogue seed (D.promos) reste, lui, sans setter.
+  function rendrePubliees() {
+    var D = window.PEC_DATA, tb = document.getElementById('offres-pub-rows'); if (!D || !tb) return;
+    var esc = function (v) { return (window.PEC_DATA && PEC_DATA.esc) ? PEC_DATA.esc(v) : String(v == null ? '' : v); };
+    var l = D.promosPubliees ? D.promosPubliees() : [];
+    tb.innerHTML = l.map(function (p) {
+      var m = (D.promosModes || []).filter(function (x) { return x.id === p.mode; })[0];
+      var dep = p.depart ? new Date(p.depart) : null;
+      var quand = (dep && !isNaN(dep)) ? dep.toLocaleDateString('fr-FR') + (typeof p.semaines === 'number' ? ' <span class="meta">(dans ' + p.semaines + ' sem.)</span>' : '') : '—';
+      return '<tr><td><b>' + esc(p.titre) + '</b><div class="meta">publiée par ' + esc(p.publieePar) + '</div></td>' +
+        '<td>' + esc(m ? m.nom : p.mode) + '</td><td>' + esc(p.prix) + ' €</td><td>' + (p.normal ? '<s>' + esc(p.normal) + ' €</s>' : '—') + '</td>' +
+        '<td>' + quand + '</td><td>' + esc(placesLbl(p)) + '</td>' +
+        '<td><button type="button" class="pec-pill tap" data-depub="' + esc(p.id) + '" title="Retirer l’offre des Promos (active = false, jamais de suppression)">Dépublier</button></td></tr>';
+    }).join('');
+  }
+
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest ? ev.target.closest('[data-depub]') : null; if (!b) return;
+    var D = window.PEC_DATA, acteur = (window.PEC_MGR && PEC_MGR.acteur) ? PEC_MGR.acteur() : 'manager (démo)';
+    D.promoDepublier(b.getAttribute('data-depub'), acteur);
+    rendrePubliees();
+    var msg = document.getElementById('ctrl-msg');
+    msg.textContent = '✓ Offre dépubliée — retirée des Promos (active = false, jamais supprimée), geste journalisé.';
+    msg.style.color = 'var(--color-primary-dark)';
+  });
+
+  function publierPack() {
+    var D = window.PEC_DATA;
+    var prix = parseFloat(document.getElementById('p-prix').value);
+    var normal = parseFloat(document.getElementById('p-normal').value);
+    var depart = document.getElementById('f-date').value || '';
+    var date = new Date(depart || 0);
+    var jours = Math.round((date - new Date()) / 86400000);
+    var msg = document.getElementById('ctrl-msg');
+    function ko(t) { msg.textContent = t; msg.style.color = 'var(--color-danger)'; }
+    // CONTRÔLES BLOQUANTS — les mêmes que les contraintes SQL de promo_offers
+    if (!document.querySelector('input[name="stock"]:checked')) { ko('✗ Choisis d\'abord un couple vol + hébergement dans la recherche (étape 1).'); return; }
+    if (!(prix < normal)) { ko('✗ Bloqué : le prix promo (' + (isNaN(prix) ? '—' : prix + ' €') + ') doit être STRICTEMENT inférieur au prix « en normal » (' + (isNaN(normal) ? '—' : normal + ' €') + ') — règle Omnibus.'); return; }
+    if (jours < REGLE_J) { ko('✗ Bloqué : départ dans ' + jours + ' jours — une Promo s\'édite à ' + REGLE_J + ' jours MINIMUM du départ.'); return; }
+    // PUBLICATION RÉELLE : la donnée REFAIT les contrôles (J−N, Omnibus) et rend son motif — affiché TEL QUEL
+    var dest = (document.getElementById('f-dest').value || '').trim();
+    var nuits = parseInt(document.getElementById('f-nuits').value || '0', 10) || null;
+    var stock = parseInt(document.getElementById('p-stock').value || '0', 10) || null;
+    var coutEl = document.getElementById('p-cout');
+    var cout = coutEl ? parseFloat(coutEl.value) : NaN;
+    var md = (D.promosModes || []).filter(function (x) { return x.id === modeSel; })[0];
+    // titre : celui saisi, sinon DÉRIVÉ de la recherche (destination, nuits) ou du mode et du départ — jamais inventé
+    var titre = (document.getElementById('p-titre').value || '').trim();
+    var derive = !titre;
+    if (!titre) titre = dest ? (((window.PEC_DATA && PEC_DATA.aeroportBase) || 'MRS') + ' → ' + dest + (nuits ? ' · ' + nuits + ' nuit' + (nuits > 1 ? 's' : '') : ''))
+                             : ('Offre « ' + ((md && md.nom) || modeSel) + ' » — départ ' + depart);
+    var acteur = (window.PEC_MGR && PEC_MGR.acteur) ? PEC_MGR.acteur() : 'manager (démo)';
+    var r = D.promoPublier({ titre: titre, mode: modeSel, prix: prix, normal: normal, depart: depart,
+                             nuits: nuits, capacite: stock || null,   /* (10/09 — lot 8, C29) une CAPACITÉ chiffrée, décomptée aux ventes — plus un texte « 4 places » que rien ne faisait bouger */
+                             coutConstate: isNaN(cout) ? null : cout,
+                             det: dest ? ('Vol A/R ' + ((window.PEC_DATA && PEC_DATA.aeroportBase) || 'MRS') + ' → ' + dest + (nuits ? ' + ' + nuits + ' nuit' + (nuits > 1 ? 's' : '') : '')) : null }, acteur);
+    if (!r || !r.ok) { ko('✗ Bloqué : ' + ((r && r.motif) || 'publication refusée par la donnée') + '.'); return; }
+    try { if (window.PEC_BUS && PEC_BUS.noter) PEC_BUS.noter('promo_controlee', titre, { par: acteur, mode: modeSel, prix: prix, normal: normal, stock: stock, depart: depart }); } catch (e) {}
+    rendrePubliees();
+    // (03/09) promosActives() s'appuie désormais sur promosToutes() et promoDepart() lit la date ISO `depart` :
+    // l'offre publiée ici est RÉELLEMENT servie par fly/06-promos tant qu'elle respecte J−45.
+    msg.textContent = '✓ Offre publiée — « ' + titre + ' »' + (derive ? ' (titre dérivé de la recherche)' : '') + ' en mode « ' + ((md && md.nom) || modeSel) + ' », départ à J−' + jours +
+      ' : contrôles Omnibus et J−' + REGLE_J + ' passés, offre enregistrée (D.promoPublier), listée ci-dessous et visible côté client dans FLY (Promos). Geste journalisé.';
+    msg.style.color = 'var(--color-primary-dark)';
+  }
+
+  /* ── Les codes promo Fly : création réelle (codePromoFlyCreer), désactivation réelle, liste dérivée. ── */
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.codesPromoFlyGet) return;
+    function $(id) { return document.getElementById(id); }
+    function esc(v) { return (window.PEC_DATA && PEC_DATA.esc) ? PEC_DATA.esc(v) : String(v == null ? '' : v); }
+    function acteurCp() { return (window.PEC_MGR && PEC_MGR.acteur) ? PEC_MGR.acteur() : 'manager (démo)'; }
+    var dmin = new Date(); dmin.setDate(dmin.getDate() + 1);
+    $('cp-fin').min = dmin.toISOString().slice(0, 10);
+    function rendreCodes() {
+      var l = D.codesPromoFlyGet();
+      $('cp-rows').innerHTML = l.map(function (c) {
+        var actif = D.codePromoFlyActif(c);
+        var cond = [c.minTotal ? 'dès ' + c.minTotal + ' €' : null, c.minVoyageurs ? 'dès ' + c.minVoyageurs + ' voyageurs' : null].filter(Boolean).join(' · ') || 'sans condition';
+        return '<tr><td><b>' + esc(c.code) + '</b><br><span class="meta">' + esc(c.desc) + '</span></td><td>' + esc(c.remise) + ' €</td><td>' + esc(cond) + '</td>' +
+          '<td>' + esc(c.fin || c.finISO || '—') + '</td>' +
+          '<td><span class="pec-pill ' + (actif ? 'pec-pill--done' : 'pec-pill--off') + '">' + (actif ? 'actif' : (c.actif === false ? 'désactivé' : 'expiré')) + '</span></td>' +
+          '<td>' + (actif ? '<button type="button" class="pec-btn-sm" data-cp-off="' + esc(c.code) + '">Désactiver</button>' : '') + '</td></tr>';
+      }).join('') || '<tr><td colspan="6" class="meta" style="text-align:center;padding:16px">Aucun code promo. La page « Promos &amp; astuces » n’en annonce donc aucun — plutôt qu’un code périmé présenté comme « du moment ».</td></tr>';
+    }
+    $('cp-creer').addEventListener('click', function () {
+      var r = D.codePromoFlyCreer({ code: $('cp-code').value, remise: $('cp-remise').value, minTotal: $('cp-min').value,
+        minVoyageurs: $('cp-voy').value, finISO: $('cp-fin').value, desc: $('cp-desc').value }, acteurCp());
+      var m = $('cp-msg');
+      m.textContent = r.ok ? '✓ Code ' + r.codePromo.code + ' créé — valable jusqu’au ' + r.codePromo.fin + ', applicable au tunnel de réservation.' : '✗ ' + r.motif;
+      m.style.color = r.ok ? 'var(--color-primary-dark)' : 'var(--color-danger)';
+      if (r.ok) ['cp-code', 'cp-remise', 'cp-min', 'cp-voy', 'cp-fin', 'cp-desc'].forEach(function (k) { $(k).value = ''; });
+      rendreCodes();
+    });
+    $('cp-rows').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-cp-off]'); if (!b) return;
+      var r = D.codePromoFlyDesactiver(b.getAttribute('data-cp-off'), acteurCp());
+      if (!r.ok) { $('cp-msg').textContent = '✗ ' + r.motif; $('cp-msg').style.color = 'var(--color-danger)'; }
+      rendreCodes();
+    });
+    rendreCodes();
+    window.addEventListener('pec-bus', rendreCodes);
+  })();
+</script>
+</body>
+</html>

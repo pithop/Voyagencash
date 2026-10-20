@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash MODE — Ta rencontre</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-mode-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-mode-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<link rel="stylesheet" href="../assets/vendor/maplibre-gl.css">
+<script src="../assets/vendor/maplibre-gl.js"></script>
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-panier-badge.js"></script>
+<!-- ══ (20/09, décision fondatrice : « reprends le design, la logique de hiérarchie, la navigation intuitive —
+     dans un commit du 17/09, l'ancienne version d'agent avait une version CARTE ultra complète ») ═══════════
+     L'ÉTAT VIVANT D'UNE RENCONTRE A DE NOUVEAU SON ÉCRAN. Il tenait dans un bandeau, au milieu d'une carte
+     empilée sous deux autres, sur « Comment veux-tu payer » : la cliente devait faire défiler un écran de
+     choix pour savoir où en était quelqu'un qui roulait vers elle. La hiérarchie de l'ancien écran
+     (ui/fly/05-recherche-agent.html, commit 42e356b du 17/09) est reprise telle quelle, parce qu'elle était
+     juste : LA CARTE EST LE FOND, la feuille du bas porte l'action, et rien d'autre n'est à l'écran.
+     Ce qui NE revient PAS, parce que le modèle a changé le 19/09 : l'agent salarié, le code de sécurité à
+     l'arrivée, l'encaissement de la commande. Un distributeur mobile indépendant vient VENDRE UN BON
+     D’ACHAT ; c'est ensuite le code qui règle. Les quatre états de la feuille suivent donc les quatre états
+     RÉELS du rendez-vous (RENCONTRE_STATUTS), et rien n'est inventé entre eux.
+     Aucun montant, aucun délai, aucun nom n'est écrit ici : tout vient de PEC_DATA et de PEC_BUS. ══ -->
+<style>
+  .fullmap{position:absolute;inset:0}
+  /* LA BARRE D'ONGLETS TIENT LE BAS DU CADRE. `.pec-device` est une colonne flex et `.pec-tabbar` y colle
+     par `position:sticky;bottom:0` — mais sticky n'a rien à quoi se coller quand TOUT le contenu est en
+     position absolue : la barre remontait sous la barre d'état, en haut de l'écran. `margin-top:auto`
+     pousse le dernier enfant flex en bas, ce que sticky ne peut pas faire ici. */
+  .pec-device > .pec-tabbar{margin-top:auto}
+  /* LE RADAR — il pulse sur le point de rendez-vous TANT QUE personne n'a pris la demande. Dès qu'un
+     distributeur l'accepte, il s'éteint : une animation d'attente qui continue après la réponse ment. */
+  /* LE RADAR SE POSE SUR LE POINT PROJETÉ PAR LA CARTE (voir `poserRadar`), pas à un pourcentage de
+     l'écran : à 38 % de la hauteur, il pulsait à côté de son épingle dès que le cadrage changeait. */
+  .radar{position:absolute;left:0;top:0;transform:translate(-50%,-50%);z-index:5;pointer-events:none}
+  .radar .dot{position:relative;z-index:2;width:22px;height:22px;border-radius:50%;background:var(--color-primary);box-shadow:0 2px 8px rgba(15,42,36,.35)}
+  .radar .ring{position:absolute;left:50%;top:50%;width:22px;height:22px;border-radius:50%;background:rgba(16,160,106,.28);transform:translate(-50%,-50%);animation:ring 2.2s ease-out infinite}
+  .radar .ring.r2{animation-delay:.7s}
+  .radar .ring.r3{animation-delay:1.4s}
+  @keyframes ring{0%{width:22px;height:22px;opacity:.85}100%{width:190px;height:190px;opacity:0}}
+  @media (prefers-reduced-motion: reduce){ .radar .ring{animation:none;opacity:.35} .dots i{animation:none} }
+  .sheet{position:absolute;left:10px;right:10px;bottom:74px;z-index:10;max-height:calc(100% - 150px);overflow-y:auto;background:var(--color-card);border-radius:22px;padding:17px 16px;box-shadow:0 18px 44px rgba(15,42,36,.28)}
+  .dots i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--color-primary);margin:0 2px;animation:bounce 1.2s infinite}
+  .dots i:nth-child(2){animation-delay:.15s}
+  .dots i:nth-child(3){animation-delay:.3s}
+  @keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.5}40%{transform:translateY(-5px);opacity:1}}
+  .avatar{flex:none;width:46px;height:46px;border-radius:50%;background:var(--color-mint);color:var(--color-primary-dark);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px}
+  .rdv-t{font-size:16px;font-weight:800;letter-spacing:-0.01em;color:var(--color-ink);line-height:1.3}
+  .rdv-s{margin-top:4px;font-size:12px;line-height:1.55;color:var(--color-muted)}
+  .rdv-sep{margin-top:12px;padding-top:12px;border-top:1px solid var(--color-sep)}
+  .rdv-lig{display:flex;align-items:flex-start;gap:9px;font-size:12px;line-height:1.55;color:var(--color-muted)}
+  .rdv-lig svg{flex:none;margin-top:2px;font-size:15px;color:var(--color-primary-dark)}
+  .rdv-codes{margin-top:8px;font-family:var(--font-mono,ui-monospace,monospace);font-size:15px;font-weight:800;letter-spacing:.09em;color:var(--color-ink);line-height:1.6}
+  .rdv-lien{display:block;width:100%;background:none;border:0;padding:0;margin-top:12px;text-align:center;font:inherit;font-size:12.5px;font-weight:700;color:var(--color-muted);cursor:pointer}
+  .etoiles{display:flex;gap:6px;margin-top:9px}
+  .etoiles button{flex:1;border:1.5px solid var(--color-sep);border-radius:10px;background:var(--color-surface);font:inherit;font-size:14px;font-weight:800;padding:8px 0;cursor:pointer}
+  .retour{position:absolute;left:14px;top:56px;z-index:20;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:999px;background:var(--color-card);color:var(--color-primary-dark);box-shadow:0 4px 12px rgba(15,42,36,.18)}
+  /* ══ REPRIS DE L'ÉCRAN DE SUIVI D'AVANT LE 17/09 (ui/mode/14-suivi-agent.html) ═══════════════════════
+     La pastille d'ETA POSÉE SUR LA CARTE et le bouton « recentrer » vivaient dans le socle
+     (`.pec-eta`, `.pec-map-recenter`) ; ils sont partis le 18/09 au soir avec l'agent salarié, faute de
+     consommateur. Ils reviennent ICI, à la page : un seul écran les porte, et le socle ne regagne pas
+     des classes que personne d'autre n'utilise. */
+  .eta-pastille{position:absolute;right:14px;top:56px;z-index:15;display:flex;align-items:baseline;gap:4px;border-radius:999px;background:var(--color-card);box-shadow:0 6px 18px rgba(15,42,36,.22);padding:7px 13px}
+  .eta-pastille .n{font-size:17px;font-weight:800;line-height:1;color:var(--color-primary-dark);font-variant-numeric:tabular-nums}
+  .eta-pastille .u{font-size:10.5px;font-weight:700;color:var(--color-muted)}
+  .recentrer{position:absolute;right:14px;z-index:15;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:999px;background:var(--color-card);color:var(--color-primary-dark);box-shadow:0 6px 18px rgba(15,42,36,.22)}
+  .sv-tel{flex:none;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:12px;background:var(--color-mint);color:var(--color-primary-dark);text-decoration:none}
+  .fenetre{margin-top:9px;display:flex;align-items:center;gap:8px;border-radius:12px;background:var(--color-bg);padding:9px 12px;font-size:11.5px;font-weight:700;color:var(--color-muted)}
+  .fenetre b{color:var(--color-ink);font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device" style="position:relative">
+
+  <div class="pec-statusbar" style="position:relative;z-index:20;background:transparent">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="fullmap pec-map-canvas"><div id="rdv-map" style="position:absolute;inset:0"></div></div>
+  <div class="radar" id="rdv-radar" hidden><span class="ring"></span><span class="ring r2"></span><span class="ring r3"></span><div class="dot"></div></div>
+  <!-- L'ETA SUR LA CARTE, pas dans un coin de texte : c'est la question qu'on se pose en regardant la carte. -->
+  <div class="eta-pastille" id="rdv-eta" hidden><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px;color:var(--color-primary-dark);align-self:center"><use href="#i-clock"/></svg><span class="n" id="rdv-eta-n">—</span><span class="u" id="rdv-eta-u">min</span></div>
+  <button type="button" class="recentrer tap" id="rdv-recentrer" hidden aria-label="Recentrer la carte">
+    <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-locate"/></svg>
+  </button>
+
+  <a href="05-ou-payer.html" class="tap retour" aria-label="Revenir à « Comment veux-tu payer »">
+    <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-chevron-left"/></svg>
+  </a>
+
+  <div class="sheet" id="rdv-sheet" role="status" aria-live="polite"><div class="rdv-t">—</div></div>
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="10-tendances.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-flame"/></svg>Tendances</a>
+    <a class="pec-tab" href="22-livraisons.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-package"/></svg>Suivi</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Mode</a>
+    <a class="pec-tab" aria-current="page" href="03-panier.html" style="position:relative"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-basket"/></svg>Commandes</a>
+    <a class="pec-tab" href="08-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+(function () {
+  var D = window.PEC_DATA, B = window.PEC_BUS;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
+  function cid() { return (D.clientActifGet && D.clientActifGet()) || null; }
+
+  /* ══ (20/09, soir) D'OÙ L'ON VIENT — Mode OU Fly ════════════════════════════════════════════════════
+     Le choix « comment payer » est partagé par les deux applications, et une rencontre demandée depuis Fly
+     arrive ICI comme une rencontre demandée depuis Mode. Elle doit en repartir par où elle est venue : le
+     retour, « Régler maintenant avec ce bon » et la barre d'onglets suivent donc `?retour=`. La valeur est
+     une CLÉ lue dans une table — jamais une adresse prise telle quelle dans l'URL (sinon n'importe quel lien
+     pourrait renvoyer la cliente n'importe où). Sans clé, c'est Mode, comme avant. */
+  var ORIGINES = {
+    mode: { payer: '05-ou-payer.html', onglets: [
+      ['10-tendances.html', 'i-flame', 'Tendances'], ['22-livraisons.html', 'i-package', 'Suivi'], ['01-accueil.html', 'i-search', 'Mode'],
+      ['03-panier.html', 'i-basket', 'Commandes', true], ['08-compte.html', 'i-user', 'Compte']] },
+    fly: { payer: '../fly/01-ou-payer.html', onglets: [
+      ['../fly/06-promos.html', 'i-promo', 'Moins cher'], ['../ecrans/03-mes-codes.html', 'i-booking', 'Réservations', true],
+      ['../ecrans/01-accueil.html', 'i-search', 'Rechercher'], ['../ecrans/14-assistance.html', 'i-headset', 'Assistance'],
+      ['../ecrans/10-compte.html', 'i-user', 'Compte']] }
+  };
+  var CLE_ORIGINE = ORIGINES[new URLSearchParams(location.search).get('retour')] ? new URLSearchParams(location.search).get('retour') : 'mode';
+  var ORIGINE = ORIGINES[CLE_ORIGINE];
+  function versPayer(extra) { return ORIGINE.payer + (extra || ''); }
+  (function () {
+    var r = document.querySelector('.retour'); if (r) r.setAttribute('href', versPayer());
+    var nav = document.querySelector('.pec-tabbar');
+    if (nav && CLE_ORIGINE !== 'mode') nav.innerHTML = ORIGINE.onglets.map(function (o) {
+      return '<a class="pec-tab"' + (o[3] ? ' aria-current="page"' : '') + ' href="' + esc(o[0]) + '"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#' + esc(o[1]) + '"/></svg>' + esc(o[2]) + '</a>';
+    }).join('');
+  })();
+
+  /* LA RENCONTRE MONTRÉE : celle que l'URL désigne (?rdv=RDV-00001), sinon LA vivante du compte, sinon la
+     dernière servie qui attend encore quelque chose du client (ses codes à poser, sa note à donner).
+     On ne choisit jamais « la plus récente » à l'aveugle : une rencontre close n'a plus rien à dire. */
+  function laRencontre() {
+    var c = cid(); if (!c || !D.rencontresClient) return null;
+    var l = D.rencontresClient(c);
+    var q = new URLSearchParams(location.search).get('rdv');
+    if (q) return l.filter(function (r) { return r.id === q; })[0] || null;
+    return l.filter(function (r) { return r.statut === 'demandee' || r.statut === 'acceptee'; })[0]
+      || l.filter(function (r) { return r.statut === 'servie' && (aPoser(r) || aNoter(r)); })[0]
+      || null;
+  }
+  /* UN BON REMIS MAIS PAS ENCORE POSÉ — la règle du 20/09 (« … JUSQU'À PAYER ») : la rencontre ne s'arrête
+     pas à la remise, elle s'arrête quand la commande est réglée. Même lecture que sur « Comment payer ». */
+  function aPoser(r) {
+    if (!r || !(r.codes || []).length) return false;
+    var poses = ((D.panierBonsCodes ? D.panierBonsCodes() : []) || []).slice();
+    /* (21/09) LA COMMANDE NAÎT À L'ARRIVÉE SUR « COMMENT PAYER » : un bon s'y pose désormais sur la commande du BUS
+       (bonApplique), plus au sac. Il est posé aussi — sinon l'écran lui redemanderait de saisir un bon déjà appliqué. */
+    var B = window.PEC_BUS, cid = D.clientActifGet ? D.clientActifGet() : null;
+    if (B && B.commandes) B.commandes().forEach(function (c) {
+      if (c && c.statut === 'a_payer' && c.bonApplique && !c.bonApplique.consommeAt && (!cid || !c.clientId || c.clientId === cid)) poses.push(c.bonApplique.code);
+    });
+    return r.codes.some(function (code) {
+      if (poses.indexOf(code) > -1) return false;
+      var b = D.bonParCode ? D.bonParCode(code) : null;
+      return !b || D.bonEtat(b) === 'actif';
+    });
+  }
+  function aNoter(r) {
+    if (!r || r.statut !== 'servie' || !r.distributeurId) return false;
+    return !(D.notesDistributeurGet() || []).some(function (n) { return n.rencontreId === r.id; });
+  }
+  /* L'APPEL DE CONFIRMATION, s'il est encore à faire — lu au bus, jamais supposé. */
+  function appel(ref) {
+    try {
+      if (!ref || !B || !B.appels) return null;
+      return B.appels().filter(function (a) { return a.type === 'securisation' && a.ref === ref && (a.statut || a.status) === 'a_faire'; })[0] || null;
+    } catch (e) { return null; }
+  }
+
+  /* ══ LA CARTE — le fond, jamais un encart. Deux épingles au plus : le rendez-vous, et le distributeur
+     quand il partage sa position. Mêmes classes que la carte de « Comment payer » : une seule façon de
+     dessiner un point de rendez-vous dans toute la maquette. ══ */
+  var carte = null, mkLieu = null, mkAgent = null;
+  function peindreCarte(r) {
+    if (typeof maplibregl === 'undefined' || !r || !r.geo) return;
+    var pos = (r.statut === 'acceptee' && B && B.positionAgent) ? B.positionAgent(r.id) : null;
+    // (21/09) le montage est celui du socle (PEC_GEO.carte) : même fond, même dévoilement, le même bandeau s'il manque
+    if (!carte) carte = PEC_GEO.carte('rdv-map', { centre: r.geo, zoom: r.geoApprox ? 12.5 : 15, interactive: false });
+    if (!carte) return;
+    if (!mkLieu) {
+      var el = document.createElement('div'); el.className = 'mk-pt';
+      el.innerHTML = '<svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-map-pin"/></svg><span class="lb">Rendez-vous</span>';
+      mkLieu = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([r.geo.lng, r.geo.lat]).addTo(carte);
+    } else mkLieu.setLngLat([r.geo.lng, r.geo.lat]);
+    if (pos) {
+      if (!mkAgent) {
+        var ea = document.createElement('div'); ea.className = 'mk-pt live';
+        ea.innerHTML = '<svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-store"/></svg>' + esc(r.distributeur || 'ton distributeur');
+        mkAgent = new maplibregl.Marker({ element: ea, anchor: 'bottom' }).setLngLat([pos.lng, pos.lat]).addTo(carte);
+      } else mkAgent.setLngLat([pos.lng, pos.lat]);
+      var bb = new maplibregl.LngLatBounds([r.geo.lng, r.geo.lat], [r.geo.lng, r.geo.lat]).extend([pos.lng, pos.lat]);
+      /* L'épingle du distributeur porte son nom : sans marge à droite, l'étiquette sort du cadre. La feuille
+         du bas occupe la moitié basse, d'où la marge du bas — sinon le point tombe dessous. */
+      carte.fitBounds(bb, { padding: { top: 90, bottom: 300, left: 50, right: 90 }, maxZoom: 15.5, duration: document.hidden ? 0 : 450 });
+    } else {
+      if (mkAgent) { mkAgent.remove(); mkAgent = null; }
+      /* LA FEUILLE DU BAS OCCUPE LA MOITIÉ BASSE : sans cette marge, le point de rendez-vous se centre
+         DERRIÈRE elle. `padding` décale le centrage vers le haut, là où l'œil le cherche. */
+      carte.easeTo({ center: [r.geo.lng, r.geo.lat], zoom: r.geoApprox ? 12.5 : 15, padding: { bottom: 300 }, duration: document.hidden ? 0 : 400 });
+    }
+    /* LE TRAIT ENTRE LES DEUX ÉPINGLES — repris de l'écran de suivi d'avant le 17/09, où il ne montrait
+       que la portion RESTANTE : il s'efface derrière celui qui avance, puisqu'il se redessine à chaque
+       position. C'est un trait de direction, jamais un itinéraire : nous ne calculons aucune route. */
+    if (carte.isStyleLoaded && carte.isStyleLoaded()) trait(r, pos);
+    else carte.once('load', function () { trait(r, pos); });
+    poserRadar(r);
+    poserEta(r);
+    if (!carte.__radarSuivi) { carte.__radarSuivi = true; carte.on('move', function () { poserRadar(laRencontre()); }); }
+  }
+  function trait(r, pos) {
+    if (!carte || !r || !r.geo) return;
+    var gj = { type: 'Feature', geometry: { type: 'LineString', coordinates: pos ? [[pos.lng, pos.lat], [r.geo.lng, r.geo.lat]] : [] } };
+    if (!carte.getSource('rdv-trait')) {
+      carte.addSource('rdv-trait', { type: 'geojson', data: gj });
+      carte.addLayer({ id: 'rdv-trait', type: 'line', source: 'rdv-trait',
+        layout: { 'line-cap': 'round' },
+        paint: { 'line-color': '#10A06A', 'line-width': 4, 'line-opacity': .65, 'line-dasharray': [1.6, 1.4] } });
+    } else carte.getSource('rdv-trait').setData(gj);
+  }
+  /* LA PASTILLE D'ETA — elle ne s'affiche QUE s'il y a une heure à donner. Sans position partagée, aucune
+     minute n'est inventée : c'était déjà la règle de l'écran de suivi, et elle vaut toujours. */
+  function poserEta(r) {
+    var z = $('rdv-eta'), rc = $('rdv-recentrer');
+    var e = (r && r.statut === 'acceptee' && D.rencontreEta) ? D.rencontreEta(r.id) : null;
+    if (rc) { rc.hidden = !carte || !r || !r.geo; rc.style.bottom = (($('rdv-sheet') || {}).offsetHeight || 260) + 86 + 'px'; }
+    if (!z) return;
+    if (!e) { z.hidden = true; return; }
+    z.hidden = false;
+    $('rdv-eta-n').textContent = e.arrive ? '✓' : String(e.min);
+    $('rdv-eta-u').textContent = e.arrive ? 'arrivé' : 'min';
+  }
+  /* LE RADAR PULSE EXACTEMENT SUR L'ÉPINGLE — on projette le point du rendez-vous dans le repère de la
+     carte, qui est aussi celui du cadre (les deux sont en `inset:0` du même conteneur). Tant que personne
+     n'a pris la demande, et pas une seconde de plus : une animation d'attente qui continue après la
+     réponse ment sur ce qui se passe. */
+  function poserRadar(r) {
+    var el = $('rdv-radar');
+    if (!el) return;
+    if (!carte || !r || !r.geo || r.statut !== 'demandee') { el.hidden = true; return; }
+    var p = carte.project([r.geo.lng, r.geo.lat]);
+    el.style.left = Math.round(p.x) + 'px';
+    el.style.top = Math.round(p.y) + 'px';
+    el.hidden = false;
+  }
+
+  /* ══ LE STEPPER — REPRIS DE L'ÉCRAN DE SUIVI D'AVANT LE 17/09 (ui/mode/14-suivi-agent.html) ═════════
+     Quatre segments, et ils disent OÙ ON EN EST d'un coup d'œil : c'était la moitié de la valeur de cet
+     écran. Les étapes ne sont pas écrites à la main — elles suivent l'état RÉEL du rendez-vous, et la
+     troisième (« en route ») n'existe que s'il partage vraiment sa position : sans elle, on ne sait pas
+     s'il est parti, et un segment allumé le dirait à tort. Les classes viennent du socle (`.pec-stepper`). */
+  function stepper(r) {
+    var e = (r.statut === 'acceptee' && D.rencontreEta) ? D.rencontreEta(r.id) : null;
+    var fait = r.statut === 'servie' ? 4 : r.statut === 'acceptee' ? (e ? (e.arrive ? 3 : 2) : 1) : 0;
+    var actif = r.statut === 'servie' ? -1 : fait;          // servie : plus rien ne clignote
+    /* LA LISTE SE CONSTRUIT À CHAQUE FOIS. Écrire « Arrivé » dans un tableau partagé le laissait là pour
+       toutes les rencontres suivantes, y compris celles où personne n'est arrivé. */
+    var etapes = ['Demandée', 'Acceptée', (e && e.arrive) ? 'Arrivé' : 'En route', 'Bon remis'];
+    return '<div class="pec-stepper" style="margin-top:12px">'
+      + etapes.map(function (_, i) { return '<div class="pec-stepper-seg' + (i < fait ? ' pec-stepper-seg--done' : i === actif ? ' pec-stepper-seg--active' : '') + '"></div>'; }).join('')
+      + '</div><div class="pec-stepper-labels">'
+      + etapes.map(function (t, i) { return '<span' + (i <= fait ? ' class="on"' : '') + '>' + esc(t) + '</span>'; }).join('')
+      + '</div>';
+  }
+  /* CE QU'IL Y A À REMETTRE — figé à la demande (montant du bon + déplacement), jamais recalculé ici. */
+  function ligneArgent(r) {
+    var n = r.nbBons > 1 ? esc(String(r.nbBons)) + ' bons d’achat' : 'Un bon d’achat';
+    return '<div class="rdv-sep"><div class="rdv-lig"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-receipt"/></svg>'
+      + '<span>' + n + ' de <b style="color:var(--color-ink)">' + esc(D.eur(r.montant)) + '</b>'
+      + (r.frais > 0 ? ' · déplacement <b style="color:var(--color-ink)">' + esc(D.eur(r.frais)) + '</b><br>À lui remettre : <b style="color:var(--color-ink)">' + esc(D.eur(r.aRegler)) + '</b>' : '')
+      + '</span></div></div>';
+  }
+  function ligneLieu(r) {
+    return '<div class="rdv-lig" style="margin-top:10px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-map-pin"/></svg>'
+      + '<span><b style="color:var(--color-ink)">' + esc(r.lieu) + '</b>'
+      + (r.aide ? '<br>Il lira : ' + esc(r.aide) : '')
+      + (r.note ? '<br>Ton mot : « ' + esc(r.note) + ' »' : '')
+      + (r.geoApprox ? '<br><span style="font-size:11px">Point approché (centre de ' + esc(r.ville) + ') — attache la position de ton adresse pour qu’il te trouve au mètre.</span>' : '')
+      + '</span></div>';
+  }
+
+  /* ══ LA FEUILLE — un état, un seul, et il suit l'état RÉEL du rendez-vous ══════════════════════════
+     ELLE NE SE RÉÉCRIT QUE QUAND QUELQUE CHOSE A CHANGÉ. L'écran est vivant (une seconde), et réécrire son
+     HTML à chaque réveil DÉTACHE les nœuds : un doigt posé sur « Régler maintenant » relâchait dans le
+     vide, et l'audit de clics cliquait des éléments déjà remplacés. La signature ci-dessous porte tout ce
+     qui peut faire changer l'affichage — l'état, qui vient, où il en est, les codes, la note — et rien
+     d'autre : la carte, elle, se remet à jour à chaque tour (une position bouge sans rien changer au texte). */
+  var __vu = null;
+  function signature(r) {
+    if (!r) return 'rien';
+    var e = (r.statut === 'acceptee' && D.rencontreEta) ? D.rencontreEta(r.id) : null;
+    return [r.id, r.statut, r.distributeur || '', e ? e.min + '/' + e.distTxt + '/' + e.arrive : '-',
+            (r.codes || []).join(','), aPoser(r) ? 'poser' : '', aNoter(r) ? 'noter' : ''].join('|');
+  }
+  function peindre() {
+    var r = laRencontre(), z = $('rdv-sheet'), radar = $('rdv-radar');
+    var sg = signature(r);
+    if (sg === __vu) { peindreCarte(r); return; }   // la carte suit, le texte ne bouge pas
+    __vu = sg;
+    if (!r) {
+      radar.hidden = true;
+      z.innerHTML = '<div class="rdv-t">Aucune rencontre en cours</div>'
+        + '<p class="rdv-s">Tu peux demander à un distributeur de venir te vendre ton bon d’achat, ou aller le chercher chez un commerçant.</p>'
+        + '<a class="pec-cta tap" href="' + esc(versPayer()) + '" style="display:block;text-align:center;margin-top:12px">Comment veux-tu payer ?</a>';
+      return;
+    }
+    peindreCarte(r);
+    if (!carte) radar.hidden = true;   // sans carte (hors ligne, MapLibre absent), pas de radar dans le vide
+
+    if (r.statut === 'demandee') {
+      var ap = appel(r.ref), h = D.hoteEnPoste ? D.hoteEnPoste() : null;
+      /* ══ (23/09, décision fondatrice) LES PROPOSITIONS — c'est LA CLIENTE qui choisit ═══════════════════
+         Chaque commissionnaire indépendant propose SON tarif de déplacement ; on les affiche du moins cher au
+         plus cher, avec la note et la distance, et rien n'est présélectionné. PayEnCash ne fixe aucun tarif et
+         ne recommande personne : le classement par prix est un fait, pas un conseil. */
+      var props = (r.propositions || []).slice();
+      var blocProps = props.length
+        ? '<div class="rdv-lig" style="flex-direction:column;align-items:stretch;gap:0;margin-top:10px">'
+          + props.map(function (x) {
+              return '<div style="display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--color-sep)">'
+                + '<span style="flex:1;min-width:0">'
+                + '<b style="color:var(--color-ink);font-size:13px">' + esc(x.distributeur) + '</b>'
+                + '<span style="display:block;font-size:11.5px;color:var(--color-muted);line-height:1.45">'
+                + (x.note ? '★ ' + esc(String(x.note)) + ' (' + esc(String(x.avis)) + ' avis) · ' : '')
+                + (x.distTxt ? esc(x.distTxt) + (x.etaMin ? ' · ~' + esc(String(x.etaMin)) + ' min' : '') : 'distance inconnue') + '</span>'
+                + (x.message ? '<span style="display:block;font-size:11.5px;color:var(--color-ink);line-height:1.45">« ' + esc(x.message) + ' »</span>' : '')
+                + '</span>'
+                + '<span style="flex:none;text-align:right">'
+                + '<b style="font-size:14px;color:var(--color-ink)">' + esc(D.eur(x.frais)) + '</b>'
+                + '<span style="display:block;font-size:10.5px;color:var(--color-muted)">déplacement</span></span>'
+                + '<button type="button" class="pec-btn pec-btn--sm tap" data-rdv-choisir="' + esc(x.distributeurId) + '" style="flex:none">Choisir</button>'
+                + '</div>';
+            }).join('')
+          + '<p class="rdv-s" style="margin:9px 0 0">Tu paies le bon d’achat <b style="color:var(--color-ink)">' + esc(D.eur(r.montant)) + '</b> plus le déplacement du commissionnaire que tu choisis. Chacun fixe librement son tarif — PayEnCash n’en impose aucun.</p>'
+          + '</div>'
+        : '';
+      z.innerHTML = '<div class="rdv-t">' + (props.length ? props.length + ' proposition' + (props.length > 1 ? 's' : '') + ' — à toi de choisir' : 'Ta demande est envoyée aux commissionnaires… <span class="dots"><i></i><i></i><i></i></span>') + '</div>'
+        + stepper(r)
+        + '<div class="fenetre"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px;color:var(--color-primary-dark)"><use href="#i-clock"/></svg><span>Elle reste ouverte encore <b id="rdv-reste">—</b></span></div>'
+        + (props.length ? blocProps : '<p class="rdv-s">' + (r.agentsJoignables > 0
+            ? esc(String(r.agentsJoignables)) + ' commissionnaire' + (r.agentsJoignables > 1 ? 's se déplacent' : ' se déplace') + ' à ' + esc(r.ville) + '. Chacun va te proposer SON tarif de déplacement — tu choisiras celui que tu veux.'
+            : 'Personne ne se déplace encore à ' + esc(r.ville) + '. Ta demande reste ouverte ' + esc(String(D.rencontreFenetreMin())) + ' min : un commissionnaire qui prend son service peut encore te faire une proposition.') + '</p>')
+        + (ap ? '<div class="rdv-lig" style="margin-top:10px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headphones"/></svg><span><b style="color:var(--color-ink)">'
+            + (h && h.nom ? esc(h.nom) : 'Un hôte PayEnCash') + ' te contacte pour confirmer</b> — le distributeur part juste après.</span></div>' : '')
+        + ligneLieu(r)
+        + ligneArgent(r)
+        + '<button type="button" class="rdv-lien tap" id="rdv-annuler">Annuler la demande</button>';
+      [].forEach.call(z.querySelectorAll('[data-rdv-choisir]'), function (b) {
+        b.addEventListener('click', function () {
+          var ch = D.rencontreChoisir(r.id, b.getAttribute('data-rdv-choisir'), {});
+          if (!ch.ok) { b.outerHTML = '<span style="flex:none;font-size:11px;font-weight:700;color:#8E2A1E">' + esc(ch.motif) + '</span>'; return; }
+          peindre();
+        });
+      });
+      return;
+    }
+
+    if (r.statut === 'acceptee') {
+      var e = D.rencontreEta ? D.rencontreEta(r.id) : null;
+      var nt = (r.distributeurId && D.distributeurNote) ? D.distributeurNote(r.distributeurId) : null;
+      var nom = r.distributeur || 'Ton distributeur';
+      var tel = (r.distributeurId && D.partenaire) ? (D.partenaire(r.distributeurId) || {}).tel : null;
+      z.innerHTML = '<div style="display:flex;align-items:center;gap:12px">'
+          + '<div class="avatar">' + esc(nom.charAt(0).toUpperCase()) + '</div>'
+          + '<div style="min-width:0;flex:1">'
+            + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="rdv-t">' + esc(nom) + '</span>'
+            + '<span class="pec-pill pec-pill--done" style="flex:none;font-size:9.5px;padding:3px 8px">' + esc(D.rencontreStatutLbl(r.statut)) + '</span></div>'
+            + '<div class="rdv-s">Distributeur indépendant sous contrat PayEnCash — il te vend un bon d’achat, il n’encaisse pas ta commande.</div>'
+            + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'
+              + (nt && nt.note != null ? '<span class="pec-pill" style="font-size:10px">★ ' + esc(String(nt.note)) + ' · ' + esc(String(nt.avis)) + ' avis</span>' : '<span class="pec-pill" style="font-size:10px">pas encore noté</span>')
+              + (e ? '<span class="pec-pill pec-pill--done" style="font-size:10px">à ' + esc(e.distTxt) + '</span>' : '')
+            + '</div>'
+          + '</div>'
+          + (e && !e.arrive ? '<span style="flex:none;text-align:right;align-self:flex-start"><span style="display:block;font-size:17px;font-weight:800;color:var(--color-primary-dark);line-height:1.1">' + esc(e.heure) + '</span><span style="display:block;font-size:9.5px;font-weight:700;color:var(--color-muted)">dans ' + esc(String(e.min)) + ' min</span></span>' : '')
+          /* L'APPELER — seulement s'il a un téléphone au dossier, et jamais un « tel: » vide (piège du
+             bouton mort de l'écran de suivi). C'est SON numéro professionnel, celui de son contrat. */
+          + (tel ? '<a class="sv-tel tap" href="tel:' + esc(String(tel).replace(/[^+0-9]/g, '')) + '" aria-label="Appeler ' + esc(nom) + '"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-phone"/></svg></a>' : '')
+        + '</div>'
+        + stepper(r)
+        /* SANS POSITION PARTAGÉE, AUCUNE HEURE INVENTÉE — on dit simplement qu'on ne sait pas encore. */
+        + (e ? (e.arrive ? '<div class="rdv-lig" style="margin-top:11px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-map-pin"/></svg><span><b style="color:var(--color-ink)">Il est arrivé</b> — cherche-le sur place.</span></div>' : '')
+             : '<div class="rdv-lig" style="margin-top:11px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-clock"/></svg><span>Il n’a pas encore partagé sa position — tu la verras dès qu’il sera en route.</span></div>')
+        + ligneLieu(r)
+        + ligneArgent(r)
+        + '<button type="button" class="rdv-lien tap" id="rdv-annuler">Annuler la rencontre</button>';
+      return;
+    }
+
+    if (r.statut === 'servie' && aPoser(r)) {
+      z.innerHTML = '<div class="rdv-t">' + esc(r.distributeur || 'Ton distributeur') + ' t’a remis '
+          + (r.codes.length > 1 ? esc(String(r.codes.length)) + ' bons d’achat' : 'ton bon d’achat') + '.</div>'
+        + stepper(r)
+        + '<div class="rdv-codes">' + r.codes.map(function (x) { return esc(x); }).join('<br>') + '</div>'
+        + '<p class="rdv-s">Il ne reste qu’à régler ta commande avec : ' + (r.codes.length > 1 ? 'saisis-les l’un après l’autre' : 'saisis-le') + ' dans « J’ai un bon d’achat ».</p>'
+        + '<a class="pec-cta tap" id="rdv-payer" href="' + esc(versPayer('?bon=' + encodeURIComponent(r.codes[0]))) + '" style="display:block;text-align:center;margin-top:12px">Régler maintenant avec ce bon</a>';
+      return;
+    }
+
+    if (aNoter(r)) {
+      z.innerHTML = '<div class="rdv-t">Comment s’est passée ta rencontre avec ' + esc(r.distributeur || 'ton distributeur') + ' ?</div>'
+        + '<div class="etoiles" id="rdv-etoiles">' + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" class="tap" data-note="' + n + '">' + n + ' ★</button>'; }).join('') + '</div>'
+        + '<p class="rdv-s" id="rdv-note-etat">Ta note aide les prochains clients à choisir.</p>';
+      return;
+    }
+
+    /* CLOSE : annulée, expirée, ou servie et soldée. On le DIT, et on rouvre le chemin. */
+    z.innerHTML = '<div class="rdv-t">' + esc(D.rencontreStatutLbl(r.statut)) + ' — ' + esc(r.ref) + '</div>'
+      + '<p class="rdv-s">' + (r.statut === 'expiree'
+          ? 'Personne ne l’a prise dans la fenêtre ouverte. Tu peux en redemander une, ou aller chercher ton bon chez un commerçant.'
+          : r.statut === 'annulee' ? 'Elle est annulée. Tu peux en redemander une quand tu veux.'
+          : 'Elle est terminée — merci !') + '</p>'
+      + '<a class="pec-cta tap" href="' + esc(versPayer()) + '" style="display:block;text-align:center;margin-top:12px">Comment veux-tu payer ?</a>';
+  }
+
+  /* RECENTRER — le bouton de l'écran de suivi d'avant le 17/09. La caméra suit déjà les deux points ;
+     ce bouton sert à revenir dessus après avoir fait glisser la carte, sans recharger l'écran. */
+  if ($('rdv-recentrer')) $('rdv-recentrer').addEventListener('click', function () {
+    var r = laRencontre(); if (!r || !carte) return;
+    var pos = (r.statut === 'acceptee' && B && B.positionAgent) ? B.positionAgent(r.id) : null;
+    if (pos) carte.fitBounds(new maplibregl.LngLatBounds([r.geo.lng, r.geo.lat], [r.geo.lng, r.geo.lat]).extend([pos.lng, pos.lat]),
+      { padding: { top: 90, bottom: 300, left: 50, right: 90 }, maxZoom: 15.5 });
+    else carte.easeTo({ center: [r.geo.lng, r.geo.lat], zoom: r.geoApprox ? 12.5 : 15, padding: { bottom: 300 } });
+  });
+  /* LES GESTES — délégués sur la feuille, qui se réécrit à chaque peinture : aucun écouteur posé sur un
+     nœud qui va disparaître (piège des nœuds détachés, audit 07/09). */
+  $('rdv-sheet').addEventListener('click', function (ev) {
+    var an = ev.target.closest ? ev.target.closest('#rdv-annuler') : null;
+    if (an) {
+      var r = laRencontre(); if (!r) return;
+      D.rencontreAnnuler(r.id, 'annulée par le client', cid());
+      peindre(); return;
+    }
+    var et = ev.target.closest ? ev.target.closest('[data-note]') : null;
+    if (et) {
+      var r2 = laRencontre(); if (!r2) return;
+      var rn = D.distributeurNoter({ distributeurId: r2.distributeurId, clientId: cid(), rencontreId: r2.id, note: +et.getAttribute('data-note') });
+      var z2 = $('rdv-note-etat');
+      if (!rn.ok) { if (z2) { z2.textContent = rn.motif; z2.style.color = '#8E2A1E'; } return; }
+      if (z2) { z2.style.color = ''; z2.textContent = 'Merci — note enregistrée.'; }
+      setTimeout(peindre, 700);
+    }
+  });
+
+  /* L'ÉCRAN EST VIVANT : il suit le bus (une autre page, l'app du distributeur) et le temps qui passe —
+     l'ETA se recalcule de la position vive. En onglet masqué, un réveil par seconde suffit (piège du 07/09 :
+     requestAnimationFrame ne tourne pas, et les minuteries sont bridées à la seconde). */
+  /* LE COMPTE À REBOURS BAT DANS SON PROPRE NŒUD. Le faire battre en réécrivant la feuille détacherait
+     un bouton sous le doigt à chaque seconde — c'est exactement ce que la signature évite. */
+  function battre() {
+    var z = $('rdv-reste'); if (!z) return;
+    var r = laRencontre(); if (!r || r.statut !== 'demandee' || !r.expireTs) { z.textContent = '—'; return; }
+    var ms = r.expireTs - Date.now();
+    if (ms <= 0) { z.textContent = 'plus de temps'; return; }
+    var m = Math.floor(ms / 60000), sec = Math.floor((ms % 60000) / 1000);
+    z.textContent = (m >= 60 ? Math.floor(m / 60) + ' h ' + ('0' + (m % 60)).slice(-2) : m + ' min ' + ('0' + sec).slice(-2) + ' s');
+  }
+  setInterval(battre, 1000);
+  window.addEventListener('pec-bus', peindre);
+  window.addEventListener('storage', peindre);
+  setInterval(peindre, 1000);
+  peindre(); battre();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash — Doc 6 : Segment Maghreb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+  /* Sans ceci, un navigateur en mode sombre rend champs, listes et ascenseurs
+     en sombre sur notre fond creme. La doc est concue en clair, on le declare. */
+  color-scheme: light;
+    --vert: #1F4438; --cuivre: #D8722B; --creme: #F7F5F0; --encre: #1A1A1A;
+    --gris: #6B6966; --gris-clair: #E4E0D6; --blanc: #FFFFFF; --rouge: #C0392B; --bleu: #1A5276; --radius: 10px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; color: var(--encre); background: var(--creme); line-height: 1.7; font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+  .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: var(--vert); color: var(--creme); overflow-y: auto; padding: 24px 0; z-index: 100; }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 0.5px solid rgba(244,241,234,0.15); margin-bottom: 16px; }
+  .sidebar-logo .brand { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 4px; }
+  .sidebar-logo .brand .accent { color: var(--cuivre); }
+  .sidebar-logo .doc-num { font-size: 11px; color: rgba(244,241,234,0.5); margin-top: 4px; }
+  .sidebar nav a { display: block; padding: 7px 20px; font-size: 12.5px; color: rgba(244,241,234,0.7); text-decoration: none; border-left: 2px solid transparent; transition: all 0.15s; }
+  .sidebar nav a:hover, .sidebar nav a.active { color: var(--creme); border-left-color: var(--cuivre); background: rgba(244,241,234,0.06); }
+  .sidebar nav .section-head { padding: 14px 20px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(244,241,234,0.35); font-weight: 600; }
+  .doc-nav { margin-top: 24px; padding: 16px 20px 0; border-top: 0.5px solid rgba(244,241,234,0.15); }
+  .doc-nav p { font-size: 11px; color: rgba(244,241,234,0.4); margin-bottom: 8px; }
+  .doc-nav a { display: block; font-size: 12px; color: rgba(244,241,234,0.6); text-decoration: none; padding: 4px 0; }
+  .doc-nav a:hover { color: var(--cuivre); }
+
+  .main { margin-left: 240px; max-width: 920px; padding: 48px 56px; }
+
+  .doc-header { border-bottom: 1px solid var(--gris-clair); padding-bottom: 24px; margin-bottom: 40px; }
+  .doc-header .doc-tag { display: inline-block; background: var(--cuivre); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px; letter-spacing: 0.04em; }
+  .doc-header h1 { font-family: 'Archivo', sans-serif; font-size: 32px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .doc-header .meta { display: flex; gap: 20px; font-size: 13px; color: var(--gris); flex-wrap: wrap; }
+
+  .section { margin-bottom: 48px; scroll-margin-top: 24px; }
+  h2 { font-family: 'Archivo', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--gris-clair); color: var(--vert); }
+  h3 { font-family: 'Archivo', sans-serif; font-size: 17px; font-weight: 600; margin: 28px 0 12px; color: var(--encre); }
+  h4 { font-family: 'Archivo', sans-serif; font-size: 13px; font-weight: 600; margin: 20px 0 8px; color: var(--gris); text-transform:uppercase; letter-spacing:0.04em; }
+  p { margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 12px 0 20px; }
+  th { background: var(--vert); color: var(--creme); padding: 9px 12px; text-align: left; font-weight: 600; font-size: 12px; }
+  td { padding: 8px 12px; border-bottom: 0.5px solid var(--gris-clair); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(244,241,234,0.5); }
+  tr:last-child td { border-bottom: none; }
+  td code { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: rgba(31,68,56,0.07); color: var(--vert); padding: 2px 6px; border-radius: 4px; }
+  pre { background: #1A1A2E; color: #E8E6E3; border-radius: var(--radius); padding: 18px 20px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; overflow-x: auto; margin: 14px 0; }
+  pre .comment { color: #6B7A8D; }
+  pre .key { color: #82AAFF; }
+  pre .str { color: #C3E88D; }
+  pre .num { color: #F78C6C; }
+  pre .kw { color: #C792EA; }
+
+  .callout { border-radius: var(--radius); padding: 14px 16px; margin: 16px 0; font-size: 14px; display: flex; gap: 12px; align-items: flex-start; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: rgba(31,68,56,0.06); border-left: 3px solid var(--vert); }
+  .callout.warning { background: rgba(216,114,43,0.08); border-left: 3px solid var(--cuivre); }
+  .callout.danger { background: rgba(192,57,43,0.07); border-left: 3px solid var(--rouge); }
+  .callout strong { display: block; font-weight: 600; margin-bottom: 4px; color: var(--encre); }
+
+  .stack-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; margin: 16px 0; }
+  .stack-card { background:#fff; border:0.5px solid var(--gris-clair); border-radius:var(--radius); padding:16px; }
+  .stack-card h4 { margin-top:0; color: var(--vert); }
+  .stack-card .choice { font-family:'Archivo', sans-serif; font-weight:700; font-size:16px; margin-bottom:6px; }
+  .stack-card .why { font-size:13px; color: var(--gris); }
+
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+  .tag.green { background: #EAF3DE; color: #27500A; }
+  .tag.amber { background: #FAEEDA; color: #633806; }
+  .tag.coral { background: #FAECE7; color: #712B13; }
+
+  .checklist { list-style:none; margin: 12px 0; }
+  .checklist li { padding: 6px 0 6px 28px; position:relative; font-size:14px; }
+  .checklist li::before { content:"☐"; position:absolute; left:0; color: var(--vert); font-size:16px; }
+
+  @media print { .sidebar { display: none; } .main { margin-left: 0; padding: 24px; } }
+  @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; padding: 24px 20px; } .stack-grid{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div style="background:#E6F4EC;border:2px dashed #0C7F54;border-radius:10px;padding:12px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#0F2A24"><b>⚠️ Pivot du 18/09/2026 (soir) — sans effet sur ce document, et c'est utile de le dire.</b> L'<b>agent de caisse mobile est supprimé</b> et le client paie désormais par <b>Bon d’achat PayEnCash</b> ou <b>Bon d’achat PayEnCash</b>, achetés au comptoir d'un commerce. Ce document porte sur la <b>couverture Duffel des compagnies du Maghreb</b> et sur l'accréditation : il ne dépend d'aucun moyen de paiement et <b>reste valable en entier</b>. Seule remarque : le segment vise une clientèle sans carte bancaire, et c'est précisément ce que les deux nouveaux moyens servent — <b>sans qu'aucune donnée bancaire ne soit demandée</b>. Référence à jour : <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html" style="color:#0C7F54;font-weight:700">Étape 4</a> et <code>CLAUDE.md</code>.</div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">PayEn<span class="accent">Cash</span></div>
+    <div class="doc-num">Documentation technique · v1.0</div>
+  </div>
+  <nav>
+    <div class="section-head">Document 6</div>
+    <a href="#intro">Introduction</a>
+    <a href="#contexte">Contexte et justification business</a>
+    <a href="#couverture-duffel">Couverture Duffel par compagnie</a>
+    <a href="#accreditation">Point de vigilance — accréditation</a>
+    <a href="#schema">Spécificités du schéma de données</a>
+    <a href="#pricing">Spécificités de pricing</a>
+    <a href="#hebergement">Particularité du taux d'attache hébergement</a>
+    <a href="#api-payload">Exemple de payload Duffel — vol Maghreb</a>
+    <a href="#checklist">Checklist avant activation du segment</a>
+  </nav>
+  <div class="doc-nav">
+    <p>Documents</p>
+    <a href="01-flux-metier.html">← Doc 1 : Flux métier</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">← Doc 2 : Schéma BDD</a>
+    <a href="03-api-specs.html">← Doc 3 : Spécifications API</a>
+    <a href="04-pricing.html">← Doc 4 : Logique de pricing</a>
+    <a href="05-architecture.html">← Doc 5 : Architecture technique</a>
+    <a href="07-annulations-remboursements.html">→ Doc 7 : Annulations &amp; remboursements</a>
+    <a href="08-mecanisme-financier.html">→ Doc 8 : Mécanisme financier</a>
+    <a href="09-espace-manager.html">→ Doc 9 : Espace Manager</a>
+    <a href="10-compte-utilisateur.html">→ Doc 10 : Compte utilisateur</a>
+    <a href="11-ui-v2.html">→ Doc 11 : UI v2 (écrans)</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">📖 Glossaire central des champs</a>
+  </div>
+</aside>
+
+<main class="main">
+<div class="bandeau-socle" style="background:#FDF1E7;border:1px solid #E39A2E;border-left:5px solid #E39A2E;border-radius:10px;padding:13px 17px;margin:0 0 28px;font-size:13.5px;line-height:1.65;color:#7a5410">⚠️ <b>Document socle (juillet 2026)</b> — conservé comme référence technique. Les décisions <b>À JOUR</b> vivent dans le fil rouge (10 étapes)&nbsp;: <a href="../ESPACE-COMMERCANT/documents/diagramme-principal.html" style="color:#0c7f54;font-weight:700">diagramme principal</a>. En cas d'écart, le fil rouge fait foi (ex.&nbsp;: carte bleue en complément, Mondial Relay, F13, codes promo fournisseurs).</div>
+
+
+  <div class="doc-header">
+    <span class="doc-tag">Document 6 / 11</span>
+    <h1>Segment Maghreb — vols Maroc, Algérie, Tunisie</h1>
+    <div class="meta">
+      <span>Projet PayEnCash</span>
+      <span>Version 1.0</span>
+      <span>Juin 2026</span>
+    </div>
+  </div>
+
+  <section class="section" id="intro">
+    <h2>Introduction</h2>
+    <p>Ce document complète les Doc 1 à 5 pour couvrir les spécificités techniques d'un segment de marché distinct : les vols vers le Maroc, l'Algérie et la Tunisie, à destination d'une clientèle pour qui le paiement en espèces n'est pas une alternative secondaire mais un mode de paiement central. Ce document ne remplace aucun des cinq documents précédents — il les complète sur les points où ce segment introduit une différence de traitement technique ou de logique métier.</p>
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div><strong>Lecture préalable requise</strong> Ce document suppose une lecture déjà faite du Doc 1 (flux métier), du Doc 2 (schéma BDD) et du Doc 3 (spécifications API). Il n'en répète pas le contenu général, seulement les écarts propres au segment Maghreb.</div>
+    </div>
+  </section>
+
+  <section class="section" id="contexte">
+    <h2>Contexte et justification business</h2>
+    <p>La proposition de valeur du paiement en espèces résonne particulièrement avec la communauté maghrébine en France, pour laquelle les vols vers Casablanca, Alger ou Tunis sont des trajets fréquents (visites familiales, fêtes religieuses, événements). La simulation financière du projet (classeur <code>payencash_simulation_benefice.xlsx</code>, onglet <code>Scenario_Maghreb</code>) modélise ce segment avec un taux de conversion et une fréquence de réservation supérieurs à la moyenne généraliste, pour un bénéfice par inscrit environ 8 fois supérieur au segment européen généraliste.</p>
+    <p>Sur le plan technique, ce segment ne nécessite ni nouvelle intégration API ni nouveau fournisseur — Duffel couvre déjà les trois compagnies nationales concernées. Les écarts sont uniquement au niveau des données traitées et de la logique de pricing, détaillés ci-dessous.</p>
+  </section>
+
+  <section class="section" id="couverture-duffel">
+    <h2>Couverture Duffel par compagnie</h2>
+    <p>Les trois compagnies nationales du Maghreb sont référencées dans le réseau Duffel, sans nécessiter d'intégration technique distincte de celle déjà documentée au Doc 3.</p>
+    <table>
+      <thead>
+        <tr><th>Compagnie</th><th>Code IATA</th><th>Hub principal</th><th>Couverture réseau</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Royal Air Maroc</td><td><code>AT</code></td><td>Casablanca (CMN)</td><td>164 destinations dans 59 pays</td></tr>
+        <tr><td>Air Algérie</td><td><code>AH</code></td><td>Alger (ALG)</td><td>71 destinations dans 25 pays</td></tr>
+        <tr><td>Tunisair</td><td><code>TU</code></td><td>Tunis (TUN)</td><td>45 destinations dans 25 pays</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="accreditation">
+    <h2>Point de vigilance — accréditation requise par compagnie</h2>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>À vérifier avant développement</strong> Certaines compagnies référencées sur Duffel nécessitent une accréditation IATA/ARC propre à l'agence revendeuse, sauf à utiliser l'offre <strong>Duffel Managed Content</strong> (avec frais additionnels), qui permet de vendre ces compagnies sans accréditation directe. Ce point doit être confirmé avec l'équipe commerciale Duffel spécifiquement pour Royal Air Maroc, Air Algérie et Tunisair avant tout développement spécifique au segment Maghreb — le statut peut différer d'une compagnie à l'autre.</div>
+    </div>
+    <p>Tant que ce point n'est pas confirmé, le développeur ne doit pas considérer la disponibilité de ces trois compagnies dans l'environnement sandbox Duffel comme une garantie de disponibilité en production. Prévoir un test d'achat réel à très faible montant avant l'ouverture commerciale du segment, comme pour toute nouvelle compagnie intégrée.</p>
+  </section>
+
+  <section class="section" id="schema">
+    <h2>Spécificités du schéma de données</h2>
+    <p>Aucune nouvelle table n'est nécessaire. La table <code>flight_offers</code> définie au Doc 2 accueille les vols Maghreb sans modification de structure. Deux points d'attention sur le contenu des données :</p>
+    <table>
+      <thead>
+        <tr><th>Colonne existante</th><th>Particularité segment Maghreb</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>destination_iata</code></td><td>Valeurs attendues : <code>CMN</code> (Casablanca), <code>RAK</code> (Marrakech), <code>ALG</code> (Alger), <code>TUN</code> (Tunis), entre autres — à inclure dans la liste de destinations proposées en Phase 1 du flux métier (Doc 1)</td></tr>
+        <tr><td><code>total_amount_cents</code></td><td>Plage de valeurs structurellement plus élevée que les destinations européennes du prototype (60€ à 120€ contre 15€ à 27€) — vérifier qu'aucune validation de montant maximum codée en dur ailleurs dans l'application ne rejette ces valeurs par erreur</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Aucune migration nécessaire</strong> Ce segment est un cas d'usage du schéma existant, pas une extension de schéma. Le référentiel des destinations actives <strong>existe déjà</strong> : la table <code>destinations</code>, exposée par <code>GET /destinations</code> et <code>GET /search/budget-destinations</code>, porte un champ de segment (<code>destination_segment</code> : <code>european</code> | <code>maghreb</code>). Il n'y a donc rien à créer — seulement des lignes à renseigner. <em>Ce document affirmait auparavant que cette table n'existait pas ; elle n'était simplement pas détaillée au Doc 2, qui la recense désormais en §« Tables existantes non détaillées ».</em></div>
+    </div>
+  </section>
+
+  <section class="section" id="pricing">
+    <h2>Spécificités de pricing</h2>
+    <p>La logique de pricing définie au Doc 4 (marge fixe + marge de sécurité par délai) s'applique sans modification structurelle. Les paramètres eux-mêmes diffèrent, reflétant le positionnement retenu dans la simulation financière :</p>
+    <table>
+      <thead>
+        <tr><th>Paramètre</th><th>Segment européen (prototype)</th><th>Segment Maghreb</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Prix moyen billet</td><td>15€ à 27€</td><td>60€ à 120€ (moyenne retenue : 85€)</td></tr>
+        <tr><td>Marge nette par billet</td><td>12€</td><td>16€</td></tr>
+        <tr><td>Taux d'attache hébergement</td><td>45%</td><td>20% — voir section suivante</td></tr>
+      </tbody>
+    </table>
+    <p>Ces valeurs sont des paramètres de configuration commerciale, pas des constantes techniques — elles doivent être ajustables sans déploiement de code, depuis <code>margin_config</code> et ses surcharges par segment et par route (<code>segment_margin_overrides</code>, <code>route_margin_overrides</code>, Doc 4).</p>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>La « marge nette par billet » ci-dessus ne comprend pas les frais de service</strong> Ces chiffres datent d'avant la décision D13, qui a introduit <code>orders.service_fee_cents</code> — une composante de revenu supplémentaire, prélevée sur chaque tournée et configurée séparément dans <code>delivery_fee_config</code>. Le revenu réel par commande vaut donc <code>margin_fixed_cents + margin_safety_cents + service_fee_cents</code>. Les 12 € et 16 € restent utilisables comme paramètres de <em>marge</em>, pas comme revenu total ; le coût agent (salaire fixe, D11 rév.) est un coût de structure suivi séparément (Doc 8), pas une commission déduite de ce revenu commande par commande.</div>
+    </div>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Plafond espèces 1 000 € — vigilance accrue sur ce segment</strong> Le panier moyen Maghreb (85 €/billet, packages famille avec plusieurs voyageurs) se rapproche plus vite du plafond légal de <strong>1 000 € par transaction</strong> (art. L112-6/D112-3, voir Doc 4) que le segment européen. Le contrôle <code>total_price_cents ≤ 100000</code> avant génération du code (Doc 4) s'applique sans exception ; pour une famille nombreuse ou un package vol + hébergement long séjour, prévoir explicitement le découpage en commandes distinctes légitimes plutôt qu'un blocage sans solution proposée au client.</div>
+    </div>
+  </section>
+
+  <section class="section" id="hebergement">
+    <h2>Particularité du taux d'attache hébergement</h2>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Ne pas réutiliser la logique de recommandation par défaut</strong> Sur le segment européen, le système recommande activement un hébergement après le choix du billet (Doc 1, Phase 2). Sur le segment Maghreb, la majorité des voyageurs logent chez de la famille sur place : un taux d'attache hébergement de seulement 20% est retenu dans la simulation financière, contre 45% sur le segment généraliste. Le parcours utilisateur doit donc permettre de sauter clairement cette étape sans friction, plutôt que de présenter l'hébergement comme une étape par défaut suivie d'un refus.</div>
+    </div>
+    <p>Concrètement, cela veut dire que le bouton ou le lien permettant de continuer sans hébergement (déjà prévu dans la logique de l'écran 2 du tunnel de vente, Doc 1) doit être au moins aussi visible que les options d'hébergement elles-mêmes pour ce segment, et non traité comme une option secondaire.</p>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>KYC renforcé — seuil atteint plus vite</strong> Le KYC client gradué (Doc 5) déclenche la vérification par pièce d'identité (PVID) au-delà de <strong>3 achats</strong> ou <strong>1 000 € cumulés sur 7 jours</strong>. Avec un panier moyen de 85 € (contre 15-27 € en Europe), un client de ce segment atteint ce seuil bien plus rapidement — prévoir un parcours PVID fluide dès l'activation du segment plutôt qu'en rattrapage.</div>
+    </div>
+  </section>
+
+  <section class="section" id="api-payload">
+    <h2>Exemple de payload Duffel — vol Maghreb</h2>
+    <p>Même structure de requête que documentée au Doc 3, avec des codes IATA et un prix différents. Aucun champ supplémentaire n'est nécessaire.</p>
+    <pre><span class="kw">POST</span> /air/offer_requests
+
+{
+  <span class="key">"data"</span>: {
+    <span class="key">"slices"</span>: [{
+      <span class="key">"origin"</span>: <span class="str">"MRS"</span>,
+      <span class="key">"destination"</span>: <span class="str">"CMN"</span>, <span class="comment">// Casablanca</span>
+      <span class="key">"departure_date"</span>: <span class="str">"2026-07-10"</span>
+    }],
+    <span class="key">"passengers"</span>: [{ <span class="key">"type"</span>: <span class="str">"adult"</span> }],
+    <span class="key">"cabin_class"</span>: <span class="str">"economy"</span>,
+    <span class="key">"max_connections"</span>: <span class="num">0</span>
+  }
+}
+
+<span class="comment">// Réponse attendue (champs utilisés par PayEnCash, identiques au Doc 3)</span>
+{
+  <span class="key">"data"</span>: {
+    <span class="key">"offers"</span>: [{
+      <span class="key">"id"</span>: <span class="str">"off_0001M"</span>, <span class="comment">// → flight_offers.duffel_offer_id</span>
+      <span class="key">"owner"</span>: { <span class="key">"iata_code"</span>: <span class="str">"AT"</span> }, <span class="comment">// Royal Air Maroc</span>
+      <span class="key">"total_amount"</span>: <span class="str">"85.00"</span>,
+      <span class="key">"total_currency"</span>: <span class="str">"EUR"</span>
+    }]
+  }
+}</pre>
+    <p>Le champ <code>owner.iata_code</code> permet d'identifier la compagnie réellement utilisée pour chaque offre retournée — utile pour le suivi statistique du segment sans nécessiter de nouvelle colonne en base, ce champ pouvant être dérivé à la volée depuis <code>duffel_offer_id</code> si besoin via un nouvel appel à l'API Duffel.</p>
+  </section>
+
+  <section class="section" id="checklist">
+    <h2>Checklist avant activation du segment</h2>
+    <ul class="checklist">
+      <li>Confirmer avec Duffel le statut d'accréditation requis pour Royal Air Maroc, Air Algérie et Tunisair (voir section accréditation ci-dessus)</li>
+      <li>Ajouter les destinations Maghreb (CMN, RAK, ALG, TUN au minimum) à la liste de destinations proposées en Phase 1</li>
+      <li>Configurer les paramètres de pricing spécifiques (marge 16€, prix moyen 85€) dans la table de configuration de pricing, sans dupliquer la logique de calcul du Doc 4</li>
+      <li>Adapter visuellement l'étape hébergement du tunnel de vente pour ce segment, en rendant l'option « continuer sans hébergement » au moins aussi visible que les choix d'hébergement</li>
+      <li>Effectuer un achat réel à faible montant en production avant l'ouverture commerciale du segment, pour valider l'absence de blocage d'accréditation non détecté en sandbox</li>
+    </ul>
+  </section>
+
+</main>
+
+</body>
+</html>

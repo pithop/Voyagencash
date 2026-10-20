@@ -1,0 +1,67 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ESPACE-COMMERCANT — le dossier documentaire · AJEK / PayEnCash</title>
+<!-- (17/09 — pivot) Ce hub s'appelait « Documentation partenariats » : volet cible borne, mode test mandat B, documents
+     01–04 (cadre juridique de la commission, cas d'usage, matrice, workflow D1→D24). Tout cela décrivait un commerçant
+     tiers qui encaisse pour AJEK — un service de paiement sans agrément. Ces quatre notes sont supprimées ; le dossier
+     garde son nom (les liens du dépôt y renvoient) et devient le hub du dossier documentaire : le fil rouge en dix
+     étapes, les documents des fournisseurs, le marketing, le paiement par bon d’achat. -->
+<!-- (18/09, soir) Ce hub décrivait encore deux moyens de payer dont l'un était un salarié qui se déplaçait avec
+     des espèces. Cette branche est abandonnée : faire porter du cash par un salarié expose l'entreprise à un risque
+     humain et à un cadre CNAPS que le projet ne veut pas assumer, et tout ce qui l'outillait (flotte, zones,
+     planning, paie, tournées, rendu de monnaie) n'a plus d'objet. Le hub décrit donc désormais deux moyens achetés
+     au comptoir d'un commerce. Le reversement mensuel du partenaire disparaît dans le même mouvement : attendre
+     l'argent du commerçant créait une créance à relancer, là où le prélèvement à la vente ne crée le bon que si la
+     banque a dit oui. Les compteurs (tables, vues, écrans, microservices) ont été recomptés le même soir sur le
+     disque, les anciens dataient d'avant ces suppressions. -->
+<style>
+:root{--ajek:#10A06A;--ajek-d:#0C7F54;--ink:#0F2A24;--muted:#5C6B64;--line:#d9e5dd;--bg:#F4F7F5;--card:#fff;--chip:#E6F4EC}
+@media(prefers-color-scheme:dark){:root{--ink:#e8efe9;--muted:#9fb0a6;--line:#254034;--bg:#0d1512;--card:#121d18;--chip:#173026}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.sheet{max-width:900px;margin:28px auto;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,.06)}
+.hd{background:linear-gradient(115deg,#0F2A24 0%,#0C7F54 55%,#10A06A 100%);color:#fff;padding:22px 34px}
+.hd .brand{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.9}
+.body{padding:24px 34px 36px}
+h1{font-size:22px;margin:0}
+h2{font-size:16px;color:var(--ajek-d);margin:26px 0 8px;border-bottom:2px solid var(--line);padding-bottom:6px}
+@media(prefers-color-scheme:dark){h2{color:#5fd39a}}
+p{margin:9px 0}ul{margin:8px 0 8px 2px;padding-left:22px}li{margin:4px 0}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+th,td{text-align:left;padding:7px 9px;border:1px solid var(--line);vertical-align:top}th{background:var(--chip);font-weight:600}
+code{background:var(--chip);padding:1px 5px;border-radius:4px;font-size:12.5px}
+a{color:var(--ajek-d)}
+.pivot{background:var(--chip);border:1px solid var(--ajek);border-radius:10px;padding:12px 14px;margin:0 0 14px;font-size:13.5px}
+.toolbar{max-width:900px;margin:16px auto 0;display:flex;gap:10px;justify-content:flex-end;padding:0 8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 14px;font-size:13px;text-decoration:none}.btn.p{background:var(--ajek);color:#fff;border-color:var(--ajek)}
+@media print{body{background:#fff}.toolbar{display:none}.sheet{box-shadow:none;border:none;margin:0}}
+</style></head><body>
+<div class="toolbar"><a class="btn p" href="documents/diagramme-principal.html">🧭 Fil rouge (10 étapes)</a><a class="btn" href="documents/partie-7-maquettes.html">🖼️ Maquettes</a><a class="btn" href="marketing/index.html">📣 Marketing</a><a class="btn" href="#" onclick="window.print();return false">Imprimer / PDF</a></div>
+<div class="sheet"><div class="hd"><div class="brand">AJEK · marque PayEnCash — le dossier documentaire</div></div><div class="body">
+<div class="pivot"><strong>Pivot du 17/09 (décision fondatrice).</strong> Plus de borne, plus de point partenaire qui encaisse pour nous : un commerçant tiers qui encaisse pour AJEK rend un service de paiement sans agrément. Le <strong>Bon d’achat PayEnCash</strong> s'achète dans les commerces du <strong>réseau de distribution</strong> — aucun contrat avec nous, aucune commission — et se saisit en ligne chez nous : page de paiement hébergée, notification serveur qui seule règle la commande. Pays : France. Lignes : Fly et Mode.</div>
+<div class="pivot" style="border-color:var(--ajek-d)"><strong>Décisions du 18/09 au soir (fondatrices).</strong> <strong>① L'agent de caisse mobile est abandonné</strong> : plus aucun salarié ne se déplace chez le client pour encaisser. Tombent avec lui la flotte, les zones de dispatch, le planning, la paie des agents, les tournées de collecte, le rendu de monnaie et l'app Agent (ses écrans et huit écrans manager sont supprimés). Il reste <strong>deux moyens, achetés au comptoir d'un commerce</strong> : le <strong>Bon d’achat PayEnCash</strong> (notre réseau, sous contrat de distribution) et le <strong>Bon d’achat PayEnCash</strong> (réseau de distribution, sans lien contractuel). <strong>② Le reversement mensuel du partenaire est abandonné</strong> : à chaque vente d'un bon, la carte enregistrée du commerce est prélevée du montant du bon <strong>moins sa commission</strong>, via <strong>Stripe</strong> (1,5 % + 0,25 €) ; un refus de la banque = aucun bon créé. Plus de créance, d'échéance, de relance ni d'IBAN de reversement — il reste un <strong>relevé mensuel</strong>, support de l'autofacture de commission (art. 289 CGI). La promesse au client ne change pas : <strong>payer avec un bon d’achat</strong>.</div>
+<h1>ESPACE-COMMERCANT — le dossier documentaire du projet</h1>
+<p style="font-size:12.5px;color:var(--muted);margin:6px 0 0"><strong>AJEK</strong>, SAS au capital de 1000 €, SIREN 107 398 448, SIRET 107 398 448 00012, TVA FR59107398448, APE 7990Z, siège 16 route de la Plage, 13700 Marignane, RCS Aix-en-Provence [à confirmer greffe], Présidente Emilie Ruiz.</p>
+<p>Le dossier garde son nom historique (les liens du dépôt y renvoient) mais son objet a changé : ce n'est plus la documentation d'un réseau de commerçants partenaires, c'est <strong>le dossier de conception complet</strong> — dix étapes, de la stratégie aux maquettes, rangées par le <a href="documents/diagramme-principal.html">fil rouge</a>.</p>
+
+<h2>Par où entrer</h2>
+<div class="tw"><table><thead><tr><th>Quoi</th><th>Où</th><th>Contenu</th></tr></thead><tbody>
+<tr><td>🧭 Le fil rouge</td><td><a href="documents/diagramme-principal.html"><code>documents/diagramme-principal.html</code></a></td><td>Les 10 étapes (marketing → financier → juridique → flux → contrats → données → API → lancement → recette → maquettes), chaque document rangé dans la sienne.</td></tr>
+<tr><td>🔀 Les flux</td><td><a href="documents/partie-4-flux.html"><code>documents/partie-4-flux.html</code></a></td><td>F1 paiement en ligne (Bon d’achat PayEnCash) · F4 Bon d’achat PayEnCash vendu chez un commerçant partenaire · F6 où acheter un Bon d’achat PayEnCash · F7 vie d'une transaction · F11/F12 Mode et fournisseurs · F10 remboursements · F13 exceptions.</td></tr>
+<tr><td>🗄️ Les données</td><td><a href="documents/partie-6-donnees.html"><code>documents/partie-6-donnees.html</code></a></td><td>Miroir 1:1 de <code>server/db/schema.sql</code> — 128 tables + 3 vues, dont <code>gift_cards</code>, <code>partner_cards</code> et <code>partner_charges</code>.</td></tr>
+<tr><td>📜 Les contrats</td><td><a href="documents/partie-5-docs-flux.html"><code>documents/partie-5-docs-flux.html</code></a></td><td>Contrat-cadre d'achat fournisseur, CGU et politique de confidentialité fournisseur, charte de terminologie, annexes, CGV Mode, règlement du jeu.</td></tr>
+<tr><td>🖼️ Les maquettes</td><td><a href="documents/partie-7-maquettes.html"><code>documents/partie-7-maquettes.html</code></a></td><td>7 apps : Fly, Mode, Fournisseur, Partenaire, Manager, Hotline, Commercial — 133 vues au total, plus les 4 vitrines publiques.</td></tr>
+<tr><td>📣 Le marketing</td><td><a href="marketing/index.html"><code>marketing/</code></a></td><td>Identité de marque, positionnement, landings (grand public, fournisseurs, équipe), réseaux sociaux, plan de lancement, brochure « Régler avec un bon d’achat ».</td></tr>
+<tr><td>🔧 Le serveur</td><td><code>../server/</code> (<code>README-DEV.md</code>)</td><td>Schéma + seed + migrations, 10 microservices + passerelle (dont <code>encaissement</code> : psp-intent et pingback, et <code>bons</code> : émission, prélèvement Stripe, relevé mensuel), prêts CapRover.</td></tr>
+</tbody></table></div>
+
+<h2>Rappels transverses (du modèle AJEK)</h2>
+<ul><li><strong>AJEK</strong> = société, <strong>titulaire de la marque PayEnCash</strong>, intermédiaire de vente (NAF 7990Z) — <strong>pas une agence de voyages tant que la garantie financière n'est pas obtenue</strong> (position du 29/08 ; immatriculation Atout France = cible, voir la checklist). Pour la ligne Mode, AJEK achète ferme et revend en son nom.</li>
+<li><strong>Deux moyens de payer avec un bon d’achat</strong>, à égalité, tous deux achetés au comptoir d'un commerce : le <strong>Bon d’achat PayEnCash</strong> (notre réseau, contrat de distribution, commission 1,10 % HT) · le <strong>Bon d’achat PayEnCash</strong> (réseau de distribution, hors contrat). <strong>Un bon d’achat suffit.</strong> iDEAL est configuré mais réservé aux Pays-Bas, jamais affiché en France. Repères du bon d’achat : 5 € minimum, 250 € par bon, 1 000 € de bons utilisés par client et par jour, validité 12 mois, annulation au comptoir sous 30 minutes.</li>
+<li><strong>Seule la notification du prestataire règle un paiement en ligne</strong> — jamais le retour du navigateur. <i>(20/09 — « enlève la logique Neosurf » : le titre d'un réseau tiers et son rail en ligne sont supprimés)</i></li>
+<li><strong>KYC</strong> client gradué · <strong>KYB</strong> fournisseurs · <strong>logiciel de caisse certifié</strong> (286-I-3° bis) pour les reçus.</li>
+<li><strong>Virements uniquement</strong> vers les fournisseurs (jamais d'espèces). Côté partenaire, aucun virement sortant non plus : sa commission est retenue à la source par le prélèvement, et le <strong>relevé mensuel</strong> sert d'assiette à l'autofacture (art. 289 CGI).</li>
+<li><strong>À valider par avocat</strong> (qualification du contrat de distribution du bon d’achat, exemption art. L521-3 CMF et seuil de déclaration à l'ACPR) + <strong>expert-comptable</strong> (TVA sur la marge, autofacture de commission art. 289 CGI, coût d'encaissement par moyen).</li></ul>
+
+<h2>Ce qui a été supprimé</h2>
+<p><strong>Le 18/09 au soir — tout l'agent de caisse mobile.</strong> L'app Agent et ses 19 écrans, les huit écrans manager qui la pilotaient (<code>03-livraisons</code>, <code>05-coursiers</code>, <code>06-zones-dispatch</code>, <code>15-coursier-remuneration</code>, <code>22-flotte</code>, <code>24-planning</code>, <code>32-rapprochement</code>, <code>33-fonds-caisse</code>), les tables d'agent du schéma, la procédure « Un agent se déplace », la note marketing « La livraison, levier marketing », la galerie des écrans coursier et six annexes de l'audit du 09/09 devenues sans objet. Avec eux disparaissent le rendu de monnaie, les frais de déplacement, le plafond des espèces découpé en « part espèces + complément carte » et le canal <code>agent</code>. <strong>Le même soir, le reversement mensuel du partenaire</strong> — créance, échéance « avant le 10 », relances, IBAN de reversement — cède la place au prélèvement à la vente par Stripe. L'historique reste dans le dépôt git.</p>
+<h3 style="font-size:14px;color:var(--muted);margin:18px 0 6px">Le 17/09</h3>
+<p>Les notes <code>01-cadre-juridique-contrats-commission</code>, <code>02-cas-usage</code>, <code>03-matrice-ecrans-endpoints-donnees</code>, <code>04-workflow-documents</code>, les contrats de point D1–D24, le mandat d'agent commercial, le mode test mandat B, les grilles et barèmes de rémunération, le simulateur de revenu, les spécifications et écrans de la borne, les CGU et la politique de confidentialité de l'espace partenaire, les supports de comptoir et la vitrine « Devenez point PayEnCash ». Ils décrivaient un modèle où un commerçant tiers encaissait pour AJEK. L'historique reste dans le dépôt git.</p>
+</div></div></body></html>

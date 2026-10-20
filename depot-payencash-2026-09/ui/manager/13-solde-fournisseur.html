@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash Manager — Solde fournisseur</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-p-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-p-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<link rel="stylesheet" href="../assets/payencash-manager.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-filters.js"></script><!-- (07/09) recherche · tri · pagination par convention -->
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-manager-nav.js"></script>
+<!--
+  SOLDE FOURNISSEUR — route `/finance/wallets`.
+  Écran révélé manquant par l'audit : `listWallets`, `walletTransactions` et
+  `topUpWallet` existent dans la façade manager sans aucune maquette.
+  Point à ne pas confondre : ce solde est une AVANCE de PayEnCash, distincte de la
+  trésorerie du cash encaissé (Doc 8). Le cash rembourse l'avance, il ne l'alimente
+  pas automatiquement.
+-->
+</head>
+<body>
+<!-- (07/09 — audit manager « connexion table / donnée ») tables du schéma reflétées par cet écran : `provider_wallets`, `supplier_invoices` — miroir server/db/schema.sql (partie 6) -->
+
+<div class="pec-admin">
+
+  <aside class="pec-aside" data-pec-nav></aside>
+
+  <main class="pec-main">
+    <div class="pec-topbar">
+      <div>
+        <h1>Solde fournisseur</h1>
+        <p class="sub">Avance Duffel, mouvements et recharges.</p>
+      </div>
+      <!-- (03/09) « Recharger » est RÉEL : D.fournisseurVoyageRecharger(nom, montant, acteur), journalisé au bus -->
+      <div class="pec-topbar-actions" style="gap:8px">
+        <input class="pec-search" id="sf-montant" style="max-width:130px" type="text" inputmode="decimal" placeholder="Montant €" aria-label="Montant de la recharge Duffel">
+        <button class="pec-btn tap" id="sf-recharger"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-plus"/></svg> Recharger le solde</button>
+      </div>
+    </div>
+    <div class="s" id="sf-msg" style="min-height:16px;margin:-6px 0 12px;font-weight:700"></div>
+
+    <div class="pec-grid pec-grid--3" style="margin-bottom:16px">
+      <div class="pec-kpi pec-kpi--alert" id="sf-duffel">
+        <div class="lbl"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-plane"/></svg> Solde prépayé <span id="sf-duffel-nom">Duffel</span></div>
+        <div class="val" id="sf-duffel-solde">0<span class="u">,00 €</span></div>
+        <div class="hint" id="sf-duffel-hint">Seuil d’alerte : — · aucune recharge déclarée pour l'instant</div>
+      </div>
+      <div class="pec-kpi">
+        <div class="lbl"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-bed"/></svg> <span id="sf-nuitee-nom">Nuitée</span></div>
+        <div class="val" style="font-size:19px" id="sf-nuitee-mode">Post-payé</div>
+        <div class="hint" id="sf-nuitee-hint">Aucun solde à porter : facture réglée après réservation</div>
+      </div>
+      <div class="pec-kpi">
+        <!-- (18/09, soir — l'agent de caisse mobile est abandonné) la tuile comptait les DÉPÔTS D'ESPÈCES rapprochés
+             du mois (l'agent portant sa caisse à l'automate Cash Services). L'argent qui reconstitue l'avance
+             fournisseur arrive maintenant du prestataire qui débite la carte des commerces à chaque Bon d’achat vendu. -->
+        <div class="lbl"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-landmark"/></svg> Encaissé au comptoir ce mois</div>
+        <div class="val" id="sf-cash-mois">0<span class="u">,00 €</span></div>
+        <div class="hint" id="sf-cash-hint">Prélevé sur la carte des commerces — reconstitue l’avance · aucun bon d’achat vendu pour l'instant</div>
+      </div>
+    </div>
+
+    <div class="pec-notice pec-notice--info" style="margin-bottom:16px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-info"/></svg>
+      <div><b>Le solde Duffel et la trésorerie encaissée sont deux circuits distincts.</b> AJEK <b>avance</b> le solde prépayé pour acheter les billets ; ce qui a été encaissé <b>rembourse</b> cette avance une fois arrivé sur le compte — les Bons d’achat par le prestataire qui débite la carte des commerces, et les bons vendus par les distributeurs mobiles de la même façon. <!-- (18/09, soir) l'automate Cash Services et son rapport quotidien ont disparu avec les dépôts d'espèces de l'agent --> Nuitée, lui, est post-payé : aucune avance, la facture se règle après la réservation. La recharge reste une décision humaine — rien ne se transvase automatiquement.</div>
+    </div>
+
+    <div class="pec-panel">
+      <div class="pec-panel-head">
+        <div><h2>Mouvements du solde</h2><p class="s" id="sf-mvt-s">Débits d’achat et recharges (D.achatsVoyage) — chacun avec son auteur et le solde qui en résulte.</p></div>
+      </div>
+      <div class="pec-panel-body">
+        <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+        <input class="pec-search" type="search" data-fsearch="#sf-mouvements tr" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+        <div class="meta" data-fvide="#sf-mouvements tr" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+        <table data-fsortable class="pec-table">
+          <thead><tr><th>Horodatage</th><th>Fournisseur</th><th>Nature</th><th>Commande</th><th>Par</th><th class="num">Montant</th><th class="num">Solde après</th></tr></thead>
+          <tbody id="sf-mouvements" data-fpage="15"><tr><td colspan="7" class="meta" style="text-align:center;padding:18px">Aucun mouvement — chaque achat de billet ou de séjour s’inscrira ici, avec son solde.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="pec-notice" style="margin-top:16px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-alert"/></svg>
+      <div><b>Une recharge est idempotente par clé de requête.</b> Un double envoi — réseau lent, double clic — ne doit jamais créditer deux fois. Chaque recharge est journalisée avec son auteur : c’est un mouvement de trésorerie, pas un réglage.</div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+  // SOLDES FOURNISSEURS DÉRIVÉS DU RÉFÉRENTIEL (audit zéro-dur 02/09) : le seuil
+  // d'alerte « 15 000 € » était posé en dur (et contredisait 08-finance) — il vient
+  // de D.ref.fournisseursVoyage.duffel.seuilAlerte, les soldes de *.solde. Le cash
+  // revenu = dépôts RAPPROCHÉS du mois (PEC_BUS.depots), jamais un chiffre posé.
+  // (03/09) LES SOLDES SONT VIVANTS : D.soldeVoyage('duffel'|'nuitee') = solde du référentiel
+  // + recharges − achats (D.achatsVoyage). « Recharger » appelle D.fournisseurVoyageRecharger
+  // (montant > 0 contrôlé, acteur = PEC_MGR.acteur(), journalisé au bus) — plus un bouton mort.
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.ref || !D.ref.fournisseursVoyage || !D.soldeVoyage) return;
+    var esc = function (v) { return (window.PEC_DATA && PEC_DATA.esc) ? PEC_DATA.esc(v) : String(v == null ? '' : v); };
+    function val(el, n) { var s = D.eur(n).replace(/\s?€$/, ''); var p = s.split(','); el.innerHTML = esc(p[0]) + '<span class="u">,' + esc(p[1] || '00') + ' €</span>'; }
+    var msg = document.getElementById('sf-msg');
+    function dire(t, ko) { msg.textContent = t; msg.style.color = ko ? 'var(--color-danger)' : 'var(--color-primary-dark)'; }
+    function acteur() { return (window.PEC_MGR && PEC_MGR.acteur) ? PEC_MGR.acteur() : 'manager (démo)'; }
+
+    function rendre() {
+      var duf = D.soldeVoyage('duffel'), nui = D.soldeVoyage('nuitee');
+      document.getElementById('sf-duffel-nom').textContent = duf.nom;
+      val(document.getElementById('sf-duffel-solde'), duf.solde);
+      document.getElementById('sf-duffel').classList.toggle('pec-kpi--alert', !!duf.sousSeuil);
+      document.getElementById('sf-duffel-hint').textContent =
+        (duf.seuilAlerte != null ? 'Seuil d’alerte : ' + D.eur(duf.seuilAlerte) + ' (' + duf.mode + ') · ' : 'Mode ' + duf.mode + ' · ') +
+        (duf.sousSeuil ? '⚠ sous le seuil' : 'au-dessus du seuil') +
+        ' · ' + (duf.recharges ? D.eur(duf.recharges) + ' rechargés' : 'aucune recharge déclarée') +
+        ' · ' + (duf.achats ? D.eur(duf.achats) + ' d’achats' : 'aucun achat');
+      document.getElementById('sf-nuitee-nom').textContent = nui.nom;
+      document.getElementById('sf-nuitee-mode').textContent = nui.mode.charAt(0).toUpperCase() + nui.mode.slice(1);
+      document.getElementById('sf-nuitee-hint').textContent = nui.mode === 'post-payé'
+        ? (nui.achats ? 'Dette en cours : ' + D.eur(Math.abs(nui.solde)) + ' — ' + D.eur(nui.achats) + ' de réservations à régler après facture' : 'Aucun solde à porter : facture réglée après réservation')
+        : 'Solde : ' + D.eur(nui.solde);
+
+      // ── mouvements : achats et recharges, du plus récent au plus ancien, avec le solde qui en résulte
+      var mvt = (D.achatsVoyage ? D.achatsVoyage() : []).slice().sort(function (a, b) { return (a.at || 0) - (b.at || 0); });
+      var base = {}; Object.keys(D.ref.fournisseursVoyage).forEach(function (k) { base[k] = (D.ref.fournisseursVoyage[k] || {}).solde || 0; });
+      var cumul = {}, lignes = [];
+      mvt.forEach(function (a) {
+        var f = a.fournisseur, prepaye = (D.ref.fournisseursVoyage[f] || {}).mode === 'prépayé';
+        if (!(f in cumul)) cumul[f] = base[f] || 0;
+        cumul[f] += (a.type === 'recharge' ? 1 : -1) * (a.montant || 0);
+        lignes.push({ a: a, solde: cumul[f], prepaye: prepaye });
+      });
+      lignes.reverse();
+      document.getElementById('sf-mouvements').innerHTML = lignes.length ? lignes.map(function (x) {
+        var a = x.a, nom = (D.ref.fournisseursVoyage[a.fournisseur] || {}).nom || a.fournisseur;
+        return '<tr><td class="meta">' + new Date(a.at).toLocaleString('fr-FR') + '</td><td>' + esc(nom) + '</td><td>' +
+          (a.type === 'recharge' ? '<span class="pec-pill pec-pill--done">Recharge</span>' : '<span class="pec-pill pec-pill--wait">Achat</span>') +
+          '</td><td class="ref">' + esc(a.ref) + '</td><td class="meta">' + esc(a.par || 'système') + '</td><td class="num">' + (a.type === 'recharge' ? '+ ' : '− ') + D.eur(a.montant) +
+          '</td><td class="num">' + (x.prepaye ? D.eur(x.solde) : '<span class="meta">post-payé</span>') + '</td></tr>';
+      }).join('') : '<tr><td colspan="7" class="meta" style="text-align:center;padding:18px">Aucun mouvement — chaque achat de billet ou de séjour s’inscrira ici, avec son solde.</td></tr>';
+      document.getElementById('sf-mvt-s').textContent = lignes.length
+        ? lignes.length + ' mouvement' + (lignes.length > 1 ? 's' : '') + ' (D.achatsVoyage) — chaque achat de commande Fly payée et chaque recharge déclarée, avec son auteur.'
+        : 'Débits d’achat et recharges (D.achatsVoyage) — chacun avec son auteur et le solde qui en résulte.';
+
+      // ── (18/09, soir) encaissé au comptoir ce mois : le relevé du réseau de commerces (D.relevesReseau), qui
+      //    agrège les prélèvements acceptés sur leurs cartes. Même rôle qu'avant : dire ce qui reconstitue l'avance.
+      if (D.relevesReseau) {
+        var rr = D.relevesReseau(D.periodeCourante().mois);
+        val(document.getElementById('sf-cash-mois'), rr.preleve || 0);
+        document.getElementById('sf-cash-hint').textContent = 'Prélevé sur la carte des commerces — reconstitue l’avance · ' + (rr.points ? rr.points + ' commerce(s) · ' + D.eur(rr.ventes) + ' de bons d’achat vendus en ' + D.periodeCourante().label.toLowerCase() : 'aucun bon d’achat vendu pour l\'instant');
+      }
+    }
+
+    // ── RECHARGE RÉELLE : montant > 0 contrôlé, acteur tracé, idempotence assurée par le data-layer
+    document.getElementById('sf-recharger').addEventListener('click', function () {
+      var champ = document.getElementById('sf-montant');
+      var m = parseFloat(String(champ.value || '').replace(/\s/g, '').replace(',', '.'));
+      if (!isFinite(m) || m <= 0) { dire('✗ Montant invalide : saisis un montant en euros supérieur à zéro — aucune recharge enregistrée.', true); return; }
+      var r = D.fournisseurVoyageRecharger('duffel', m, acteur());
+      if (!r || !r.ok) { dire('✗ ' + ((r && r.motif) || 'Recharge refusée') + ' — rien n’a été enregistré.', true); return; }
+      champ.value = '';
+      rendre();
+      dire('✓ Recharge de ' + D.eur(m) + ' déclarée sur le compte ' + r.solde.nom + ' par ' + acteur() + ' — nouveau solde ' + D.eur(r.solde.solde) + (r.solde.sousSeuil ? ' (toujours sous le seuil d’alerte)' : '') + '.');
+    });
+
+    window.addEventListener('pec-bus', rendre); window.addEventListener('storage', rendre); rendre();
+  })();
+</script>
+</body>
+</html>

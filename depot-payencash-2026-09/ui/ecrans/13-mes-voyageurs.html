@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Mes voyageurs</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<!-- MES VOYAGEURS (fondatrice 23/08 : les pages du Compte doivent être PRO, vraies infos).
+     Les 7 champs exigés par les compagnies (title, given_name, family_name, born_on, gender,
+     email, phone) sont ceux de Duffel POST /air/orders — chiffrés AES-256 chez nous
+     (table order_travelers, cf. audit API §1). Ici : prénoms en clair, le reste masqué. -->
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:14px 18px 8px">
+
+    <div style="display:flex;align-items:center;gap:11px;margin-bottom:12px">
+      <a class="tap" href="10-compte.html" aria-label="Retour au compte" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-chevron-left"/></svg></a>
+      <div>
+        <h1 style="font-size:21px;font-weight:800;letter-spacing:-0.02em;color:var(--color-ink)">Mes voyageurs</h1>
+        <div style="font-size:11.5px;color:var(--color-muted);font-weight:600;margin-top:1px">Enregistrés une fois — prêts pour chaque réservation</div>
+      </div>
+    </div>
+
+    <!-- Les fiches CRÉÉES ICI — réelles, gardées sur l'appareil, modifiables -->
+    <div id="vf-liste" style="display:flex;flex-direction:column;gap:0;margin-bottom:12px"></div>
+
+    <button type="button" id="vf-ouvrir" class="tap" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:1.5px dashed var(--color-primary);border-radius:14px;background:transparent;padding:13px;font-size:13px;font-weight:800;color:var(--color-primary-dark)">
+      <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-plus"/></svg> Ajouter un voyageur
+    </button>
+
+    <!-- LE FORMULAIRE — les 7 champs exigés par les compagnies (contrat Duffel :
+         title, given_name, family_name, born_on, gender, email, phone_number) -->
+    <div id="vf-form" class="pec-card" style="display:none;padding:14px 15px;margin-top:10px">
+      <div style="font-size:12.5px;font-weight:800;color:var(--color-ink);margin-bottom:9px" id="vf-titre">Nouveau voyageur</div>
+      <label class="pec-input-label" for="vf-civ">Civilité</label>
+      <select class="pec-input" id="vf-civ" style="margin-bottom:10px"><option value="mr">M.</option><option value="ms">Mme</option></select>
+      <label class="pec-input-label" for="vf-prenom">Prénom — exactement comme sur la pièce d'identité</label>
+      <input class="pec-input" id="vf-prenom" type="text" style="margin-bottom:10px">
+      <label class="pec-input-label" for="vf-nom">Nom — exactement comme sur la pièce d'identité</label>
+      <input class="pec-input" id="vf-nom" type="text" style="margin-bottom:10px">
+      <label class="pec-input-label" for="vf-naissance">Date de naissance</label>
+      <input class="pec-input" id="vf-naissance" type="text" inputmode="numeric" maxlength="10" placeholder="JJ/MM/AAAA — les / se placent tout seuls" style="margin-bottom:10px">
+      <label class="pec-input-label" for="vf-genre">Genre (exigé par les compagnies)</label>
+      <select class="pec-input" id="vf-genre" style="margin-bottom:10px"><option value="m">Masculin</option><option value="f">Féminin</option></select>
+      <label class="pec-input-label" for="vf-email">Email</label>
+      <input class="pec-input" id="vf-email" type="email" style="margin-bottom:10px" placeholder="prenom.nom@email.fr">
+      <label class="pec-input-label" for="vf-tel">Téléphone</label>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <select class="pec-input" id="vf-indicatif" style="flex:none;width:118px">
+          <option value="+33" selected>🇫🇷 +33</option><option value="+32">🇧🇪 +32</option><option value="+41">🇨🇭 +41</option><option value="+49">🇩🇪 +49</option><option value="+34">🇪🇸 +34</option><option value="+39">🇮🇹 +39</option><option value="+44">🇬🇧 +44</option><option value="+1">🇺🇸 +1</option><option value="+212">🇲🇦 +212</option><option value="+213">🇩🇿 +213</option><option value="+216">🇹🇳 +216</option><option value="+221">🇸🇳 +221</option>
+        </select>
+        <input class="pec-input" id="vf-tel" type="tel" inputmode="numeric" maxlength="10" placeholder="06 12 34 56 78" style="min-width:0;flex:1">
+      </div>
+      <label class="pec-input-label" for="vf-nat">Nationalité — pays émetteur de la pièce</label>
+      <select class="pec-input" id="vf-nat" style="margin-bottom:10px">
+        <option value="FR" selected>🇫🇷 France</option><option value="BE">🇧🇪 Belgique</option><option value="CH">🇨🇭 Suisse</option><option value="DE">🇩🇪 Allemagne</option><option value="ES">🇪🇸 Espagne</option><option value="IT">🇮🇹 Italie</option><option value="PT">🇵🇹 Portugal</option><option value="GB">🇬🇧 Royaume-Uni</option><option value="MA">🇲🇦 Maroc</option><option value="DZ">🇩🇿 Algérie</option><option value="TN">🇹🇳 Tunisie</option><option value="SN">🇸🇳 Sénégal</option><option value="TR">🇹🇷 Turquie</option><option value="US">🇺🇸 États-Unis</option>
+      </select>
+      <label class="pec-input-label">Pièces d'identité <span style="font-weight:600;color:var(--color-muted)">(facultatif — renseigne celles que tu as, l'une, l'autre ou les deux)</span></label>
+      <!-- DEUX volets indépendants (fondatrice 28/08 : « s'il veut enregistrer les
+           deux ? ») : CNI ET passeport, chacun son numéro + expiration + schéma.
+           Rappel API : seul le PASSEPORT est transmissible à la compagnie (Duffel
+           identity_documents type passport) — la CNI sert à l'aéroport en Europe. -->
+      <details id="vf-sec-cni" style="border-radius:11px;background:var(--color-bg);margin-bottom:8px">
+        <summary class="tap" style="list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px;font-size:12px;font-weight:800;color:var(--color-ink)">Carte d'identité (CNI) <span id="vf-cni-etat" style="flex:none;font-size:9.5px;font-weight:700;color:var(--color-muted)">à compléter</span></summary>
+        <div style="padding:0 12px 11px">
+        <!-- Aide visuelle : OÙ lire le numéro sur la pièce (schéma, pas une vraie pièce) -->
+        <div id="vf-aide-cni" style="margin-bottom:10px">
+          <svg viewBox="0 0 300 96" role="img" aria-label="Schéma du recto de la carte d'identité : le numéro est en haut à droite" style="display:block;width:100%;height:auto;margin-bottom:7px">
+            <rect x="2" y="2" width="296" height="92" rx="10" fill="#fff" stroke="#c9d4cf"/>
+            <rect x="12" y="10" width="7" height="12" rx="1.5" fill="#1f3d8f"/><rect x="19" y="10" width="7" height="12" rx="0" fill="#eef1ee"/><rect x="26" y="10" width="7" height="12" rx="1.5" fill="#c53030"/>
+            <text x="40" y="20" font-size="8.5" font-weight="700" fill="#5b6660">CARTE NATIONALE D'IDENTITÉ</text>
+            <rect x="12" y="30" width="52" height="54" rx="6" fill="#e6ece8"/>
+            <circle cx="38" cy="49" r="9" fill="#c9d4cf"/><path d="M24 78 q14 -16 28 0" fill="#c9d4cf"/>
+            <rect x="74" y="34" width="110" height="7" rx="3.5" fill="#dfe6e1"/>
+            <rect x="74" y="48" width="88" height="7" rx="3.5" fill="#e6ece8"/>
+            <rect x="74" y="62" width="98" height="7" rx="3.5" fill="#e6ece8"/>
+            <rect x="196" y="8" width="94" height="20" rx="6" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-dasharray="5 3"/>
+            <text x="243" y="21.5" font-size="9" font-weight="800" text-anchor="middle" fill="var(--color-primary-dark)">N° X4RTBPFW4</text>
+            <path d="M243 32 v14" stroke="var(--color-primary)" stroke-width="2"/><path d="M238 40 l5 7 5 -7" fill="none" stroke="var(--color-primary)" stroke-width="2"/>
+            <text x="243" y="60" font-size="8" font-weight="700" text-anchor="middle" fill="var(--color-primary-dark)">le numéro est ici,</text>
+            <text x="243" y="71" font-size="8" font-weight="700" text-anchor="middle" fill="var(--color-primary-dark)">en haut à droite</text>
+          </svg>
+          <div style="font-size:10px;line-height:1.55;color:var(--color-muted)">Le numéro est <b style="color:var(--color-ink)">en haut à droite du recto</b> : <b style="color:var(--color-ink)">9 lettres et chiffres</b> sur la nouvelle carte (ex. X4RTBPFW4), <b style="color:var(--color-ink)">12 chiffres</b> sur l'ancien modèle cartonné.</div>
+        </div>
+        <label class="pec-input-label" for="vf-cni-num">Numéro de la CNI</label>
+        <input class="pec-input" id="vf-cni-num" type="text" autocapitalize="characters" style="margin-bottom:10px" placeholder="ex. X4RTBPFW4">
+        <label class="pec-input-label" for="vf-cni-exp">Date d'expiration de la CNI</label>
+        <input class="pec-input" id="vf-cni-exp" type="text" inputmode="numeric" maxlength="10" placeholder="JJ/MM/AAAA — les / se placent tout seuls">
+        </div>
+      </details>
+      <details id="vf-sec-pass" style="border-radius:11px;background:var(--color-bg);margin-bottom:10px">
+        <summary class="tap" style="list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px;font-size:12px;font-weight:800;color:var(--color-ink)">Passeport <span id="vf-pass-etat" style="flex:none;font-size:9.5px;font-weight:700;color:var(--color-muted)">à compléter</span></summary>
+        <div style="padding:0 12px 11px">
+        <div id="vf-aide-passeport" style="margin-bottom:10px">
+          <svg viewBox="0 0 300 96" role="img" aria-label="Schéma de la page photo du passeport : le numéro est en haut à droite" style="display:block;width:100%;height:auto;margin-bottom:7px">
+            <rect x="2" y="2" width="296" height="92" rx="8" fill="#fff" stroke="#c9d4cf"/>
+            <text x="12" y="20" font-size="8.5" font-weight="700" fill="#5b6660">PASSEPORT</text>
+            <rect x="12" y="28" width="46" height="46" rx="5" fill="#e6ece8"/>
+            <circle cx="35" cy="44" r="8" fill="#c9d4cf"/><path d="M23 72 q12 -14 24 0" fill="#c9d4cf"/>
+            <rect x="68" y="30" width="100" height="6" rx="3" fill="#dfe6e1"/>
+            <rect x="68" y="42" width="80" height="6" rx="3" fill="#e6ece8"/>
+            <rect x="68" y="54" width="90" height="6" rx="3" fill="#e6ece8"/>
+            <rect x="196" y="8" width="94" height="20" rx="6" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-dasharray="5 3"/>
+            <text x="243" y="21.5" font-size="9" font-weight="800" text-anchor="middle" fill="var(--color-primary-dark)">N° 24FV81234</text>
+            <path d="M243 32 v10" stroke="var(--color-primary)" stroke-width="2"/><path d="M238 36 l5 7 5 -7" fill="none" stroke="var(--color-primary)" stroke-width="2"/>
+            <text x="243" y="56" font-size="8" font-weight="700" text-anchor="middle" fill="var(--color-primary-dark)">le numéro est ici</text>
+            <text x="16" y="80" font-size="7.5" font-family="monospace" fill="#9aa59f">P&lt;FRABELKACEM&lt;&lt;NADIA&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</text>
+            <text x="16" y="89" font-size="7.5" font-family="monospace" fill="#9aa59f">24FV81234&lt;3FRA9307024F3209025&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;06</text>
+          </svg>
+          <div style="font-size:10px;line-height:1.55;color:var(--color-muted)">Le numéro est <b style="color:var(--color-ink)">en haut à droite de la page photo</b> : <b style="color:var(--color-ink)">2 chiffres, 2 lettres, 5 chiffres</b> (ex. 24FV81234). On le retrouve au début de la 2ᵉ ligne du bas.</div>
+        </div>
+        <label class="pec-input-label" for="vf-pass-num">Numéro du passeport</label>
+        <input class="pec-input" id="vf-pass-num" type="text" autocapitalize="characters" style="margin-bottom:10px" placeholder="ex. 24FV81234">
+        <label class="pec-input-label" for="vf-pass-exp">Date d'expiration du passeport</label>
+        <input class="pec-input" id="vf-pass-exp" type="text" inputmode="numeric" maxlength="10" placeholder="JJ/MM/AAAA — les / se placent tout seuls">
+        </div>
+      </details>
+      <div style="border-radius:11px;background:var(--color-bg);padding:9px 11px;margin-bottom:4px;font-size:10px;line-height:1.6;color:var(--color-muted)"><b style="color:var(--color-ink)">Quand ta pièce sert — et quand on la demande :</b><br>· <b style="color:var(--color-ink)">À l'aéroport</b>, toujours : la CNI suffit en Europe (Schengen), le passeport selon la destination — au nom EXACT du billet.<br>· <b style="color:var(--color-ink)">À la réservation</b>, seulement si la compagnie l'exige (certains vols internationaux) : le passeport (numéro, pays, expiration) lui est alors transmis — on te le demandera à ce moment-là s'il manque.<br>· <b style="color:var(--color-ink)">Au 1ᵉʳ paiement</b> : vérification d'identité rapide avec l'agent (le payeur est le voyageur) — en ligne, c'est le prestataire de paiement qui identifie le payeur.<br>· <b style="color:var(--color-ink)">Remboursement par virement</b> : RIB et pièce au même nom (anti-fraude).</div>
+      <p style="font-size:10px;line-height:1.55;color:var(--color-mint-ink);margin-top:4px;border-radius:11px;background:var(--color-mint);padding:9px 11px"><b style="color:var(--color-primary-dark)">Pourquoi tous ces champs ?</b> Ils servent à <b style="color:var(--color-ink)">gérer ta réservation</b> : la compagnie émet le billet à ce nom exact, le PNR et l'e-billet arrivent à cet email et ce téléphone, et c'est par eux qu'on te joint pour un changement, un rappel ou un remboursement. <b style="color:var(--color-ink)">Tous les champs sont obligatoires — sauf les pièces d'identité</b>, complétables plus tard (les conditions sont rappelées ci-dessus).</p>
+      <div style="display:flex;gap:8px;margin-top:11px">
+        <button type="button" id="vf-enregistrer" class="pec-cta pec-cta--tight tap" style="flex:1;text-align:center">Enregistrer le voyageur</button>
+        <button type="button" id="vf-annuler" class="pec-btn-secondary tap" style="flex:none;padding:0 16px">Annuler</button>
+      </div>
+      <div id="vf-erreur" hidden style="margin-top:8px;border-radius:11px;background:var(--color-amber-well);color:var(--color-amber-text);font-size:11px;font-weight:700;padding:9px 11px"></div>
+    </div>
+
+    <div class="pec-reassure" style="margin:12px 0 16px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-lock"/></svg>
+      <p>Ces informations sont celles qu'exigent les compagnies pour émettre un billet. Chez nous elles sont <b>chiffrées (AES-256)</b>, jamais revendues, supprimables sur demande — <a href="05-securite-confiance.html" style="color:var(--color-primary-dark);font-weight:700">notre engagement</a>.</p>
+    </div>
+
+  </div>
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" aria-current="page" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+// LES FICHES VOYAGEURS — toutes RÉELLES (les 3 exemples sont seedés au premier
+// passage → modifiables ET supprimables). Champs = le contrat Duffel vérifié :
+// passager {title, given, family, born_on, gender, email, phone E.164} ;
+// identity_documents = PASSEPORT {unique_identifier, expires_on,
+// issuing_country_code ISO} transmis SI l'offre l'exige — la CNI n'est pas
+// transmissible par l'API (contrôle aéroport Schengen), on la garde sur la fiche.
+(function () {
+  var CIV = { mr: 'M.', ms: 'Mme' };
+  var PAYS = { FR: 'France', BE: 'Belgique', CH: 'Suisse', DE: 'Allemagne', ES: 'Espagne', IT: 'Italie', PT: 'Portugal', GB: 'Royaume-Uni', MA: 'Maroc', DZ: 'Algérie', TN: 'Tunisie', SN: 'Sénégal', TR: 'Turquie', US: 'États-Unis' };
+  function lire() { try { return JSON.parse(((window.PEC_DATA && PEC_DATA._lireCompte) ? PEC_DATA._lireCompte('pec-voyageurs-fiches') : localStorage.getItem('pec-voyageurs-fiches')) || 'null'); } catch (e) { return null; }   // (09/09 — lot 1 socle) carnet PAR COMPTE   // (09/09 — lot 1 socle) carnet PAR COMPTE
+  }
+  function ecrire(l) { try { if (window.PEC_DATA && PEC_DATA._ecrireCompte) PEC_DATA._ecrireCompte('pec-voyageurs-fiches', JSON.stringify(l)); else localStorage.setItem('pec-voyageurs-fiches', JSON.stringify(l)); } catch (e) {} }
+  // SEED UNIQUE (fondatrice 31/08) : les 3 fiches viennent du RÉFÉRENTIEL partagé
+  // (PEC_DATA.voyageursCarnet) — plus de seed concurrent ici (le titulaire reflète
+  // le profil vivant, les pièces CNI/passeport sont portées par le référentiel).
+  if (!lire()) ecrire((window.PEC_DATA && PEC_DATA.voyageursCarnet) ? PEC_DATA.voyageursCarnet() : []);
+  // LE CARNET AFFICHÉ = PEC_DATA.voyageursCarnet() (audit 03/09) : le TITULAIRE y reflète le profil VIVANT du
+  // compte connecté (nom, e-mail) — plus jamais une fiche figée lue à côté du profil.
+  function carnet() { return (window.PEC_DATA && PEC_DATA.voyageursCarnet) ? PEC_DATA.voyageursCarnet() : (lire() || []); }
+  var enEdition = null;
+
+  // dates FACILES : les / se placent tout seuls (JJ/MM/AAAA)
+  function autoDate(input) {
+    input.addEventListener('input', function () {
+      var d = input.value.replace(/\D/g, '').slice(0, 8);
+      var out = d.slice(0, 2);
+      if (d.length > 2) out += '/' + d.slice(2, 4);
+      if (d.length > 4) out += '/' + d.slice(4, 8);
+      input.value = out;
+    });
+  }
+  autoDate(document.getElementById('vf-naissance'));
+  autoDate(document.getElementById('vf-cni-exp'));
+  autoDate(document.getElementById('vf-pass-exp'));
+  // téléphone : chiffres seulement, 10 max
+  document.getElementById('vf-tel').addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '').slice(0, 10);
+  });
+  // les DEUX pièces se renseignent indépendamment — l'état du volet suit la saisie
+  function majEtatsDocs() {
+    [['cni', 'vf-cni-num'], ['pass', 'vf-pass-num']].forEach(function (p) {
+      var ok = !!document.getElementById(p[1]).value.trim();
+      var e = document.getElementById('vf-' + p[0] + '-etat');
+      e.textContent = ok ? 'renseignée ✓' : 'à compléter';
+      e.style.color = ok ? 'var(--color-primary-dark)' : 'var(--color-muted)';
+    });
+  }
+  // les numéros s'écrivent en capitales, sans espaces (comme sur la pièce)
+  ['vf-cni-num', 'vf-pass-num'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', function () {
+      this.value = this.value.toUpperCase().replace(/\s/g, '');
+      majEtatsDocs();
+    });
+  });
+
+  function rendre() {
+    var l = carnet(), z = document.getElementById('vf-liste');
+    z.innerHTML = l.map(function (v) {
+      var ini = (v.prenom[0] || '') + (v.nom[0] || '');
+      var cniOk = v.cniNum || (v.doc === 'cni' && v.docNum), passOk = v.passNum || (v.doc === 'passeport' && v.docNum);
+      var pays = PAYS[v.nat] || v.nat;
+      var docLbl = cniOk && passOk ? 'CNI + passeport ' + pays : cniOk ? 'CNI ' + pays : passOk ? 'passeport ' + pays : 'pièce à compléter';
+      return '<div class="pec-card" style="display:flex;align-items:center;gap:12px;padding:13px 15px;margin-bottom:8px" data-vid="' + v.id + '">' +
+        '<span style="flex:none;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:999px;background:var(--color-mint);font-size:15px;font-weight:800;color:var(--color-primary-dark)">' + ini.toUpperCase() + '</span>' +
+        '<div style="min-width:0;flex:1"><div style="font-size:14px;font-weight:800;color:var(--color-ink)">' + v.prenom + ' ' + v.nom + (v.titulaire ? ' <span class="pec-pill pec-pill--done" style="font-size:9px;padding:2px 7px;margin-left:4px">Titulaire</span>' : '') + '</div>' +
+        '<div style="font-size:11px;color:var(--color-muted);margin-top:2px">' + (CIV[v.civ] || '') + ' · né(e) le ' + v.naissance + ' · ' + docLbl + '</div></div>' +
+        '<button type="button" class="tap pec-tap-confort" data-vmod="' + v.id + '" style="flex:none;font-size:11.5px;font-weight:800;color:var(--color-primary-dark);background:none">Modifier</button>' +
+        (v.titulaire ? '' : '<button type="button" class="tap" data-vsup="' + v.id + '" aria-label="Supprimer ce voyageur" style="flex:none;font-size:12px;font-weight:800;color:var(--color-muted);background:none;padding:6px">✕</button>') + '</div>';
+    }).join('');
+  }
+
+  function ouvrirForm(v) {
+    enEdition = v ? v.id : null;
+    document.getElementById('vf-titre').textContent = v ? 'Modifier ' + v.prenom + ' ' + v.nom : 'Nouveau voyageur';
+    document.getElementById('vf-civ').value = v ? v.civ : 'mr';
+    document.getElementById('vf-prenom').value = v ? v.prenom : '';
+    document.getElementById('vf-nom').value = v ? v.nom : '';
+    document.getElementById('vf-naissance').value = v ? (v.naissance || '') : '';
+    document.getElementById('vf-genre').value = v ? (v.genre || 'm') : 'm';
+    document.getElementById('vf-email').value = v ? (v.email || '') : '';
+    document.getElementById('vf-indicatif').value = v ? (v.indicatif || '+33') : '+33';
+    document.getElementById('vf-tel').value = v ? (v.tel || '') : '';
+    document.getElementById('vf-nat').value = v ? (v.nat || 'FR') : 'FR';
+    // les deux pièces — avec MIGRATION de l'ancien format (doc/docNum/docExp)
+    var cniNum = v ? (v.cniNum || (v.doc === 'cni' && v.docNum) || '') : '';
+    var cniExp = v ? (v.cniExp || (v.doc === 'cni' && v.docExp) || '') : '';
+    var passNum = v ? (v.passNum || (v.doc === 'passeport' && v.docNum) || '') : '';
+    var passExp = v ? (v.passExp || (v.doc === 'passeport' && v.docExp) || '') : '';
+    document.getElementById('vf-cni-num').value = cniNum;
+    document.getElementById('vf-cni-exp').value = cniExp;
+    document.getElementById('vf-pass-num').value = passNum;
+    document.getElementById('vf-pass-exp').value = passExp;
+    // le volet d'une pièce déjà renseignée s'ouvre tout seul
+    document.getElementById('vf-sec-cni').open = !!cniNum;
+    document.getElementById('vf-sec-pass').open = !!passNum;
+    majEtatsDocs();
+    document.getElementById('vf-erreur').hidden = true;
+    var f = document.getElementById('vf-form');
+    f.style.display = 'block';
+    f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('vf-prenom').focus();
+  }
+
+  document.getElementById('vf-ouvrir').addEventListener('click', function () { ouvrirForm(null); });
+  document.getElementById('vf-annuler').addEventListener('click', function () { document.getElementById('vf-form').style.display = 'none'; });
+  document.getElementById('vf-enregistrer').addEventListener('click', function () {
+    var prenom = document.getElementById('vf-prenom').value.trim();
+    var nom = document.getElementById('vf-nom').value.trim();
+    var naissance = document.getElementById('vf-naissance').value.trim();
+    var email = document.getElementById('vf-email').value.trim();
+    var tel = document.getElementById('vf-tel').value.trim();
+    var cniNum = document.getElementById('vf-cni-num').value.trim();
+    var cniExp = document.getElementById('vf-cni-exp').value.trim();
+    var passNum = document.getElementById('vf-pass-num').value.trim();
+    var passExp = document.getElementById('vf-pass-exp').value.trim();
+    var err = document.getElementById('vf-erreur');
+    function ko(msg) { err.hidden = false; err.textContent = msg; }
+    if (!prenom || !nom) return ko('Le prénom et le nom sont obligatoires — exactement comme sur la pièce d\'identité.');
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(naissance)) return ko('La date de naissance est obligatoire — tape les chiffres, les / se placent tout seuls (JJ/MM/AAAA).');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return ko('L\'email est obligatoire et doit être valide : c\'est là qu\'arrivent le PNR et l\'e-billet.');
+    if (tel.length < 9) return ko('Le téléphone est obligatoire (9 à 10 chiffres) : les SMS de réservation passent par lui.');
+    // les pièces sont FACULTATIVES (fondatrice 27/08) — l'une, l'autre ou les deux ;
+    // on ne valide le format de CHACUNE que si elle est renseignée
+    var natv = document.getElementById('vf-nat').value;
+    if (cniNum) {
+      if (natv === 'FR' && !/^[A-Z0-9]{9}$/.test(cniNum) && !/^\d{12}$/.test(cniNum)) return ko('Un numéro de CNI française fait 9 lettres et chiffres (nouvelle carte, ex. X4RTBPFW4) ou 12 chiffres (ancien modèle) — en haut à droite du recto.');
+      if (natv !== 'FR' && !/^[A-Z0-9]{5,15}$/.test(cniNum)) return ko('Le numéro de la carte d\'identité ne contient que des lettres et des chiffres (5 à 15 caractères), sans espaces.');
+    }
+    if (passNum) {
+      if (natv === 'FR' && !/^\d{2}[A-Z]{2}\d{5}$/.test(passNum)) return ko('Un numéro de passeport français fait 9 caractères — 2 chiffres, 2 lettres, 5 chiffres (ex. 24FV81234), en haut à droite de la page photo.');
+      if (natv !== 'FR' && !/^[A-Z0-9]{5,15}$/.test(passNum)) return ko('Le numéro du passeport ne contient que des lettres et des chiffres (5 à 15 caractères), sans espaces.');
+    }
+    if (cniExp && !/^\d{2}\/\d{2}\/\d{4}$/.test(cniExp)) return ko('La date d\'expiration de la CNI s\'écrit JJ/MM/AAAA.');
+    if (passExp && !/^\d{2}\/\d{2}\/\d{4}$/.test(passExp)) return ko('La date d\'expiration du passeport s\'écrit JJ/MM/AAAA — un passeport périmé bloque l\'embarquement.');
+    var l = lire() || [];
+    var fiche = {
+      civ: document.getElementById('vf-civ').value, prenom: prenom, nom: nom, naissance: naissance,
+      genre: document.getElementById('vf-genre').value, email: email,
+      indicatif: document.getElementById('vf-indicatif').value, tel: tel,
+      nat: natv, cniNum: cniNum, cniExp: cniExp, passNum: passNum, passExp: passExp,
+      // l'ancien format (doc/docNum/docExp) est soldé — la migration est faite
+      doc: null, docNum: null, docExp: null
+    };
+    if (enEdition) {
+      var v = l.find(function (x) { return x.id === enEdition; });
+      if (v) Object.assign(v, fiche);
+      // le TITULAIRE = le profil du compte : sa rectification se propage au profil (profilSet), une seule vérité
+      if (v && v.titulaire && window.PEC_DATA && PEC_DATA.profilSet) {
+        var telMask = tel.length === 10 ? tel.slice(0, 2) + ' •• •• •• ' + tel.slice(-2) : undefined;
+        PEC_DATA.profilSet({ prenom: prenom, nom: nom, nomComplet: prenom + ' ' + nom, email: email, genre: fiche.genre === 'f' ? 'femme' : 'homme', telComplet: tel || undefined, tel: telMask });
+      }
+    } else {
+      fiche.id = 'v' + Date.now().toString(36);
+      l.push(fiche);
+    }
+    ecrire(l);
+    document.getElementById('vf-form').style.display = 'none';
+    rendre();
+  });
+  document.getElementById('vf-liste').addEventListener('click', function (e) {
+    var m = e.target.closest('[data-vmod]');
+    if (m) { ouvrirForm(carnet().find(function (x) { return x.id === m.getAttribute('data-vmod'); })); return; }
+    var s = e.target.closest('[data-vsup]');
+    if (s) {
+      var id = s.getAttribute('data-vsup');
+      var v = (lire() || []).find(function (x) { return x.id === id; });
+      // données personnelles d'un TIERS : on confirme avant d'effacer (28/08)
+      if (!window.confirm('Supprimer ' + (v ? v.prenom + ' ' + v.nom : 'ce voyageur') + ' ?\nSa fiche est effacée de cet appareil — ses réservations déjà émises ne sont pas touchées.')) return;
+      ecrire((lire() || []).filter(function (x) { return x.id !== id; })); rendre();
+    }
+  });
+  rendre();
+})();
+</script>
+</body>
+</html>

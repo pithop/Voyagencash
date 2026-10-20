@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash — Doc 3 : Spécifications API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+  /* Sans ceci, un navigateur en mode sombre rend champs, listes et ascenseurs
+     en sombre sur notre fond creme. La doc est concue en clair, on le declare. */
+  color-scheme: light;
+    --vert: #1F4438; --cuivre: #D8722B; --creme: #F7F5F0; --encre: #1A1A1A;
+    --gris: #6B6966; --gris-clair: #E4E0D6; --blanc: #FFFFFF; --rouge: #C0392B; --bleu: #1A5276; --radius: 10px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; color: var(--encre); background: var(--creme); line-height: 1.7; font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+  .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: var(--vert); color: var(--creme); overflow-y: auto; padding: 24px 0; z-index: 100; }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 0.5px solid rgba(244,241,234,0.15); margin-bottom: 16px; }
+  .sidebar-logo .brand { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 4px; }
+  .sidebar-logo .brand .accent { color: var(--cuivre); }
+  .sidebar-logo .doc-num { font-size: 11px; color: rgba(244,241,234,0.5); margin-top: 4px; }
+  .sidebar nav a { display: block; padding: 7px 20px; font-size: 12.5px; color: rgba(244,241,234,0.7); text-decoration: none; border-left: 2px solid transparent; transition: all 0.15s; }
+  .sidebar nav a:hover, .sidebar nav a.active { color: var(--creme); border-left-color: var(--cuivre); background: rgba(244,241,234,0.06); }
+  .sidebar nav .section-head { padding: 14px 20px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(244,241,234,0.35); font-weight: 600; }
+  .doc-nav { margin-top: 24px; padding: 16px 20px 0; border-top: 0.5px solid rgba(244,241,234,0.15); }
+  .doc-nav p { font-size: 11px; color: rgba(244,241,234,0.4); margin-bottom: 8px; }
+  .doc-nav a { display: block; font-size: 12px; color: rgba(244,241,234,0.6); text-decoration: none; padding: 4px 0; }
+  .doc-nav a:hover { color: var(--cuivre); }
+
+  .main { margin-left: 240px; max-width: 920px; padding: 48px 56px; }
+
+  .doc-header { border-bottom: 1px solid var(--gris-clair); padding-bottom: 24px; margin-bottom: 40px; }
+  .doc-header .doc-tag { display: inline-block; background: var(--cuivre); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px; letter-spacing: 0.04em; }
+  .doc-header h1 { font-family: 'Archivo', sans-serif; font-size: 32px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .doc-header .meta { display: flex; gap: 20px; font-size: 13px; color: var(--gris); flex-wrap: wrap; }
+
+  .section { margin-bottom: 48px; scroll-margin-top: 24px; }
+  h2 { font-family: 'Archivo', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--gris-clair); color: var(--vert); display:flex; align-items:center; gap:10px; }
+  h3 { font-family: 'Archivo', sans-serif; font-size: 17px; font-weight: 600; margin: 28px 0 12px; color: var(--encre); }
+  h4 { font-family: 'Archivo', sans-serif; font-size: 13px; font-weight: 600; margin: 20px 0 8px; color: var(--gris); text-transform:uppercase; letter-spacing:0.04em; }
+  p { margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+
+  .provider-badge {
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'Archivo', sans-serif; font-weight:700; font-size:14px;
+    padding: 6px 14px; border-radius: 8px; margin-bottom: 4px;
+  }
+  .provider-badge.duffel { background:#EAF3DE; color:#27500A; }
+  .provider-badge.hotelbeds { background:#E6F1FB; color:#0C447C; }
+  .provider-badge.payencash { background:#FBEFE4; color:#8A4A16; }
+
+  .endpoint {
+    display:flex; align-items:center; gap:10px; margin: 18px 0 10px;
+    font-family:'JetBrains Mono', monospace; font-size:13.5px;
+  }
+  .method { font-weight:700; padding:3px 10px; border-radius:6px; font-size:12px; color:#fff; }
+  .method.post { background:#27500A; }
+  .method.get { background:#0C447C; }
+  .method.put { background:#633806; }
+  .endpoint-path { color: var(--vert); font-weight:500; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 12px 0 20px; }
+  th { background: var(--vert); color: var(--creme); padding: 9px 12px; text-align: left; font-weight: 600; font-size: 12px; }
+  td { padding: 8px 12px; border-bottom: 0.5px solid var(--gris-clair); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(244,241,234,0.5); }
+  tr:last-child td { border-bottom: none; }
+  td code { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: rgba(31,68,56,0.07); color: var(--vert); padding: 2px 6px; border-radius: 4px; }
+  pre { background: #1A1A2E; color: #E8E6E3; border-radius: var(--radius); padding: 18px 20px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; overflow-x: auto; margin: 14px 0; }
+  pre .comment { color: #6B7A8D; }
+  pre .key { color: #82AAFF; }
+  pre .str { color: #C3E88D; }
+  pre .num { color: #F78C6C; }
+  pre .kw { color: #C792EA; }
+  pre .type { color: #FFCB6B; }
+
+  .callout { border-radius: var(--radius); padding: 14px 16px; margin: 16px 0; font-size: 14px; display: flex; gap: 12px; align-items: flex-start; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: rgba(31,68,56,0.06); border-left: 3px solid var(--vert); }
+  .callout.warning { background: rgba(216,114,43,0.08); border-left: 3px solid var(--cuivre); }
+  .callout.danger { background: rgba(192,57,43,0.07); border-left: 3px solid var(--rouge); }
+  .callout.tip { background: #EAF3DE; border-left: 3px solid #27500A; }
+  .callout strong { display: block; font-weight: 600; margin-bottom: 4px; color: var(--encre); }
+
+  .error-tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+  .error-tag.critical { background: #FAECE7; color: #712B13; }
+  .error-tag.medium { background: #FAEEDA; color: #633806; }
+  .error-tag.low { background: #EAF3DE; color: #27500A; }
+
+  @media print { .sidebar { display: none; } .main { margin-left: 0; padding: 24px; } }
+  @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; padding: 24px 20px; } }
+</style>
+</head>
+<body>
+<div style="background:#E6F4EC;border:2px dashed #0C7F54;border-radius:10px;padding:12px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#0F2A24"><b>⚠️ Pivot du 18/09/2026 (soir) — remplace le bandeau du 17/09.</b> Ce document décrit le modèle « espèces à domicile par l'agent » d'août. <b>Ce modèle n'existe plus</b> : l'<b>agent de caisse mobile est supprimé</b>, et avec lui les courses, les tournées, les zones, le planning, la flotte, le fond de caisse, le rendu de monnaie, les dépôts en automate Cash Services et le découpage « 1 000 € d'espèces + complément carte ». Il reste <b>deux moyens de paiement</b>, tous deux achetés au comptoir d'un commerce : le <b>Bon d’achat PayEnCash</b> (bon d'achat prépayé émis par AJEK, vendu par un réseau de commerçants sous contrat — art. L521-3 CMF ; tables <code>gift_cards</code> · <code>gift_card_movements</code>) <i>(20/09 : le rail d'un prestataire en ligne est supprimé — le débit du bon est le seul valideur ; <code>psp_transactions</code> · <code>payment_tenders</code>, dont <code>method</code> vaut désormais <code>bon</code>, et lui seul — plus jamais <code>cash</code> ni <code>card</code>). Côté commerçant, le <b>reversement mensuel est abandonné</b> : sa carte bancaire enregistrée est <b>prélevée à chaque vente</b> du montant moins sa commission (1,10 % HT + TVA), via <b>Stripe</b> ; <b>un refus de la banque = aucun bon d’achat émis</b> (<code>partner_cards</code> · <code>partner_charges</code>). <b>Tout ce qui est écrit ici sur l'agent, la collecte, le dépôt, le dispatch ou un « point d'encaissement » est caduc</b> ; ce qui porte sur le catalogue, le prix, les fournisseurs et la commande reste vrai. Référence à jour : <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html" style="color:#0C7F54;font-weight:700">Étape 4</a> et <code>CLAUDE.md</code>.</div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">PayEn<span class="accent">Cash</span></div>
+    <div class="doc-num">Documentation technique · v2.0 (encaissement à domicile)</div>
+  </div>
+  <nav>
+    <div class="section-head">Document 3</div>
+    <a href="#intro">Introduction</a>
+    <a href="#duffel">Duffel — API vols</a>
+    <a href="#duffel-search">Recherche d'offres (POST)</a>
+    <a href="#duffel-offers-list">Liste comparée (GET) — comparateur</a>
+    <a href="#duffel-order">Création de commande</a>
+    <a href="#duffel-balance">Duffel Balance</a>
+    <a href="#duffel-errors">Codes d'erreur Duffel</a>
+    <a href="#hotelbeds">Hotelbeds APItude</a>
+    <a href="#hotelbeds-search">Recherche de disponibilité</a>
+    <a href="#hotelbeds-booking">Création de réservation</a>
+    <a href="#hotelbeds-errors">Codes d'erreur Hotelbeds</a>
+    <a href="#encaissement">PayEnCash — Encaissement &amp; encaissement</a>
+    <a href="#code-generation">Génération du code interne</a>
+    <a href="#dispatch">Dispatch agent</a>
+    <a href="#courier-space">Espace agent</a>
+    <a href="#collect">Validation d'encaissement</a>
+    <a href="#tracking">Suivi temps réel &amp; ETA</a>
+    <a href="#rating">Notation agent</a>
+    <a href="#deposits">Dépôt du cash (Cash Services)</a>
+    <a href="#cash-report-import">Import du rapport Cash Services</a>
+    <a href="#qonto">Qonto — virement &amp; paies</a>
+    <a href="#manager-existant">Manager — endpoints préexistants</a>
+    <a href="#manager-api">Administration (manager)</a>
+    <a href="#api-client">API client &amp; compte</a>
+    <a href="#recap-secrets">Récapitulatif des secrets</a>
+  </nav>
+  <div class="doc-nav">
+    <p>Documents</p>
+    <a href="01-flux-metier.html">← Doc 1 : Flux métier</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">← Doc 2 : Schéma BDD</a>
+    <a href="04-pricing.html">→ Doc 4 : Logique de pricing</a>
+    <a href="05-architecture.html">→ Doc 5 : Architecture technique</a>
+    <a href="06-segment-maghreb.html">→ Doc 6 : Segment Maghreb</a>
+    <a href="07-annulations-remboursements.html">→ Doc 7 : Annulations &amp; remboursements</a>
+    <a href="08-mecanisme-financier.html">→ Doc 8 : Mécanisme financier</a>
+    <a href="09-espace-manager.html">→ Doc 9 : Espace Manager</a>
+    <a href="10-compte-utilisateur.html">→ Doc 10 : Compte utilisateur</a>
+    <a href="11-ui-v2.html">→ Doc 11 : UI v2 (écrans)</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">📖 Glossaire central des champs</a>
+  </div>
+</aside>
+
+<main class="main">
+<div class="bandeau-socle" style="background:#FDF1E7;border:1px solid #E39A2E;border-left:5px solid #E39A2E;border-radius:10px;padding:13px 17px;margin:0 0 28px;font-size:13.5px;line-height:1.65;color:#7a5410">⚠️ <b>Document socle (juillet 2026)</b> — conservé comme référence technique. Les décisions <b>À JOUR</b> vivent dans le fil rouge (10 étapes)&nbsp;: <a href="../ESPACE-COMMERCANT/documents/diagramme-principal.html" style="color:#0c7f54;font-weight:700">diagramme principal</a>. En cas d'écart, le fil rouge fait foi (ex.&nbsp;: carte bleue en complément, Mondial Relay, F13, codes promo fournisseurs).</div>
+
+
+  <div class="doc-header">
+    <span class="doc-tag">Document 3 / 11</span>
+    <h1>Spécifications API</h1>
+    <div class="meta">
+      <span>Projet PayEnCash — AJEK SASU</span>
+      <span>Version 2.0</span>
+      <span>Juin 2026</span>
+    </div>
+  </div>
+
+  <section class="section" id="intro">
+    <h2>Introduction</h2>
+    <p>Ce document décrit les contrats d'interface du système, répartis en deux familles. D'abord les <strong>deux fournisseurs externes</strong> : <strong>Duffel</strong> (vols, débit du solde prépayé en temps réel) et <strong>Hotelbeds APItude</strong> (hébergements, modèle <strong>post-payé</strong> — la réservation est confirmée puis la dette réglée). Ensuite l'<strong>API interne PayEnCash</strong> qui remplace l'ancien prestataire de paiement : l'<strong>encaissement du cash est désormais réalisé par un agent au domicile du client</strong>, avec un code-barres généré en interne, un dispatch agent, un suivi temps réel, une validation par code de sécurité + photo, et une notation. Pour chaque API : les endpoints, les payloads de requête et de réponse, et les codes d'erreur à gérer explicitement.</p>
+    <div class="callout info">
+      <span class="callout-icon">🔄</span>
+      <div><strong>Changement de modèle (v2.0)</strong> L'ancien prestataire externe de paiement en espèces (code-barres scanné dans un point de vente tiers, confirmation par webhook) a été entièrement retiré. PayEnCash génère son propre code, dispatche un agent <strong>salarié d'AJEK SASU</strong> qui collecte le cash à domicile, et c'est la validation de la collecte par l'agent (code de sécurité + photo) qui déclenche le paiement des fournisseurs — en lieu et place du webhook. Conformité : <strong>AJEK SASU est a priori non assujettie LCB-FT (à confirmer par avis juridique)</strong> ; le dispositif repose sur un <strong>KYC client gradué</strong> (renforcé à 3 achats OU 1 000 € sur 7 jours glissants, prestataire PVID), un <strong>KYB fournisseurs</strong>, le plafond espèces de <strong>1 000 €/transaction</strong> avec anti-fractionnement, et un logiciel de caisse sécurisé (CGI 286-I-3° bis).</div>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Avant de commencer</strong> Les exemples des fournisseurs externes (Duffel, Hotelbeds) sont à valider contre leur documentation officielle au moment de l'implémentation — les API évoluent. Ce document fixe le contrat fonctionnel attendu côté PayEnCash, pas une copie figée d'une référence externe.</div>
+    </div>
+  </section>
+
+  <!-- DUFFEL -->
+  <section class="section" id="duffel">
+    <h2><span class="provider-badge duffel">✈️ Duffel</span></h2>
+    <p>Base URL : <code>https://api.duffel.com</code>. Authentification par header <code>Authorization: Bearer duffel_live_xxx</code> (ou <code>duffel_test_xxx</code> en sandbox). Toutes les requêtes nécessitent l'en-tête <code>Duffel-Version: v2</code>.</p>
+
+    <h3 id="duffel-contraintes">Contraintes techniques transversales — à respecter sur tous les appels Duffel</h3>
+    <table>
+      <thead><tr><th>Contrainte</th><th>Valeur exacte</th><th>Pourquoi c'est critique</th></tr></thead>
+      <tbody>
+        <tr><td>Timeout client HTTP minimum</td><td><strong>130 secondes</strong></td><td>Les API des compagnies aériennes peuvent occasionnellement prendre jusqu'à 120 secondes pour répondre. Un timeout plus court côté PayEnCash provoquerait une erreur applicative alors que la réservation a peut-être réussi côté Duffel — risque de double traitement ou de perte de suivi d'une commande réellement payée.</td></tr>
+        <tr><td>Limite de débit (recherche)</td><td>120 requêtes / 60 secondes en environnement live (valeur par défaut, variable par endpoint)</td><td>Au-delà, réponse <code>rate_limit_error</code>. Le header <code>ratelimit-reset</code> indique quand la limite sera réinitialisée — à utiliser pour temporiser les retries plutôt que de réessayer immédiatement.</td></tr>
+        <tr><td>Header de suivi du quota</td><td><code>ratelimit-remaining</code></td><td>Indique le nombre de requêtes encore autorisées dans la période en cours — permet d'anticiper la limite avant de la heurter, plutôt que de réagir après coup.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="duffel-erreurs-format">Format structuré des erreurs Duffel</h3>
+    <p>Chaque erreur retournée par l'API Duffel suit une structure fixe à deux niveaux : un <code>type</code> (catégorie générale) et un <code>code</code> (raison précise, propre à ce type). Le code HTTP seul ne suffit jamais à distinguer la cause exacte — le couple <code>type</code> + <code>code</code> doit systématiquement être lu et journalisé.</p>
+    <pre>{
+  <span class="key">"errors"</span>: [{
+    <span class="key">"type"</span>: <span class="str">"rate_limit_error"</span>,
+    <span class="key">"code"</span>: <span class="str">"rate_limit_exceeded"</span>,
+    <span class="key">"message"</span>: <span class="str">"Too many requests hit the API too quickly. Please retry your request after the time specified in the ratelimit-reset header."</span>
+  }]
+}</pre>
+    <table>
+      <thead><tr><th>Type d'erreur</th><th>Signification générale</th><th>Codes principaux rencontrés</th></tr></thead>
+      <tbody>
+        <tr><td><code>authentication_error</code></td><td>Problème d'authentification (clé absente, invalide, ou expirée)</td><td>Header <code>Authorization</code> absent ou mal formé, token révoqué</td></tr>
+        <tr><td><code>invalid_request_error</code></td><td>La requête elle-même est mal formée ou incohérente</td><td>Champ obligatoire manquant, format de date invalide, code IATA inconnu</td></tr>
+        <tr><td><code>rate_limit_error</code></td><td>Quota de requêtes dépassé</td><td><code>rate_limit_exceeded</code> — toujours accompagné du header <code>ratelimit-reset</code></td></tr>
+        <tr><td><code>airline_error</code></td><td>Erreur provenant de la compagnie aérienne elle-même, pas de Duffel</td><td><code>airline_internal</code> (renvoie 502 pour une erreur générale, 504 si causée par un timeout côté compagnie)</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Distinction importante pour le monitoring</strong> Un code 502/504 sur <code>airline_error</code> ne veut pas dire que Duffel est en panne — c'est la compagnie aérienne elle-même qui ne répond pas. Le comportement attendu côté PayEnCash diffère : pour une erreur Duffel généralisée, alerter l'équipe technique ; pour un <code>airline_error</code> isolé sur une commande, le traiter comme un échec ponctuel de cette réservation précise (voir Doc 1, cas d'erreur) sans déclencher d'alerte sur l'ensemble du système.</div>
+    </div>
+
+    <h3 id="duffel-search">Recherche d'offres</h3>
+    <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/air/offer_requests</span></div>
+    <p>Appelé à la Phase 1 (Doc 1) lorsque le client sélectionne une destination depuis l'écran budget.</p>
+
+    <h4>Requête</h4>
+    <pre>{
+  <span class="key">"data"</span>: {
+    <span class="key">"slices"</span>: [{
+      <span class="key">"origin"</span>: <span class="str">"MRS"</span>,
+      <span class="key">"destination"</span>: <span class="str">"BCN"</span>,
+      <span class="key">"departure_date"</span>: <span class="str">"2026-06-20"</span>
+    }],
+    <span class="key">"passengers"</span>: [
+      { <span class="key">"type"</span>: <span class="str">"adult"</span> },      <span class="comment">// un objet par adulte (orders.nb_adults)</span>
+      { <span class="key">"age"</span>: <span class="num">8</span> }             <span class="comment">// un objet par enfant avec âge calculé depuis born_on (orders.nb_children)</span>
+    ],
+    <span class="key">"cabin_class"</span>: <span class="str">"economy"</span>,
+    <span class="key">"max_connections"</span>: <span class="num">0</span>
+  }
+}</pre>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>CRITIQUE — Filtrer les offres incompatibles avec le délai d'encaissement agent</strong> Duffel retourne pour chaque offre un objet <code>payment_requirements</code> contenant :
+        <ul style="margin-top:6px;padding-left:16px;">
+          <li><code>requires_instant_payment</code> (boolean) — Si <code>true</code>, l'offre exige un paiement immédiat. <strong>INCOMPATIBLE avec PayEnCash</strong> car le paiement fournisseur n'intervient qu'après la collecte du cash par l'agent (délai de dispatch + trajet + encaissement). Ces offres doivent être <strong>exclues du comparateur</strong>.</li>
+          <li><code>price_guarantee_expires_at</code> (datetime) — Date jusqu'à laquelle le prix est garanti. Si cette date est inférieure à la <strong>fenêtre de collecte</strong> (<code>orders.collection_deadline_at</code>, Doc 2), le prix peut changer avant le règlement → <strong>risque de perte pour PayEnCash</strong>. Afficher un avertissement ou filtrer.</li>
+          <li><code>payment_required_by</code> (datetime) — Deadline absolue. Le règlement Duffel déclenché à la validation agent doit intervenir AVANT.</li>
+        </ul>
+        Le filtrage <code>requires_instant_payment = false</code> est aussi critique que le filtrage <code>paymentType = AT_WEB</code> côté Hotelbeds.
+      </div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div><strong>Aller simple vs aller-retour</strong> Le nombre de slices dans l'offer_request dépend de <code>orders.trip_type</code> : 1 slice pour <code>one_way</code>, 2 slices pour <code>round_trip</code> (le 2ème slice inverse origin/destination et utilise <code>orders.return_date</code>). Le <code>total_amount</code> retourné par Duffel inclut le prix combiné aller+retour — il n'y a pas de prix séparé par slice. <code>orders.origin_iata</code> est choisi par le client (pas auto-détecté) et <code>orders.cabin_class</code> est envoyé dans le payload.</div>
+    </div>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Filtrer requires_instant_payment = true</strong> Certaines offres Duffel exigent un paiement instantané (<code>payment_requirements.requires_instant_payment = true</code>). Ces offres sont <strong>incompatibles avec le flux PayEnCash</strong> car le client paie en espèces à l'agent lors de la collecte à domicile, et le règlement fournisseur n'est déclenché qu'à la validation de cette collecte. Le comparateur doit exclure ces offres et ne montrer que celles avec <code>requires_instant_payment = false</code>. De plus, vérifier que <code>payment_required_by</code> laisse suffisamment de temps pour couvrir la fenêtre de collecte (dispatch + trajet agent + encaissement) puis la Phase 5.</div>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Problème de timing : born_on pas encore disponible en Phase 1</strong> Duffel recommande de fournir les dates de naissance des passagers dès l'offer_request pour éviter une incohérence tarifaire enfant/adulte entre la recherche et l'achat. Mais en Phase 1, le client n'a pas encore saisi ses informations voyageurs (Phase 2). Stratégie retenue : (1) En Phase 1, utiliser uniquement <code>type: "adult"</code> ou <code>age</code> si le client a déjà précisé le nombre d'adultes et d'enfants via un sélecteur à l'étape initiale, (2) En Phase 5 (POST /air/orders), fournir les born_on complets depuis <code>order_travelers.born_on_enc</code>. Un écart tarifaire résiduel est couvert par la marge de sécurité (Doc 4).</div>
+    </div>
+
+    <h4>Réponse (champs utilisés par PayEnCash)</h4>
+    <pre>{
+  <span class="key">"data"</span>: {
+    <span class="key">"id"</span>: <span class="str">"orq_0000A"</span>,
+    <span class="key">"offers"</span>: [{
+      <span class="key">"id"</span>: <span class="str">"off_0000B"</span>,           <span class="comment">// → flight_offers.duffel_offer_id</span>
+      <span class="key">"total_amount"</span>: <span class="str">"15.00"</span>,
+      <span class="key">"total_currency"</span>: <span class="str">"EUR"</span>,
+      <span class="key">"expires_at"</span>: <span class="str">"2026-06-19T09:15:00Z"</span>, <span class="comment">// → flight_offers.offer_expires_at</span>
+      <span class="key">"conditions"</span>: { <span class="comment">// → flight_offers.conditions_json (voir Doc 7)</span>
+        <span class="key">"refund_before_departure"</span>: { <span class="key">"allowed"</span>: <span class="kw">true</span>, <span class="key">"penalty_amount"</span>: <span class="str">"10.00"</span> },
+        <span class="key">"change_before_departure"</span>: { <span class="key">"allowed"</span>: <span class="kw">true</span>, <span class="key">"penalty_amount"</span>: <span class="str">"15.00"</span> }
+      },
+      <span class="key">"slices"</span>: [{
+        <span class="key">"segments"</span>: [{
+          <span class="key">"departing_at"</span>: <span class="str">"2026-06-20T08:30:00"</span>,
+          <span class="key">"arriving_at"</span>: <span class="str">"2026-06-20T14:45:00"</span>,
+          <span class="key">"marketing_carrier"</span>: { <span class="key">"iata_code"</span>: <span class="str">"FR"</span>, <span class="key">"name"</span>: <span class="str">"Ryanair"</span> }
+        }]
+      }]
+    }]
+  }
+}</pre>
+
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Durée de vie de l'offre</strong> Le champ <code>expires_at</code> est souvent inférieur à 30 minutes. Si le client met plus de temps que cette fenêtre (Phase 3, délai déclaré "2h+"), l'offre doit être récupérée à nouveau juste avant l'appel <code>/air/orders</code> — voir Doc 4 pour la stratégie de re-fetch.</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Champ conditions à conserver</strong> Le champ <code>conditions</code> de l'offre doit être stocké tel quel (JSONB) au moment de la sélection, pour pouvoir l'afficher au client avant paiement sans nouvel appel API — voir Doc 7 pour la justification complète et son usage dans la logique d'annulation.</div>
+    </div>
+
+    <h3 id="duffel-offers-list">Liste comparée des offres (comparateur)</h3>
+    <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/air/offers?offer_request_id={orq_id}&sort=total_amount&max_connections=0</span></div>
+    <p>Appelé immédiatement après <code>POST /air/offer_requests</code>, dans le même contexte de Phase 1 (Doc 1, étape 4). Là où l'offer_request crée la recherche et retourne une première page d'offres, cet endpoint permet de récupérer la liste complète <strong>triée</strong> et <strong>filtrée</strong> pour l'affichage comparatif. C'est l'endpoint central du modèle comparateur multi-offres de PayEnCash (Doc 2, tables <code>flight_search_results</code> / <code>flight_offers</code>).</p>
+
+    <h4>Paramètres de requête</h4>
+    <table>
+      <thead><tr><th>Paramètre</th><th>Type</th><th>Valeurs possibles</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>offer_request_id</code></td><td>string</td><td><code>orq_xxxx</code></td><td>Obligatoire — identifiant retourné par <code>POST /air/offer_requests</code></td></tr>
+        <tr><td><code>sort</code></td><td>string</td><td><code>total_amount</code> (défaut), <code>total_duration</code></td><td>Tri de la liste — <code>total_amount</code> pour le tri "Prix croissant" affiché au client, <code>total_duration</code> pour le tri "Durée". Correspon à <code>flight_search_results.rank_position</code> (Doc 2).</td></tr>
+        <tr><td><code>max_connections</code></td><td>integer</td><td>0 (direct), 1, 2</td><td>Filtre escales — 0 = vols directs uniquement. Appliquer uniquement si le client active le filtre "Direct uniquement" dans le comparateur.</td></tr>
+        <tr><td><code>limit</code></td><td>integer</td><td>max 200</td><td>Nombre d'offres par page. Recommandation PayEnCash : 20 (nombre d'offres effectivement affichées) plutôt que 200 — stocker uniquement ce qui est affiché dans <code>flight_search_results</code>, voir note de volume au Doc 2.</td></tr>
+        <tr><td><code>after</code></td><td>string</td><td>curseur opaque</td><td>Curseur de pagination retourné dans <code>meta.after</code> — utiliser uniquement si une pagination "Voir plus" est implémentée côté UI.</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Réponse (structure utilisée pour le comparateur)</h4>
+    <pre>{
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"id"</span>: <span class="str">"off_0000B"</span>,                    <span class="comment">// → flight_search_results.duffel_offer_id</span>
+      <span class="key">"total_amount"</span>: <span class="str">"15.00"</span>,
+      <span class="key">"total_currency"</span>: <span class="str">"EUR"</span>,              <span class="comment">// → flight_search_results.total_amount_cents (converti)</span>
+      <span class="key">"expires_at"</span>: <span class="str">"2026-06-19T09:15:00Z"</span>,
+      <span class="key">"slices"</span>: [{
+        <span class="key">"duration"</span>: <span class="str">"PT6H15M"</span>,              <span class="comment">// → flight_search_results.total_duration_minutes (ISO 8601)</span>
+        <span class="key">"segments"</span>: [{
+          <span class="key">"departing_at"</span>: <span class="str">"2026-06-20T08:30:00"</span>,  <span class="comment">// → flight_offers.departure_at si sélectionné</span>
+          <span class="key">"arriving_at"</span>: <span class="str">"2026-06-20T14:45:00"</span>,
+          <span class="key">"marketing_carrier"</span>: { <span class="key">"iata_code"</span>: <span class="str">"FR"</span>, <span class="key">"name"</span>: <span class="str">"Ryanair"</span> },
+          <span class="key">"passengers"</span>: [{
+            <span class="key">"baggages"</span>: [{ <span class="key">"type"</span>: <span class="str">"checked"</span>, <span class="key">"quantity"</span>: <span class="num">1</span> }]
+          }]                                 <span class="comment">// → flight_offers.baggages_json si sélectionné (Doc 7)</span>
+        }]
+      }],
+      <span class="key">"conditions"</span>: {                      <span class="comment">// → flight_offers.conditions_json si sélectionné (Doc 7)</span>
+        <span class="key">"refund_before_departure"</span>: { <span class="key">"allowed"</span>: <span class="kw">true</span>, <span class="key">"penalty_amount"</span>: <span class="str">"10.00"</span> }
+      }
+    }
+  ],
+  <span class="key">"meta"</span>: {
+    <span class="key">"limit"</span>: <span class="num">20</span>,
+    <span class="key">"after"</span>: <span class="str">"cursor_opaque"</span>   <span class="comment">// → curseur de pagination si besoin</span>
+  }
+}</pre>
+
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Workflow complet côté PayEnCash (Phase 1, étape 4)</strong>
+        <ol style="margin-top:8px; padding-left:18px;">
+          <li>Client sélectionne une destination — PayEnCash appelle <code>POST /air/offer_requests</code></li>
+          <li>Avec l'<code>offer_request_id</code> retourné, appeler immédiatement <code>GET /air/offers?offer_request_id=...&sort=total_amount</code></li>
+          <li>Calculer la marge fixe sur chaque offre retournée (Doc 4, section "Marge sur le comparateur"), définir <code>within_budget</code></li>
+          <li>Insérer les N offres affichées dans <code>flight_search_results</code> (Doc 2)</li>
+          <li>Afficher la liste triée — le client choisit — insérer l'offre choisie dans <code>flight_offers</code> avec <code>search_result_id</code> de traçabilité</li>
+        </ol>
+      </div>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Attention à l'ordre du tri</strong> Ne jamais trier sur <code>total_amount</code> brut Duffel puis ajouter la marge après coup — le tri au client doit refléter le prix TTC marge incluse. Calculer le prix affiché avant le tri (Doc 4, pseudo-code <code>buildComparedFlightList()</code>).</div>
+    </div>
+    <h3 id="duffel-order">Création de la commande (débit du Balance)</h3>
+    <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/air/orders</span></div>
+    <p>Appelé en Phase 5 (Doc 1), uniquement après que <code>orders.status = 'PAID'</code> soit confirmé en transaction — c.-à-d. après la validation de la collecte cash par l'agent (voir <a href="#collect">Validation d'encaissement</a>). C'est l'appel qui débite réellement le Duffel Balance.</p>
+
+    <h4>Requête</h4>
+    <pre>{
+  <span class="key">"data"</span>: {
+    <span class="key">"type"</span>: <span class="str">"instant"</span>,
+    <span class="key">"selected_offers"</span>: [<span class="str">"off_0000B"</span>],
+    <span class="key">"passengers"</span>: [{
+      <span class="key">"id"</span>: <span class="str">"pas_0000C"</span>,
+      <span class="key">"given_name"</span>: <span class="str">"Sofia"</span>,
+      <span class="key">"family_name"</span>: <span class="str">"Martin"</span>,
+      <span class="key">"born_on"</span>: <span class="str">"1998-04-12"</span>,
+      <span class="key">"email"</span>: <span class="str">"sofia@example.com"</span>,
+      <span class="key">"phone_number"</span>: <span class="str">"+33600000000"</span>,
+      <span class="key">"title"</span>: <span class="str">"mrs"</span>,
+      <span class="key">"gender"</span>: <span class="str">"f"</span>
+    }],
+    <span class="key">"payments"</span>: [{
+      <span class="key">"type"</span>: <span class="str">"balance"</span>,
+      <span class="key">"currency"</span>: <span class="str">"EUR"</span>,
+      <span class="key">"amount"</span>: <span class="str">"15.00"</span>   <span class="comment">// ← PRIX DUFFEL en string décimal (flight_offers.offer_price_cents / 100) PAS notre prix client</span>
+    }]
+  }
+}</pre>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Trois montants distincts — ne jamais les confondre</strong>
+        <ul style="margin-top:8px; padding-left:18px;">
+          <li><strong>Prix client encaissé par l'agent (Phase 3-4)</strong> = <code>orders.total_price_cents</code> — le cash collecté à domicile, <strong>TTC</strong> (prix Duffel + prix Hotelbeds + marges PayEnCash + <code>service_fee_cents</code> + <code>vat_amount_cents</code>). En centimes entiers ; c'est le montant TTC du code interne et de <code>payments.amount_cents</code>.</li>
+          <li><strong>Prix Duffel (Phase 5)</strong> = <code>flight_offers.offer_price_cents / 100</code> en string décimal (<code>"15.00"</code>) — ce que Duffel débite sur le Duffel Balance. Doit correspondre exactement au <code>total_amount</code> de l'offre retournée. Jamais envoyer notre prix client à Duffel.</li>
+          <li><strong>Prix Hotelbeds (Phase 5)</strong> = <code>stay_offers.offer_price_cents / 100</code> via le rateKey — Hotelbeds déduit son prix directement depuis le rateKey, aucun montant à passer dans le payload (c'est dans le rateKey lui-même).</li>
+        </ul>
+      </div>
+    </div>
+
+    <h4>Détail des champs passagers — obligatoires et optionnels</h4>
+    <table>
+      <thead><tr><th>Champ</th><th>Obligatoire ?</th><th>Format exact</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>Oui</td><td>ID du passager retourné par l'offer_request original (<code>order_travelers.duffel_passenger_id_offer</code>, Doc 2) — doit correspondre exactement au <code>passengers[].id</code> de la réponse POST /air/offer_requests. Ce n'est pas un ID généré côté PayEnCash.</td></tr>
+        <tr><td><code>given_name</code> / <code>family_name</code></td><td>Oui</td><td>Texte libre — doit correspondre à l'identité officielle pour l'embarquement</td></tr>
+        <tr><td><code>born_on</code></td><td>Oui</td><td><code>YYYY-MM-DD</code> — Duffel recommande de préciser l'âge dès la recherche d'offre (Phase 1) pour éviter une incohérence tarifaire entre la recherche et l'achat</td></tr>
+        <tr><td><code>title</code></td><td>Oui</td><td>Énumération limitée : <code>mr</code>, <code>mrs</code>, <code>ms</code>, <code>miss</code>, <code>dr</code></td></tr>
+        <tr><td><code>gender</code></td><td>Oui</td><td>Énumération : <code>m</code> ou <code>f</code> uniquement</td></tr>
+        <tr><td><code>email</code></td><td>Oui</td><td>Format email standard — utilisé par Duffel pour ses propres communications, indépendamment des emails PayEnCash (Doc 7)</td></tr>
+        <tr><td><code>phone_number</code></td><td>Oui</td><td>Format E.164 (<code>+33...</code>), cohérent avec <code>users.phone_number</code> du Doc 2</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Réponse (succès)</h4>
+    <pre>{
+  <span class="key">"data"</span>: {
+    <span class="key">"id"</span>: <span class="str">"ord_0000D"</span>,            <span class="comment">// → supplier_bookings.supplier_order_id</span>
+    <span class="key">"booking_reference"</span>: <span class="str">"PEC77042"</span>, <span class="comment">// → supplier_bookings.confirmation_code (PNR)</span>
+    <span class="key">"total_amount"</span>: <span class="str">"15.00"</span>,       <span class="comment">// → flight_offers.final_price_cents</span>
+    <span class="key">"documents"</span>: [{ <span class="key">"type"</span>: <span class="str">"electronic_ticket"</span>, <span class="key">"unique_identifier"</span>: <span class="str">"0742100000000"</span> }]
+  }
+}</pre>
+
+    <h4>Cas de réponse incomplète — à gérer obligatoirement</h4>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>La réservation peut réussir sans réponse complète immédiate</strong> Quand de l'argent change de main lors de cet appel, la transaction est généralement non remboursable même en cas de timeout apparent côté PayEnCash. Une réponse <code>202 Accepted</code> signifie qu'une réservation a été faite côté fournisseur, mais que l'information complète n'a pas pu être récupérée immédiatement — il ne faut JAMAIS interpréter cette absence de réponse complète comme un échec et relancer un nouvel achat, sous peine de double réservation.</div>
+    </div>
+    <table>
+      <thead><tr><th>Code retour</th><th>Signification</th><th>Action PayEnCash</th></tr></thead>
+      <tbody>
+        <tr><td><code>201 Created</code></td><td>Réservation et informations complètes disponibles immédiatement</td><td>Traiter normalement, passer la commande en <code>CONFIRMED</code></td></tr>
+        <tr><td><code>202 Accepted</code></td><td>Réservation effectuée côté fournisseur mais informations pas encore toutes disponibles (survient uniquement avec paiement de type <code>card</code> pour les vols, peut survenir pour tout type de paiement pour l'hébergement)</td><td>Ne pas relancer l'achat. Attendre le webhook Duffel, ou interroger périodiquement <code>GET /air/orders/{id}</code> jusqu'à obtenir les informations complètes</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="duffel-balance">Duffel Balance — gestion du solde prépayé</h3>
+    <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/air/balances</span></div>
+    <p>Appelé périodiquement (toutes les 15 minutes via job CRON) pour synchroniser <code>provider_wallets.last_known_balance_cents</code>.</p>
+    <pre>{
+  <span class="key">"data"</span>: [{
+    <span class="key">"amount"</span>: <span class="str">"842.50"</span>,
+    <span class="key">"currency"</span>: <span class="str">"EUR"</span>
+  }]
+}</pre>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Alerte solde insuffisant</strong> Si <code>amount &lt; provider_wallets.low_balance_threshold_cents</code>, déclencher immédiatement une notification (email + Slack/SMS équipe). Une commande Phase 5 qui échoue pour solde insuffisant doit suivre le flux de remboursement automatique (Doc 1, table des cas d'erreur).</div>
+    </div>
+
+    <h3 id="duffel-errors">Codes d'erreur Duffel à gérer explicitement</h3>
+    <table>
+      <thead><tr><th>Code Duffel</th><th>Signification</th><th>Criticité</th><th>Action PayEnCash</th></tr></thead>
+      <tbody>
+        <tr><td><code>offer_no_longer_available</code></td><td>Le vol n'existe plus / places épuisées</td><td><span class="error-tag critical">Critique</span></td><td>supplier_bookings.status = 'failed' → déclencher remboursement intégral</td></tr>
+        <tr><td><code>offer_expired</code></td><td>Le délai de validité de l'offre est dépassé</td><td><span class="error-tag medium">Moyen</span></td><td>Re-fetch automatique d'une offre équivalente avant échec définitif (voir Doc 4)</td></tr>
+        <tr><td><code>insufficient_balance</code></td><td>Duffel Balance ne couvre pas le montant</td><td><span class="error-tag critical">Critique</span></td><td>Alerte immédiate équipe + remboursement client si non résolu en 30 min</td></tr>
+        <tr><td><code>passenger_validation_error</code></td><td>Nom/date de naissance invalide pour la compagnie</td><td><span class="error-tag medium">Moyen</span></td><td>Ne devrait pas arriver si la validation frontend (Doc 4) est correcte — alerte dev si ça survient</td></tr>
+        <tr><td><code>rate_limit_exceeded</code></td><td>Trop de requêtes simultanées</td><td><span class="error-tag low">Faible</span></td><td>Retry avec backoff exponentiel (max 3 tentatives), en respectant le délai indiqué par <code>ratelimit-reset</code></td></tr>
+        <tr><td><code>invalid_token</code> / <code>missing authorization header</code> (type <code>authentication_error</code>)</td><td>Clé API absente, invalide, ou révoquée</td><td><span class="error-tag critical">Critique</span></td><td>Ne jamais exposer ce détail au client — alerte technique immédiate, vérifier la rotation de clé en vault</td></tr>
+        <tr><td><code>airline_internal</code> (type <code>airline_error</code>, HTTP 502)</td><td>Erreur interne côté système de la compagnie aérienne, pas de Duffel</td><td><span class="error-tag medium">Moyen</span></td><td>Traiter comme un échec isolé de cette réservation (retry une fois après quelques secondes), pas comme une panne généralisée du système PayEnCash</td></tr>
+        <tr><td><code>airline_internal</code> (type <code>airline_error</code>, HTTP 504)</td><td>Timeout côté système de la compagnie aérienne</td><td><span class="error-tag medium">Moyen</span></td><td>Ne pas relancer l'achat immédiatement — vérifier d'abord via <code>GET /air/orders/{id}</code> si la réservation a tout de même réussi (voir section réponse incomplète ci-dessus)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- HOTELBEDS -->
+  <section class="section" id="hotelbeds">
+    <h2><span class="provider-badge hotelbeds">🏨 Hotelbeds APItude</span></h2>
+    <p>Base URL de test : <code>https://api.test.hotelbeds.com</code>. Authentification par deux headers sur chaque requête : <code>Api-key</code> (clé API en clair) et <code>X-Signature</code> (hash SHA-256 en hexadécimal calculé à partir de la clé API, du secret correspondant, et du timestamp Unix courant).</p>
+
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Accès self-service, sans candidature à faire approuver</strong> Contrairement à Expedia Rapid (écarté pour ce motif, voir <code>outils-integration/outils-a-integrer.html</code>), Hotelbeds permet une inscription en ligne immédiate : en quelques clics, un compte développeur donne accès à trois clés API (Hôtel, Activités, Transferts) et à un environnement d'évaluation, sans dossier commercial à faire approuver au préalable.</div>
+    </div>
+
+    <h3 id="hotelbeds-acces">Processus d'accès et credentials</h3>
+    <table>
+      <thead><tr><th>Étape</th><th>Détail</th></tr></thead>
+      <tbody>
+        <tr><td>1. Inscription en ligne</td><td>Création de compte développeur sur le portail Hotelbeds — immédiate, sans validation commerciale préalable</td></tr>
+        <tr><td>2. Clés API d'évaluation</td><td>Obtention de trois clés API distinctes (Hôtel, Activités, Transferts), chacune avec son propre secret — seule la clé Hôtel est utilisée par PayEnCash dans un premier temps</td></tr>
+        <tr><td>3. Environnement d'évaluation</td><td>Quota limité à 50 requêtes par jour ; les réservations effectuées dans cet environnement ne donnent lieu à aucune réservation réelle ni débit</td></tr>
+        <tr><td>4. Certification</td><td>Une fois l'intégration testée, soumission de cas de test à l'équipe de certification Hotelbeds avant obtention des accès et identifiants de production</td></tr>
+        <tr><td>5. Production</td><td>Délivrance des URLs et identifiants de production une fois la certification validée</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Quota de 50 requêtes/jour en évaluation</strong> Ce quota est largement suffisant pour le développement initial mais doit être anticipé dès la phase de tests d'intégration poussés — au-delà, une erreur 403 est retournée. Prévoir la demande de passage en certification suffisamment en amont du calendrier de lancement.</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>mTLS sur certaines opérations</strong> Hotelbeds impose une authentification mutuelle par certificat (mTLS) sur certains endpoints sensibles de réservation, en plus des headers Api-key/X-Signature classiques. Le certificat public doit être généré et associé à la clé API depuis le portail développeur. Vérifier au moment de l'implémentation si les endpoints de réservation utilisés par PayEnCash sont concernés.</div>
+    </div>
+
+    <h3 id="hotelbeds-content">Content API — informations statiques des hébergements</h3>
+    <div class="endpoint"><span class="method get">GET</span><span class="endpoint-path">/hotel-content-api/1.0/hotels</span></div>
+    <p>Fournit les informations descriptives stables (nom, adresse, photos, équipements, catégorie) qui ne doivent pas être interrogées à chaque recherche — à synchroniser et stocker localement à intervalle régulier, séparément des disponibilités et prix qui changent en temps réel.</p>
+
+    <h3 id="hotelbeds-search">Booking API — recherche de disponibilité</h3>
+    <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/hotel-api/1.0/hotels</span></div>
+    <p>Appelé à la Phase 1 (Doc 1), une fois la destination du vol sélectionnée, pour proposer des hébergements aux mêmes dates.</p>
+
+    <h4>Requête (paramètres principaux)</h4>
+    <table>
+      <thead><tr><th>Paramètre</th><th>Exemple</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>stay.checkIn</code></td><td><code>2026-06-20</code></td><td>Date d'arrivée du vol</td></tr>
+        <tr><td><code>stay.checkOut</code></td><td><code>2026-06-22</code></td><td>checkIn + nombre de nuits choisi</td></tr>
+        <tr><td><code>occupancies[].adults</code></td><td><code>2</code></td><td><strong>Source : <code>orders.nb_adults</code></strong> — nombre d'adultes. Hotelbeds utilise cette valeur pour filtrer les disponibilités et tarifer correctement.</td></tr>
+        <tr><td><code>occupancies[].children</code></td><td><code>1</code></td><td><strong>Source : <code>orders.nb_children</code></strong> — nombre d'enfants. 0 si aucun enfant.</td></tr>
+        <tr><td><code>occupancies[].paxes[].age</code></td><td><code>8</code></td><td><strong>Requis si children > 0</strong> — liste des âges des enfants au moment du voyage, calculés depuis <code>order_travelers.born_on_enc</code>. Hotelbeds en a besoin pour le tarif enfant.</td></tr>
+        <tr><td><code>occupancies[].rooms</code></td><td><code>1</code></td><td>Nombre de chambres — fixé à 1 dans la v1 de PayEnCash (1 chambre par réservation). À documenter si multi-chambre est envisagé ultérieurement.</td></tr>
+        <tr><td><code>destination.code</code></td><td><code>BCN</code></td><td>Code destination propre au référentiel Hotelbeds, à obtenir via le Content API — pas systématiquement un code IATA</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Réponse (champs utilisés par PayEnCash)</h4>
+    <pre>{
+  <span class="key">"hotels"</span>: { <span class="key">"hotels"</span>: [{
+    <span class="key">"code"</span>: <span class="num">110000123</span>,             <span class="comment">// → stay_offers.hotelbeds_hotel_code</span>
+    <span class="key">"name"</span>: <span class="str">"Itaca Hostel"</span>,
+    <span class="key">"rooms"</span>: [{
+      <span class="key">"rates"</span>: [{
+        <span class="key">"rateKey"</span>: <span class="str">"20260620|20260622|W|110000123|..."</span>,   <span class="comment">// → stay_offers.hotelbeds_rate_key</span>
+        <span class="key">"rateType"</span>: <span class="str">"BOOKABLE"</span>,            <span class="comment">// "RECHECK" exige une vérification checkrates avant réservation</span>
+        <span class="key">"net"</span>: <span class="str">"22.00"</span>,
+        <span class="key">"cancellationPolicies"</span>: [{               <span class="comment">// → stay_offers.cancel_penalties_json (voir Doc 7)</span>
+          <span class="key">"amount"</span>: <span class="str">"22.00"</span>,
+          <span class="key">"from"</span>: <span class="str">"2026-06-18T00:00:00"</span>
+        }]
+      }]
+    }]
+  }] }
+}</pre>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Le rateKey doit être traité comme une donnée opaque et volatile</strong> Cette chaîne encode les paramètres de la recherche et n'est valable que pour une fenêtre de temps limitée — elle doit être réutilisée telle quelle pour la réservation, jamais reconstruite manuellement. Si <code>rateType</code> vaut <code>RECHECK</code>, un appel supplémentaire à la méthode de vérification des tarifs est obligatoire avant de pouvoir réserver, le tarif affiché n'étant pas garanti.</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Prix définitifs, pas de recalcul nécessaire</strong> Les tarifs retournés par le Booking API sont finaux et incluent déjà suppléments et réductions — contrairement à certains agrégateurs, PayEnCash n'a pas à recalculer de composantes de prix additionnelles avant d'appliquer sa propre marge (Doc 4).</div>
+    </div>
+
+    <h3 id="hotelbeds-checkrate">CheckRate API — vérification de prix obligatoire</h3>
+    <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/hotel-api/1.0/checkrates</span></div>
+    <p><strong>Étape obligatoire si <code>stay_offers.rate_type = 'RECHECK'</code></strong> — doit être appelée APRÈS la sélection de l'hôtel par le client et AVANT la réservation Phase 5. Si rate_type = 'BOOKABLE', cette étape peut être sautée (mais reste recommandée pour confirmer le prix avant paiement).</p>
+
+    <h4>Requête</h4>
+    <pre>{
+  <span class="key">"rooms"</span>: [{
+    <span class="key">"rateKey"</span>: <span class="str">"20260622|20260624|W|1|HB_MAD_005|..."</span>  <span class="comment">// stay_offers.hotelbeds_rate_key — identique à la recherche</span>
+  }]
+}</pre>
+
+    <h4>Réponse</h4>
+    <pre>{
+  <span class="key">"hotel"</span>: {
+    <span class="key">"rooms"</span>: [{
+      <span class="key">"rates"</span>: [{
+        <span class="key">"rateKey"</span>: <span class="str">"..."</span>,        <span class="comment">// peut être DIFFÉRENT de la recherche (nouveau rateKey)</span>
+        <span class="key">"net"</span>: <span class="str">"32.50"</span>,          <span class="comment">// prix peut avoir changé (±tolerance)</span>
+        <span class="key">"rateType"</span>: <span class="str">"BOOKABLE"</span>,  <span class="comment">// maintenant BOOKABLE (confirmé)</span>
+        <span class="key">"paymentType"</span>: <span class="str">"AT_WEB"</span>  <span class="comment">// confirme le mode de paiement</span>
+      }]
+    }]
+  }
+}</pre>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Le rateKey peut CHANGER après CheckRate</strong> — Si le rateKey retourné par CheckRate est différent de celui de la recherche, il faut utiliser le NOUVEAU rateKey pour la réservation (POST bookings). L'ancien est invalidé. Le prix peut aussi varier : si l'écart est > <code>tolerance</code> (2.00€), recalculer le total et ré-afficher au client.</div>
+    </div>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Filtrer payment_type = AT_WEB uniquement</strong> — PayEnCash encaisse le cash via l'agent (collecte à domicile) puis règle Hotelbeds (modèle post-payé). Les tarifs <code>AT_HOTEL</code> (client paie directement à l'hôtel) sont incompatibles avec ce modèle. Le comparateur et le CheckRate doivent exclure systématiquement les résultats AT_HOTEL.</div>
+    </div>
+
+    <h3 id="hotelbeds-booking">Booking API — création de la réservation réelle</h3>
+    <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/hotel-api/1.0/bookings</span></div>
+    <p>Appelé en Phase 5, <strong>après</strong> l'appel Duffel (séquentiel, pas parallèle — voir Doc 1 et Doc 10), dès que <code>orders.status = 'PAID'</code>. Le passage à <code>PAID</code> n'est plus déclenché par un webhook de paiement mais par la <strong>validation de la collecte par l'agent</strong> (code de sécurité + photo, voir <a href="#collect">Validation d'encaissement</a>).</p>
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div><strong>Modèle post-payé (pas de solde prépayé Hotelbeds)</strong> Contrairement à Duffel (débit d'un solde prépayé), Hotelbeds fonctionne en <strong>post-payé</strong> : cet appel confirme la réservation et crée une dette réglée ensuite (facture / VCC). Comme le cash est déjà collecté physiquement au moment de l'appel, le règlement de la dette est déclenché <strong>immédiatement</strong> (décision D3). Tracer l'état via <code>supplier_bookings.payment_timing = 'hotelbeds_postpaid'</code> et <code>settlement_status</code> (Doc 2). En cas d'échec de règlement après collecte, appliquer le mécanisme de mise en attente / retry puis remboursement (décision D4, voir Doc 1).</div>
+    </div>
+
+    <h4>Requête</h4>
+    <pre>{
+  <span class="key">"holder"</span>: {
+    <span class="key">"name"</span>: <span class="str">"Sofia"</span>,              <span class="comment">// order_travelers.given_name_enc (voyageur is_primary_contact)</span>
+    <span class="key">"surname"</span>: <span class="str">"Martin"</span>           <span class="comment">// order_travelers.family_name_enc</span>
+  },
+  <span class="key">"rooms"</span>: [{
+    <span class="key">"rateKey"</span>: <span class="str">"20260620|20260622|W|110000123|..."</span>,  <span class="comment">// stay_offers.hotelbeds_rate_key — OPAQUE, jamais reconstruit</span>
+    <span class="key">"paxes"</span>: [
+      { <span class="key">"roomId"</span>: <span class="num">1</span>, <span class="key">"type"</span>: <span class="str">"AD"</span>, <span class="key">"name"</span>: <span class="str">"Sofia"</span>, <span class="key">"surname"</span>: <span class="str">"Martin"</span> },
+      <span class="comment">// Un objet AD par adulte (orders.nb_adults), un objet CH par enfant (orders.nb_children)</span>
+      { <span class="key">"roomId"</span>: <span class="num">1</span>, <span class="key">"type"</span>: <span class="str">"CH"</span>, <span class="key">"name"</span>: <span class="str">"Junior"</span>, <span class="key">"surname"</span>: <span class="str">"Martin"</span>, <span class="key">"age"</span>: <span class="num">8</span> }
+      <span class="comment">// age: calculé depuis order_travelers.born_on_enc — OBLIGATOIRE pour type CH</span>
+    ]
+  }],
+  <span class="key">"clientReference"</span>: <span class="str">"CMD-A7F92K"</span>,   <span class="comment">// orders.order_ref — pour réconciliation</span>
+  <span class="key">"tolerance"</span>: <span class="num">2.00</span>                   <span class="comment">// écart de prix accepté entre recherche et réservation (en devise, pas en %)</span>
+}</pre>
+
+    <h4>Réponse (succès)</h4>
+    <pre>{
+  <span class="key">"booking"</span>: {
+    <span class="key">"reference"</span>: <span class="str">"94728190488817"</span>,    <span class="comment">// → supplier_bookings.supplier_order_id</span>
+    <span class="key">"hotel"</span>: { <span class="key">"bookingStatus"</span>: <span class="str">"CONFIRMED"</span> }
+  }
+}</pre>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Réservation en deux étapes possible (rateType RECHECK)</strong> Lorsque la disponibilité initiale indique un tarif de type RECHECK, la réservation se fait en deux temps : une vérification explicite du tarif à jour, puis la confirmation. Ne jamais tenter de réserver directement un rateKey de type RECHECK sans cette étape intermédiaire, sous peine de rejet.</div>
+    </div>
+
+    <h3 id="hotelbeds-errors">Codes d'erreur Hotelbeds à gérer explicitement</h3>
+    <table>
+      <thead><tr><th>Cas</th><th>Signification</th><th>Criticité</th><th>Action PayEnCash</th></tr></thead>
+      <tbody>
+        <tr><td>Code HTTP <code>403</code> sur l'environnement d'évaluation</td><td>Quota de 50 requêtes/jour dépassé</td><td><span class="error-tag low">Faible</span></td><td>Ne survient qu'en environnement de test — vérifier le volume de tests automatisés ne dépassant pas ce plafond</td></tr>
+        <tr><td>Tarif non disponible à la réservation (rate mismatch)</td><td>Le rateKey utilisé ne correspond plus à une disponibilité réelle (expiré ou déjà vendu)</td><td><span class="error-tag critical">Critique</span></td><td>Vol confirmé indépendamment. Tentative sur alternative proche (voir Doc 1) ou remboursement partiel hébergement</td></tr>
+        <tr><td>Échec de paiement fournisseur</td><td>Solde/compte Hotelbeds insuffisant pour couvrir le montant</td><td><span class="error-tag critical">Critique</span></td><td>Alerte équipe immédiate + remboursement partiel si non résolu rapidement (voir Doc 8 pour le mécanisme de fonds de roulement)</td></tr>
+        <tr><td>Occupation incompatible</td><td>Nombre de voyageurs incompatible avec la configuration de la chambre choisie</td><td><span class="error-tag low">Faible</span></td><td>Ne devrait pas survenir si la recherche (Phase 1) a filtré correctement</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ENCAISSEMENT & ENCAISSEMENT PAYENCASH (API interne) -->
+  <section class="section" id="encaissement">
+    <h2><span class="provider-badge payencash">🛵 PayEnCash — Encaissement &amp; encaissement à domicile</span></h2>
+    <p>Cette API est <strong>interne</strong> : elle remplace intégralement l'ancien prestataire externe de paiement en espèces. PayEnCash génère son propre code, dispatche un agent <strong>salarié d'AJEK SASU</strong> (salaire fixe, la tournée ne porte aucun gain — D11 rév.) qui collecte le cash au domicile du client, suit la tournée en temps réel, valide l'encaissement par code de sécurité + photo — ce qui déclenche le règlement des fournisseurs — puis recueille une notation. Tous les endpoints ci-dessous sont exposés sous le préfixe global <code>/api</code> et protégés par l'authentification PayEnCash (JWT client, JWT agent, ou rôle manager selon le cas).</p>
+    <div class="callout info">
+      <span class="callout-icon">🔐</span>
+      <div><strong>Trois profils d'appelant</strong> Les endpoints sont segmentés par acteur : <strong>client</strong> (suivi de sa encaissement, notation), <strong>agent</strong> (ses tournées, position, validation d'encaissement), <strong>manager</strong> (validation des inscriptions agent, zones, limites, dispatch). Un guard de rôle est appliqué globalement — un agent ne peut pas lire les tournées d'un autre, un client ne voit que ses propres commandes.</div>
+    </div>
+
+    <h3 id="code-generation">1. Génération du code interne (code-barres)</h3>
+    <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/orders/{orderId}/payment-code</span></div>
+    <p>Appelé en Phase 3 (Doc 1) quand la commande passe en <code>AWAITING_COURIER</code>. Génère en interne le code-barres et le code de sécurité, crée la ligne <code>payments</code> (Doc 2) et ouvre la fenêtre de collecte. <strong>Idempotent</strong> : un second appel sur la même commande renvoie le code existant, jamais un nouveau.</p>
+    <h4>Réponse</h4>
+    <pre>{
+  <span class="key">"paymentId"</span>: <span class="str">"pay_01H..."</span>,
+  <span class="key">"barcodeValue"</span>: <span class="str">"PEC-4F9A-20K7-C3"</span>,       <span class="comment">// → payments.barcode_value (UNIQUE, généré en interne)</span>
+  <span class="key">"amountCents"</span>: <span class="num">3700</span>,                       <span class="comment">// TTC → payments.amount_cents = orders.total_price_cents</span>
+  <span class="key">"vatRate"</span>: <span class="num">0.20</span>,                          <span class="comment">// → orders.vat_rate (config manager, défaut 20%)</span>
+  <span class="key">"vatAmountCents"</span>: <span class="num">617</span>,                    <span class="comment">// → orders.vat_amount_cents — affiché « dont TVA »</span>
+  <span class="key">"securityCode"</span>: <span class="str">"4821"</span>,                    <span class="comment">// affiché au client UNE fois — stocké haché (security_code_hash)</span>
+  <span class="key">"collectionDeadlineAt"</span>: <span class="str">"2026-06-19T18:30:00Z"</span>  <span class="comment">// → orders.collection_deadline_at (fenêtre de collecte)</span>
+}</pre>
+    <div class="callout info">
+      <span class="callout-icon">🧾</span>
+      <div><strong>Montant TTC + TVA</strong> <code>amountCents</code> est le montant <strong>TTC</strong> (= <code>orders.total_price_cents</code>). <code>vatAmountCents</code> et <code>vatRate</code> permettent d'afficher « dont TVA » et d'émettre le reçu / la facture (HT + TVA + TTC). Le taux est figé à la génération du code (config manager, défaut 20%).</div>
+    </div>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Le code de sécurité ne transite qu'une fois</strong> Il est affiché au client au moment de la génération et n'est <strong>jamais</strong> renvoyé par une lecture ultérieure : seul son hash est stocké (<code>payments.security_code_hash</code>). Le client le communique à l'agent lors de la collecte ; l'agent le saisit pour valider (voir <a href="#collect">§4</a>). Ne jamais le journaliser en clair.</div>
+    </div>
+    <div class="callout">
+      <span class="callout-icon">🔵</span>
+      <div><strong>Deux codes, deux rôles — l'un ne remplace pas l'autre</strong> Le <strong>code interne</strong> (<code>payments.internal_code</code>, ex. <code>PEC-Z6DNX8HV</code>) est affiché au client <strong>en code-barres</strong> et scanné par l'agent : il <em>identifie</em> la commande. Il est visible par quiconque regarde l'écran, donc il ne prouve rien d'autre. Le <strong>code de sécurité</strong> (4 chiffres, révélé au client seulement à l'arrivée de l'agent) <em>authentifie</em> la remise : il atteste que le client est présent et consent. La validation de collecte exige <strong>les deux</strong>. Un scan seul ne doit jamais suffire à encaisser.</div>
+    </div>
+
+    <h3 id="dispatch">2. Création de l'encaissement &amp; dispatch agent</h3>
+    <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/orders/{orderId}/deliveries</span></div>
+    <p>Crée l'encaissement (<code>deliveries</code>, Doc 2) et déclenche le <strong>dispatch automatique</strong> (job <code>dispatch-courier</code>). L'algorithme sélectionne un agent <code>approved</code> et disponible dans la zone couvrant l'adresse, en priorisant la <strong>distance</strong> (critère primaire, D5) puis la <strong>note</strong> (<code>rating_avg</code>, critère secondaire), sous réserve des limites manager de la zone : rayon max, nombre de tournées simultanées, montant cash max par agent.</p>
+    <h4>Réponse</h4>
+    <pre>{
+  <span class="key">"deliveryId"</span>: <span class="str">"dlv_01H..."</span>,
+  <span class="key">"status"</span>: <span class="str">"COURIER_ASSIGNED"</span>,   <span class="comment">// ou AWAITING_COURIER si aucun agent dispo (mise en file)</span>
+  <span class="key">"courier"</span>: {
+    <span class="key">"id"</span>: <span class="str">"cur_01H..."</span>,
+    <span class="key">"firstName"</span>: <span class="str">"Yanis"</span>,
+    <span class="key">"ratingAvg"</span>: <span class="num">4.8</span>,
+    <span class="key">"vehicle"</span>: <span class="str">"scooter"</span>
+  },
+  <span class="key">"etaMinutes"</span>: <span class="num">18</span>
+}</pre>
+    <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/deliveries/{deliveryId}/reassign</span></div>
+    <p>Réaffecte la tournée à un autre agent — manuellement (manager) ou automatiquement (job de réassignation sur timeout d'acceptation). Même algorithme de sélection, en excluant l'agent précédent.</p>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Aucun agent disponible</strong> Si le dispatch ne trouve aucun agent éligible, l'encaissement reste en <code>AWAITING_COURIER</code> et est ré-évaluée par le job à intervalle régulier. Au-delà d'un seuil (fenêtre de collecte dépassée), la commande bascule en <code>COLLECTION_FAILED</code> (voir cas d'erreur, Doc 1).</div>
+    </div>
+
+    <h3 id="courier-space">3. Espace agent</h3>
+    <p>Endpoints authentifiés par JWT agent. L'inscription reste soumise à validation manager (<a href="#manager-api">§7</a>) avant que le compte ne devienne <code>approved</code> et éligible au dispatch.</p>
+    <table>
+      <thead><tr><th>Méthode</th><th>Endpoint</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST</code></td><td><code>/couriers/apply</code></td><td>Candidature agent (identité, CV, CNI, aptitudes) → <code>approval_status = pending</code>. Tout candidat est ensuite invité à une <strong>session de recrutement</strong> ; ce n'est pas une auto-inscription validée automatiquement</td></tr>
+        <tr><td><code>POST</code></td><td><code>/couriers/auth/login</code></td><td><strong>Nouveau</strong> — Identifiant + mot de passe → jeton de session (écran <code>ui/agent/02-connexion.html</code>). Vérifié contre <code>couriers.password_hash</code>. <strong>Refus explicite si <code>approval_status ≠ 'approved'</code></strong> : un dossier en attente doit recevoir « dossier en cours de validation », pas « identifiants incorrects » — sinon l'agent réessaie et sature le support. Refus également si <code>status = 'suspended'</code></td></tr>
+        <tr><td><code>POST</code></td><td><code>/couriers/auth/logout</code></td><td><strong>Nouveau</strong> — Fermeture de session. Incrémente <code>couriers.token_version</code> si la déconnexion est demandée sur tous les appareils</td></tr>
+        <tr><td><code>GET</code></td><td><code>/couriers/me</code></td><td>Profil, statut d'approbation, note moyenne, zone d'attache</td></tr>
+        <tr><td><code>PUT</code></td><td><code>/couriers/me/status</code></td><td>Bascule disponibilité (<code>online</code> / <code>offline</code>)</td></tr>
+        <tr><td><code>GET</code></td><td><code>/couriers/me/deliveries</code></td><td>Tournées assignées (actives + historique). <strong>Aucun montant de rémunération n'est servi</strong> : l'agent est salarié (salaire fixe), la tournée ne porte pas de gain. La réponse ne contient aucun champ de gain par tournée</td></tr>
+        <tr><td><code>POST</code></td><td><code>/couriers/me/documents</code></td><td><strong>Nouveau</strong> — Téléversement d'une pièce du dossier d'embauche (identité/CNI, CV, permis, RIB) — alimente <code>courier_documents</code>, examiné par le manager avant habilitation. Aucune pièce d'indépendant (ni RC pro, ni avis SIRENE)</td></tr>
+        <tr><td><code>POST</code></td><td><code>/deliveries/{id}/accept</code></td><td>Accepte la tournée → <code>COURIER_ASSIGNED</code> confirmé</td></tr>
+        <tr><td><code>POST</code></td><td><code>/deliveries/{id}/start</code></td><td>Démarre le trajet → <code>OUT_FOR_COLLECTION</code></td></tr>
+        <tr><td><code>POST</code></td><td><code>/deliveries/{id}/location</code></td><td>Heartbeat de position (lat/lng) — voir <a href="#tracking">§5</a></td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">🧾</span>
+      <div><strong>Tournées de retour (remboursement) — DÉCISION REQUISE</strong> Le remboursement en espèces par une tournée de retour <code>is_return = true</code> (l'agent rapporte le cash au client) est un mécanisme <strong>sous décision</strong>, non arrêté. S'il est retenu, la tournée apparaîtrait dans <code>/couriers/me/deliveries</code> comme une tournée normale, avec un montant à restituer au lieu d'un montant à collecter ; les modalités (traçabilité, alternative par virement) restent à trancher.</div>
+    </div>
+
+    <h3 id="collect">4. Validation d'encaissement (déclencheur du paiement fournisseur)</h3>
+    <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/deliveries/{deliveryId}/collect</span></div>
+    <p>C'est le <strong>cœur du nouveau modèle</strong> : l'appel effectué par l'agent après avoir reçu le cash. Il remplace l'ancien webhook de paiement comme <strong>unique déclencheur de la Phase 5</strong> (règlement Duffel + Hotelbeds). L'agent <strong>scanne le code-barres affiché par le client</strong>, saisit le code de sécurité que celui-ci lui dicte, et joint une photo de preuve.</p>
+    <h4>Requête (multipart)</h4>
+    <pre>{
+  <span class="key">"scannedCode"</span>: <span class="str">"PEC-Z6DNX8HV"</span>,   <span class="comment">// code-barres scanné sur l'écran du client → comparé à payments.internal_code</span>
+  <span class="key">"securityCode"</span>: <span class="str">"4821"</span>,          <span class="comment">// comparé au hash payments.security_code_hash</span>
+  <span class="key">"collectedAmountCents"</span>: <span class="num">3700</span>,   <span class="comment">// montant TTC réellement encaissé → payments.collected_amount_cents</span>
+  <span class="key">"proofPhoto"</span>: <span class="str">"&lt;fichier binaire&gt;"</span> <span class="comment">// → payments.proof_photo_url (bucket chiffré, rétention bornée — D10)</span>
+}</pre>
+    <h4>Traitement serveur (transactionnel)</h4>
+    <ol style="padding-left:18px; font-size:14px; line-height:1.9;">
+      <li>Vérifier que <code>scannedCode</code> correspond bien au code interne de <strong>cette</strong> encaissement — sinon <code>422</code> : l'agent est devant la mauvaise commande, rien n'est encaissé.</li>
+      <li>Vérifier le code de sécurité (hash) et que le montant encaissé correspond — sinon <code>422</code>, la collecte n'est pas validée.</li>
+      <li>Exiger la photo de preuve — un appel sans photo est rejeté (<code>422</code>).</li>
+      <li>Passer <code>payments.status = collected</code>, <code>deliveries.status = CASH_COLLECTED</code>, <code>orders.status = CASH_COLLECTED</code> puis <code>PAID</code>.</li>
+      <li>Enfiler la Phase 5 dans BullMQ (règlement fournisseurs) — <strong>jamais</strong> en synchrone dans la requête.</li>
+      <li>Retourner <code>200 OK</code>.</li>
+    </ol>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Idempotence sur <code>deliveries.id</code></strong> La validation de collecte doit être strictement idempotente : un rejeu (double tap réseau de l'agent) ne doit jamais déclencher deux fois le paiement fournisseur ni deux transitions d'état. La clé d'idempotence est <code>deliveries.id</code> (une collecte = un encaissement). Toute la logique lourde (Duffel/Hotelbeds) reste en file asynchrone après le <code>200 OK</code>.</div>
+    </div>
+    <table>
+      <thead><tr><th>Cas d'erreur</th><th>Code</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td>Code de sécurité invalide</td><td><span class="error-tag critical">422</span></td><td>Collecte refusée — l'agent redemande le code au client ; journaliser la tentative</td></tr>
+        <tr><td>Photo de preuve manquante</td><td><span class="error-tag medium">422</span></td><td>Collecte refusée tant que la photo n'est pas jointe</td></tr>
+        <tr><td>Montant encaissé ≠ montant dû</td><td><span class="error-tag critical">422</span></td><td>Refus — litige cash à remonter au manager (Doc 1, cas d'erreur)</td></tr>
+        <tr><td>Encaissement déjà collectée</td><td><span class="error-tag low">200</span></td><td>Idempotent — renvoyer l'état existant, aucune nouvelle action</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="tracking">5. Suivi temps réel &amp; ETA (carte live)</h3>
+    <p>Le client suit la position de l'agent et l'ETA façon VTC. Deux canaux : un flux temps réel (WebSocket/SSE) alimenté par les heartbeats <code>/deliveries/{id}/location</code> de l'agent, et un endpoint de repli en polling.</p>
+    <table>
+      <thead><tr><th>Méthode</th><th>Endpoint</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td><code>/deliveries/{id}/tracking</code></td><td>Client — dernière position agent + ETA + statut (repli polling)</td></tr>
+        <tr><td><code>WS/SSE</code></td><td><code>/deliveries/{id}/stream</code></td><td>Client — flux temps réel position + ETA + changements de statut</td></tr>
+      </tbody>
+    </table>
+    <h4>Événement de suivi (payload)</h4>
+    <pre>{
+  <span class="key">"deliveryId"</span>: <span class="str">"dlv_01H..."</span>,
+  <span class="key">"status"</span>: <span class="str">"OUT_FOR_COLLECTION"</span>,
+  <span class="key">"courierLat"</span>: <span class="num">43.2965</span>,     <span class="comment">// → delivery_tracking_events.courier_lat</span>
+  <span class="key">"courierLng"</span>: <span class="num">5.3698</span>,
+  <span class="key">"etaMinutes"</span>: <span class="num">6</span>,
+  <span class="key">"emittedAt"</span>: <span class="str">"2026-06-19T17:42:10Z"</span>
+}</pre>
+    <div class="callout info">
+      <span class="callout-icon">🗺️</span>
+      <div><strong>SDK carto &amp; conformité RGPD</strong> Le rendu de la carte s'appuie sur un SDK de cartographie (MapLibre / Mapbox / Google — choix figé au plan d'implémentation). La géolocalisation live (client et agent) et les photos de preuve sont des données personnelles : stockage chiffré, rétention bornée, accès restreint (D10).</div>
+    </div>
+
+    <h3 id="rating">6. Notation de l'agent</h3>
+    <div class="endpoint"><span class="method post">POST</span><span class="endpoint-path">/orders/{orderId}/courier-rating</span></div>
+    <p>Appelé par le client après <code>CONFIRMED</code> (job <code>request-rating</code> qui invite à noter). Alimente <code>courier_ratings</code> (Doc 2) et le <code>rating_avg</code> de l'agent — critère <strong>secondaire</strong> du dispatch (la distance primant, D5).</p>
+    <h4>Requête</h4>
+    <pre>{
+  <span class="key">"stars"</span>: <span class="num">5</span>,                    <span class="comment">// entier 1 à 5 (validé) → courier_ratings.stars</span>
+  <span class="key">"comment"</span>: <span class="str">"Ponctuel et sympa"</span>   <span class="comment">// optionnel, texte libre borné</span>
+}</pre>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Une notation par encaissement</strong> Contrainte d'unicité <code>(delivery_id, user_id)</code> — un client ne note qu'une fois une tournée donnée. Une valeur hors bornes (0, 6, décimale) est rejetée en <code>422</code>.</div>
+    </div>
+
+    <h3 id="deposits">7. Dépôt du cash par l'agent</h3>
+    <p>Seconde moitié de la tournée. Dès que son encours d'espèces dépasse le <strong>seuil de dépôt de 400 €</strong>, l'agent est bloqué : le dispatch ne lui propose plus rien (<code>couriers.cash_on_hand_cents &gt; 40000</code>), dépôt immédiat exigé. Le dépôt se fait dans un automate <strong>Cash Services</strong> (recherche géolocalisée) avec la <strong>carte de dépôt nominative Cash Services</strong> de l'agent, puis il le déclare ici.</p>
+    <table>
+      <thead><tr><th>Méthode</th><th>Endpoint</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td><code>/couriers/me/cash</code></td><td>Encours à déposer, dépôts en attente de rapprochement, plafond de la zone</td></tr>
+        <tr><td><code>GET</code></td><td><code>/deposit-points?lat&amp;lng</code></td><td>Automates Cash Services les plus proches (recherche géolocalisée sur le référentiel Cash Services)</td></tr>
+        <tr><td><code>POST</code></td><td><code>/couriers/me/deposits</code></td><td>Déclaration d'un dépôt : montant du reçu, référence de transaction, photo</td></tr>
+      </tbody>
+    </table>
+    <h4>Requête — déclaration de dépôt (multipart)</h4>
+    <pre>{
+  <span class="key">"declaredAmountCents"</span>: <span class="num">50045</span>,        <span class="comment">// total imprimé sur le reçu de l'automate</span>
+  <span class="key">"declaredReference"</span>: <span class="str">"CS-88213"</span>,      <span class="comment">// n° de transaction Cash Services du reçu</span>
+  <span class="key">"receiptPhoto"</span>: <span class="str">"&lt;fichier binaire&gt;"</span>   <span class="comment">// → courier_deposits.receipt_photo_url (bucket chiffré)</span>
+}</pre>
+    <h4>Traitement serveur</h4>
+    <ol style="padding-left:18px; font-size:14px; line-height:1.9;">
+      <li>Vérifier que l'agent a une <strong>carte de dépôt active</strong> — sinon <code>422</code>.</li>
+      <li>Créer <code>courier_deposits</code> en statut <code>declared</code>, avec la photo et la référence saisies.</li>
+      <li>Remettre <code>couriers.cash_on_hand_cents</code> à zéro et <strong>débloquer</strong> l'agent : il peut reprendre une tournée.</li>
+      <li>Retourner <code>201</code>. Le rapprochement bancaire viendra plus tard, par le job d'import.</li>
+    </ol>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Cet endpoint ne rend jamais un dépôt « confirmé »</strong> Il enregistre une <em>déclaration de l'agent</em>, appuyée par une photo de reçu. Ce n'est pas une preuve d'encaissement bancaire. Seul le job de rapprochement (§8) peut faire passer un dépôt en <code>reconciled</code>, et aucun versement de paie ne doit s'appuyer sur autre chose. L'agent est débloqué dès <code>declared</code> — l'immobiliser jusqu'à J+1 n'aurait pas de sens — mais l'argent, lui, n'est pas encore revenu.</div>
+    </div>
+
+    <h3 id="cash-report-import">8. Import du rapport quotidien Cash Services</h3>
+    <p>Job planifié quotidien, <strong>sans endpoint public</strong>. Il récupère le <strong>rapport quotidien Cash Services</strong> des transactions non encore traitées (CSV ou Excel) et rapproche chaque ligne de dépôt d'espèces avec les déclarations des agents.</p>
+    <h4>Configuration</h4>
+    <table>
+      <thead><tr><th>Variable</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>CASH_SERVICES_API_BASE</code> / <code>CASH_SERVICES_API_KEY</code></td><td>Point d'accès et <strong>clé secrète</strong> du rapport Cash Services (authentification par clé)</td></tr>
+        <tr><td><code>CASH_SERVICES_REPORT_PATH</code></td><td>Emplacement / ressource des rapports quotidiens</td></tr>
+        <tr><td><code>CASH_SERVICES_IMPORT_CRON</code></td><td>Heure d'exécution — réglable depuis l'espace manager (Doc 9)</td></tr>
+      </tbody>
+    </table>
+    <h4>Traitement</h4>
+    <ol style="padding-left:18px; font-size:14px; line-height:1.9;">
+      <li>Télécharger les fichiers non traités, archiver le fichier brut tel quel (piste d'audit) et créer <code>bank_report_imports</code>.</li>
+      <li>Parser chaque ligne → <code>bank_deposit_transactions</code>. <strong>Déduplication sur la référence de transaction Cash Services</strong>, jamais sur la date d'import : un fichier rejoué ne crée pas de doublon.</li>
+      <li>Rapprocher : référence de carte → agent, puis montant et horodatage → dépôt <code>declared</code> correspondant. Correspondance trouvée ⇒ <code>reconciled</code>.</li>
+      <li>Imputer le montant rapproché aux encaissements de l'agent dans l'ordre chronologique : chaque commande sait ainsi si son cash est revenu.</li>
+      <li>Tout ce qui ne se rapproche pas est remonté au manager comme <strong>écart</strong>.</li>
+    </ol>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Jamais d'import partiel silencieux</strong> Un format inattendu met le fichier entier en <code>failed</code> et alerte : mieux vaut un import bloqué et visible qu'une moitié de rapport avalée sans bruit, qui créerait des écarts fantômes impossibles à expliquer plus tard. De même, un écart de montant n'est jamais « corrigé » automatiquement : <strong>le rapport Cash Services fait foi</strong>, et l'écart est tracé sur l'agent pour arbitrage humain.</div>
+    </div>
+
+    <h3 id="qonto">9. Qonto — virement et ventilation des paies</h3>
+    <p>Qonto est le <strong>compte opérationnel</strong> : il reçoit les fonds rapprochés, et c'est de lui que partent les paies des agents. Deux usages de l'API, tous deux réservés au rôle manager.</p>
+    <table>
+      <thead><tr><th>Méthode</th><th>Endpoint</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST</code></td><td><code>/treasury/qonto/sync</code></td><td>Interroge Qonto et <strong>confirme quels fonds sont réellement arrivés</strong> → <code>treasury_transfers.status = confirmed</code>. C'est le bouton « Synchroniser » de l'espace manager (Doc 9)</td></tr>
+        <tr><td><code>GET</code></td><td><code>/treasury/balance</code></td><td>Les 4 poches : collecté non déposé · déposé non rapproché · rapproché non viré · disponible sur Qonto</td></tr>
+        <tr><td><code>POST</code></td><td><code>/treasury/payouts/run</code></td><td>Déclenche la ventilation des paies agents pour la période échue</td></tr>
+      </tbody>
+    </table>
+    <h4>Configuration</h4>
+    <table>
+      <thead><tr><th>Variable</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>QONTO_ORG_SLUG</code> / <code>QONTO_API_KEY</code></td><td>Organisation et clé secrète. Portées nécessaires : <strong>lecture des transactions</strong> (confirmer l'arrivée des fonds) et <strong>initiation de virements</strong> (payer les agents)</td></tr>
+        <tr><td><code>PAYOUT_FREQUENCY</code></td><td>Fréquence de ventilation (hebdomadaire par défaut) — réglable depuis l'espace manager</td></tr>
+      </tbody>
+    </table>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Une ventilation ne part que de la poche « disponible sur Qonto »</strong> La chaîne est stricte : <code>collected → declared → reconciled → on_account → paid_out</code>. Court-circuiter une étape, c'est virer des salaires sur une trésorerie supposée. La ventilation doit en outre être <strong>idempotente par période et par agent</strong> : relancer un run déjà exécuté ne doit jamais payer deux fois.</div>
+    </div>
+
+    <h3 id="manager-existant">11. Espace manager — endpoints préexistants</h3>
+    <p>Ces endpoints existent <strong>déjà</strong> dans le backend et sont consommés par <code>manager/src/lib/facades/manager.facade.ts</code>. Ils n'étaient pas documentés : ce vide a été relevé par l'audit de traçabilité (Doc 9). Tous sont exposés sous le préfixe <code>/manager</code> et protégés par le <strong>guard global</strong> de rôle — le front les atteint via son propre relais <code>/api/backend/*</code>, qui ajoute le jeton de session.</p>
+
+    <h4>Réservations</h4>
+    <table>
+      <thead><tr><th>Méthode</th><th>Endpoint</th><th>Rôle</th><th>Écran</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td><code>/manager/reservations/pending</code></td><td>Commandes en attente d'action (collecte non aboutie, réservation fournisseur bloquée)</td><td>Tableau de bord</td></tr>
+        <tr><td><code>GET</code></td><td><code>/manager/reservations/by-status?status=</code></td><td>Filtrage par statut de commande</td><td>Commandes</td></tr>
+        <tr><td><code>GET</code></td><td><code>/manager/reservations/search?q=</code></td><td>Recherche par référence, client, destination</td><td>Commandes</td></tr>
+        <tr><td><code>GET</code></td><td><code>/manager/reservations/{id}</code></td><td>Détail complet : voyageurs, tronçons, séjours, paiement, encaissement, journal</td><td>Détail commande</td></tr>
+        <tr><td><code>POST</code></td><td><code>/manager/reservations/{id}/confirm-payment</code></td><td><strong>Confirmation manuelle d'un encaissement</strong> — filet de secours quand la validation agent a échoué techniquement alors que le cash a bien été remis</td><td>Détail commande</td></tr>
+        <tr><td><code>POST</code></td><td><code>/manager/reservations/{id}/cancel</code></td><td>Annulation dans les règles (politiques fournisseurs appliquées)</td><td>Détail commande</td></tr>
+        <tr><td><code>POST</code></td><td><code>/manager/reservations/{id}/force-cancel</code></td><td><strong>Annulation forcée</strong>, hors politique fournisseur — la perte est assumée par PayEnCash</td><td>Détail commande</td></tr>
+      </tbody>
+    </table>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Trois endpoints à haut risque</strong> <code>confirm-payment</code>, <code>cancel</code> et <code>force-cancel</code> déplacent de l'argent réel sans passer par le parcours normal. Ils exigent : une <strong>confirmation explicite</strong> côté interface (pas un simple clic), une <strong>trace nominative</strong> dans <code>audit_log</code>, et un <strong>motif obligatoire</strong>. <code>confirm-payment</code> en particulier déclenche la Phase 5 : l'utiliser à tort fait acheter un billet pour un cash jamais encaissé.</div>
+    </div>
+
+    <h4>Finance et solde fournisseur</h4>
+    <table>
+      <thead><tr><th>Méthode</th><th>Endpoint</th><th>Rôle</th><th>Écran</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td><code>/manager/finance/dashboard</code></td><td>Revenu, TVA collectée, dépenses fournisseurs, bénéfice net sur la période</td><td>Revenus &amp; TVA</td></tr>
+        <tr><td><code>GET</code></td><td><code>/manager/finance/revenue-by-rate</code></td><td>Décomposition du revenu par composante tarifaire (marge fixe, marge de sécurité, frais de service)</td><td>Revenus &amp; TVA</td></tr>
+        <tr><td><code>GET</code></td><td><code>/manager/finance/wallets</code></td><td><strong>Solde prépayé Duffel</strong> et seuil d'alerte</td><td>Solde fournisseur</td></tr>
+        <tr><td><code>GET</code></td><td><code>/manager/finance/wallet-transactions</code></td><td>Mouvements du solde : débits d'achat, recharges</td><td>Solde fournisseur</td></tr>
+        <tr><td><code>POST</code></td><td><code>/manager/finance/wallets/{id}/top-up</code></td><td><strong>Recharge du solde prépayé</strong> — idempotent par clé de requête</td><td>Solde fournisseur</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Le solde Duffel n'est pas la trésorerie du cash</strong> Ce sont deux circuits distincts : le solde prépayé est <em>avancé</em> par PayEnCash pour acheter les billets ; le cash collecté <em>rembourse</em> cette avance une fois revenu par l'automate et la banque (Doc 8). Les afficher sur le même écran sans le dire ferait croire à un vase communicant automatique, alors que la recharge est une décision humaine.</div>
+    </div>
+
+    <h4>Centre d'appels et satisfaction</h4>
+    <table>
+      <thead><tr><th>Méthode</th><th>Endpoint</th><th>Rôle</th><th>Écran</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td><code>/manager/calls/planning</code></td><td>Appels à passer : rappels pré-départ, échecs de collecte, remboursements en cours</td><td>Centre d'appels</td></tr>
+        <tr><td><code>POST</code></td><td><code>/manager/calls</code></td><td>Création d'un appel de satisfaction</td><td>Centre d'appels</td></tr>
+        <tr><td><code>POST</code></td><td><code>/manager/calls/{id}/complete</code></td><td>Clôture d'un appel avec compte rendu</td><td>Centre d'appels</td></tr>
+        <tr><td><code>GET</code></td><td><code>/manager/calls/satisfaction</code></td><td>Tableau de bord de satisfaction agrégé</td><td>Satisfaction</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Configuration et audit</h4>
+    <table>
+      <thead><tr><th>Méthode</th><th>Endpoint</th><th>Rôle</th><th>Écran</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td><code>/manager/config</code></td><td>Configuration courante : marges, frais, TVA, seuils</td><td>Configuration</td></tr>
+        <tr><td><code>PUT</code></td><td><code>/manager/config/margins</code></td><td><strong>Marges de pricing</strong> (marge fixe, marge de sécurité) — voir Doc 4</td><td>Configuration</td></tr>
+        <tr><td><code>PUT</code></td><td><code>/manager/config/fees</code></td><td>Frais de service d'encaissement, composante par composante (D13)</td><td>Configuration</td></tr>
+        <tr><td><code>GET</code></td><td><code>/manager/audit</code></td><td>Journal d'audit filtrable — lecture seule, y compris pour un administrateur</td><td>Journal d'audit</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Une modification de marge change le prix des commandes à venir</strong> <code>/manager/config/margins</code> n'est pas un réglage cosmétique : il alimente directement le calcul du prix affiché (Doc 4). Toute écriture doit être journalisée avec sa valeur précédente, faute de quoi personne ne saura expliquer, six mois plus tard, pourquoi deux commandes identiques n'ont pas le même prix.</div>
+    </div>
+
+    <h4>Authentification</h4>
+    <table>
+      <thead><tr><th>Méthode</th><th>Endpoint</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST</code></td><td><code>/manager/auth/login</code></td><td>Identifiant + mot de passe → jeton de session</td></tr>
+        <tr><td><code>POST</code></td><td><code>/manager/auth/refresh</code></td><td>Renouvellement du jeton</td></tr>
+        <tr><td><code>POST</code></td><td><code>/manager/auth/logout</code></td><td>Révocation de la session côté serveur — pas seulement l'oubli du jeton côté client</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="manager-api">12. Administration — endpoints de la refonte agent</h3>
+    <p>Endpoints réservés au rôle manager (guard global). Ils couvrent la validation des agents, la configuration des zones et de leurs limites, la grille tarifaire d'encaissement, et la supervision.</p>
+    <table>
+      <thead><tr><th>Méthode</th><th>Endpoint</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td><code>/manager/couriers?approval_status=pending</code></td><td>File des candidatures agent à traiter (après session de recrutement)</td></tr>
+        <tr><td><code>POST</code></td><td><code>/manager/couriers/{id}/approve</code></td><td>Habilite l'agent (embauche) → <code>approval_status = approved</code></td></tr>
+        <tr><td><code>POST</code></td><td><code>/manager/couriers/{id}/reject</code></td><td>Refuse la candidature → <code>approval_status = rejected</code></td></tr>
+        <tr><td><code>POST</code> / <code>PUT</code></td><td><code>/manager/delivery-zones</code></td><td>CRUD zones : centre + rayon, <strong>rayon max</strong>, <strong>tournées simultanées max</strong>, <strong>cash max par agent</strong></td></tr>
+        <tr><td><code>PUT</code></td><td><code>/manager/delivery-fee-config</code></td><td>Grille de frais de déplacement (domicile) modulaire : composantes <code>fixed</code> / <code>percentage</code> / <code>per_km</code> / <code>night_surcharge</code>, chacune activable (Doc 2)</td></tr>
+        <tr><td><code>PUT</code></td><td><code>/manager/service-fee</code></td><td>Frais de service prélevés par tournée → <code>orders.service_fee_cents</code> (D13)</td></tr>
+        <tr><td><code>GET</code></td><td><code>/manager/deliveries?status=...</code></td><td>Supervision des encaissements en cours (dispatch, retards, litiges)</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">💶</span>
+      <div><strong>Ne pas confondre ce que le client paie et ce que l'agent touche</strong> Sont paramétrables côté manager les <strong>revenus</strong> et <strong>frais facturés au client</strong> — grille d'encaissement modulaire et frais de service — qui composent <code>orders.total_price_cents</code> (voir Doc 4). L'agent, lui, est <strong>salarié d'AJEK SASU</strong> : sa rémunération est un <strong>salaire fixe</strong> versé par la paie (<code>courier_payouts</code>), indépendant des tournées. <strong>Aucune commission à la tournée, aucune facture agent, aucun endpoint de settlement.</strong></div>
+      <p>Endpoints manager du dossier agent :</p>
+      <table>
+        <thead><tr><th>Méthode</th><th>Chemin</th><th>Rôle</th></tr></thead>
+        <tbody>
+          <tr><td><code>GET</code></td><td><code>/manager/couriers/{id}/documents</code></td><td>Pièces du dossier d'embauche, avec leur état et leur échéance</td></tr>
+          <tr><td><code>POST</code></td><td><code>/manager/couriers/{id}/documents/{docId}/review</code></td><td>Validation ou refus motivé d'une pièce</td></tr>
+          <tr><td><code>POST</code></td><td><code>/manager/couriers</code></td><td>Création manuelle d'un agent (salarié) par le manager. À l'habilitation, une <strong>carte de dépôt nominative Cash Services</strong> est émise (<code>deposit_cards</code>)</td></tr>
+          <tr><td><code>GET</code></td><td><code>/manager/couriers/{id}/payouts</code></td><td>Historique des versements de salaire de l'agent, par période</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="manager-administration-endpoints">Administration : comptes manager, clients, comptabilité</h3>
+    <p>Ces quatre écrans — <em>Comptes manager</em>, <em>Invitation</em>, <em>Clients</em>, <em>Comptabilité &amp; TVA</em> — existent en maquette et sont planifiés, mais leurs contrats n'étaient décrits nulle part. Un plan qui référence un endpoint absent de ce document produit deux implémentations : celle du plan et celle de la doc.</p>
+    <table>
+      <thead><tr><th>Méthode</th><th>Endpoint</th><th>Rôle</th><th>Écran</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td><code>/manager/accounts</code></td><td>Liste des comptes manager (rôle, état, dernière connexion)</td><td>Comptes manager</td></tr>
+        <tr><td><code>GET</code></td><td><code>/manager/accounts/invitations</code></td><td>Invitations en attente, avec leur échéance</td><td>Comptes manager</td></tr>
+        <tr><td><code>POST</code></td><td><code>/manager/accounts/invitations</code></td><td>Émet une invitation (email + rôle) → ligne <code>manager_invitations</code>, jeton haché, expiration bornée. <strong>Réservé au rôle <code>owner</code></strong></td><td>Invitation</td></tr>
+        <tr><td><code>DELETE</code></td><td><code>/manager/accounts/invitations/{id}</code></td><td>Révoque une invitation non consommée. Une invitation déjà acceptée ne se révoque pas — on désactive le compte créé</td><td>Comptes manager</td></tr>
+        <tr><td><code>POST</code></td><td><code>/manager/invitations/{token}/accept</code></td><td><strong>Hors session — seule route de l'espace manager sans garde</strong> (l'invité n'a pas encore de compte). L'invité choisit son mot de passe ; l'email et le rôle viennent de l'invitation et ne sont <strong>pas</strong> acceptés depuis le corps de la requête, sinon un lien d'opérateur permettrait de s'attribuer <code>owner</code>. Jeton inconnu, expiré ou déjà utilisé → <strong>message identique</strong> dans les trois cas</td><td>Invitation</td></tr>
+        <tr><td><code>PUT</code></td><td><code>/manager/accounts/{id}/role</code></td><td>Change le rôle d'un compte. <strong>Réservé au rôle <code>owner</code></strong>, journalisé avec l'ancienne et la nouvelle valeur</td><td>Comptes manager</td></tr>
+        <tr><td><code>PUT</code></td><td><code>/manager/accounts/{id}/active</code></td><td>Active ou désactive un compte. <strong>Désactivation ≠ suppression</strong> : le compte disparaît de l'accès, jamais du journal d'audit — sinon les traces nominatives passées deviennent illisibles</td><td>Comptes manager</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Demandes RGPD traitées depuis la fiche client</h4>
+    <p>Ces quatre actions reprennent, côté manager, les droits que le client exerce lui-même via <code>/me/privacy/*</code>. Elles existent parce qu'une demande arrive aussi par téléphone ou par courrier.</p>
+    <table>
+      <thead><tr><th>Méthode</th><th>Endpoint</th><th>Rôle</th><th>Écran</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST</code></td><td><code>/manager/customers/{id}/privacy/code</code></td><td>Émet un code de vérification à faire confirmer par le client avant toute action sur ses données. <strong>Sans lui, un appelant qui connaît un numéro de téléphone fait effacer le compte d'un tiers</strong></td><td>Fiche client</td></tr>
+        <tr><td><code>POST</code></td><td><code>/manager/customers/{id}/privacy/export</code></td><td>Droit à la portabilité, déclenché par le manager</td><td>Fiche client</td></tr>
+        <tr><td><code>POST</code></td><td><code>/manager/customers/{id}/privacy/rectify</code></td><td>Droit de rectification</td><td>Fiche client</td></tr>
+        <tr><td><code>POST</code></td><td><code>/manager/customers/{id}/privacy/erase</code></td><td>Droit à l'effacement. <strong>Anonymisation, pas suppression</strong> : les montants et les pièces comptables sont conservés (obligation légale), seules les données identifiantes sont neutralisées</td><td>Fiche client</td></tr>
+        <tr><td><code>GET</code></td><td><code>/manager/customers/search</code></td><td>Recherche client par téléphone, email ou référence de commande. <strong>Aucune recherche à vide</strong> : un critère est obligatoire, sinon l'écran devient un export intégral du fichier client</td><td>Clients</td></tr>
+        <tr><td><code>GET</code></td><td><code>/manager/customers/{id}</code></td><td>Fiche client : commandes, encaissements, appels, demandes RGPD. Consultation <strong>journalisée dans <code>audit_log</code></strong></td><td>Fiche client</td></tr>
+        <tr><td><code>GET</code></td><td><code>/manager/accounting/vat</code></td><td>Assiette et TVA de la période (<code>?period=YYYY-MM</code>) — TVA collectée et TVA déductible <strong>séparées</strong>, jamais nettées en un seul chiffre (Doc 8)</td><td>Comptabilité &amp; TVA</td></tr>
+        <tr><td><code>GET</code></td><td><code>/manager/accounting/export/{journal}</code></td><td>Export CSV d'un journal comptable sur une période. Lecture seule</td><td>Comptabilité &amp; TVA</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>La table <code>manager_invitations</code> doit exister avant ces endpoints</strong> Elle est définie dans la spec d'administration manager et créée par le plan manager, mais n'apparaît pas au Doc 2. Tant qu'elle n'y figure pas, <code>POST /manager/accounts/invitations</code> écrit dans une table que le schéma de référence ignore.</div>
+    </div>
+  </section>
+
+  <!-- Section de l'ancien prestataire de paiement en ligne supprimée (refonte v2.0) : l'encaissement externe est remplacé par l'encaissement à domicile interne, voir #encaissement. -->
+
+
+  <section class="section" id="api-client">
+    <h2>API client &amp; compte — endpoints préexistants</h2>
+    <p>Même constat que pour le manager, en pire : <strong>46 chemins (48 opérations) réellement exposés par le backend n'étaient documentés nulle part</strong>. Ce document ne décrivait que les fournisseurs externes, la refonte agent et le manager. <strong>Tout le parcours client — composition de commande, recherche, compte, RGPD, webhooks — était absent.</strong> Un développeur travaillant à partir de la seule documentation aurait réécrit la moitié du backend en croyant partir de zéro.</p>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Ces endpoints décrivent le PRÉSENT, pas la cible</strong> Certains portent encore le modèle d'avant la refonte — un <strong>webhook de paiement en ligne hérité</strong> et un <strong>endpoint de points de dépôt tiers hérité</strong> notamment. Ils sont listés parce qu'ils <strong>existent et tournent</strong>, pas parce qu'ils doivent survivre : leur retrait fait partie du portage. Les ignorer, c'est découvrir en production un webhook actif dont plus personne ne connaît l'usage.</div>
+    </div>
+
+    <h3>Authentification &amp; compte</h3>
+    <table>
+      <thead><tr><th>Méthode</th><th>Chemin</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST</code></td><td><code>/auth/otp/request</code></td><td>Demande d'un code OTP par SMS (inscription et reconnexion)</td></tr>
+        <tr><td><code>POST</code></td><td><code>/auth/otp/verify</code></td><td>Vérification du code, ouverture de session</td></tr>
+        <tr><td><code>GET</code></td><td><code>/me</code></td><td>Profil du client connecté</td></tr>
+        <tr><td><code>PUT</code></td><td><code>/me/preferences</code></td><td>Préférences du compte</td></tr>
+        <tr><td><code>POST</code></td><td><code>/me/logout</code></td><td>Fermeture de session</td></tr>
+        <tr><td><code>GET</code> · <code>PUT</code></td><td><code>/me/consents</code></td><td>Consentements RGPD — lecture et mise à jour</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Voyageurs enregistrés</h3>
+    <table>
+      <thead><tr><th>Méthode</th><th>Chemin</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code> · <code>POST</code></td><td><code>/me/travelers</code></td><td>Liste et création d'un voyageur enregistré (données chiffrées)</td></tr>
+        <tr><td><code>PUT</code></td><td><code>/me/travelers/{id}</code></td><td>Mise à jour</td></tr>
+        <tr><td><code>POST</code></td><td><code>/me/travelers/{id}/delete</code></td><td>Suppression. <strong>POST et non DELETE</strong> : suppression logique avec trace, pas un effacement de ligne</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Vie privée (RGPD)</h3>
+    <table>
+      <thead><tr><th>Méthode</th><th>Chemin</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td><code>/me/privacy/export</code></td><td>Export des données personnelles — droit à la portabilité</td></tr>
+        <tr><td><code>POST</code></td><td><code>/me/privacy/delete</code></td><td>Demande d'effacement — droit à l'oubli</td></tr>
+        <tr><td><code>PUT</code></td><td><code>/me/privacy/profile</code></td><td>Rectification des données du profil</td></tr>
+      </tbody>
+    </table>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Trois endpoints RGPD non documentés, c'est une obligation légale invisible</strong> Le droit d'accès, de rectification et d'effacement est implémenté — mais personne ne pouvait le savoir en lisant la documentation. Un endpoint de conformité qui n'est pas documenté n'est ni testé, ni maintenu, ni opposable : c'est exactement la situation qu'un contrôle sanctionne.</div>
+    </div>
+
+    <h3>Recherche</h3>
+    <table>
+      <thead><tr><th>Méthode</th><th>Chemin</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST</code></td><td><code>/search/flights</code></td><td>Recherche de vols hors commande</td></tr>
+        <tr><td><code>GET</code></td><td><code>/search/offers/{id}/baggage</code></td><td>Options bagages d'une offre</td></tr>
+        <tr><td><code>GET</code></td><td><code>/search/places</code></td><td>Autocomplétion de lieux</td></tr>
+        <tr><td><code>GET</code></td><td><code>/search/budget-destinations</code></td><td>Destinations atteignables pour un budget donné</td></tr>
+        <tr><td><code>GET</code></td><td><code>/destinations</code></td><td>Référentiel des destinations</td></tr>
+        <tr><td><code>GET</code></td><td><code>/media/hotels/{code}</code></td><td>Image d'hôtel servie par le cache interne</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Composition d'une commande</h3>
+    <p>Le tunnel est une <strong>commande construite par étapes</strong> côté serveur, et non un panier tenu par le navigateur : chaque choix est persisté, ce qui permet de reprendre un parcours interrompu et de figer les prix (Doc 4).</p>
+    <table>
+      <thead><tr><th>Méthode</th><th>Chemin</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST</code></td><td><code>/orders</code></td><td>Création de la commande (état <code>DRAFT</code>)</td></tr>
+        <tr><td><code>PATCH</code></td><td><code>/orders/{id}/budget</code></td><td>Budget déclaré par le client</td></tr>
+        <tr><td><code>POST</code></td><td><code>/orders/{id}/search/flights</code></td><td>Recherche de vols dans le contexte de la commande</td></tr>
+        <tr><td><code>POST</code></td><td><code>/orders/{id}/flight</code></td><td>Sélection du vol</td></tr>
+        <tr><td><code>PATCH</code></td><td><code>/orders/{id}/flight/baggage</code></td><td>Ajout ou modification des bagages</td></tr>
+        <tr><td><code>POST</code></td><td><code>/orders/{id}/search/stays</code></td><td>Recherche d'hébergements</td></tr>
+        <tr><td><code>POST</code></td><td><code>/orders/{id}/stay</code> · <code>/stays</code></td><td>Sélection d'un hébergement (dont multi-hôtel)</td></tr>
+        <tr><td><code>POST</code></td><td><code>/orders/{id}/stay/none</code></td><td>Choix explicite de « sans hébergement » → écrit <code>orders.stay_declined_at</code>, ce qui fait une commande <code>flight_only</code>. <strong>Un choix, pas une absence</strong> : sans lui, on ne distingue pas le client qui refuse l'hôtel de celui qui n'a pas encore répondu. Le marqueur est <strong>effacé</strong> si le client choisit finalement un hôtel, et son écriture est <strong>stable</strong> au rejeu : un double-clic ne déplace pas la date de la décision</td></tr>
+        <tr><td><code>POST</code></td><td><code>/orders/{id}/flight/none</code></td><td>Symétrique du précédent : choix explicite de « <strong>sans vol</strong> » → écrit <code>orders.flight_declined_at</code>, ce qui fait une commande <code>stay_only</code> (D12). Sans lui, le parcours hôtel seul n'a aucun moyen de se déclarer : il reste indistinguable d'un tunnel vol abandonné avant la sélection. Comme son symétrique, l'écriture est <strong>stable au rejeu</strong> et le marqueur est <strong>effacé</strong> si un vol est finalement choisi. <strong>Deux refus en <code>409</code></strong> : <code>FLIGHT_ALREADY_SELECTED</code> — un vol pose aussi <code>trip_type</code>, les aéroports et les dates, le client le retire d'abord ; <code>ORDER_WOULD_BE_EMPTY</code> — l'hébergement a déjà été refusé, la commande n'aurait plus rien à collecter</td></tr>
+        <tr><td><code>DELETE</code></td><td><code>/orders/{id}/stays/{stayId}</code></td><td>Retrait d'un hébergement</td></tr>
+        <tr><td><code>PUT</code></td><td><code>/orders/{id}/travelers</code></td><td>Voyageurs nominatifs</td></tr>
+        <tr><td><code>GET</code></td><td><code>/orders/{id}/recap</code></td><td>Récapitulatif avant génération du code</td></tr>
+        <tr><td><code>POST</code></td><td><code>/orders/{id}/arrived</code></td><td>Signal d'arrivée — <strong>vestige du modèle de dépôt tiers hérité</strong>, à retirer avec la refonte</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Suivi de commande côté client</h3>
+    <table>
+      <thead><tr><th>Méthode</th><th>Chemin</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td><code>/me/orders</code> · <code>/me/orders/{id}</code></td><td>Historique et détail</td></tr>
+        <tr><td><code>POST</code></td><td><code>/me/orders/{id}/cancel</code></td><td>Annulation par le client (Doc 7)</td></tr>
+        <tr><td><code>POST</code></td><td><code>/me/orders/{id}/refund-iban</code></td><td>IBAN de remboursement. <strong>À requalifier</strong> : la cible rembourserait en espèces par tournée de retour (D2) — mécanisme <strong>sous décision</strong> (DÉCISION REQUISE)</td></tr>
+        <tr><td><code>POST</code></td><td><code>/me/price-alerts</code></td><td>Création d'une alerte de prix</td></tr>
+        <tr><td><code>POST</code></td><td><code>/me/push-token</code></td><td>Enregistrement du jeton FCM</td></tr>
+        <tr><td><code>POST</code></td><td><code>/contact</code></td><td>Formulaire de contact</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="notifications-api">Notifications (client, agent, manager)</h3>
+    <p>Trois écrans de notifications existent en maquette — <code>ui/ecrans/09-notifications.html</code>, <code>ui/agent/16-notifications.html</code>, <code>ui/manager/20-notifications.html</code> — et la table <code>notifications</code> est définie au Doc 2, mais aucun contrat n'était publié. Les plans client et agent appellent déjà ces chemins.</p>
+    <table>
+      <thead><tr><th>Méthode</th><th>Chemin</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td><code>/notifications</code></td><td>Liste paginée des notifications du porteur de session. <strong>Le destinataire est déduit du jeton</strong>, jamais passé en paramètre : un identifiant en query laisserait lire les notifications d'autrui</td></tr>
+        <tr><td><code>POST</code></td><td><code>/notifications/{id}/read</code></td><td>Marque une notification comme lue. <strong>Idempotent</strong> : un second appel ne change rien et ne renvoie pas d'erreur — l'app rejoue cet appel au retour de veille</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div><strong>Un même contrat pour trois surfaces</strong> Le canal diffère (push FCM pour le client, temps réel WS/SSE pour l'agent, simple liste pour le manager) mais la lecture et l'accusé de lecture sont identiques. Trois endpoints distincts auraient produit trois pagination différentes pour la même table.</div>
+    </div>
+
+    <h3>Webhooks &amp; supervision</h3>
+    <table>
+      <thead><tr><th>Méthode</th><th>Chemin</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST</code></td><td><code>/webhooks/duffel</code></td><td>Événements Duffel (changements d'horaires notamment) → e-mail <code>airline_schedule_change</code></td></tr>
+        <tr><td><code>POST</code></td><td><code>/webhooks/legacy-payment</code></td><td><strong>Vestige</strong> — webhook de l'ancien prestataire de paiement en espèces. À retirer — remplacé (17/09) par <i>(20/09 — supprimé avec le réseau tiers)</i> et <code>POST /encaissement/payments/:ref/psp-intent</code> (ouverture de transaction)</td></tr>
+        <tr><td><code>GET</code></td><td><code>/deposit-points-legacy/nearest</code></td><td><strong>Vestige</strong> — points de dépôt tiers hérités. À retirer</td></tr>
+        <tr><td><code>GET</code></td><td><code>/health</code> · <code>/live</code></td><td>Sondes de disponibilité (CapRover)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Manager — endpoints omis du premier relevé</h3>
+    <table>
+      <thead><tr><th>Méthode</th><th>Chemin</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td><code>/manager/reservations/by-status</code></td><td>Filtres par statut de l'écran Réservations</td></tr>
+        <tr><td><code>GET</code></td><td><code>/manager/reservations/search</code></td><td>Recherche par référence</td></tr>
+      </tbody>
+    </table>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Écart de chemin à corriger : <code>topup</code> et non <code>top-up</code></strong> Ce document décrivait <code>/manager/finance/wallets/{id}/top-up</code> ; le backend expose <code>/manager/finance/wallets/{provider}/topup</code>, sans tiret et avec le <em>provider</em> en paramètre, pas l'identifiant du wallet. Une implémentation fidèle à la documentation aurait produit un 404 sur la recharge du solde fournisseur — la fonctionnalité la plus sensible de l'écran financier.</div>
+    </div>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Écart de verbe corrigé : <code>PUT</code> et non <code>PATCH</code> sur la configuration</strong> Ce document annonçait <code>PATCH /manager/config/margins</code> et <code>PATCH /manager/config/fees</code> ; le backend expose les deux en <code>PUT</code> (<code>config.controller.ts</code>). Même classe d'erreur que l'écart <code>topup</code> ci-dessus, et même conséquence : un 405 sur le réglage des marges, c'est-à-dire sur le paramètre qui fixe le prix de vente. Le tableau ci-dessus a été aligné sur le backend.</div>
+    </div>
+  </section>
+
+  <!-- RÉCAPITULATIF SECRETS -->
+  <section class="section" id="recap-secrets">
+    <h2>Récapitulatif des secrets à provisionner</h2>
+    <table>
+      <thead><tr><th>Fournisseur</th><th>Secret</th><th>Usage</th><th>Stockage recommandé</th></tr></thead>
+      <tbody>
+        <tr><td>Duffel</td><td><code>DUFFEL_API_KEY</code></td><td>Authentification Bearer sur toutes les requêtes</td><td>Variable d'environnement chiffrée (vault)</td></tr>
+        <tr><td>Hotelbeds</td><td><code>HOTELBEDS_API_KEY</code> + <code>HOTELBEDS_SECRET</code></td><td>Calcul de la signature X-Signature (SHA-256) par requête</td><td>Variable d'environnement chiffrée (vault)</td></tr>
+        <tr><td>Cash Services</td><td><code>CASH_SERVICES_API_KEY</code></td><td>Clé d'accès au rapport quotidien Cash Services des transactions de dépôt — voir <a href="#cash-report-import">§8</a></td><td>Vault. <strong>Clé secrète</strong> ; accès en lecture seule au rapport quotidien</td></tr>
+        <tr><td>Qonto</td><td><code>QONTO_API_KEY</code></td><td>Lecture des transactions et initiation des virements de paie — voir <a href="#qonto">§9</a></td><td>Vault. Portée minimale ; <strong>toute initiation de virement journalisée</strong> dans <code>audit_log</code></td></tr>
+        <tr><td>Carto / tracking</td><td><code>MAP_SDK_API_KEY</code></td><td>Clé du SDK de cartographie (carte live position + ETA) — voir <a href="#tracking">§5</a></td><td>Variable d'environnement chiffrée (vault) ; clé restreinte par domaine côté client</td></tr>
+        <tr><td>Notifications push</td><td><code>PUSH_SERVICE_KEY</code></td><td>Notifications temps réel agent (nouvelle tournée, réassignation) et client (agent en route)</td><td>Variable d'environnement chiffrée (vault)</td></tr>
+        <tr><td>Stockage preuve</td><td><code>PROOF_BUCKET_KEY</code></td><td>Accès au bucket chiffré des photos de preuve de collecte (rétention bornée — D10)</td><td>Variable d'environnement chiffrée (vault)</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">🔄</span>
+      <div><strong>Secrets de l'ancien prestataire retirés (17/09) — et ceux du prestataire en ligne retirés à leur tour (20/09)</strong> Les clés de l'ancien prestataire de paiement en espèces n'existent plus. Le règlement passe par le débit d'un bon, côté serveur : aucune clé de prestataire en ligne. <code>PSP_PAGE_URL</code>, <code>PAYS_OUVERT</code> — voir <code>server/.env.example</code>. La validation d'un règlement en espèces reste faite par l'agent (code de sécurité + photo, haché en base).</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div><strong>Document suivant</strong> Le Doc 4 — Logique de pricing détaille précisément comment ces réponses API (offer_price_cents, marge fixe, marge de sécurité, frais de service) sont combinées pour produire le <code>total_price_cents</code> figé — montant du code interne encaissé par l'agent — ainsi que la stratégie de re-fetch en cas d'offre Duffel expirée.</div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

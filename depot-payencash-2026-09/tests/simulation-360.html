@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>PayEnCash — Simulation 360° (vraie vie)</title>
+<!--
+  SALLE DE CONTRÔLE 360° (fondatrice 05/09) : « lance des commandes depuis le compte de
+  plusieurs utilisateurs sur 2 minutes, connectés depuis Fly ET Mode, tous les scénarios
+  d'achat, visualise en direct sur chacun […] pour avoir une vue 360° de toutes les
+  interactions et corriger bug, dur ou perte de donnée. »
+
+  (18/09, soir — pivot) L'AGENT DE CAISSE MOBILE EST SUPPRIMÉ, et son volet avec lui. Il reste
+  DEUX moyens de paiement, tous deux achetés au comptoir d'un commerce :
+    ① le BON D’ACHAT PAYENCASH — notre réseau de commerçants sous contrat. Le commerçant encaisse
+       son client comme il veut, et NOUS sommes payés dans la seconde : sa carte enregistrée est
+       prélevée de la valeur du bon d’achat moins sa commission. Refus de la banque = aucun code émis.
+    ② (20/09) LE MÊME BON, VENDU PAR UN DISTRIBUTEUR MOBILE qui se déplace jusqu'au client. Le
+       ticket d'un réseau tiers et la page hébergée d'un prestataire sont partis : il n'y a plus qu'un titre.
+  Les six volets sont donc : Mode, Fly, « Où acheter un bon d'achat », l'espace PARTENAIRE,
+  le fournisseur, le manager.
+
+  Chaque volet est la VRAIE page de l'app (iframe), avec l'identité de SON acteur
+  (pec-client-actif / pec-partenaire-id + pec-session / pec-fournisseur-actif). Le moteur joue des
+  gestes réels via PEC_DATA + PEC_BUS ; les écritures localStorage du parent déclenchent l'événement
+  'storage' dans chaque iframe, donc les volets se rafraîchissent COMME dans la vraie vie.
+  Après chaque acte, des INVARIANTS sont vérifiés et les volets scannés (undefined, NaN,
+  [object Object], montants incohérents). Aucun écran n'est simulé : tout est l'app réelle.
+
+  LE RÉSEAU N'EST PAS POSÉ À LA MAIN : les commerces partenaires naissent du protocole de compte
+  (PEC_BANC.pointPartenairePret : inscription → e-mail → pièces au coffre → validation manager →
+  contrat signé → activation → carte du commerce), exactement comme le banc.
+
+  STOCKAGE : photographié au chargement. Le bouton « Restaurer le stockage » le remet en place —
+  on ne le fait pas tout seul à la fin, sinon la salle de contrôle effacerait ce qu'elle montre.
+-->
+<link rel="stylesheet" href="../ui/assets/payencash-v2.css">
+<script src="outils-banc.js"></script>
+<script src="../ui/assets/payencash-icons.js"></script>
+<script src="../ui/assets/payencash-data.js"></script>
+<!-- le COFFRE : sans lui, pointPartenairePret ne peut pas monter un dossier, et publierPiece refuse -->
+<script src="../ui/assets/payencash-docs.js"></script>
+<script src="../ui/assets/payencash-bus.js"></script>
+<style>
+  body{margin:0;background:#0E1613;color:#E8EFEA;font:13px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+  header{position:sticky;top:0;z-index:9;background:#0E1613;border-bottom:1px solid #23332C;padding:10px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  h1{margin:0;font-size:15px;font-weight:800;letter-spacing:-.01em}
+  #chrono{font-variant-numeric:tabular-nums;font-weight:800;color:#7FD1A8}
+  #etat{font-size:12px;color:#9FB3A9;flex:1;min-width:220px}
+  button{font:inherit;font-weight:700;border:0;border-radius:8px;padding:7px 14px;cursor:pointer;background:#2F9E6B;color:#fff}
+  button.sec{background:#23332C;color:#CFE0D7}
+  .wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px}
+  .pane{background:#141F1A;border:1px solid #23332C;border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+  .pane h2{margin:0;padding:7px 10px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#7FD1A8;background:#101915;border-bottom:1px solid #23332C;display:flex;justify-content:space-between;gap:8px}
+  .pane h2 .who{color:#9FB3A9;font-weight:600;letter-spacing:0;text-transform:none;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pane iframe{width:100%;height:340px;border:0;background:#fff}
+  #journal{margin:10px;background:#101915;border:1px solid #23332C;border-radius:10px;max-height:330px;overflow:auto;padding:10px;font:11.5px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace}
+  .l-ok{color:#8FE0B4}.l-act{color:#CFE0D7}.l-ko{color:#FF9C8A;font-weight:700}.l-warn{color:#FFD98A}.l-t{color:#5E7A6E}
+  #bilan{margin:10px;padding:12px 14px;background:#101915;border:1px solid #23332C;border-radius:10px;white-space:pre-wrap;font:12px/1.6 ui-monospace,Menlo,monospace}
+</style>
+</head>
+<body>
+<header>
+  <h1>Simulation 360° — vraie vie</h1>
+  <span id="chrono">0:00</span>
+  <button id="go">Lancer les 2 minutes</button>
+  <button id="stop" class="sec">Arrêter</button>
+  <button id="restaurer" class="sec">Restaurer le stockage</button>
+  <span id="etat">Prêt. Chaque volet est la vraie page de l'app, avec l'identité de son acteur.</span>
+</header>
+
+<div class="wrap">
+  <div class="pane"><h2>Client MODE <span class="who" id="w-mode">—</span></h2><iframe id="f-mode" src="../ui/mode/01-accueil.html"></iframe></div>
+  <div class="pane"><h2>Client FLY <span class="who" id="w-fly">—</span></h2><iframe id="f-fly" src="../ui/ecrans/03-mes-codes.html"></iframe></div>
+  <div class="pane"><h2>Où acheter <span class="who" id="w-psp">le réseau des commerces</span></h2><iframe id="f-psp" src="../ui/ecrans/25-ou-acheter-un-bon.html"></iframe></div>
+  <div class="pane"><h2>Partenaire <span class="who" id="w-part">—</span></h2><iframe id="f-part" src="../ui/partenaire/02-accueil.html"></iframe></div>
+  <div class="pane"><h2>Fournisseur <span class="who" id="w-four">—</span></h2><iframe id="f-four" src="../ui/fournisseur/08-stock.html"></iframe></div>
+  <div class="pane"><h2>Manager <span class="who" id="w-mgr">Direction</span></h2><iframe id="f-mgr" src="../ui/manager/04-commandes.html"></iframe></div>
+</div>
+
+<div id="journal"></div>
+<div id="bilan">Bilan — en attente du lancement.</div>
+
+<script>
+(function () {
+  var D = window.PEC_DATA, B = window.PEC_BUS;
+  var J = document.getElementById('journal'), T0 = 0, TIMER = null, STOP = false;
+  var ANOM = [];   // anomalies retenues (bug, dur, perte de donnée)
+  var RESEAU = [], CLIENTS = [];
+
+  /* LE STOCKAGE DE CE NAVIGATEUR EST PHOTOGRAPHIÉ AU CHARGEMENT — la simulation écrit des comptes, des
+     points, des bons d’achat et des commandes ; sans ce cliché, le banc lancé juste après retrouverait tout. */
+  var SNAP = {}; try { for (var si = 0; si < localStorage.length; si++) { var sk = localStorage.key(si); SNAP[sk] = localStorage.getItem(sk); } } catch (e) {}
+
+  function hhmmss(ms) { var s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  function log(cls, txt) {
+    var d = document.createElement('div'); d.className = cls;
+    d.innerHTML = '<span class="l-t">' + hhmmss(Date.now() - T0) + '</span>  ' + txt;
+    J.appendChild(d); J.scrollTop = J.scrollHeight;
+  }
+  function ko(quoi, detail) { ANOM.push({ quoi: quoi, detail: detail }); log('l-ko', '✗ ' + quoi + ' — ' + detail); }
+  function ok(txt) { log('l-ok', '✓ ' + txt); }
+  function acte(txt) { log('l-act', '▸ ' + txt); }
+  // l'attente passe par le banc (Worker) : un onglet caché depuis 5 min bride setTimeout à un réveil par minute
+  function sleep(ms) { return (window.PEC_BANC && PEC_BANC.sleep) ? PEC_BANC.sleep(ms) : new Promise(function (r) { setTimeout(r, ms); }); }
+
+  // Les iframes écoutent 'storage' (déclenché par nos écritures) ; on pousse aussi 'pec-bus'
+  // pour les pages qui n'écoutent que lui, exactement comme le fait l'app en usage réel.
+  var PANES = ['f-mode', 'f-fly', 'f-psp', 'f-part', 'f-four', 'f-mgr'];
+  /* UNE ERREUR JS DANS UN VOLET EST UNE ANOMALIE — elle ne se lit plus seulement dans la console du
+     navigateur. Chaque volet porte son `onerror` (réarmé à chaque chargement) ; la même erreur n'est
+     retenue qu'une fois, sinon un rendu appelé à chaque événement du bus noierait le journal. */
+  var VUES_ERR = {};
+  function armer(id) {
+    try {
+      var w = document.getElementById(id).contentWindow;
+      w.onerror = function (msg, src, lig) {
+        var cle = id + '|' + msg + '|' + lig;
+        if (VUES_ERR[cle]) return true; VUES_ERR[cle] = 1;
+        ko(id.replace('f-', '') + ' : erreur JS', String(msg) + ' — ' + String(src || '').split('/').pop() + ' l.' + lig);
+        return true;
+      };
+    } catch (e) {}
+  }
+  /* ⚠ ON NE RÉVEILLE PAS UN VOLET EN COURS DE CHARGEMENT. Son ancien document garde ses écouteurs pendant
+     qu'il se fait remplacer : le rendu repartait alors sur un DOM démonté et cassait sur un élément nul —
+     une fausse anomalie, attribuée à la page alors que c'est la scène qui l'a réveillée au mauvais moment. */
+  function reveiller() {
+    PANES.forEach(function (id) {
+      try {
+        var f = document.getElementById(id), w = f.contentWindow, d = f.contentDocument;
+        if (!w || !d || !d.body || d.readyState !== 'complete') return;
+        w.dispatchEvent(new w.Event('pec-bus'));
+      } catch (e) {}
+    });
+  }
+  function recharger(id, url) {
+    var f = document.getElementById(id);
+    return new Promise(function (res) { f.onload = function () { armer(id); sleep(220).then(res); }; f.src = url + (url.indexOf('?') > -1 ? '&' : '?') + '_t=' + Date.now(); });
+  }
+  function qui(id, txt) { var e = document.getElementById(id); if (e) e.textContent = txt; }
+
+  // SCAN DES VOLETS : ce qu'un humain verrait d'anormal à l'écran.
+  var MOTIFS = [
+    { re: /undefined/, nom: 'undefined affiché' },
+    { re: /\bNaN\b/, nom: 'NaN affiché' },
+    { re: /\[object Object\]/, nom: '[object Object] affiché' },
+    { re: /null\s*€|€\s*null/, nom: 'montant null' }
+  ];
+  function scanner(etape) {
+    PANES.forEach(function (id) {
+      var f = document.getElementById(id), t = '';
+      try { t = f.contentDocument.body.innerText || ''; } catch (e) { return; }
+      MOTIFS.forEach(function (m) {
+        if (m.re.test(t)) {
+          var ex = (t.match(new RegExp('.{0,45}' + m.re.source + '.{0,45}')) || [''])[0].replace(/\s+/g, ' ');
+          ko(id.replace('f-', '') + ' : ' + m.nom, '[' + etape + '] …' + ex + '…');
+        }
+      });
+    });
+  }
+
+  // ── LES ACTEURS ────────────────────────────────────────────────────────────
+  // clientActifSet ouvre la SESSION de ce client — hors session, rien n'est lisible
+  /* ⚠ ON NE SE RECONNECTE PAS SUR SON PROPRE COMPTE. `clientActifSet` traite tout appel comme un CHANGEMENT de
+     compte : il purge le panier ET la commande en cours (panierCommandeReset). Rappelé avec le MÊME identifiant
+     entre deux étapes, il effaçait la commande verrouillée du client — et `payer` ne pouvait plus la solder
+     (ni expédition, ni facture, ni ligne de registre). On ne pose la session que si elle change, comme l'audit. */
+  function clientMode(id) {
+    if (D.clientActifGet() !== id) D.clientActifSet(id);
+    qui('w-mode', (D.client(id) || {}).nomComplet || (D.client(id) || {}).nom || id);
+    return D.client(id) || { id: id };
+  }
+  function fournisseurActif(nom) { D.fournisseurActifSet(nom); qui('w-four', nom); }
+  /* LA SESSION DU COMMERÇANT — celle que pose sa connexion (01-connexion) : le compte né du protocole
+     + l'id de SON point. Les écrans partenaire ne lisent rien d'autre. */
+  function partenaireActif(P) {
+    if (!P) return null;
+    var E = (D.ESPACES_COMPTE || {}).partenaire || {};
+    D.connecter({ identifiant: P.identifiant, espace: E.sessionLabel || 'Partenaire', role: (P.point && P.point.enseigne) || '' });
+    try { localStorage.setItem('pec-partenaire-id', P.pointId); } catch (e) {}
+    qui('w-part', ((D.partenaire(P.pointId) || {}).enseigne || P.pointId));
+    return P;
+  }
+  function managerActif() {
+    var m = (D.comptesDemo || []).filter(function (c) { return /^Manager/.test(c.espace); })[0];
+    if (m) { D.connecter({ identifiant: m.identifiant, espace: m.espace, role: m.role }); qui('w-mgr', m.identifiant); }
+    return m;
+  }
+
+  /* ── LE RÉSEAU DE COMMERCES, NÉ DU PROTOCOLE ──────────────────────────────────────────────────
+     Zéro fiche posée à la main : chaque point passe par compte → e-mail → pièces → validation →
+     contrat → activation → carte. Les enseignes et les adresses sont EMPRUNTÉES au référentiel des
+     commerces (D.pointsBons : de vraies adresses géolocalisées), jamais écrites ici. */
+  function monterReseau(n) {
+    var src = (D.pointsBons ? D.pointsBons() : []).slice(0, n), faits = [];
+    for (var i = 0; i < src.length; i++) {
+      var s = src[i];
+      /* UN SIRET PAR ÉTABLISSEMENT — `pointPartenairePret` en pose un unique à chaque appel (_siretUnique) :
+         sans cela, le second compte se rattacherait au point du premier (`_compteLierMetier` retrouve un point
+         par son SIRET) et le réseau se réduirait à un seul commerce. On n'en écrit donc aucun ici. */
+      var P = PEC_BANC.pointPartenairePret(window, {
+        enseigne: s.nom,
+        form: { enseigne: s.nom, adresse: String(s.adresse || '').replace(/,.*$/, ''), cp: s.cp || '', ville: s.ville || '' }
+      });
+      if (!P || !P.ok) { ko('réseau partenaire', 'le protocole s’arrête à « ' + (P && P.etape) + ' » : ' + (P && P.motif)); continue; }
+      // la géoposition du commerce vient de son adresse au référentiel — elle ne s'invente pas
+      if (s.geo && D.partenaireEnregistrer) D.partenaireEnregistrer({ id: P.pointId, geo: s.geo }, 'simulation');
+      faits.push(P);
+    }
+    return faits;
+  }
+
+  // ── UN ACHAT MODE (le client remplit son sac et sa commande naît) ──────────
+  /* `plafond` borne le sac : au-delà du plafond d'un bon d’achat, un seul bon ne suffit plus — c'est
+     exactement ce qu'on veut montrer à l'étape du bon d’achat partiel. Les prix viennent du stock réel. */
+  function remplirSac(opt) {
+    // le catalogue du client est DÉRIVÉ des lots en vente : sans cette synchro, les pièces publiées
+    // à l'instant n'existeraient dans cette fenêtre qu'au prochain chargement
+    if (D.synchroniserArticlesPublies) D.synchroniserArticlesPublies();
+    var arts = D.mode.articles.filter(function (a) { return D.stockArticle(a.id).dispo > 0; })
+      .sort(function (a, b) { return D.prixClient(a.id) - D.prixClient(b.id); });
+    D.mode.panier.items = []; D.panierPersist();
+    var n = 0;
+    for (var i = 0; i < arts.length; i++) {
+      if (opt.max && D.panierTotal().total + D.prixClient(arts[i].id) > opt.max) continue;
+      D.panierAjouter(arts[i].id, 1); n++;
+      if (opt.min != null && D.panierTotal().total > opt.min) break;
+      if (opt.articles && n >= opt.articles) break;
+    }
+    return { n: n, total: D.panierTotal().total };
+  }
+  function commanderMode(canal, moyen, client) {
+    var res = D.commanderPanier({ canal: canal, moyen: moyen });
+    if (!res || res.bloque || !res.ref) { ko('commanderPanier', 'aucune commande créée (' + JSON.stringify(res || null).slice(0, 120) + ')'); return null; }
+    if (canal === 'bon' && D.panierCommandeMaj) D.panierCommandeMaj({ canal: 'bon', encaissement: 'Réglée par ' + D.libelleMoyen('bon'), pointNom: '', pointAdresse: '' });
+    var a = B.annoncerCommande(res.ref, { montant: String(res.total), client: (client || {}).nomComplet || (client || {}).nom || null,
+      clientId: (client || {}).id || null, type: 'MODE', canal: canal, moyen: moyen });
+    if (!a || a.ok === false) { ko('annonce', res.ref + ' — ' + ((a && a.message) || 'refus muet')); return null; }
+    acte('MODE ' + ((client || {}).nomComplet || (client || {}).nom || '') + ' → commande ' + res.ref + ' · ' + D.eur(res.total) + ' · à régler par ' + D.libelleMoyen(moyen));
+    return res;
+  }
+
+  /* ── LE COMPTOIR : LE COMMERÇANT VEND UN BON D’ACHAT ──────────────────────────────────────────
+     Un seul geste, celui de l'écran « Vendre » : bonEmettre. Le prélèvement sur la carte du commerce
+     naît AVEC le code — refus de la banque, pas de bon d’achat. `echec` rejoue ce refus. */
+  function vendreBon(P, montant, opts) {
+    opts = opts || {};
+    var r = D.bonEmettre({ montant: montant, origine: 'partenaire', pointId: P.pointId, par: P.identifiant,
+      prixRecu: true, echecPrelevement: opts.echec === true });
+    if (opts.echec) {
+      if (r.ok) { ko('prélèvement refusé', 'la banque refuse mais un bon d’achat a été émis (' + r.bon.code + ')'); return null; }
+      var pr = (r.prelevement || {});
+      acte('PARTENAIRE ' + (D.partenaire(P.pointId) || {}).enseigne + ' → carte REFUSÉE (' + (pr.reference || '—') + ') : aucun code, le commerçant rend son paiement au cliens');
+      return { refus: r };
+    }
+    if (!r.ok) { ko('vente du bon d’achat', D.eur(montant) + ' — ' + r.motif); return null; }
+    var prl = D.prelevementsGet(P.pointId).filter(function (x) { return x.bon === r.bon.code; })[0];
+    var du = D.partenaireDu(montant, D.partenaire(P.pointId));   // (19/09) au taux de CE commerce
+    if (!prl) ko('prélèvement', r.bon.code + ' émis sans prélèvement rattaché sur la carte du commerce');
+    else if (prl.statut !== 'accepte') ko('prélèvement', prl.id + ' : statut « ' + prl.statut +' » sur un bon d’achat émis');
+    else if (Math.abs(prl.montant - du.net) > 0.005) ko('prélèvement', prl.id + ' : ' + D.eur(prl.montant) + ' prélevés au lieu de ' + D.eur(du.net) + ' (valeur − commission TTC)');
+    acte('PARTENAIRE ' + (D.partenaire(P.pointId) || {}).enseigne + ' → bon d’achat ' + r.bon.code + ' · ' + D.eur(montant)
+      + ' · ticket ' + r.bon.ticket + ' · carte ••' + ((prl && prl.carte) || {}).last4 + ' prélevée de ' + D.eur(du.net));
+    return r.bon;
+  }
+
+  /* ── LE RÈGLEMENT EN LIGNE, EN TROIS GESTES RÉELS ─────────────────────────────────────────────
+     le bon est émis, présenté, puis DÉBITÉ sous verrou : c'est ce débit, et lui seul, qui règle. */
+  /* (20/09) RÉGLER EN LIGNE, C'EST RÉGLER AVEC UN BON. Le rail d'un prestataire est parti avec le ticket
+     d'un réseau tiers : la simulation émet le ou les bons nécessaires et déclare le règlement, par l'aide
+     partagée du banc — le même geste que l'écran du client. */
+  async function reglerEnLigne(ref) {
+    var r = PEC_BANC.reglerEnLigne(B, ref);
+    if (!r || r.ok === false) { ko('règlement par bon d’achat', ref + ' — ' + ((r && (r.message || r.motif)) || 'refus muet')); return null; }
+    acte('EN LIGNE ' + ref + ' · réglée par Bon d’achat PayEnCash');
+    return r;
+  }
+
+  // ── INVARIANTS : ce qui DOIT être vrai après le règlement d'une commande MODE ──
+  function verifPaiement(cmd, moyenAttendu) {
+    var bus = B.commande(cmd.ref);
+    if (!bus) { ko('bus', 'commande ' + cmd.ref + ' absente du bus après annonce'); return; }
+    if (bus.statut !== 'paye') { ko('règlement', cmd.ref + ' : statut « ' + bus.statut + ' » après règlement'); return; }
+    if (moyenAttendu && bus.moyen !== moyenAttendu) ko('moyen', cmd.ref + ' réglée par « ' + bus.moyen + ' » au lieu de « ' + moyenAttendu + ' »');
+    var pay = B.paiement(cmd.ref);
+    if (!pay) ko('paiement', cmd.ref + ' déclarée payée mais aucun pec_bus_pay_');
+    else if (!pay.recu) ko('reçu', cmd.ref + ' réglée sans numéro de reçu (preuve de paiement absente)');
+    var reglee = (D.commandesRegleesGet() || []).filter(function (c) { return c.ref === cmd.ref; })[0];
+    if (!reglee) { ko('règlement', cmd.ref + ' payée au bus mais absente des commandes réglées (perte de donnée)'); return; }
+    if (Math.abs(reglee.total - cmd.total) > 0.005) ko('montant réglé', cmd.ref + ' : réglée ' + reglee.total + ' ≠ ' + cmd.total);
+    if (!D.expeditionsGet().filter(function (e) { return e.commande === cmd.ref; }).length) ko('expédition', cmd.ref + ' réglée sans aucune expédition fournisseur');
+    var fact = D.facturesGet().filter(function (f) { return f.commande === cmd.ref; })[0];
+    if (!fact) ko('chaîne argent fournisseur', cmd.ref + ' vendue mais AUCUNE facture d’achat ferme à payer au fournisseur');
+    else if (!fact.montant) ko('facture fournisseur', fact.id + ' créée à 0 €');
+    if (!(D.registreGet ? D.registreGet() : []).filter(function (r) { return r.sortie && String(r.sortie).indexOf(cmd.ref) > -1; }).length) {
+      ko('livre de police (art. 321-7)', cmd.ref + ' vendue mais aucune sortie inscrite au registre');
+    }
+  }
+
+  // ── SCÉNARIO : 2 minutes de vraie vie ─────────────────────────────────────
+  async function scenario() {
+    ANOM = []; VUES_ERR = {}; STOP = false; T0 = Date.now(); J.innerHTML = '';
+    PANES.forEach(armer);   // les volets ouverts au chargement de la page portent eux aussi leur onerror
+    document.getElementById('bilan').textContent = 'Simulation en cours…';
+    TIMER = setInterval(function () { document.getElementById('chrono').textContent = hhmmss(Date.now() - T0); }, 500);
+
+    // état de départ propre, comme une journée qui commence
+    B.reset && B.reset(); D.inventaireReset(); D.atelierReset && D.atelierReset();
+    D.panierCommandeReset && D.panierCommandeReset(); D.expeditionsReset && D.expeditionsReset();
+    D.commandesRegleesReset && D.commandesRegleesReset(); D.registreReset && D.registreReset(); D.facturesReset && D.facturesReset();
+    D.comptesReset && D.comptesReset();   // les comptes et les points nés d'une simulation précédente
+    try { ['pec-bons', 'pec-seq:bons', 'pec-seq:prelevements', 'pec-mode-panier-bon'].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
+    managerActif();
+
+    // ① LE RÉSEAU — deux commerces montés par le protocole réel
+    RESEAU = monterReseau(2);
+    if (RESEAU.length < 2) { ko('réseau partenaire', 'moins de deux commerces prêts à vendre : le scénario du bon d’achat ne peut pas se jouer'); }
+    if (RESEAU[0]) {
+      partenaireActif(RESEAU[0]);
+      var P0 = D.partenaire(RESEAU[0].pointId) || {};
+      if (P0.statut !== 'actif') ko('point partenaire', P0.enseigne + ' : statut « ' + P0.statut + ' » après le protocole');
+      if (!D.partenaireCarte(P0)) ko('carte du commerce', P0.enseigne + ' activé sans carte : aucun bon d’achat ne pourrait s’émettre');
+      if (!D.pointsBons().some(function (x) { return x.id === P0.id; })) ko('où acheter', P0.enseigne + ' actif mais absent de pointsBons()');
+      ok('Réseau : ' + D.pointsBons().length + ' commerce(s) actif(s) — ' + D.pointsBons().map(function (p) { return p.enseigne + ' (' + p.ville + ')'; }).join(', '));
+    }
+
+    /* ② LE STOCK — le fournisseur publie sa journée (sinon rien à vendre).
+       Le POIDS EMBALLÉ vient du référentiel (suggestionsPour) : depuis que la livraison est refacturée à la
+       tranche Mondial Relay, `publierPiece` refuse une pièce sans poids — et le refus se lit. */
+    PEC_BANC.dossierFournisseurPret(window);
+    fournisseurActif(D.mode.fournisseurCourant || (D.mode.fournisseurs[0] || {}).nom);
+    var poidsRobe = ((D.suggestionsPour && D.suggestionsPour('Prêt-à-porter', 'Robes')) || {}).poids;
+    var publies = 0;
+    for (var k = 0; k < 3; k++) {
+      var lot = D.publierPiece({ categorie: 'Prêt-à-porter', sous: 'Robes', genre: 'femme', marque: 'Sézane',
+        modele: 'Pièce SIM-' + (k + 1), couleurs: ['Rouge'], matiere: 'Coton', etat: 'Neuf avec étiquette',
+        prix: 40 + k * 55, poids: poidsRobe, lignes: [{ taille: 'M', qte: 2 }] });
+      if (lot && lot.ref) { D.pieceVerdict(lot.ref, 'photos_ok'); publies++; }
+      else ko('publication', 'le lot ' + (k + 1) + ' n’a pas été publié — ' + ((lot && lot.motif) || 'refus muet'));
+    }
+    if (publies) ok('Fournisseur ' + D.mode.fournisseurCourant + ' : ' + publies + ' lot(s) publié(s) et validé(s) atelier');
+    await recharger('f-four', '../ui/fournisseur/08-stock.html');
+    await recharger('f-part', '../ui/partenaire/02-accueil.html');
+    // les articles dérivés n'existent qu'au BOOT : on rafraîchit le volet client
+    await recharger('f-mode', '../ui/mode/01-accueil.html');
+    scanner('ouverture');
+
+    CLIENTS = D.clientsGet().slice(0, 6);
+    var R = D.bonsRef();
+    var ETAPES = [];
+
+    // 1 · la commande naît, à régler par Bon d’achat PayEnCash
+    ETAPES.push({ t: 2, nom: 'Mode · la commande naît (à régler par bon d’achat)', run: async function () {
+      var cl = clientMode(CLIENTS[0].id);
+      var sac = remplirSac({ max: R.plafondBon, articles: 2 });
+      if (!sac.n) { ko('achat Mode', 'aucun article disponible en stock'); return; }
+      var cmd = commanderMode('bon', 'bon', cl); if (!cmd) return;
+      var mp = D.moyensPourMontant(cmd.total).filter(function (m) { return m.k === 'bon'; })[0];
+      if (!mp || !mp.dispo) ko('comment payer', D.eur(cmd.total) + ' : le bon d’achat devrait rester proposé sous le plafond du jour');
+      await sleep(300); reveiller();
+      await recharger('f-mode', '../ui/mode/05-ou-payer.html');
+      var bus = B.commande(cmd.ref);
+      if (!bus || bus.statut !== 'a_payer') ko('bus', cmd.ref + ' n’est pas « à payer » après annonce');
+      window.__C1 = cmd; window.__CL1 = cl;
+    }});
+
+    // 2 · au comptoir : le commerçant vend le bon d’achat, sa carte est prélevée
+    ETAPES.push({ t: 16, nom: 'Partenaire · vente du bon d’achat, prélèvement accepté', run: async function () {
+      var cmd = window.__C1, P = RESEAU[0]; if (!cmd || !P) return;
+      partenaireActif(P);
+      await recharger('f-part', '../ui/partenaire/03-vendre.html');
+      var bon = vendreBon(P, cmd.total);
+      if (!bon) return;
+      window.__BON1 = bon;
+      await sleep(300); reveiller();
+      await recharger('f-part', '../ui/partenaire/04-bons.html');
+      var vu = D.bonsDuPoint(P.pointId);
+      if (!vu || vu.nb !== 1) ko('mes bons d’achat', 'le point devrait porter 1 vente, il en porte ' + (vu && vu.nb));
+      var txt = ''; try { txt = document.getElementById('f-part').contentDocument.body.innerText || ''; } catch (e) {}
+      if (txt && txt.indexOf(bon.ticket) === -1) ko('mes bons d’achat', 'le ticket ' + bon.ticket + ' ne s’affiche pas dans l’écran du commerçant');
+      else if (txt) ok('Le commerçant voit sa vente : ticket ' + bon.ticket);
+      await recharger('f-mgr', '../ui/manager/29-partenaires.html');
+    }});
+
+    // 3 · le client revient saisir son code : la commande se règle
+    ETAPES.push({ t: 30, nom: 'Mode · le client saisit son code, la commande se règle', run: async function () {
+      var cmd = window.__C1, bon = window.__BON1, cl = window.__CL1; if (!cmd || !bon) return;
+      clientMode(cl.id);
+      var v = D.bonValider(bon.code, { clientId: cl.id, montant: cmd.total });
+      if (!v.ok) { ko('saisie du code', bon.code + ' refusé au client — ' + v.motif); return; }
+      var c2 = B.commande(cmd.ref) || {};
+      var r = B.payer(cmd.ref, { par: 'bon', montant: c2.montant || String(cmd.total), bon: bon.code });
+      if (!r || r.ok === false) { ko('règlement par bon d’achat', cmd.ref + ' — ' + ((r && r.message) || 'refus muet')); return; }
+      acte('MODE ' + cmd.ref + ' → réglée par ' + D.libelleMoyen('bon') + ' ' + D.bonMasque(bon.code));
+      await sleep(300); reveiller();
+      await recharger('f-mode', '../ui/mode/16-mes-commandes.html');
+      verifPaiement(cmd, 'bon');
+      var apres = D.bonParCode(bon.code);
+      if (!apres || apres.solde > 0.004) ko('bon d’achat', bon.code + ' devrait être épuisé, il lui reste ' + D.eur((apres || {}).solde || 0));
+      else ok('Bon d’achat ' + D.bonMasque(bon.code) + ' entièrement consommé · commande ' + cmd.ref + ' réglée');
+      await recharger('f-mgr', '../ui/manager/04-commandes.html');
+    }});
+
+    // 4 · le refus de la banque : aucun bon d’achat, et ça se voit
+    ETAPES.push({ t: 44, nom: 'Partenaire · prélèvement REFUSÉ (aucun code émis)', run: async function () {
+      var P = RESEAU[1] || RESEAU[0]; if (!P) return;
+      partenaireActif(P);
+      var avant = D.bonsDuPoint(P.pointId).nb;
+      var r = vendreBon(P, R.minimum * 4, { echec: true });
+      if (!r) return;
+      if (D.bonsDuPoint(P.pointId).nb !== avant) ko('refus de prélèvement', 'un bon d’achat a été créé malgré le refus de la carte');
+      var ref = D.prelevementsGet(P.pointId).filter(function (x) { return x.statut === 'refuse'; });
+      if (!ref.length) ko('refus de prélèvement', 'aucun prélèvement refusé au relevé du commerçant');
+      else if (!(B.journal() || []).some(function (e) { return e.evt === 'prelevement_refuse'; })) ko('refus de prélèvement', 'le refus n’est pas au journal');
+      else ok('Refus tracé : ' + ref.length + ' prélèvement refusé (' + ref[0].reference + ') — aucun bon d’achat émis');
+      await sleep(250); reveiller();
+      await recharger('f-part', '../ui/partenaire/05-releves.html');
+      var txt = ''; try { txt = document.getElementById('f-part').contentDocument.body.innerText || ''; } catch (e) {}
+      if (txt && !/refus/i.test(txt)) ko('relevé du commerçant', 'le refus de prélèvement ne se lit nulle part sur son relevé');
+    }});
+
+    // 5 · en parallèle : un voyage Fly réglé EN LIGNE, par plusieurs bons d’achat
+    ETAPES.push({ t: 58, nom: 'Fly · règlement par Bon d’achat', run: async function () {
+      var cl = CLIENTS[3] || CLIENTS[0];
+      if (D.clientActifGet() !== cl.id) D.clientActifSet(cl.id);
+      qui('w-fly', cl.nomComplet || cl.nom);
+      var seq = B.seq(), ref = 'PEC-SIM' + seq;
+      /* LE MONTANT DÉPASSE LE PLAFOND D'UN SEUL BON : la vente se découpe, et plusieurs bons règlent la
+         même commande — c'est la règle du 19/09, éprouvée ici en vraie grandeur. */
+      var montant = Math.round((D.bonsRef().plafondBon || 250) * 1.8);
+      var a = B.annoncerCommande(ref, { montant: String(montant), client: cl.nomComplet || cl.nom, clientId: cl.id, type: 'FLY',
+        titre: 'Marseille → Porto · aller-retour', canal: 'bon', moyen: 'bon' });
+      if (!a || a.ok === false) { ko('annonce Fly', ref + ' — ' + ((a && a.message) || 'refus muet')); return; }
+      acte('FLY ' + (cl.nomComplet || cl.nom || '') + ' → réservation ' + ref + ' · ' + D.eur(montant));
+      await sleep(300); reveiller();
+      var r = await reglerEnLigne(ref); if (!r) return;
+      await recharger('f-fly', '../ui/ecrans/03-mes-codes.html');
+      var pay = B.paiement(ref);
+      if (!pay) ko('Fly', ref + ' payée mais aucun paiement au bus');
+      else ok('Fly ' + ref + ' réglée · reçu ' + (pay.recu || '—'));
+      window.__F1 = ref;
+    }});
+
+    // 6 · un bon d’achat qui ne couvre pas tout : le reste se règle avec un SECOND bon (série au-delà de 250 €)
+    ETAPES.push({ t: 74, nom: 'Mode · bon d’achat partiel + reste réglé par un second bon', run: async function () {
+      var cl = clientMode((CLIENTS[1] || CLIENTS[0]).id);
+      await recharger('f-mode', '../ui/mode/01-accueil.html');
+      var sac = remplirSac({ min: R.plafondBon });
+      if (!sac.n || sac.total <= R.plafondBon) { ko('sac', 'impossible de dépasser le plafond d’un bon d’achat avec le stock du jour (' + D.eur(sac.total) + ')'); return; }
+      var cmd = commanderMode('bon', 'bon', cl); if (!cmd) return;
+      var mp = D.moyensPourMontant(cmd.total).filter(function (m) { return m.k === 'bon'; })[0];
+      if (!mp || mp.nbBons < 2) ko('comment payer', D.eur(cmd.total) + ' : l’écran devrait annoncer plusieurs bons d’achat');
+      else ok('« Comment payer » annonce ' + mp.nbBons + ' bons d’achat pour ' + D.eur(cmd.total) + ' (plafond ' + D.eur(R.plafondBon) + ')');
+      var P = RESEAU[0]; if (!P) return;
+      partenaireActif(P);
+      var bon = vendreBon(P, R.plafondBon); if (!bon) return;
+      clientMode(cl.id);
+      var ap = B.bonAppliquer(cmd.ref, bon.code, cl.id);
+      if (!ap || ap.ok === false) { ko('bon d’achat partiel', cmd.ref + ' — ' + ((ap && ap.message) || 'refus muet')); return; }
+      if (Math.abs(ap.part - R.plafondBon) > 0.005 || Math.abs(ap.reste - (cmd.total - R.plafondBon)) > 0.005) {
+        ko('bon d’achat partiel', cmd.ref + ' : ' + D.eur(ap.part) + ' appliqués, reste ' + D.eur(ap.reste) + ' sur ' + D.eur(cmd.total));
+      } else ok('Bon d’achat ' + D.bonMasque(bon.code) + ' : ' + D.eur(ap.part) + ' appliqués, reste ' + D.eur(ap.reste) + ' à régler par un second bon');
+      await sleep(250); reveiller();
+      await recharger('f-mode', '../ui/mode/05-ou-payer.html');
+      var r = await reglerEnLigne(cmd.ref); if (!r) return;
+      await recharger('f-mode', '../ui/mode/16-mes-commandes.html');
+      verifPaiement(cmd, 'bon');
+      var reste = D.bonParCode(bon.code);
+      if (!reste || reste.solde > 0.004) ko('bon d’achat partiel', bon.code + ' devrait être épuisé après application (' + D.eur((reste || {}).solde || 0) + ')');
+      window.__C2 = cmd;
+    }});
+
+    // 7 · le fournisseur expédie, le client suit
+    ETAPES.push({ t: 90, nom: 'Fournisseur · étiquette + dépôt, le client suit', run: async function () {
+      var cmd = window.__C1; if (!cmd) return;
+      var exps = D.expeditionsGet().filter(function (e) { return e.commande === cmd.ref; });
+      if (!exps.length) { ko('expédition', 'rien à expédier pour ' + cmd.ref); return; }
+      exps.forEach(function (e) {
+        var et = D.editerEtiquette(e.ref);
+        if (!et || !et.mr) ko('étiquette', e.ref + ' : aucun n° Mondial Relay généré');
+        if (!D.marquerExpedie(e.ref)) ko('expédition', e.ref + ' : marquerExpedie a échoué');
+      });
+      acte('FOURNISSEUR ' + cmd.ref + ' → étiquette éditée puis colis déposé');
+      await recharger('f-four', '../ui/fournisseur/04-expeditions.html');
+      clientMode(window.__CL1.id);
+      await recharger('f-mode', '../ui/mode/22-livraisons.html');
+      var liv = (D.commandesEnLivraison() || []).filter(function (c) { return c.ref === cmd.ref; })[0];
+      if (!liv) ko('suivi client', cmd.ref + ' expédiée mais absente de Livraisons');
+      else if (!/En route/.test(liv.etape)) ko('suivi client', cmd.ref + ' colis déposé mais étape = « ' + liv.etape + ' »');
+      else ok('Client voit « ' + liv.etape + ' » · n° ' + liv.mr);
+    }});
+
+    // 8 · le manager : la journée, le réseau, le relevé du commerce
+    ETAPES.push({ t: 104, nom: 'Manager · la journée, le réseau, le relevé', run: async function () {
+      managerActif();
+      var payees = (B.journal() || []).filter(function (j) { return j.evt === 'paiement'; }).length;
+      if (!payees) ko('manager', 'aucun paiement au journal alors que la simulation en a produit');
+      else ok('Journal du bus : ' + payees + ' paiements, ' + (B.journal() || []).length + ' événements');
+      /* (20/09) PLUS DE TRANSACTION DE PRESTATAIRE À COMPTER : ce qui prouve un règlement, c'est le débit d'un
+         bon. On vérifie donc que chaque paiement journalisé a bien son mouvement de débit en face. */
+      var debits = D.bonsGet().reduce(function (n, b) { return n + (b.mouvements || []).filter(function (m) { return m.type === 'debit'; }).length; }, 0);
+      if (payees && !debits) ko('bons d’achat', payees + ' paiements au journal, mais AUCUN débit de bon en face — un règlement sans preuve');
+      else ok('Bons d’achat : ' + debits + ' débit(s) — la preuve de chaque règlement (manager 41)');
+      // LE RELEVÉ DU COMMERCE : ventes − commission = net, et tout est DÉJÀ encaissé (prélèvement à la vente)
+      var P = RESEAU[0];
+      if (P) {
+        var rel = D.releveMensuel(P.pointId);
+        /* (19/09 — taux par commerce) le taux attendu est celui DU COMMERCE, et le relevé rend celui qui a été retenu. */
+        var tauxP = D.commissionPointPct(P.pointId);
+        var attendu = Math.round((rel.ventes * tauxP / 100) * 100) / 100;
+        if (Math.abs(rel.commissionHT - attendu) > 0.011) ko('relevé', P.pointId + ' : commission ' + D.eur(rel.commissionHT) + ' au lieu de ' + D.eur(attendu) + ' (' + tauxP + ' %)');
+        else ok('Relevé ' + (D.partenaire(P.pointId) || {}).enseigne + ' : ' + rel.nb + ' bon(s) d’achat · ' + D.eur(rel.ventes) + ' vendus · '
+          + D.eur(rel.commissionHT) + ' HT de commission · ' + D.eur(rel.net) + ' nets prélevés' + (rel.refuses ? ' · ' + rel.refuses + ' refus' : ''));
+      }
+      await recharger('f-mgr', '../ui/manager/29-partenaires.html');
+      await recharger('f-part', '../ui/partenaire/05-releves.html');
+      // ISOLATION DES COMPTES : un autre client ne voit pas les commandes des autres
+      var avant = (D.commandesRegleesGet() || []).length;
+      clientMode((CLIENTS[5] || CLIENTS[4] || CLIENTS[0]).id);
+      await recharger('f-mode', '../ui/mode/16-mes-commandes.html');
+      var apres = (D.commandesRegleesGet() || []).length;
+      if (apres === avant && avant > 0) ko('isolation des comptes', 'un autre compte voit les ' + apres + ' commandes réglées des AUTRES clients');
+      else ok('Changement de compte : historique propre (' + apres + ' commande(s))');
+    }});
+
+    for (var i = 0; i < ETAPES.length; i++) {
+      if (STOP) break;
+      var e = ETAPES[i];
+      var attente = T0 + e.t * 1000 - Date.now();
+      if (attente > 0) await sleep(attente);
+      document.getElementById('etat').textContent = '[' + (i + 1) + '/' + ETAPES.length + '] ' + e.nom;
+      log('l-warn', '── ' + e.nom + ' ──');
+      try { await e.run(); } catch (err) { ko(e.nom, 'exception : ' + (err && err.message)); }
+      reveiller(); await sleep(250); scanner(e.nom);
+    }
+
+    clearInterval(TIMER);
+    document.getElementById('etat').textContent = 'Simulation terminée — pense à « Restaurer le stockage ».';
+    var prl = D.prelevementsGet();
+    var b = 'BILAN — ' + hhmmss(Date.now() - T0) + ' de vraie vie\n\n';
+    b += 'Commerces partenaires actifs : ' + D.pointsBons().length + ' (nés du protocole de compte)\n';
+    b += 'Bons d’achat émis : ' + D.bonsGet().length + ' · valeur ' + D.eur(D.bonsGet().reduce(function (s, x) { return s + x.montant; }, 0)) + '\n';
+    b += 'Prélèvements sur les cartes des commerces : ' + prl.filter(function (x) { return x.statut === 'accepte'; }).length + ' acceptés · '
+       + prl.filter(function (x) { return x.statut === 'refuse'; }).length + ' refusés · '
+       + prl.filter(function (x) { return x.statut === 'rembourse'; }).length + ' remboursés\n';
+    b += 'Débits de bons d’achat (la preuve des règlements) : ' + D.bonsGet().reduce(function (n, b2) { return n + (b2.mouvements || []).filter(function (m) { return m.type === 'debit'; }).length; }, 0) + '\n';
+    b += 'Commandes réglées (tous comptes) : ' + Object.keys(localStorage).filter(function (k) { return k.indexOf('pec-mode-cmd-reglees') === 0; }).reduce(function (n, k) { try { return n + JSON.parse(localStorage.getItem(k) || '[]').length; } catch (e) { return n; } }, 0) + '\n';
+    b += 'Expéditions créées : ' + D.expeditionsGet().length + '\n';
+    b += 'Factures fournisseur : ' + D.facturesGet().filter(function (f) { return f.commande; }).length + ' créées par la vente\n';
+    b += 'Livre de police : ' + (D.registreGet ? D.registreGet().length : 0) + ' lignes\n';
+    b += 'Événements au bus : ' + (B.journal() || []).length + '\n\n';
+    b += ANOM.length ? ('ANOMALIES (' + ANOM.length + ') :\n' + ANOM.map(function (a, i) { return (i + 1) + '. ' + a.quoi + ' — ' + a.detail; }).join('\n'))
+                     : 'Aucune anomalie détectée.';
+    document.getElementById('bilan').textContent = b;
+    window.__SIM = { anomalies: ANOM, fini: true };
+  }
+
+  document.getElementById('go').addEventListener('click', function () { window.__SIM = { fini: false }; scenario(); });
+  document.getElementById('stop').addEventListener('click', function () { STOP = true; clearInterval(TIMER); });
+  document.getElementById('restaurer').addEventListener('click', function () {
+    try { localStorage.clear(); Object.keys(SNAP).forEach(function (k) { localStorage.setItem(k, SNAP[k]); }); } catch (e) {}
+    document.getElementById('etat').textContent = 'Stockage restauré tel qu’il était à l’ouverture de cette page.';
+    PANES.forEach(function (id) { try { var f = document.getElementById(id); f.src = f.src; } catch (e) {} });
+  });
+  window.__lancer = scenario;
+})();
+</script>
+</body>
+</html>

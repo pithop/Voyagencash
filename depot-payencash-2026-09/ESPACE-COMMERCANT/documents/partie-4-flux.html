@@ -1,0 +1,297 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Étape 4 · Flux &amp; fonctions — PayEnCash</title>
+<style>
+:root{--ajek:#0f7a4d;--ajek-d:#0b5c3a;--ink:#1a1f1c;--muted:#5b675f;--line:#d9e5dd;--bg:#f4f7f5;--card:#fff;--chip:#e8f3ec;--gold:#b8860b;--goldbg:#fdf5e6}
+@media(prefers-color-scheme:dark){:root{--ink:#e8efe9;--muted:#9fb0a6;--line:#254034;--bg:#0d1512;--card:#121d18;--chip:#173026;--goldbg:#2a2410}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.tb{display:flex;gap:8px;flex-wrap:wrap;padding:12px 22px 0}.btn{border:1px solid var(--line);background:var(--card);color:var(--ajek-d);border-radius:8px;padding:6px 11px;font-size:12.5px;text-decoration:none;font-weight:700}
+.wrap{max-width:1080px;margin:0 auto;padding:8px 22px 60px}
+.head{background:linear-gradient(120deg,var(--ajek),var(--ajek-d));color:#fff;border-radius:14px;padding:22px 26px;margin:10px 0 18px}
+.head .k{font-size:12px;letter-spacing:.14em;font-weight:800;opacity:.85}.head h1{margin:4px 0 6px;font-size:24px}.head p{margin:0;font-size:13.5px;opacity:.94}
+.flux{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:16px 0}
+.flux h2{margin:0 0 4px;font-size:17px;color:var(--ajek-d)}
+@media(prefers-color-scheme:dark){.flux h2{color:#5fd39a}}
+.flux .sub{font-size:12px;color:var(--muted);margin-bottom:10px}
+.steps{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0}
+.step{background:var(--chip);color:var(--ajek-d);border:1px solid var(--ajek);border-radius:9px;padding:6px 10px;font-size:12px;font-weight:600}
+.step b{opacity:.65;margin-right:3px}
+@media(prefers-color-scheme:dark){.step{color:#5fd39a}}
+.step.g{background:var(--goldbg);border:1px dashed var(--gold);color:#8a6508}
+@media(prefers-color-scheme:dark){.step.g{color:#e0b352}}
+.fa{color:var(--gold);font-weight:800}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:10px}
+.meta .m{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12.5px}
+.meta .m b{display:block;font-size:11px;letter-spacing:.06em;color:var(--muted);margin-bottom:3px}
+.pill{display:inline-block;background:var(--chip);color:var(--ajek-d);border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;margin:1px 2px 1px 0}
+@media(prefers-color-scheme:dark){.pill{color:#5fd39a}}
+a.doc{color:var(--ajek-d);font-weight:700;text-decoration:none;border-bottom:1px dashed var(--ajek)}
+@media(prefers-color-scheme:dark){a.doc{color:#5fd39a}}
+.note{background:var(--goldbg);border-left:4px solid var(--gold);border-radius:8px;padding:10px 14px;font-size:13px;margin:14px 0}
+</style><style>/*fresh*/
+:root{--ajek:#10A06A;--ajek-d:#0C7F54;--gold:#E39A2E}
+body{background:
+ radial-gradient(1100px 520px at 92% -12%, rgba(63,217,155,.16), transparent 62%),
+ radial-gradient(900px 460px at -12% 34%, rgba(227,154,46,.09), transparent 58%),
+ radial-gradient(700px 420px at 50% 115%, rgba(16,160,106,.10), transparent 60%),
+ var(--bg)}
+.head{background:linear-gradient(115deg,#0F2A24 0%,#0C7F54 55%,#10A06A 100%)!important;position:relative;overflow:hidden}
+.head::after{content:"";position:absolute;right:-40px;top:-60px;width:220px;height:220px;border-radius:50%;
+ background:radial-gradient(circle,rgba(63,217,155,.35),transparent 65%);pointer-events:none}
+h2{border-bottom:none!important;position:relative;padding-bottom:9px!important}
+h2::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:4px;border-radius:2px;
+ background:linear-gradient(90deg,#10A06A,#3FD99B)}
+.card,.flux,.app,.part,.tbl{transition:transform .16s ease,box-shadow .16s ease}
+.card:hover,.flux:hover,.app:hover,.tbl:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(15,42,36,.13)}
+.btn{transition:transform .12s ease,box-shadow .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(16,160,106,.22)}
+.pill{background:linear-gradient(120deg,#E6F4EC,#d8f3e6)}
+.ok{background:linear-gradient(120deg,#E6F4EC,#f0faf4)}
+.note{background:linear-gradient(120deg,#FDF1E7,#fdf7ee)}
+.gbar .bar i,.part .g i,.lab .g i{background:linear-gradient(90deg,#10A06A,#3FD99B)!important}
+th{background:linear-gradient(115deg,#0C7F54,#10A06A)!important}
+</style>
+</head><body>
+<div class="tb"><a class="btn" href="diagramme-principal.html">🧭 Fil rouge</a><a class="btn" href="partie-2-juridique-socle.html">← Étape 3 · Juridique</a><a class="btn" href="partie-5-docs-flux.html">Étape 5 · Contrats & documents →</a></div>
+<div class="wrap">
+
+<div class="head"><div class="k">ÉTAPE 4 / 10</div><h1>🔀 Flux &amp; fonctions — F1 → F13</h1>
+<!-- (18/09, soir) Le chapeau annonçait trois moyens dont un agent salarié qui se déplaçait encaisser :
+     ce métier est abandonné, et avec lui le découpage « part espèces + complément carte » qu'il imposait.
+     Le reversement mensuel du commerçant est abandonné le même soir : plus rien n'est dû, donc plus rien
+     ne peut manquer. Enfin, on ne dit plus comment le client règle au comptoir : ce n'est pas notre règle,
+     c'est celle du commerçant — notre promesse est qu'un bon d’achat suffit n'est demandée au client. -->
+<p><b>Pivot du 17/09, tranché le 18/09 au soir</b> : plus de borne, plus de point partenaire encaisseur, <b>plus d'agent de caisse mobile</b> — un commerçant tiers qui encaisse pour AJEK rend un service de paiement sans agrément, et un salarié qui transporte les espèces des clients est un métier que nous ne faisons pas. Le client <b>paie avec un bon d’achat</b>, par <b>un seul moyen, acheté au comptoir</b> : le <b>Bon d’achat PayEnCash</b> — titre prépayé émis par AJEK, vendu par un <b>commerçant partenaire</b> sous contrat de distribution (F4, F6 — art. L521-3 CMF). <i>(20/09 — « enlève la logique Neosurf » : le second titre, celui d'un réseau tiers réglé en ligne par un prestataire, est supprimé — il n'en reste qu'un, le nôtre.)</i> Le partenaire <b>vend un titre, il n'encaisse jamais une commande</b>, et il ne nous doit rien : sa carte bancaire enregistrée est <b>débitée à la vente</b>, du montant du bon d’achat moins sa commission (F4). Chaque promesse marketing (P1–P8, Étape 1) devient ici un <b>processus de bout en bout</b> : acteurs → étapes → documents émis → règles. Ces flux commandent le juridique (Étapes 3 et 5), les données (Étape 6) et les écrans (Étape 10). Les montants et les régimes de TVA qu'ils manipulent sont fixés en <a class="doc" href="partie-1b-financier.html">Étape 2 · Modèle financier</a>.</p></div>
+
+<div class="flux"><h2>F1 · Commande &amp; paiement — Bon d’achat PayEnCash <span class="pill">P1</span></h2>
+<div class="sub">Le flux cœur : commander en ligne et régler avec un bon d’achat, avec un titre acheté au comptoir. <i>(20/09 — décision fondatrice « enlève la logique Neosurf » : le titre d’un réseau tiers et la page hébergée d’un prestataire ont disparu de ce flux. Il n’y a plus qu’un titre, le nôtre, et un seul geste qui règle : le DÉBIT du bon, sous verrou, dans notre couche de données.)</i></div>
+<div class="steps">
+<span class="step"><b>1</b>Le client cherche son voyage (app FLY) ou sa pièce (app MODE)</span><span class="fa">→</span>
+<span class="step"><b>2</b>Offres réelles Duffel / Nuitée + marge AJEK = prix public</span><span class="fa">→</span>
+<span class="step"><b>3</b>Voyageurs : carnet ou saisie des 7 champs Duffel (chiffrés)</span><span class="fa">→</span>
+<span class="step"><b>4</b>« Commander — X € » → écran <b>« Comment payer »</b> : le moyen vient de <code>moyensPourMontant</code> — le <b>Bon d’achat PayEnCash</b>, et lui seul — avec <b>trois façons de se le procurer</b> (chez un commerçant, d’un distributeur mobile, ou déjà en main) · <b>fenêtre d’encaissement 120 min</b>, prix bloqué</span><span class="fa">→</span>
+<span class="step"><b>5</b>Le client saisit le <b>code à douze caractères</b> de son bon — <code>bonValider</code> dit aussitôt s’il est valable, son solde et sa date de validité : rien ne se débite à la vérification</span><span class="fa">→</span>
+<span class="step"><b>6</b>Le bon couvre TOUT → <code>payer(ref, {par:'bon'})</code> · il n’en couvre qu’une part → <code>bonAppliquer</code>, le reste se règle avec un AUTRE bon (au-delà de 250 € la vente au comptoir s’est découpée en série)</span><span class="fa">→</span>
+<span class="step"><b>7</b>Le serveur <b>DÉBITE le bon sous verrou</b> — c’est ce débit, et lui seul, qui règle la commande, et son mouvement <code>debit</code> en est la preuve opposable</span><span class="fa">→</span>
+<span class="step"><b>8</b>Reçu du paiement (bon masqué, reste sur le bon) + code de confirmation — <code>reglementLibelle</code></span><span class="fa">→</span>
+<span class="step"><b>9</b>AJEK confirme : billet / réservation émis · achat ferme de la pièce Mode</span><span class="fa">→</span>
+<span class="step"><b>10</b>Notification + suivi client</span></div>
+<div class="meta">
+<div class="m"><b>ACTEURS</b>Client · AJEK (émetteur du titre) · Commerçant partenaire ou distributeur mobile (vendeur du titre) · Duffel / Nuitée · fournisseur Mode</div>
+<div class="m"><b>DOCUMENTS ÉMIS</b><a class="doc" href="recu-client-code.html">Reçu + code</a> (bon masqué et reste imprimés) · facture de vente client (Odoo — TVA sur la marge 297 A, <b>non détaillée</b> ; <code>client_invoices.payment_means</code> dit « réglée par Bon d’achat PayEnCash », jamais « en espèces »)</div>
+<div class="m"><b>RÈGLES</b><b>Un seul moyen, à tout montant</b> : le Bon d’achat PayEnCash (F4) — <b>la carte bancaire n’est jamais un moyen de paiement du client</b> : elle n’apparaît nulle part dans le parcours, et un bon d’achat suffit n’est saisie nulle part · <b>le débit du bon est le SEUL valideur</b> (<code>payments.valideur_obligatoire</code> l’impose en base : <code>method = 'bon'</code> ET <code>gift_card_id</code> posé) — jamais le client, jamais un salarié qui compte, et plus jamais la notification d’un tiers · idempotence : un double clic ne débite pas deux fois · KYC gradué avant génération de la commande · <b>prix bloqué / fenêtre 120 min</b> (<code>scenario.fenetreEncaissementMinutes</code>) · <b>TVA sur la marge (art. 297 A CGI)</b> : jamais détaillée sur le reçu ni la facture (→ <a class="doc" href="partie-1b-financier.html">Étape 2 §2 et §5</a>) · <b>nos plafonds sont ceux du titre, pas ceux d’un comptoir</b> : 250 € par bon d’achat, 1 000 € de bons utilisés par client et par jour, 1 000 € sur 30 jours glissants (<code>ref.bons</code>)</div>
+<div class="m"><b>ÉCRANS</b><a class="doc" href="../../ui/fly/01-ou-payer.html">fly/01 Comment payer</a> · <a class="doc" href="../../ui/mode/05-ou-payer.html">mode/05 Comment payer</a> · <a class="doc" href="../../ui/fly/02-ordre-paiement.html">fly/02 ta commande (reçu ou flashcode)</a> · <a class="doc" href="../../ui/mode/11-code-paiement.html">mode/11 ta commande</a> · <a class="doc" href="../../ui/ecrans/03-mes-codes.html">ecrans/03 réservations</a> · <a class="doc" href="../../ui/ecrans/25-ou-acheter-un-bon.html">ecrans/25 où acheter un bon d’achat PayEnCash</a></div>
+</div></div>
+
+<div class="flux"><h2>F2 · Recherche &amp; pricing des offres <span class="pill">P2</span></h2>
+<div class="sub">La promesse « au meilleur prix », techniquement tenue.</div>
+<div class="steps">
+<span class="step"><b>1</b>Requête client (destination, dates, passagers)</span><span class="fa">→</span>
+<span class="step"><b>2</b>Interrogation API Duffel (plus de 200 compagnies : NDC, GDS, LCC)</span><span class="fa">→</span>
+<span class="step"><b>3</b>Calcul du prix public = tarif Duffel + frais Duffel + marge AJEK</span><span class="fa">→</span>
+<span class="step"><b>4</b>Tri &amp; affichage comparatif (le client voit le choix)</span><span class="fa">→</span>
+<span class="step"><b>5</b>Sélection → bascule vers F1</span></div>
+<div class="meta">
+<div class="m"><b>ACTEURS</b>Client · AJEK (pricing) · Duffel</div>
+<div class="m"><b>DOCUMENTS</b><a class="doc" href="spec-duffel-offres.html">Spec Duffel offres</a> · <a class="doc" href="partie-1b-financier.html">Étape 2 §1 — marges et coût d'encaissement par moyen</a></div>
+<div class="m"><b>RÈGLES (formules figées, docs/04)</b>Marge : vol seul = <b>max(3 €, 15 %)</b> · hébergement seul = <b>10 %</b> · package vol+hôtel = <b>8 %</b> · + <b>marge de sécurité par délai</b> (+1 €/voyageur à 1 h, +2 € à 2 h+) · + frais de service (fixe/% /km/nuit/urgence) · TVA <b>sur la marge (art. 297 A)</b> figée à la génération du code · timeout Duffel ≥ 130 s · jamais « les meilleurs prix » (le tag UI « meilleur prix » existant est à re-libeller)</div>
+</div></div>
+<div class="flux"><h2>F2-promo · Réservation promo — offre figée, parcours court <span class="pill">P2</span></h2>
+<div class="sub">Depuis l'onglet Promos : pas de tunnel — l'offre est déjà composée, on choisit les voyageurs et on paie.</div>
+<div class="steps">
+<span class="step"><b>1</b>Onglet Promos : <b>4 modes de voyage</b> (Spartiate · Baroudeur · Futé · Grand air) — A/R + hébergement édités <b>à J−45 minimum</b></span><span class="fa">→</span>
+<span class="step"><b>2</b>Sélection d'une offre (prix par personne · « prix en normal » barré · stock limité)</span><span class="fa">→</span>
+<span class="step"><b>3</b><b>Nombre de voyageurs</b> (1–6) — total recalculé en direct, économie affichée</span><span class="fa">→</span>
+<span class="step"><b>4</b><b>Récap « Vérifie — avant de payer »</b> : termes rappelés · mention <b>TVA sur la marge (297 A), non détaillée</b> · les plafonds du moyen choisi sont dits ici, avant de payer (bon d’achat : 250 € par bon, 1 000 € par jour)</span><span class="fa">→</span>
+<span class="step"><b>5</b>« Commander — X € » → Comment payer (F1) · le <b>nombre</b> de voyageurs est figé ici — les <b>identités Duffel</b> sont complétées avant la commande</span></div>
+<div class="meta">
+<div class="m"><b>ACTEURS</b>Client · AJEK (éditeur des promos) · Duffel/Nuitée (stock réel bloqué à l'édition)</div>
+<div class="m"><b>DOCUMENTS</b>Conditions de l'offre promo (dates fixes, stock) · règlement des prix de référence (Étape 5)</div>
+<div class="m"><b>ÉCRANS</b><a class="doc" href="../../ui/fly/06-promos.html">fly/06 promos (4 modes)</a> · <a class="doc" href="../../ui/fly/07-promo-recap.html">fly/07 récap ?o=</a></div>
+<div class="m"><b>RÈGLES</b>promos <b>éditées ≥ 3 semaines avant départ</b> · toujours moins chères que la réservation « en normal » · ⚠️ <b>directive Omnibus / prix de référence</b> : le « prix en normal » barré doit être <b>justifiable et daté</b> (méthodologie documentée à l'Étape 5) · les plafonds applicables sont ceux du moyen choisi (F1), jamais ceux d'un comptoir · prix bloqué / fenêtre 120 min après confirmation</div>
+</div></div>
+
+
+<!-- (18/09, soir) F3 décrivait le métier d'agent de caisse mobile : un salarié se déplaçait chez le client
+     pour encaisser ses espèces, avec tout ce que cela traînait (flotte, zones, planning, tournées, dépôts en
+     automate, rendu de monnaie, complément carte au-delà du plafond légal). Ce métier est abandonné : le
+     transport d'espèces par un salarié n'est pas notre métier, et il n'est pas nécessaire — le client achète
+     son moyen de paiement au comptoir d'un commerce. Le flux n'est PAS renuméroté : F4…F13 gardent leur nom,
+     les audits et les documents juridiques y renvoient. -->
+<div class="flux"><h2>F3 · <s>« Un agent se déplace »</s> — sans objet depuis le 18/09 au soir</h2>
+<div class="sub">Le canal « un agent salarié vient encaisser tes espèces » est <b>supprimé</b>. Rien ne le remplace : il n'y avait rien à remplacer.</div>
+<div class="meta">
+<div class="m"><b>CE QUI DISPARAÎT AVEC LUI</b>L'app agent et ses 19 écrans · la flotte, les zones de dispatch, le planning et la paie des agents · les tournées de collecte et les dépôts d'espèces · le rendu de monnaie · le découpage « part espèces plafonnée + complément carte obligatoire » · les frais de déplacement · le suivi en direct et le code de sécurité remis à l'agent · côté manager, les écrans livraisons, coursiers, zones, rémunération, flotte, planning, rapprochement et fonds de caisse.</div>
+<div class="m"><b>OÙ VONT LES CLIENTS QUI PAYAIENT AINSI</b>Vers le <b>seul titre acheté au comptoir</b> : le <b>Bon d’achat PayEnCash</b> (F4), chez un commerçant partenaire ou d'un distributeur mobile. Dans les deux cas le client paie <b>avec un bon d’achat</b>.</div>
+<div class="m"><b>CE QUE ÇA SIMPLIFIE</b>Plus d'espèces dans nos murs : pas de cycle du cash, pas de fonds de caisse, pas d'écart de dépôt à arbitrer, pas d'assurance « vol d'espèces sur la personne », pas de risque CNAPS sur le transport de fonds. Les exceptions qui en vivaient sortent de F13.</div>
+</div></div>
+
+<div class="flux"><h2>F4 · Bon d’achat PayEnCash — vente chez un commerçant partenaire, prélèvement à la vente, usage fractionné, remboursement par re-crédit <span class="pill">P4</span></h2>
+<!-- (18/09, soir) Le reversement mensuel est abandonné : le commerçant ne détient plus jamais notre argent,
+     donc il n'y a plus de créance, plus d'échéance, plus de relance, plus d'impayé — et la question juridique de la
+     détention de fonds tombe d'elle-même. On ne dit pas non plus comment le client règle son bon d’achat au comptoir :
+     c'est une vente du commerçant à son client, seul compte le fait qu'il ait encaissé. -->
+<div class="sub">(18/09) L'un des deux moyens « avec un bon d’achat » : un bon d’achat prépayé émis par AJEK, vendu au comptoir d'un commerce partenaire — le partenaire vend un titre, il n'encaisse jamais une commande. <b>Le bon d’achat naît du paiement</b> : la carte enregistrée du commerce est débitée AVANT que le code existe. La version cadeau (émise par le manager) suit le même flux, sans prélèvement.</div>
+<div class="steps">
+<span class="step"><b>1</b>Le client demande un bon d’achat au comptoir (5 à 250 €, référentiel <code>ref.bons</code>) et le règle au commerçant, avec un bon d’achat</span><span class="fa">→</span>
+<span class="step"><b>2</b>Le partenaire confirme « j'ai encaissé X € » → <b>la carte enregistrée du commerce est débitée</b> du montant du bon d’achat moins sa commission TTC (<code>prelevementPartenaire</code>, prestataire <b>Stripe</b>) — <b>refus de la banque = aucun bon d’achat</b>, le commerçant rend son argent au client (motif affiché, jamais un échec muet)</span><span class="fa">→</span>
+<span class="step"><b>3</b>Prélèvement accepté → <code>bonEmettre</code> : code unique (12 caractères) + ticket <code>BV-n</code> imprimé (montant, QR, valable jusqu'au, mentions <code>ref.bons.mentions</code>) · annulable au comptoir 30 min si non utilisé — l'annulation <b>rembourse le prélèvement</b> au commerce (<code>prelevementRembourser</code>)</span><span class="fa">→</span>
+<span class="step"><b>4</b>Le client choisit <b>Bon d’achat PayEnCash</b> à « Comment payer » (Fly ou Mode) et saisit le code → <code>bonValider</code> : solde, expiration, motif de refus s'il y a lieu</span><span class="fa">→</span>
+<span class="step"><b>5</b>Le bon d’achat couvre tout → <code>payer(ref, {par:'bon'})</code> : le bus débite (<code>bonDebiter</code>) puis règle · il couvre une partie → <code>bonAppliquer</code> (bus) ou <code>panierBonAppliquer</code> (Mode) : part déduite, le reste par <b>un autre bon de la série</b>, débit du bon d’achat au règlement</span><span class="fa">→</span>
+<span class="step"><b>6</b>Le solde reste sur le code (usage fractionné) jusqu'à épuisement ou expiration (12 mois) — visible dans « Mes Bons d’achat PayEnCash » du compte · plafonds : 1 000 € par client et par jour, 1 000 € sur 30 jours glissants</span><span class="fa">→</span>
+<span class="step"><b>7</b>Remboursement d'une commande réglée par bon d’achat → <b>re-crédit du bon d’achat</b> (<code>rembourser(ref, {mode:'bon'})</code> → <code>bonRecrediter</code>), jamais en espèces, jamais de rendu de monnaie</span><span class="fa">→</span>
+<span class="step"><b>8</b>Chaque mois : <b>relevé</b> du point (<code>releveMensuel</code> : nb de bons d’achat, ventes, commission 1,10 % HT, TVA, net déjà prélevé) — <b>rien à payer, rien à recevoir</b> : il sert à l'<b>autofacture de commission</b> (art. 289 CGI) et à montrer au commerçant ce qu'il a gagné</span></div>
+<div class="meta">
+<div class="m"><b>ACTEURS</b>Client · Commerçant partenaire (distributeur, contrat de distribution) · AJEK (émetteur) · <b>Stripe</b> (prestataire du prélèvement carte — 1,5 % + 0,25 € par transaction carte EEE, tarifs relevés le 18/09) · Manager (activation du point, blocage d'un bon d’achat, suivi des prélèvements refusés, cartes cadeaux) · Commercial (signature du contrat)</div>
+<div class="m"><b>DOCUMENTS</b><a class="doc" href="contrat-distribution-bons.html">Contrat de distribution du bon d’achat</a> (modèle <code>contrat_partenaire</code> signé dans l'app) · <a class="doc" href="conditions-bon-payencash.html">Conditions du bon d’achat (consommateur)</a> · <a class="doc" href="cgu-espace-partenaire.html">CGU espace partenaire</a> · ticket imprimé (mentions <code>ref.bons.mentions</code>) · relevé mensuel (calculé, jamais stocké) + autofacture de commission (<code>PEC_DOCS.factureCommissionBons</code>) · reçu de prélèvement <code>PAY-…</code> ou avis de refus <code>ECH-…</code> remis au commerçant · journal <code>bon_emis · bon_applique · bon_utilise · bon_recredite · bon_annule · bon_bloque · prelevement · prelevement_refuse · prelevement_rembourse · autofacture_commission</code></div>
+<div class="m"><b>RÈGLES</b><b>Moyen de paiement à usage limité</b> (art. L521-3, I, 1° CMF — accepté sur le seul site d'AJEK ; pas de la monnaie électronique, L315-1 ; déclaration ACPR au-delà d'1 M€ d'opérations sur 12 mois, L521-3 II — <a class="doc" href="partie-2-juridique-socle.html#bon">Étape 3 §2b</a>) · <b>aucun bon d’achat sans paiement</b> : le commerçant confirme avoir encaissé son client, <b>puis sa carte est débitée, puis le code existe</b> — un refus de la banque n'émet rien et se motive (<code>partner_charges.status = 'refused'</code>, <code>decline_reason</code> obligatoire) · montant 5–250 € par bon d’achat, <b>1 000 € de bons d’achat utilisés par client et par jour</b> et <b>1 000 € sur 30 jours glissants</b>, minimum 5 €, validité 12 mois, annulation au comptoir 30 min si non utilisé (le prélèvement est alors remboursé au commerce), blocage manager (perte, vol, fraude) · <b>usage fractionné</b>, valable sur les DEUX univers · <b>ni échange, ni remboursement en espèces, ni rendu de monnaie</b> : re-crédit du bon d’achat · <b>bon d’achat à usages multiples</b> : pas de TVA à la vente — TVA exigible à l'utilisation selon la ligne consommée (297 A voyage / 297 A occasion / 20 % neuf, → Étape 2 §5) ; commission du partenaire = prestation soumise à TVA, <b>autofacturée par AJEK</b> (art. 289 CGI) sur le relevé mensuel · <b>1,10 % HT + TVA 20 %</b> : c'est le TAUX qui se lit, jamais un montant écrit d'avance · <b>vente ouverte seulement pour un point actif</b> (dossier validé + contrat signé + activation manager ; suspendu = vente fermée, bons d’achat déjà vendus toujours valables) · <b>une carte en cours par point</b> (<code>partner_cards</code> — une EMPREINTE rendue par le prestataire, jamais un numéro ; carte expirée = vente fermée) · <b>plus de créance, plus d'échéance, plus de relance, plus d'impayé</b> : tout est encaissé à la seconde de la vente (<code>partner_charges</code>) — un contrat résilié ne laisse donc rien dû de part ni d'autre · valeur des bons d’achat en circulation = <b>dette</b> (Étape 2 §7) · le bon d’achat n'est le titre de personne d'autre : il se vérifie et se débite dans notre couche de données</div>
+<div class="m"><b>ÉCRANS</b><a class="doc" href="../../ui/partenaire/03-vendre.html">partenaire/03 vendre un bon d’achat (ticket)</a> · <a class="doc" href="../../ui/partenaire/04-bons.html">partenaire/04 bons vendus</a> · <a class="doc" href="../../ui/partenaire/05-releves.html">partenaire/05 mes relevés</a> · <a class="doc" href="../../ui/fly/01-ou-payer.html">fly/01 Comment payer</a> · <a class="doc" href="../../ui/mode/05-ou-payer.html">mode/05 Comment payer</a> · <a class="doc" href="../../ui/mode/03-panier.html">mode/03 panier (bon appliqué)</a> · <a class="doc" href="../../ui/manager/29-partenaires.html">manager/29 commerces partenaires (activation, prélèvements, cartes qui refusent)</a> · <a class="doc" href="../../ui/manager/41-cartes-cadeaux.html">manager/41 Bons d’achat PayEnCash &amp; cartes cadeaux</a> · <a class="doc" href="../../ui/manager/12-commande-detail.html">manager/12 remboursement par re-crédit</a> · galerie <a class="doc" href="maquette-app-partenaire.html">app Partenaire</a></div>
+</div></div>
+
+<div class="flux"><h2>F5 · Codes promo &amp; parrainage <span class="pill">P5</span></h2>
+<div class="sub">L'acquisition pilotée depuis le Manager.</div>
+<div class="steps">
+<span class="step"><b>1</b>Le Manager crée une campagne (règles, budget, durée)</span><span class="fa">→</span>
+<span class="step"><b>2</b>Attribution : code campagne ou code parrain personnel</span><span class="fa">→</span>
+<span class="step"><b>3</b>Saisie au panier (app Public)</span><span class="fa">→</span>
+<span class="step"><b>4</b>Validation des règles (cumul, plafond, expiration, 1ʳᵉ commande)</span><span class="fa">→</span>
+<span class="step"><b>5</b>Consommation tracée + récompense parrain</span><span class="fa">→</span>
+<span class="step"><b>6</b>CAGNOTTE : chaque commande encaissée crédite des points (1 € = 1 pt) → paliers : remise OU participation au tirage « voyage à gagner »</span></div>
+<div class="meta">
+<div class="m"><b>ACTEURS</b>Manager · Client (parrain / filleul)</div>
+<div class="m"><b>DOCUMENTS</b><span class="step g" style="padding:3px 8px">Règlement d'offre promotionnelle — rédigé à l'Étape 5 §2</span></div>
+<div class="m"><b>RÈGLES</b>Non cumulable sauf mention · plafond par campagne · code parrain lié au compte client · <b>cagnotte</b> : points crédités à l'encaissement uniquement (jamais sur un panier), le tirage relève du règlement de jeu (F9)</div>
+</div></div>
+
+<div class="flux"><h2>F6 · Où acheter son Bon d’achat PayEnCash — le réseau de distribution <span class="pill">P6</span></h2>
+<div class="sub">UN réseau physique, un seul statut : les distributeurs vendent notre titre sous contrat, sédentaires (un commerce, une adresse) ou mobiles (pas d'adresse, une zone). Aucun des deux n'encaisse une commande. <i>(20/09 — « enlève la logique Neosurf » : le second réseau, hors contrat, a disparu avec le titre qu'il vendait.)</i></div>
+<div class="steps">
+<span class="step"><b>1</b>À « Comment payer » (F1) ou depuis les pages publiques « Où acheter » : le client choisit <b>comment se procurer son Bon d’achat PayEnCash</b> — chez un commerce, d'un distributeur mobile, ou il l'a déjà en main</span><span class="fa">→</span>
+<span class="step"><b>2</b><b>Chez un commerce</b> : l'app liste les <b>commerces partenaires actifs</b> (<code>pointsBons()</code> — enseigne, adresse, ville, distance ; position jamais stockée ; état vide honnête tant qu'il n'y en a pas) · le client achète son bon au comptoir, avec un bon d’achat, et repart avec le ticket (F4)</span><span class="fa">→</span>
+<span class="step"><b>3</b><b>D'un distributeur mobile</b> : il n'a pas d'adresse — il se trouve par sa ZONE (<code>agentsMobiles</code>), accepte un rendez-vous à l'adresse que le client donne (20/09 — la sienne par défaut, une autre s'il la saisit ou la relève de sa position), à une heure dite, et lui vend son bon sur place. Même contrat, même prélèvement sur SA carte : il ne transporte aucun fonds pour nous</span><span class="fa">→</span>
+<span class="step"><b>4</b>Le réseau partenaire se construit : inscription du commerce (<code>partenaire/00</code>) ou pipeline commercial → dossier (Kbis, gérant, vidéo) → contrat de distribution signé (Mon point, ou lien + code OTP du gérant) → activation par le manager → vente ouverte</span></div>
+<div class="meta">
+<div class="m"><b>ACTEURS</b>Client · Commerçants partenaires et distributeurs mobiles (vendeurs du bon d’achat) · Stripe (prélèvement sur LEUR carte à chaque vente) · Commercial (recrutement, signature) · Manager (validation, activation, suspension)</div>
+<div class="m"><b>DOCUMENTS</b><a class="doc" href="contrat-distribution-bons.html">contrat de distribution</a> + <a class="doc" href="cgu-espace-partenaire.html">CGU espace partenaire</a> + <a class="doc" href="conditions-bon-payencash.html">conditions du bon d’achat</a> + dossier de vérification (coffre <code>partenaire</code>)</div>
+<div class="m"><b>RÈGLES</b>Un distributeur <b>vend le Bon d’achat et ne fait que ça</b> : jamais de scan, jamais d'encaissement de commande, jamais de remboursement (art. L521-3 CMF, Étape 3 §2b) · un SIRET = un point · statuts : contrat_a_signer → contrat_signe → actif → suspendu / clos (motif obligatoire, le compte suit) · la liste « Où acheter un bon d’achat » ne montre que les points <b>actifs</b> · les plafonds du Bon d’achat (250 € par bon, 1 000 € par client et par jour) sont dits AVANT l'achat</div>
+<div class="m"><b>ÉCRANS</b><a class="doc" href="../../ui/ecrans/25-ou-acheter-un-bon.html">ecrans/25 Où acheter un bon d’achat PayEnCash</a> · <a class="doc" href="../../ui/fly/01-ou-payer.html">fly/01</a> · <a class="doc" href="../../ui/mode/05-ou-payer.html">mode/05</a> · <a class="doc" href="../../ui/partenaire/00-inscription.html">partenaire/00 inscription</a> · <a class="doc" href="../../ui/commercial/03-signature.html">commercial/03 signature</a> · <a class="doc" href="../../ui/commercial/09-signature-gerant.html">commercial/09 vue gérant</a> · <a class="doc" href="../../ui/manager/29-partenaires.html">manager/29</a> · vitrine <a class="doc" href="../marketing/landing-partenaires.html">« Vendez le bon d’achat PayEnCash »</a></div>
+</div></div>
+
+<div class="flux"><h2>F7 · La vie d'un Bon d’achat — émission, débit, re-crédit, blocage <span class="pill">P7</span></h2>
+<div class="sub">Ce que le manager voit du seul titre qui existe : chaque bon, son solde, ce qui l'a consommé et ce qui lui est revenu. <i>(20/09 — « enlève la logique Neosurf » : ce flux décrivait la vie d'une transaction chez un prestataire en ligne — pingback, « à rembourser », Delivery Confirmation. Ce rail n'existe plus ; le cycle qui compte désormais est celui du bon.)</i></div>
+<div class="steps">
+<span class="step"><b>1</b><code>issue</code> — le bon naît au comptoir, APRÈS le prélèvement de la carte du commerce : un prélèvement refusé n'émet aucun code (F4)</span><span class="fa">→</span>
+<span class="step"><b>2</b><code>debit</code> — le client règle une commande : le solde baisse d'autant, sous verrou, dans la même transaction SQL que le paiement. C'est CE mouvement qui prouve le règlement</span><span class="fa">→</span>
+<span class="step"><b>3</b><code>recredit</code> — un remboursement rend au bon ce que le bon avait donné (jamais en espèces, jamais sur une carte) : borné à Σ débits − Σ re-crédits de la même commande, et il prolonge la validité d'un bon expiré</span><span class="fa">→</span>
+<span class="step"><b>4</b>États DÉRIVÉS, jamais posés : <b>épuisé</b> (solde 0), <b>expiré</b> (date passée) — et deux états POSÉS par un geste : <b>bloqué</b> (perte, vol, fraude — motif obligatoire, le client lit la raison) et <b>annulé</b> (au comptoir, dans les minutes qui suivent la vente, si rien n'a été débité — la charge du commerce est remboursée)</span></div>
+<div class="meta">
+<div class="m"><b>ACTEURS</b>Client · Commerçant ou distributeur mobile (émetteur au comptoir) · serveur AJEK (service bons) · Manager (blocage, re-crédit)</div>
+<div class="m"><b>DOCUMENTS</b><a class="doc" href="conditions-bon-payencash.html">conditions du bon d’achat</a> · ticket imprimé (n° BV-…) · tables <code>gift_cards</code> et <code>gift_card_movements</code> (Étape 6) — append-only : le solde en DÉRIVE, il ne se stocke pas ailleurs</div>
+<div class="m"><b>RÈGLES</b>Le débit est le <b>seul valideur</b> d'un règlement, et il est sous verrou : un double clic ne débite pas deux fois · le plafond « 1 000 € de bons par client et par jour » se LIT sur les mouvements (Σ des débits du jour), il ne se stocke nulle part · un bon qui a déjà servi ne s'annule plus — le client détient un solde · pièces comptables : 10 ans</div>
+<div class="m"><b>ÉCRANS</b><a class="doc" href="../../ui/manager/41-cartes-cadeaux.html">manager/41 bons d’achat</a> · <a class="doc" href="../../ui/manager/07-tresorerie.html">manager/07 trésorerie</a> · <a class="doc" href="../../ui/mode/26-portefeuille.html">mode/26 mes bons</a></div>
+</div></div>
+
+<div class="flux"><h2>F8 · Transverse confiance <span class="pill">P7</span></h2>
+<div class="sub">Ce qui court sur tous les flux — la promesse anti-arnaque.</div>
+<div class="steps">
+<span class="step"><b>1</b>Toute action sensible est journalisée (audit)</span><span class="fa">→</span>
+<span class="step"><b>2</b>Tout paiement produit un reçu + code vérifiable</span><span class="fa">→</span>
+<span class="step"><b>3</b>Le client suit sa commande à tout moment</span><span class="fa">→</span>
+<span class="step"><b>4</b>Données minimisées &amp; consenties (RGPD)</span></div>
+<div class="meta">
+<div class="m"><b>ACTEURS</b>Tous</div>
+<div class="m"><b>DOCUMENTS</b><a class="doc" href="registre-traitements-rgpd.html">Registre des traitements (art. 30)</a> · politique de confidentialité &amp; mentions légales de l'app (<code>ui/ecrans/18-informations-legales.html</code>)</div>
+<div class="m"><b>RÈGLES</b>Le code du reçu permet de vérifier une commande sans compte · <b>un bon d’achat suffit du client, nulle part</b> : il n'en saisit aucune pour payer — il présente le code d'un titre déjà payé · seule la carte du COMMERCE partenaire est enregistrée, chez Stripe, sous forme d'empreinte (<code>partner_cards</code>) · clé API Duffel et clés secrètes des prestataires côté serveur uniquement</div>
+</div></div>
+
+<div class="flux"><h2>F9 · Campagnes &amp; acquisition <span class="pill">P8</span></h2>
+<div class="sub">Le dispositif de lancement : jeu concours, pub sociale, influenceurs, flyers — tout tracé, tout mesuré.</div>
+<div class="steps">
+<span class="step"><b>1</b>Le Manager / Commercial <b>LANCE la campagne DEPUIS l'espace PRO via les API des régies</b> (TikTok Marketing API, Meta, Snap) — objectif, budget, dates, créa (GED, version validée) · <b>jamais en se connectant aux dashboards des régies</b></span><span class="fa">→</span>
+<span class="step"><b>2</b>Chaque support reçoit son traceur : QR par lot de flyers · lien par pub · code par influenceur</span><span class="fa">→</span>
+<span class="step"><b>3</b>Diffusion : TikTok / Snap / Insta (publiées par l'API de la régie) · influenceurs · flyers distribués en secteur ciblé · pages GEO</span><span class="fa">→</span>
+<span class="step"><b>4</b>Téléchargement de l'app → source attribuée automatiquement</span><span class="fa">→</span>
+<span class="step"><b>5</b>Participation au jeu concours (inscription dans l'app)</span><span class="fa">→</span>
+<span class="step"><b>6</b>Tirage à date fixe · gagnant annoncé · dotation remise</span><span class="fa">→</span>
+<span class="step"><b>7</b>Retombées consolidées : les résultats (impressions, clics, installs, dépense) sont <b>rapatriés par API</b> pour le <b>budget en direct</b> — CPI, coût par client, comparatif par source</span><span class="fa">→</span>
+<span class="step"><b>8</b>Arbitrage : on coupe / on double — vague suivante</span></div>
+<div class="meta">
+<div class="m"><b>ACTEURS</b>Manager (pilote) · Commercial (terrain) · Influenceurs · Client</div>
+<div class="m"><b>DOCUMENTS</b><span class="step g" style="padding:3px 8px">Règlement de jeu concours — rédigé à l'Étape 5 §2</span> <span class="step g" style="padding:3px 8px">Contrat influenceur — rédigé à l'Étape 5 §2</span> · <a class="doc" href="../marketing/reseaux-sociaux.html">Plan réseaux sociaux</a></div>
+<div class="m"><b>RÈGLES</b>Un traceur unique par support (jamais deux campagnes sur le même QR) · mention « collaboration commerciale » obligatoire chez l'influenceur · participation au jeu sans obligation d'achat · données de participation = RGPD (F8) · réallocation budgétaire décidée au CPI par canal · référencement IA (GEO — pages structurées, FAQ schema.org) traité comme un canal à part entière</div>
+<div class="m"><b>ÉCRANS</b><a class="doc" href="../../ui/commercial/05-campagnes.html">commercial/05 campagnes (API régies, budget en direct, CPI)</a> · <a class="doc" href="../../ui/commercial/06-concours.html">commercial/06 concours (force commune)</a> · <a class="doc" href="../../ui/commercial/07-ged.html">commercial/07 GED (supports + lots de flyers QR)</a> · <a class="doc" href="../../ui/commercial/08-agenda.html">commercial/08 agenda</a></div>
+</div></div>
+
+<div class="flux"><h2>F11 · Vente MODE — prêt-à-porter · accessoires · sneakers  <span class="pill">P9</span></h2>
+<div class="sub">La deuxième ligne de revenus, intégrée maintenant : zéro stock, achat ferme, mêmes moyens de paiement par bon d’achat.</div>
+<div class="steps">
+<span class="step"><b>1</b>Catalogue : pièces des <b>fournisseurs</b> — le stock reste chez eux ; l'occasion est une <b>pièce unique</b>, retirée du catalogue à la vente</span><span class="fa">→</span>
+<span class="step"><b>2</b>Commande + proforma (<code>product_line = fashion</code>)</span><span class="fa">→</span>
+<span class="step"><b>3</b>Règlement — même moyen que le voyage : le <b>Bon d’achat PayEnCash</b> (F4 — aussi depuis le panier), aux plafonds du titre</span><span class="fa">→</span>
+<span class="step"><b>4</b>Achat ferme : facture du <b>fournisseur</b> émise APRÈS l'encaissement (jamais avant)</span><span class="fa">→</span>
+<!-- (18/09, soir) L'étape disait « ramassage par l'agent chez le fournisseur » : il n'y a plus d'agent, et
+     l'expédition est de toute façon celle du fournisseur depuis le pivot Mondial Relay. -->
+<span class="step"><b>5</b><b>Le FOURNISSEUR expédie</b> sous étiquette <b>Mondial Relay</b> au compte AJEK (échéance datée à la vente, dépôt en point relais) — relais/locker par défaut (le moins cher de France, ~20 % sous le tarif colis domicile standard, API étiquettes/tracking/retours) · <b>contrôle aléatoire</b> : le colis est dérouté vers l'atelier pour authentification (état <code>blocked_control</code>, motif obligatoire)</span><span class="fa">→</span>
+<span class="step"><b>6</b>Facture de vente émise à l'expédition + registre 321-7 alimenté auto</span><span class="fa">→</span>
+<span class="step"><b>7</b>Rétractation 14 j : retour possible → restitution via F10</span></div>
+<div class="meta">
+<div class="m"><b>ÉCRANS</b><a class="doc" href="../../ui/mode/01-accueil.html">mode/01 boutique</a> · <a class="doc" href="../../ui/mode/09-recherche.html">mode/09 recherche vivante</a> · <a class="doc" href="../../ui/mode/10-tendances.html">mode/10 tendances &amp; collabs</a> · <a class="doc" href="../../ui/mode/03-panier.html">mode/03 panier fusionné (TVA composée)</a> · <a class="doc" href="../../ui/mode/04-commande.html">mode/04 suivi MR</a> · <a class="doc" href="../../ui/mode/05-ou-payer.html">mode/05 où payer</a></div>
+<div class="m"><b>ACTEURS</b>Client · Fournisseur (SIRET + KYB — c'est LUI qui expédie) · AJEK · Atelier (contrôle aléatoire + authentification) · Mondial Relay</div>
+<div class="m"><b>DOCUMENTS</b>Proforma · facture d'achat (fournisseur→AJEK) · facture de vente (AJEK→client) · contrat-cadre d'achat (F12 — remplace les anciens contrats fourniture/promotion)</div>
+<div class="m"><b>RÈGLES</b><b>L'encaissement précède tout engagement</b> · grille canonique (→ Étape 2 §1) : achat fournisseur <b>123 €</b> → <b>marge 7 % = 8,61 €</b> + Mondial Relay 7,99 € (colis 1,2 kg) + contrôle atelier 2,20 € → client <b>141,80 €</b> livraison incluse → <b>8,61 € nets</b> avant TVA sur marge. <b>La marge est indépendante des frais</b> : un colis lourd renchérit le prix client, il n'entame pas la marge (12/09/2026) · TVA : <b>neuf = 20 %</b> (ligne « dont TVA » affichable) · <b>occasion = TVA sur la marge des biens d'occasion</b> (art. 297 A, non détaillée) — cloisonnée de la marge voyage (→ Étape 2 §5) · garantie d'authenticité au contrat (sneakers : anti-contrefaçon, traçabilité par article) · extension de l'objet social requise (Étape 3 §2) · <b>Recherche &amp; filtres</b> (marque/taille/état/prix) = le cœur de l'expérience · <b>Tendances</b> : looks « Porté par » avec similaires moins chers + collabs (lignes spéciales fournisseurs, le client reste anonyme) · <b>lancement séquencé</b> : FLY actif, MODE ouvre à J-59 avec concours 1 000 € — objectif <b>120 fournisseurs actifs au jour J</b> (entonnoir 300→120→90→60→40, animation réseaux par collab)</div>
+</div></div>
+
+<div class="flux"><h2>F12 · Intégration fournisseur — KYB, contrat, catalogue, ramassage <span class="pill">P9</span></h2>
+<div class="sub">Le modèle Temu adapté : des fournisseurs, mais c'est AJEK qui vend. Le fournisseur ne touche jamais les espèces des clients.</div>
+<div class="steps">
+<span class="step"><b>1</b>Acquisition : <b>vitrine « Devenir fournisseur »</b> (zéro logistique · Mondial Relay pris en charge · clientèle cash France entière · virement 7 j) → candidature (app Fournisseur) : SIREN + identité du gérant</span><span class="fa">→</span>
+<span class="step"><b>2</b><b>KYB/KYC</b> : vérification société + gérant · RIB (pour les virements de ses factures)</span><span class="fa">→</span>
+<span class="step"><b>3</b><b>Contrat-cadre d'achat</b> signé électroniquement (achat ferme, vente en nom propre AJEK)</span><span class="fa">→</span>
+<span class="step"><b>4</b><b>Publication structurée (wizard 6 étapes)</b> : catégorie &amp; sous-catégorie → marque · modèle · SKU · couleur · matière → état (échelle Vinted, défauts décrits — facture d'origine OBLIGATOIRE sneakers neuves) → <b>tailles × stock</b> (occasion = pièce unique · le stock RESTE chez le fournisseur) → 4 photos (face/dos/étiquette/défauts) → prix d'ACHAT souhaité + poids (tarif Mondial Relay) — le prix de VENTE est fixé par AJEK après contrôle</span><span class="fa">→</span>
+<span class="step"><b>5</b>Vente client → <b>achat ferme automatique</b> au prix convenu</span><span class="fa">→</span>
+<span class="step"><b>6</b>Expédition par le fournisseur (F11-5) → sur contrôle aléatoire, passage à l'atelier : pièce conforme, re-cotée (avenant soumis à son accord) ou refusée</span><span class="fa">→</span>
+<span class="step"><b>7</b>Le fournisseur <b>facture AJEK</b> → <b>virement sous 7 j</b> (trésorerie inversée : le cash client est déjà en caisse — virement depuis <code>on_account</code>, → Étape 2 §4)</span><span class="fa">→</span>
+<span class="step"><b>8</b><b>Fournisseur-influenceur</b> : lien tracé de ses pièces (« disponible sur PayEnCash MODE ») · retombées attribuées</span><span class="fa">→</span>
+<span class="step"><b>9</b><b>Codes promo du fournisseur</b> : il édite ses codes (€ ou %, validité, pièces, plafond d'utilisations) — la remise s'impute sur SON prix d'achat convenu, le prix client baisse d'autant, la marge AJEK ne bouge pas · visible Manager</span></div>
+<div class="meta">
+<div class="m"><b>ÉCRANS</b><a class="doc" href="../../ui/fournisseur/03-ajouter-piece.html">fournisseur/03 wizard 6 étapes</a> · <a class="doc" href="../../ui/fournisseur/04-expeditions.html">fournisseur/04 expéditions</a> · <a class="doc" href="../../ui/fournisseur/05-ventes-factures.html">fournisseur/05 factures</a> · <a class="doc" href="../../ui/fournisseur/06-partage.html">fournisseur/06 partage</a> · <a class="doc" href="../../ui/fournisseur/07-codes-promo.html">fournisseur/07 codes promo</a> · <a class="doc" href="../marketing/landing-fournisseurs.html">vitrine « Devenir fournisseur »</a></div>
+<div class="m"><b>ACTEURS</b>Fournisseur (expéditeur) · AJEK (acheteur-revendeur) · Atelier · Mondial Relay · Commercial (recrutement fournisseurs)</div>
+<div class="m"><b>DOCUMENTS</b>Contrat-cadre d'achat · charte terminologie fournisseur · étiquette Mondial Relay (compte AJEK) · facture fournisseur · CGU espace fournisseur</div>
+<div class="m"><b>RÈGLES</b>⚠️ <b>Anti-requalification (DSP2 / instrument de paiement)</b> : AJEK encaisse <b>pour son propre compte</b> (vente en nom propre après achat ferme) — le fournisseur n'est JAMAIS bénéficiaire des paiements clients · vocabulaire imposé : « prix d'achat convenu », « facture », « virement 7 j » — <b>interdits</b> : « reversement des paiements clients », « solde », « cagnotte fournisseur », « encaisser pour votre compte » · le partage influenceur dit « disponible sur PayEnCash MODE », jamais « ma boutique » / « payez-moi » · <b>suivi client de bout en bout</b> (app MODE) : règlement effectué (bon d’achat) → achat ferme → expédiée par le fournisseur → contrôlée/authentifiée si le colis est dérouté → Mondial Relay <b>suivi en direct (API tracking)</b> → retrait au relais (code, gardé 8 j) · le fournisseur voit le même pipeline sur SES pièces · le Manager vérifie chaque commerçant (KYB, conformité atelier, factures) · pièces neuves : facture d'origine exigée · registre 321-7 pour l'occasion · <b>codes promo : édités par le FOURNISSEUR uniquement</b> (AJEK n'édite pas de codes MODE — F5 reste le levier promo de la ligne FLY) : remise imputée sur le prix d'achat, facture réduite d'autant, jamais sous le prix plancher, durée + plafond d'utilisations obligatoires, visibles Manager · ⚠️ <b>découverte de scénario</b> : sous ~23-25 € de prix d'achat, la grille −8 %/+12 % ne couvre pas la livraison (marge négative) — le wizard affiche un <b>prix plancher</b> ; <b>arbitrage fondatrice ouvert</b> : prix minimum d'article, livraison partiellement au client sur petits paniers, ou regroupement d'envois</div>
+</div></div>
+
+<div class="flux"><h2>F10 · Annulations &amp; remboursements <span class="pill">P7</span></h2>
+<!-- (18/09, soir) La restitution passait par quatre canaux dont deux n'existent plus : les espèces remises par
+     l'agent et la part carte de son complément. Le client n'ayant plus jamais donné de carte ni reçu d'espèces,
+     il ne reste que ce qu'il a réellement utilisé : son bon d’achat, ou le circuit du prestataire en ligne. -->
+<div class="sub">Le trou identifié par tous les audits — règle prudente + circuit recommandé (à valider par Émilie). <b>Un remboursement ne se fait jamais en espèces</b> et ne donne <b>jamais lieu à un rendu de monnaie</b>.</div>
+<div class="steps">
+<span class="step"><b>1</b>Conditions affichées AVANT l'achat — « NON REMBOURSÉ » explicite si le tarif l'est</span><span class="fa">→</span>
+<span class="step"><b>2</b>Demande d'annulation → lecture des conditions fournisseur (Duffel order_cancellation · Nuitée cancellationPolicies)</span><span class="fa">→</span>
+<span class="step"><b>3</b>Règle : AJEK ne rembourse <b>jamais plus que ce qu'elle récupère</b></span><span class="fa">→</span>
+<span class="step g"><b>4</b>Restitution, dans cet ordre : ⓪ commande réglée (tout ou partie) par <b>Bon d’achat PayEnCash → re-crédit du bon d’achat</b> (<code>rembourser(ref, {mode:'bon'})</code>, 18/09) · ① avoir sur le compte par défaut · ② à défaut de bon (commande soldée par un avoir) → l'avoir est recrédité sur le compte · ③ virement si le client a donné un IBAN à son nom — <b>jamais d'espèces, jamais de rendu de monnaie</b></span><span class="fa">→</span>
+<span class="step"><b>5</b>La TVA est régularisée <b>sur la marge effectivement conservée</b> (297 A) — jamais au prorata du principal · tout est journalisé</span></div>
+<div class="meta">
+<div class="m"><b>ACTEURS</b>Client · Manager · fournisseurs (Duffel / Nuitée)</div>
+<div class="m"><b>DOCUMENTS</b>Politique d'annulation (à publier avec les CGV) · avoir numéroté · justificatif de restitution</div>
+<div class="m"><b>RÈGLES</b><b>Le canal de restitution est tranché</b> (18/09, soir) : il n'y a plus ni course de retour, ni décaissement « au point », ni espèces — on rend par où le client a payé · rétractation 14 j : <b>ne s'applique pas</b> au voyage à date (L221-28), <b>s'applique</b> à la ligne mode (F11, active) · <b>réglé par bon d’achat</b> → re-crédit du bon d’achat, montant ≤ Σ des débits de CETTE commande, journal <code>bon_recredite</code> — <b>un partenaire ne rembourse jamais rien</b> (il a déjà été prélevé, F4) · <b>soldé par un avoir</b> → l'avoir est recrédité sur le compte · <b>l'annulation d'un bon d’achat au comptoir dans les 30 min</b> est un cas à part : c'est le <b>prélèvement du commerce</b> qui est remboursé (<code>partner_charges.status = 'refunded'</code>), le client ayant été remboursé par son commerçant · <code>cancellation_requests.refund_method</code> ∈ virement · psp · avoir_compagnie · <b>bon</b> · avoir</div>
+</div></div>
+
+<div class="flux"><h2>F13 · Exceptions &amp; litiges <span class="pill">P7</span></h2>
+<div class="sub">Les quatre cas qui sortent du nominal — chacun outillé, tracé, jamais résolu « à la main » sans trace.</div>
+<div class="steps">
+<!-- (18/09, soir) L'exception ① était l'écart de dépôt d'un agent : il n'y a plus ni espèces ni dépôt chez nous.
+     Ce qui la remplace n'est pas un écart mais un refus : la carte du commerce qui ne passe pas à la vente. -->
+<span class="step"><b>①</b><b>Prélèvement refusé au comptoir</b> : la carte du commerce est refusée ou expirée → <b>aucun bon d’achat n'est émis</b>, le commerçant rend son argent au client, le motif est écrit (<code>partner_charges.status = 'refused'</code>, <code>decline_reason</code>) et la ligne remonte au Manager — refus répétés = vente suspendue, jamais un échec muet</span><span class="fa">→</span>
+<span class="step"><b>②</b><b>Perte / avarie colis Mondial Relay</b> : réclamation transporteur (API retours/tracking) → remplacement ou remboursement client selon F10 — le fournisseur déjà payé (achat ferme) n'est <b>pas repris</b></span><span class="fa">→</span>
+<span class="step"><b>③</b><b>Litige client</b> : réclamation écrite → réponse sous <b>15 jours</b> → à défaut, <b>médiation MTV</b> (Médiation Tourisme &amp; Voyage)</span><span class="fa">→</span>
+<span class="step"><b>④</b><b>Suspicion de fraude</b> : bon d’achat perdu, volé ou revendu → <b>blocage motivé</b> par le Manager, le client lit la raison (journal <code>bon_bloque</code>) · notification du prestataire forgée → ignorée (seul le pingback signé règle, F7) · contournement des plafonds du titre par multiplication des bons d’achat → c'est le <b>compte</b> qui est plafonné (1 000 €/jour, 1 000 € sur 30 jours glissants) et la vérification d'identité renforcée qui prend le relais · codes promo fournisseur abusés → suspension du code + revue Manager</span></div>
+<div class="meta">
+<div class="m"><b>ACTEURS</b>Client · Commerçant partenaire · Manager (arbitre de chaque exception) · Stripe · Mondial Relay · médiateur MTV</div>
+<div class="m"><b>DOCUMENTS</b>Avis de refus de prélèvement <code>ECH-…</code> (lu par le commerçant) · réclamation transporteur · dossier de médiation · journal d'audit (F8)</div>
+<div class="m"><b>RÈGLES</b>Un prélèvement refusé n'est <b>jamais rattrapé après coup</b> : pas de code, pas de créance, pas de « on régularisera » — le commerçant réessaie avec une autre carte ou rend son argent · la perte transporteur ne remet pas en cause l'achat ferme fournisseur (le risque logistique est porté par AJEK) · délai de réponse aux réclamations <b>≤ 15 j</b> avant médiation · un code promo suspendu ne s'applique plus à aucun panier en cours</div>
+<div class="m"><b>ÉCRANS</b><a class="doc" href="../../ui/ecrans/11-suivi-etats-echec.html">ecrans/11 suivi états &amp; échecs</a> · <a class="doc" href="../../ui/manager/29-partenaires.html">manager/29 (prélèvements refusés)</a> · <a class="doc" href="../../ui/manager/41-cartes-cadeaux.html">manager/41 (blocage d'un bon d’achat)</a> · <a class="doc" href="../../ui/manager/27-assistance-reclamations.html">manager/27 réclamations</a></div>
+</div></div>
+
+<div class="note"><b>Sortie de l'Étape 4 :</b> <b>13 flux fermés</b> (F1–F13 + F2-promo, <b>moins F3 devenu sans objet</b>) — les numéros ne sont PAS décalés : F4…F13 gardent le leur, les documents juridiques et les audits y renvoient. <b>18/09 au soir, trois décisions fondatrices</b> : ① le produit s'appelle le <b>Bon d’achat PayEnCash</b> ; ② l'<b>agent de caisse mobile est supprimé</b> — F3 tombe, F1/F2-promo/F8/F10/F11/F12/F13 sont purgés de l'agent, du plafond découpé en « espèces + complément carte » et du cycle du cash ; ③ le <b>reversement mensuel du partenaire est abandonné</b> au profit d'un <b>prélèvement à la vente</b> (Stripe) — F4 réécrit, F13 ① remplacé. Il reste <b>un seul moyen de paiement, acheté au comptoir</b> : le Bon d’achat PayEnCash (notre réseau, sous contrat) — <i>le titre d'un réseau tiers a été supprimé le 20/09, avec le rail en ligne qui l'encaissait</i>. F11/F12 (mode &amp; fournisseurs) actifs. L'Étape 5 accroche chaque flux à ses documents juridiques (et rédige les manquants). La <b>Étape 6</b> modélise les tables citées dans ces flux ; les montants et régimes viennent de la <b>Étape 2</b>.</div>
+
+<p style="margin-top:24px"><a class="btn" href="diagramme-principal.html">🧭 Fil rouge</a> <a class="btn" href="partie-5-docs-flux.html">Continuer → Étape 5 · Contrats & documents</a></p>
+</div></body></html>

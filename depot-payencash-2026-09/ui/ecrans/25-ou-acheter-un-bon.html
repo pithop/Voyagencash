@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Où acheter un Bon d’achat PayEnCash</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<link rel="stylesheet" href="../assets/vendor/maplibre-gl.css">
+<script src="../assets/vendor/maplibre-gl.js"></script>
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-filters.js"></script><!-- (07/09) recherche · tri · pagination par convention -->
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<!-- (18/09 — Bon d’achat PayEnCash) OÙ ACHETER UN BON D’ACHAT PAYENCASH — page PUBLIQUE (garde : PUBLIQUES.ecrans).
+     Le Bon d’achat PayEnCash est un bon d'achat PRÉPAYÉ à montant libre, acheté au comptoir d'un commerçant partenaire :
+     le partenaire VEND le bon d’achat (code généré + ticket imprimé), il n'encaisse AUCUNE commande pour notre compte —
+     c'est la différence avec le réseau d'encaissement abandonné le 17/09, et la page le DIT.
+     (18/09, soir — pivot de positionnement) ON NE DIT PLUS COMMENT LE CLIENT RÈGLE SON BON D’ACHAT AU COMPTOIR : il paie
+     comme il veut, ça ne nous regarde pas. La phrase mère est « payer avec un bon d’achat ». Le plafond légal des espèces (art. L112-6 CMF) et le complément carte ont disparu avec l'agent.
+     (18/09, soir — décision fondatrice « si je veux utiliser un bon d’achat OU L'ACHETER : principe de la carte géographique,
+     liste des partenaires, distance ») CETTE PAGE EST LA RÉFÉRENCE DE LA CARTE. Les volets « je veux en acheter » de
+     fly/01 et mode/05 en montrent les trois plus proches et renvoient ICI pour la liste complète : un seul endroit
+     décrit le réseau, un seul endroit porte les filtres, la recherche et les mentions.
+     POURQUOI une carte et pas seulement une liste : « le plus proche » n'est pas une notion de texte. La distance se
+     CALCULE (D.distanceM) depuis la position du client, jamais écrite ; sans position, aucune distance n'est affichée
+     et l'ordre reste celui du référentiel — on n'invente pas une proximité.
+     Tout est dérivé de PEC_DATA : `pointsBons()` (les partenaires ACTIFS — vide tant qu'aucun point n'est activé par
+     le manager : ÉTAT VIDE HONNÊTE, le réseau ouvre ville par ville), `bonsRef()` (minimum, plafond par bon d’achat, plafond
+     par client et par jour, plafondClientMois sur fenetrePlafondJours glissants, validité, mentions du ticket,
+     fondement légal — valeurs vives, réglées par le manager),
+     `moyensPaiement()` pour les autres moyens. Aucun chiffre, aucune adresse, aucune phrase de conditions en dur. -->
+<style>
+  .h1{font-size:23px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;color:var(--color-ink);margin:14px 0 6px}
+  .h1 em{font-style:normal;color:var(--color-primary)}
+  .lead{font-size:14px;font-weight:500;line-height:1.5;color:var(--color-muted);margin:0 0 4px}
+  .lead b{color:var(--color-ink)}
+  .kpi{display:flex;gap:9px;margin:14px 0 4px}
+  .kpi .box{flex:1;border-radius:16px;background:var(--color-card);box-shadow:var(--shadow-card);padding:13px 14px}
+  .kpi .n{font-size:22px;font-weight:800;letter-spacing:-0.5px;color:var(--color-primary-dark);line-height:1}
+  .kpi .l{font-size:11px;font-weight:600;color:var(--color-muted);margin-top:3px}
+  .info{display:flex;align-items:flex-start;gap:12px;background:var(--color-card);border-radius:16px;box-shadow:var(--shadow-card);padding:14px 15px;margin-top:12px}
+  .info .ic{flex:none;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:12px;background:var(--color-mint);color:var(--color-primary-dark)}
+  .info .b{margin:0;font-size:14px;font-weight:800;color:var(--color-ink)}
+  .info p{margin:5px 0 0;font-size:12.5px;line-height:1.55;color:var(--color-muted)}
+  .info p b{color:var(--color-ink)}
+  .info ul{margin:6px 0 0;padding-left:16px;font-size:11.5px;line-height:1.55;color:var(--color-muted)}
+  .lien{font-size:12.5px;font-weight:800;color:var(--color-primary-dark);text-decoration:none}
+  /* LA LISTE — une ligne par commerce, du plus proche au plus loin quand la position est connue.
+     Elle n'est plus groupée par ville : le groupe contredisait le tri par distance (Aix avant Marseille
+     à 300 m). La ville reste LUE dans l'adresse et cherchable (data-fsearch). */
+  .pt{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px solid var(--color-sep);width:100%;text-align:left;background:none}
+  .pt:last-child{border-bottom:none}
+  .pt .tile{flex:none;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:11px;background:var(--color-mint);color:var(--color-primary-dark);font-size:12px;font-weight:800}
+  .pt .nm{font-size:14px;font-weight:800;color:var(--color-ink)}
+  .pt .ad{font-size:11.5px;line-height:1.5;color:var(--color-muted);margin-top:1px}
+  .pt .di{display:block;font-size:11.5px;font-weight:800;color:var(--color-primary-dark);margin-top:3px}
+  .pt .tel{flex:none;align-self:center;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:10px;font-weight:800;padding:3px 9px;white-space:nowrap;text-decoration:none}
+  .pt.vu{background:var(--color-mint);border-radius:12px;padding-left:9px;padding-right:9px}
+  .vide{border-radius:16px;background:var(--color-amber-well);padding:14px 15px;margin-top:10px;font-size:12.5px;line-height:1.55;color:var(--color-amber-text)}
+  .vide b{color:var(--color-amber-text)}
+  /* LA CARTE — même montage que l'itinéraire agent (éprouvé) : le fond CSS .pec-map-canvas reste sous le
+     canvas WebGL, qui peint BLANC quand les tuiles ne chargent pas. Il est masqué tant que rien n'a chargé. */
+  .mapwrap{position:relative;height:210px;border-radius:18px;overflow:hidden;box-shadow:0 8px 22px rgba(15,42,36,.12);margin-top:14px}
+  .mk-user{width:20px;height:20px;border-radius:50%;background:var(--color-primary);box-shadow:0 0 0 5px rgba(16,160,106,.25),0 2px 6px rgba(15,42,36,.3)}
+  .mk-pt{display:flex;align-items:center;gap:5px;background:var(--color-ink);color:#fff;font-size:10.5px;font-weight:700;border-radius:999px;padding:5px 10px;box-shadow:0 4px 10px rgba(15,42,36,.3);white-space:nowrap;cursor:pointer}
+  .mk-pt .pec-ico{font-size:12px;color:var(--color-bright)}
+  .mk-pt.vu{background:var(--color-primary-dark)}
+  .geoask{border-radius:16px;background:var(--color-mint);padding:13px 14px;margin-top:12px;font-size:12px;line-height:1.55;color:var(--color-mint-ink)}
+  .geoask b{color:var(--color-primary-dark)}
+  .rayons{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 8px}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;background:var(--color-surface)">
+
+    <div style="padding:18px 20px 0">
+      <!-- on arrive ici depuis « Comment payer » (Fly, Mode), le sac, le compte ou les moyens de paiement : le retour suit l'historique -->
+      <a href="15-moyens-paiement.html" onclick="if(history.length>1){history.back();return false}" class="tap" aria-label="Retour" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-chevron-left"/></svg>
+      </a>
+      <h1 class="h1">Où acheter<br><em>un Bon d’achat PayEnCash.</em></h1>
+      <p class="lead" id="bon-lead">—</p>
+
+      <!-- LA CARTE (18/09, soir) : elle n'existe que si des commerces sont activés — une carte vide qui cadre
+           sur une ville au hasard laisserait croire à un réseau. Elle est donc masquée avec la liste. -->
+      <div class="mapwrap pec-map-canvas" id="bon-mapwrap" hidden><div id="bon-map" style="position:absolute;inset:0"></div></div>
+
+      <!-- L'ACCORD DE POSITION NE SE DEMANDE PAS PAR UN BOUTON QUAND IL EST DÉJÀ DONNÉ (règle PEC_GEO) :
+           si l'accord est connu, autoLocaliser fait le travail et cet encart n'apparaît jamais. Sinon on
+           explique À QUOI la position sert AVANT de la demander — trier du plus proche au plus loin. -->
+      <div class="geoask" id="geo-ask" hidden>
+        <b>Pour classer les commerces du plus proche au plus loin</b>, on a besoin de ta position — c'est tout ce qu'elle sert ici.
+        <span data-geo-retention="tu"></span>
+        <button type="button" class="pec-btn-secondary tap" id="geo-ok" style="display:block;width:100%;margin-top:9px;font-weight:800">Autoriser ma position</button>
+        <p id="geo-err" hidden style="margin:8px 0 0;font-size:11.5px;font-weight:700;color:#8E2A1E"></p>
+      </div>
+      <p id="geo-note" hidden style="margin:8px 2px 0;font-size:10.5px;line-height:1.5;color:var(--color-muted)">Distances à vol d'oiseau depuis ta position · <span data-geo-retention="tu"></span></p>
+
+      <div class="kpi">
+        <div class="box"><div class="n" id="kpi-points">—</div><div class="l">commerces partenaires actifs</div></div>
+        <div class="box"><div class="n" id="kpi-villes">—</div><div class="l">villes couvertes</div></div>
+      </div>
+
+      <div class="info">
+        <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:19px"><use href="#i-ticket"/></svg></span>
+        <div style="min-width:0"><p class="b">Comment ça marche</p><p id="bon-comment">—</p></div>
+      </div>
+      <div class="info">
+        <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:19px"><use href="#i-info"/></svg></span>
+        <div style="min-width:0"><p class="b">Le montant d'un bon d’achat</p><p id="bon-plafond">—</p></div>
+      </div>
+      <div class="info">
+        <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:19px"><use href="#i-store"/></svg></span>
+        <!-- (18/09, soir — pivot de positionnement) ON NE DIT PLUS COMMENT LE CLIENT RÈGLE SON BON D’ACHAT AU COMPTOIR.
+             Il paie comme il veut, ça ne nous regarde pas : ce qui nous engage, c'est qu'AUCUNE DONNÉE BANCAIRE
+             n'est requise chez nous. Ce qu'il faut dire ici, en revanche, c'est ce que le commerçant ne fait PAS. -->
+        <div style="min-width:0"><p class="b">Ces commerces vendent le Bon d’achat — ils n'encaissent aucune commande</p><p>Un <b>commerçant partenaire</b> te vend un Bon d’achat PayEnCash à son comptoir, comme une recharge ou un ticket. Il ne règle <b>jamais une commande</b> pour nous : ne lui présente pas ton code de commande, ne lui remets pas d'argent pour une commande — seule la vente du bon d’achat se fait au comptoir.</p></div>
+      </div>
+
+      <p class="pec-section-label" style="margin:22px 0 4px" id="liste-titre">Les commerces partenaires</p>
+      <!-- LES FILTRES DE RAYON : les VALEURS (1, 2, 5) sont des données de CETTE page — un cadrage de carte,
+           pas une règle métier ; les libellés se construisent dans le code. « Tous » reste l'état de départ.
+           Ils ne s'affichent qu'avec une position : sans elle, un rayon ne veut rien dire. -->
+      <div class="rayons" id="rayons" hidden></div>
+      <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+      <input class="pec-search" type="search" data-fsearch="#reseau-liste > *" placeholder="Rechercher une ville, un commerce…" aria-label="Rechercher une ville, un commerce" style="margin:0 0 10px;max-width:420px">
+      <div class="meta" data-fvide="#reseau-liste > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+      <div class="pec-card" id="reseau-carte" hidden style="padding:4px 15px 6px"><div id="reseau-liste" data-fpage="15"></div></div>
+      <!-- ÉTAT VIDE HONNÊTE : tant qu'aucun partenaire n'est activé, on le dit — et on renvoie vers l'autre moyen -->
+      <div class="vide" id="reseau-vide" hidden>—</div>
+      <!-- Le rayon choisi peut ne rien laisser : c'est un RÉSULTAT, pas un réseau vide. On le distingue. -->
+      <div class="vide" id="rayon-vide" hidden>—</div>
+
+      <p style="margin:12px 2px 0;font-size:10.5px;line-height:1.55;color:var(--color-muted-2)">Liste mise à jour à chaque activation d'un point par PayEnCash — un commerce suspendu ou fermé en sort aussitôt.</p>
+
+      <div class="info" style="margin-top:14px">
+        <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:19px"><use href="#i-shield"/></svg></span>
+        <div style="min-width:0"><p class="b">Les conditions du Bon d’achat</p><ul id="bon-mentions"></ul>
+          <!-- LE FONDEMENT LÉGAL, DÉRIVÉ (18/09, soir) : les articles ne se réécrivent pas ici, ils se LISENT dans
+               ref.bons.fondement (exemption, declarationAcpr, especes) — la phrase les assemble, le texte complet
+               de chaque fondement reste consultable au survol (title). -->
+          <p id="bon-acpr" style="margin:8px 0 0;font-size:11.5px;line-height:1.55;color:var(--color-muted)">—</p>
+          <a class="lien" href="18-informations-legales.html#bon" style="display:inline-block;margin-top:6px">Conditions complètes et fondement légal <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px;vertical-align:-2px"><use href="#i-arrow-right"/></svg></a></div>
+      </div>
+
+      <div class="info" style="margin-top:12px">
+        <span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:19px"><use href="#i-banknote"/></svg></span>
+        <div style="min-width:0"><p class="b">Tu préfères payer autrement ?</p><p id="autres-moyens">—</p>
+          <a class="lien" href="15-moyens-paiement.html" style="display:inline-block;margin-top:6px">Voir tous les moyens de paiement <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:13px;vertical-align:-2px"><use href="#i-arrow-right"/></svg></a></div>
+      </div>
+
+      <div id="fermeture-slot" style="margin-top:12px"></div>
+    </div>
+
+    <nav class="pec-tabbar" aria-label="Navigation principale">
+      <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+      <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+      <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+      <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+      <a class="pec-tab" aria-current="page" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+    </nav>
+  </div>
+
+<script>
+  /* Tout vient de PEC_DATA : les points (pointsBons — partenaires ACTIFS), les règles du bon d’achat (bonsRef — vives), son
+     fondement légal (bonsRef().fondement), les autres moyens (moyensPaiement). Aucun chiffre, aucune adresse, aucune
+     phrase de conditions en dur. La page ÉCOUTE : un point activé ou suspendu par le manager, un plafond modifié en
+     configuration se relisent sans recharger.
+     (18/09, soir) LA DISTANCE VIENT DU DATA-LAYER. Elle se recalculait ici, et dans trois autres pages, chacune à sa
+     façon : `pointsBons({pos})` rend désormais distM / distTxt / pied et trie, pour tout le monde.
+     Un commerce sans géoposition saisie est placé au centre de sa ville et le dit (`geoApprox`). */
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.pointsBons || !D.bonsRef) return;
+    function esc(s) { return D.esc ? D.esc(s) : String(s == null ? '' : s); }
+    function $(id) { return document.getElementById(id); }
+
+    /* LES RAYONS sont des données DE CETTE PAGE (un cadrage de carte), pas des chiffres métier : aucune règle du Bon d’achat
+       ne dépend d'un kilomètre. Les libellés se construisent — on n'écrit pas « 1 km » puis « 2 km » à la main. */
+    /* (18/09, soir) LE TEMPS À PIED EST CALCULÉ PAR `D.fmtPied` : il rend une chaîne vide au-delà d'une marche
+       raisonnable (« 327 min à pied » pour 26 km était vrai, calculé, et ridicule). Le seuil est une donnée du
+       référentiel, plus un chiffre recopié dans quatre pages. */
+    function pied(p) { return p.pied ? (' · ' + p.pied) : ''; }
+    var RAYONS_KM = [1, 2, 5];
+    var rayonM = null;                       // null = « Tous » (état de départ : on ne cache rien par défaut)
+    var pos = null;                          // la position du client, quand elle est connue
+    var vuId = null;                         // la fiche mise en avant (épingle cliquée)
+    var map = null, mkUser = null, mkPts = {};
+
+    /* LA PHRASE ACPR, DÉRIVÉE : chaque fondement de ref.bons.fondement est rédigé « art. X — explication ».
+       On en extrait la RÉFÉRENCE pour la phrase, et on garde le texte entier au survol : rien n'est réécrit. */
+    /* (18/09, soir — pivot de positionnement) `fondement.especes` (art. L112-6 CMF) N'EST PLUS AFFICHÉ : il
+       décrivait le plafond légal du paiement d'une dette en espèces à un professionnel, et plus personne ne
+       règle une dette en espèces chez nous. Les deux fondements qui portent le Bon d’achat restent : l'exemption
+       d'agrément (titre à usage limité) et la déclaration à l'ACPR. */
+
+    /* LA CARTE — montage éprouvé (fly/04-itineraire-point, 28/08 puis 04/09) : bounds NORMALISÉS (un bounds mal
+       ordonné « traverse le Pacifique » et rend une carte monde), canvas masqué tant que les tuiles n'ont pas
+       chargé (WebGL peint BLANC par-dessus le fond CSS), bandeau « carte indisponible » au bout de 4 s. */
+    function carte(pts) {
+      var wrap = $('bon-mapwrap');
+      if (!pts.length) { wrap.hidden = true; return; }
+      wrap.hidden = false;
+      if (typeof maplibregl === 'undefined') return;
+      var centre = pos || (pts[0].geo) || D.posReference;
+      // (21/09) le montage est celui du socle (PEC_GEO.carte) : il était recopié ici, et Safari le laissait vide
+      if (!map) map = PEC_GEO.carte('bon-map', { centre: centre, zoom: 13.2, cadre: wrap });
+      if (!map) return;
+      // MA POSITION : un seul marqueur, déplacé quand le fix s'affine (jamais un second point bleu)
+      if (pos) {
+        if (!mkUser) { var u = document.createElement('div'); u.className = 'mk-user'; mkUser = new maplibregl.Marker({ element: u }).setLngLat([pos.lng, pos.lat]).addTo(map); }
+        else mkUser.setLngLat([pos.lng, pos.lat]);
+      }
+      // LES ÉPINGLES : une par commerce géolocalisé ; cliquer met SA fiche en avant (et la liste s'y rend)
+      Object.keys(mkPts).forEach(function (id) { if (!pts.some(function (p) { return p.id === id; })) { mkPts[id].remove(); delete mkPts[id]; } });
+      pts.forEach(function (p) {
+        if (!p.geo) return;
+        if (!mkPts[p.id]) {
+          var el = document.createElement('div'); el.className = 'mk-pt';
+          el.innerHTML = '<svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-map-pin"/></svg>' + esc(p.enseigne);
+          el.addEventListener('click', function () { vuId = p.id; peindreListe(); var f = document.querySelector('[data-pt="' + p.id + '"]'); if (f) f.scrollIntoView({ block: 'center', behavior: 'smooth' }); majEpingles(); });
+          mkPts[p.id] = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([p.geo.lng, p.geo.lat]).addTo(map);
+        } else mkPts[p.id].setLngLat([p.geo.lng, p.geo.lat]);
+      });
+      majEpingles();
+      // CADRAGE : ma position + les commerces affichés — bounds étendu point par point (jamais un tableau mal ordonné)
+      var avecGeo = pts.filter(function (p) { return p.geo; });
+      if (!avecGeo.length && !pos) return;
+      var d0 = pos ? [pos.lng, pos.lat] : [avecGeo[0].geo.lng, avecGeo[0].geo.lat];
+      var bb = new maplibregl.LngLatBounds(d0, d0);
+      avecGeo.forEach(function (p) { bb.extend([p.geo.lng, p.geo.lat]); });
+      map.fitBounds(bb, { padding: { top: 46, bottom: 46, left: 40, right: 60 }, maxZoom: 15.5, duration: document.hidden ? 0 : 400 });
+    }
+    function majEpingles() { Object.keys(mkPts).forEach(function (id) { mkPts[id].getElement().classList.toggle('vu', id === vuId); }); }
+
+    /* LES POINTS, ENRICHIS : géoposition normalisée, distance et temps à pied quand la position est connue.
+       Sans position : ni distance ni tri par distance — l'ordre du référentiel (ville, enseigne) est conservé. */
+    function points() { return D.pointsBons(pos ? { pos: pos } : {}); }
+
+    function peindreRayons() {
+      var z = $('rayons');
+      z.hidden = !pos;
+      if (!pos) { z.innerHTML = ''; return; }
+      // les libellés se CONSTRUISENT depuis les valeurs de la page (RAYONS_KM) — jamais recopiés
+      var html = RAYONS_KM.map(function (km) {
+        return '<button type="button" class="pec-pill tap' + (rayonM === km * 1000 ? ' pec-pill--done' : '') + '" data-km="' + km + '" style="font-weight:800">Moins de ' + km + ' km</button>';
+      });
+      html.unshift('<button type="button" class="pec-pill tap' + (rayonM === null ? ' pec-pill--done' : '') + '" data-km="" style="font-weight:800">Tous</button>');
+      z.innerHTML = html.join('');
+    }
+
+    function peindreListe() {
+      var tous = points();
+      var pts = rayonM == null ? tous : tous.filter(function (p) { return p.distM != null && p.distM <= rayonM; });
+      var villes = {}; tous.forEach(function (p) { if (p.ville) villes[p.ville] = 1; });
+      $('kpi-points').textContent = String(tous.length);
+      $('kpi-villes').textContent = String(Object.keys(villes).length);
+
+      var liste = $('reseau-liste'), boite = $('reseau-carte'), vide = $('reseau-vide'), vr = $('rayon-vide');
+      var titre = $('liste-titre');
+      if (titre) titre.textContent = pos ? 'Les commerces partenaires, du plus proche au plus loin' : 'Les commerces partenaires';
+
+      if (!tous.length) {
+        // ÉTAT VIDE HONNÊTE : le réseau n'existe pas encore — on ne promet rien, on renvoie sur ce qui marche
+        liste.innerHTML = ''; boite.hidden = true; vr.hidden = true;
+        var autres = D.moyensPaiement ? D.moyensPaiement().filter(function (m) { return m.k !== 'bon'; }).map(function (m) { return D.libelleMoyen(m.k); }) : [];
+        vide.hidden = false;
+        vide.innerHTML = '<b>Aucun commerce partenaire n\'est encore activé</b> — le réseau ouvre ville par ville, à mesure que les commerçants signent et que PayEnCash active leur point. En attendant, tu règles ' + (autres.length ? 'par ' + esc(autres.join(' ou ')) : 'par les autres moyens') + '.';
+        carte([]);
+        return;
+      }
+      vide.hidden = true;
+      // un rayon qui ne laisse rien est un RÉSULTAT DE FILTRE, pas un réseau absent : la page le distingue
+      if (!pts.length) {
+        boite.hidden = true; vr.hidden = false;
+        vr.innerHTML = '<b>Aucun commerce à moins de ' + esc(String(rayonM / 1000)) + ' km de toi.</b> Le plus proche est à <b>' + esc(tous[0].distTxt || '—') + '</b> — touche « Tous » pour revoir la liste entière.';
+        carte(tous);
+        return;
+      }
+      vr.hidden = true; boite.hidden = false;
+      liste.innerHTML = pts.map(function (p, i) {
+        var adr = [p.adresse, [p.cp, p.ville].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+        return '<div class="pt' + (p.id === vuId ? ' vu' : '') + '" data-pt="' + esc(p.id) + '">' +
+          '<span class="tile">' + (pos ? (i + 1) : '<svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-map-pin"/></svg>') + '</span>' +
+          '<div style="min-width:0;flex:1"><div class="nm">' + esc(p.enseigne) + '</div><div class="ad">' + esc(adr) + '</div>' +
+          /* la distance ne s'affiche QUE si elle a été calculée : pas de position, pas de distance inventée.
+             (18/09, soir) ET ELLE DIT CE QU'ELLE VAUT : quand le commerce n'a pas de géoposition saisie, il est
+             placé au centre de sa ville — la distance est alors APPROCHÉE, et la page le dit plutôt que de laisser
+             croire à une adresse pointée au mètre près. */
+          (p.distTxt ? '<span class="di">' + esc(p.distTxt) + esc(pied(p)) + (p.geoApprox ? ' · <span style="font-weight:600;opacity:.75">position approchée</span>' : '') + '</span>' : '') + '</div>' +
+          (p.tel ? '<a class="tel tap" href="tel:' + esc(String(p.tel).replace(/\s/g, '')) + '">' + esc(p.tel) + '</a>' : '') + '</div>';
+      }).join('');
+      // (18/09, soir) le kit de listes (payencash-filters) observe le DOM : la recherche saisie et la pagination
+      // se ré-appliquent SEULES après ce innerHTML — la page n'a rien à rappeler, et surtout rien à recopier.
+      carte(pts);
+    }
+
+    function peindreTextes() {
+      var R = D.bonsRef(), nom = R.nom || 'Bon d’achat PayEnCash';
+      /* (18/09, soir — pivot de positionnement) LA PHRASE MÈRE EST « PAYER avec un bon d’achat », plus « payer en espèces ». On ne dit donc PAS comment la cliente règle son bon d’achat
+         au comptoir : elle paie comme elle veut, ça ne nous regarde pas. Ce qui nous engage est ici. */
+      $('bon-lead').innerHTML = 'Un ' + esc(nom) + ' s\'achète <b>au comptoir</b> d\'un commerçant partenaire, au montant que tu veux — de ' + esc(D.eur(R.minimum)) + ' à ' + esc(D.eur(R.plafondBon)) + '. Au moment de payer, tu saisis le code de son ticket : <b>avec un bon d’achat</b>.';
+      $('bon-comment').innerHTML = 'Tu demandes un bon d’achat au comptoir et tu choisis le montant : on te remet un <b>ticket avec un code à 12 caractères</b> (XXXX-XXXX-XXXX). Ce code, tu le saisis dans ton sac ou à « Comment payer » : ta commande est réglée <b>tout de suite</b>. Valable <b>' + esc(String(R.validiteMois)) + ' mois</b>, <b>en une ou plusieurs fois</b> — ce que tu n\'utilises pas reste sur le bon d’achat.';
+      /* LES TROIS PLAFONDS, tous lus dans bonsRef : par bon d’achat, par jour, et sur la fenêtre glissante
+         (plafondClientMois / fenetrePlafondJours, ajoutés au référentiel le 18/09 après vérification Légifrance).
+         Le dernier n'est PAS un mur : au-delà, la vérification d'identité ouvre la suite — on le dit comme tel. */
+      $('bon-plafond').innerHTML = 'De <b>' + esc(D.eur(R.minimum)) + '</b> à <b>' + esc(D.eur(R.plafondBon)) + ' par bon d’achat</b> (pour plus, plusieurs bons d’achat) · au plus <b>' + esc(D.eur(R.plafondClientJour)) + '</b> de bons d’achat utilisés par jour et par compte'
+        + (R.plafondClientMois ? ', et <b>' + esc(D.eur(R.plafondClientMois)) + ' sur ' + esc(String(R.fenetrePlafondJours)) + ' jours glissants</b> — au-delà, une vérification d\'identité ouvre la suite, ton bon d’achat reste intact' : '')
+        + ' · <b>jamais de rendu de monnaie, jamais de remboursement en espèces</b> : le remboursement d\'une commande réglée par bon d’achat est re-crédité sur le bon d’achat.';
+      $('bon-mentions').innerHTML = (R.mentions || []).map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') || '<li>Les conditions du bon d’achat ne sont pas encore renseignées.</li>';
+      var ac = $('bon-acpr'), h = D.bonFondementHTML();
+      ac.hidden = !h; ac.innerHTML = h;
+      // Les AUTRES moyens du pays du client (jamais une liste écrite à la main).
+      var am = $('autres-moyens');
+      if (D.moyensPaiement && am) {
+        var autres2 = D.moyensPaiement().filter(function (m) { return m.k !== 'bon'; }).map(function (m) { return D.libelleMoyen(m.k); });
+        am.innerHTML = autres2.length
+          ? 'Le ' + esc(nom) + ' n\'est pas le seul moyen de régler : ' + esc(autres2.join(' ou ')) + '.'
+          : 'Retrouve tous les moyens de régler.';
+      }
+    }
+
+    function peindre() { peindreTextes(); peindreRayons(); peindreListe(); }
+
+    /* LA POSITION NE SE DEMANDE JAMAIS PAR UN BOUTON QUAND L'ACCORD EST CONNU (règle PEC_GEO, 28/08) :
+       autoLocaliser part tout seul et rappelle à chaque affinage — la liste se retrie sous les doigts.
+       Accord inconnu : l'encart explique POURQUOI, et c'est le seul cas où un bouton apparaît. */
+    function surFix(f) {
+      pos = f;
+      $('geo-ask').hidden = true;
+      $('geo-note').hidden = false;
+      if (window.PEC_GEO && PEC_GEO.appliquerRetention) PEC_GEO.appliquerRetention();
+      peindreRayons(); peindreListe();
+    }
+    (function geo() {
+      if (!window.PEC_GEO) return;
+      var d = PEC_GEO.dernierePos ? PEC_GEO.dernierePos() : null;
+      if (d) pos = d;                                        // on DÉMARRE sur la dernière position connue (pas de saut visuel)
+      var auto = PEC_GEO.autoLocaliser(surFix, function (msg) {
+        // la position a échoué : la liste reste lisible, on le dit sans bloquer
+        var e = $('geo-err'); if (e && !pos) { $('geo-ask').hidden = false; e.hidden = false; e.textContent = msg; }
+      });
+      // on ne demande PAS une position pour trier une liste vide : l'encart n'apparaît qu'avec des commerces
+      if (!auto && !PEC_GEO.accordConnu() && D.pointsBons().length) $('geo-ask').hidden = false;
+      if (pos) $('geo-note').hidden = false;
+      var b = $('geo-ok');
+      if (b) b.addEventListener('click', function () {
+        var e = $('geo-err'); if (e) e.hidden = true;
+        b.textContent = 'Localisation…';
+        PEC_GEO.localiser(function (f) { PEC_GEO.noterAccord(); b.textContent = 'Autoriser ma position'; surFix(f); },
+          function (msg) { b.textContent = 'Autoriser ma position'; if (e) { e.hidden = false; e.textContent = msg; } });
+      });
+    })();
+
+    $('rayons').addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('[data-km]') : null; if (!b) return;
+      var v = b.getAttribute('data-km');
+      rayonM = v ? parseFloat(v) * 1000 : null;
+      vuId = null;
+      peindreRayons(); peindreListe();
+    });
+    // cliquer une fiche recentre la carte sur SON épingle (l'inverse du clic sur l'épingle)
+    $('reseau-liste').addEventListener('click', function (e) {
+      var f = e.target.closest ? e.target.closest('[data-pt]') : null; if (!f || e.target.closest('a')) return;
+      vuId = f.getAttribute('data-pt');
+      var p = points().filter(function (x) { return x.id === vuId; })[0];
+      peindreListe();
+      if (map && p && p.geo) map.flyTo({ center: [p.geo.lng, p.geo.lat], zoom: 15.5, duration: document.hidden ? 0 : 400 });
+    });
+
+    peindre();
+    // un point activé / suspendu (pec-partenaires), un paramètre bons d’achat.* modifié, un bon d’achat émis : la page suit
+    window.addEventListener('pec-bus', peindre);
+    window.addEventListener('storage', function (e) { if (!e.key || /^pec-(partenaires|param|bons)|^pec_bus_/.test(e.key)) peindre(); });
+  })();
+  (function () { var z = document.getElementById('fermeture-slot'); if (z && window.PEC_DATA && PEC_DATA.fermetureHTML) z.innerHTML = PEC_DATA.fermetureHTML(''); })();
+</script>
+</div>
+</div>
+</body>
+</html>

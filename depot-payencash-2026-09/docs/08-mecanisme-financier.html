@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash — Doc 8 : Mécanisme financier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+  /* Sans ceci, un navigateur en mode sombre rend champs, listes et ascenseurs
+     en sombre sur notre fond creme. La doc est concue en clair, on le declare. */
+  color-scheme: light;
+    --vert: #1F4438; --cuivre: #D8722B; --creme: #F7F5F0; --encre: #1A1A1A;
+    --gris: #6B6966; --gris-clair: #E4E0D6; --blanc: #FFFFFF; --rouge: #C0392B; --radius: 10px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; color: var(--encre); background: var(--creme); line-height: 1.7; font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+  .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: var(--vert); color: var(--creme); overflow-y: auto; padding: 24px 0; z-index: 100; }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 0.5px solid rgba(244,241,234,0.15); margin-bottom: 16px; }
+  .sidebar-logo .brand { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 4px; }
+  .sidebar-logo .brand .accent { color: var(--cuivre); }
+  .sidebar-logo .doc-num { font-size: 11px; color: rgba(244,241,234,0.5); margin-top: 4px; }
+  .sidebar nav a { display: block; padding: 7px 20px; font-size: 12.5px; color: rgba(244,241,234,0.7); text-decoration: none; border-left: 2px solid transparent; }
+  .sidebar nav a:hover { color: var(--creme); border-left-color: var(--cuivre); background: rgba(244,241,234,0.06); }
+  .sidebar nav .section-head { padding: 14px 20px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(244,241,234,0.35); font-weight: 600; }
+  .doc-nav { margin-top: 24px; padding: 16px 20px 0; border-top: 0.5px solid rgba(244,241,234,0.15); }
+  .doc-nav p { font-size: 11px; color: rgba(244,241,234,0.4); margin-bottom: 8px; }
+  .doc-nav a { display: block; font-size: 12px; color: rgba(244,241,234,0.6); text-decoration: none; padding: 4px 0; }
+  .doc-nav a:hover { color: var(--cuivre); }
+
+  .main { margin-left: 240px; max-width: 920px; padding: 48px 56px; }
+
+  .doc-header { border-bottom: 1px solid var(--gris-clair); padding-bottom: 24px; margin-bottom: 40px; }
+  .doc-header .doc-tag { display: inline-block; background: var(--cuivre); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px; letter-spacing: 0.04em; }
+  .doc-header h1 { font-family: 'Archivo', sans-serif; font-size: 30px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .doc-header .meta { display: flex; gap: 20px; font-size: 13px; color: var(--gris); flex-wrap: wrap; }
+
+  .section { margin-bottom: 48px; scroll-margin-top: 24px; }
+  h2 { font-family: 'Archivo', sans-serif; font-size: 21px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--gris-clair); color: var(--vert); }
+  h3 { font-family: 'Archivo', sans-serif; font-size: 16.5px; font-weight: 600; margin: 26px 0 12px; color: var(--encre); }
+  p { margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0 20px; }
+  th { background: var(--vert); color: var(--creme); padding: 9px 11px; text-align: left; font-weight: 600; font-size: 11.5px; }
+  td { padding: 8px 11px; border-bottom: 0.5px solid var(--gris-clair); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(244,241,234,0.5); }
+  td code { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: rgba(31,68,56,0.07); color: var(--vert); padding: 2px 6px; border-radius: 4px; }
+  pre { background: #1A1A2E; color: #E8E6E3; border-radius: var(--radius); padding: 16px 18px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7; overflow-x: auto; margin: 14px 0; }
+  pre .comment { color: #6B7A8D; }
+  pre .key { color: #82AAFF; }
+  pre .str { color: #C3E88D; }
+
+  .callout { border-radius: var(--radius); padding: 14px 16px; margin: 16px 0; font-size: 13.5px; display: flex; gap: 12px; align-items: flex-start; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: rgba(31,68,56,0.06); border-left: 3px solid var(--vert); }
+  .callout.warning { background: rgba(216,114,43,0.08); border-left: 3px solid var(--cuivre); }
+  .callout.danger { background: rgba(192,57,43,0.07); border-left: 3px solid var(--rouge); }
+  .callout.tip { background: #EAF3DE; border-left: 3px solid #27500A; }
+  .callout strong { display: block; font-weight: 600; margin-bottom: 4px; color: var(--encre); }
+
+  .flow-diagram { background: #fff; border: 0.5px solid var(--gris-clair); border-radius: var(--radius); padding: 20px; margin: 16px 0; }
+  .flow-step { display: flex; align-items: flex-start; gap: 14px; padding: 10px 0; }
+  .flow-num { background: var(--vert); color: #fff; font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 13px; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .flow-arrow { text-align: center; color: var(--cuivre); font-size: 18px; padding: 2px 0; margin-left: 14px; }
+  .flow-content strong { display: block; margin-bottom: 2px; }
+  .flow-content span { font-size: 13px; color: var(--gris); }
+
+  .checklist { list-style:none; margin: 12px 0; }
+  .checklist li { padding: 6px 0 6px 28px; position:relative; font-size:14px; }
+  .checklist li::before { content:"☐"; position:absolute; left:0; color: var(--vert); font-size:16px; }
+
+  @media print { .sidebar { display: none; } .main { margin-left: 0; padding: 24px; } }
+  @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; padding: 24px 20px; } }
+</style>
+</head>
+<body>
+<div style="background:#E6F4EC;border:2px dashed #0C7F54;border-radius:10px;padding:12px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#0F2A24"><b>⚠️ Pivot du 18/09/2026 (soir) — remplace le bandeau du 17/09.</b> Ce document décrit le modèle « espèces à domicile par l'agent » d'août. <b>Ce modèle n'existe plus</b> : l'<b>agent de caisse mobile est supprimé</b>, et avec lui les courses, les tournées, les zones, le planning, la flotte, le fond de caisse, le rendu de monnaie, les dépôts en automate Cash Services et le découpage « 1 000 € d'espèces + complément carte ». Il reste <b>deux moyens de paiement</b>, tous deux achetés au comptoir d'un commerce : le <b>Bon d’achat PayEnCash</b> (bon d'achat prépayé émis par AJEK, vendu par un réseau de commerçants sous contrat — art. L521-3 CMF ; tables <code>gift_cards</code> · <code>gift_card_movements</code>) <i>(20/09 : le rail d'un prestataire en ligne est supprimé — le débit du bon est le seul valideur ; <code>psp_transactions</code> · <code>payment_tenders</code>, dont <code>method</code> vaut désormais <code>bon</code>, et lui seul — plus jamais <code>cash</code> ni <code>card</code>). Côté commerçant, le <b>reversement mensuel est abandonné</b> : sa carte bancaire enregistrée est <b>prélevée à chaque vente</b> du montant moins sa commission (1,10 % HT + TVA), via <b>Stripe</b> ; <b>un refus de la banque = aucun bon d’achat émis</b> (<code>partner_cards</code> · <code>partner_charges</code>). <b>Tout ce qui est écrit ici sur l'agent, la collecte, le dépôt, le dispatch ou un « point d'encaissement » est caduc</b> ; ce qui porte sur le catalogue, le prix, les fournisseurs et la commande reste vrai. Référence à jour : <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html" style="color:#0C7F54;font-weight:700">Étape 4</a> et <code>CLAUDE.md</code>.</div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">PayEn<span class="accent">Cash</span></div>
+    <div class="doc-num">Documentation technique · v2.0 (encaissement à domicile)</div>
+  </div>
+  <nav>
+    <div class="section-head">Document 8</div>
+    <a href="#intro">Introduction</a>
+    <a href="#deux-modeles">Ce qui change : encaissement physique immédiat</a>
+    <a href="#cycle-cash">Le cycle du cash collecté</a>
+    <a href="#depot-cash-services">Dépôt du cash — Cash Services</a>
+    <a href="#duffel-float">Avance de fonds — Duffel uniquement</a>
+    <a href="#hotelbeds-postpay">Hotelbeds post-payé — trésorerie inversée</a>
+    <a href="#flux-complet">Flux complet, étape par étape</a>
+    <a href="#dimensionnement">Dimensionner l'avance Duffel</a>
+    <a href="#aml-cash">Conformité &amp; manipulation d'espèces</a>
+    <a href="#tva-collectee">TVA collectée</a>
+    <a href="#tva-deductible">TVA déductible</a>
+    <a href="#schema-impact">Impact sur le schéma de données</a>
+    <a href="#checklist">Checklist avant développement</a>
+  </nav>
+  <div class="doc-nav">
+    <p>Documents</p>
+    <a href="01-flux-metier.html">← Doc 1 : Flux métier</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">← Doc 2 : Schéma BDD</a>
+    <a href="03-api-specs.html">← Doc 3 : Spécifications API</a>
+    <a href="04-pricing.html">← Doc 4 : Logique de pricing</a>
+    <a href="05-architecture.html">← Doc 5 : Architecture technique</a>
+    <a href="06-segment-maghreb.html">← Doc 6 : Segment Maghreb</a>
+    <a href="07-annulations-remboursements.html">← Doc 7 : Annulations &amp; remboursements</a>
+    <a href="09-espace-manager.html">→ Doc 9 : Espace Manager</a>
+    <a href="10-compte-utilisateur.html">→ Doc 10 : Compte utilisateur</a>
+    <a href="11-ui-v2.html">→ Doc 11 : UI v2 (écrans)</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">📖 Glossaire central des champs</a>
+  </div>
+</aside>
+
+<main class="main">
+<div class="bandeau-socle" style="background:#FDF1E7;border:1px solid #E39A2E;border-left:5px solid #E39A2E;border-radius:10px;padding:13px 17px;margin:0 0 28px;font-size:13.5px;line-height:1.65;color:#7a5410">⚠️ <b>Document socle (juillet 2026)</b> — conservé comme référence technique. Les décisions <b>À JOUR</b> vivent dans le fil rouge (10 étapes)&nbsp;: <a href="../ESPACE-COMMERCANT/documents/diagramme-principal.html" style="color:#0c7f54;font-weight:700">diagramme principal</a>. En cas d'écart, le fil rouge fait foi (ex.&nbsp;: carte bleue en complément, Mondial Relay, F13, codes promo fournisseurs).</div>
+
+
+  <div class="doc-header">
+    <span class="doc-tag">Document 8 / 11</span>
+    <h1>Mécanisme financier — comment l'argent circule vraiment</h1>
+    <div class="meta">
+      <span>Projet PayEnCash</span>
+      <span>Version 2.0 (encaissement à domicile)</span>
+      <span>Juillet 2026</span>
+    </div>
+  </div>
+
+  <section class="section" id="intro">
+    <h2>Introduction</h2>
+    <p>Ce document répond à une question restée implicite dans le reste de la documentation : au moment où l'agent valide la collecte du cash au domicile du client, l'argent est-il réellement disponible pour financer l'achat chez Duffel et Hotelbeds à cet instant précis ? La réponse dépend du fournisseur, et elle est très différente de l'ancien modèle. Avec la collecte par agent, l'argent est encaissé <strong>physiquement et immédiatement</strong> — mais des espèces en main de l'agent ne sont pas instantanément un solde prépayé Duffel. Ce document explique comment le cash circule de la porte du client jusqu'au compte de la <strong>SASU AJEK</strong> (société exploitante de l'application PayEnCash), et pourquoi les deux fournisseurs appellent deux traitements de trésorerie opposés.</p>
+
+    <!-- Diagramme flux financier — cycle du cash collecté par agent -->
+    <svg viewBox="0 0 900 430" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:900px;display:block;margin:14px 0 20px;" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" role="img" aria-label="Cycle du cash : de la porte du client au règlement des fournisseurs et à la paie des agents">
+<rect width="900" height="430" rx="10" fill="#F7F5F0"/>
+<defs><marker id="cc-arr" markerWidth="8" markerHeight="8" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#D8722B"/></marker><marker id="cc-arr2" markerWidth="8" markerHeight="8" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#6B6966"/></marker></defs>
+<text x="450" y="26" font-size="13" font-weight="700" fill="#1F4438" text-anchor="middle">Cycle du cash : de la porte du client au règlement des fournisseurs et à la paie des agents</text>
+<rect x="330" y="46" width="240" height="58" rx="8" fill="#1F4438"/>
+<text x="450" y="66" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">Collecte au domicile</text>
+<text x="450" y="82" font-size="9.5" fill="rgba(255,255,255,0.72)" text-anchor="middle">L'agent encaisse les espèces,</text>
+<text x="450" y="94" font-size="9.5" fill="rgba(255,255,255,0.72)" text-anchor="middle">valide scan + code + photo</text>
+<text x="450" y="122" font-size="9" fill="#D8722B" text-anchor="middle">Un seul geste, deux conséquences distinctes</text>
+<line x1="390" y1="106" x2="230" y2="140" stroke="#D8722B" stroke-width="1.5" marker-end="url(#cc-arr)"/>
+<text x="150" y="152" font-size="10" fill="#1F4438" text-anchor="start">A · Immédiatement — on doit les billets</text>
+<rect x="22" y="160" width="300" height="62" rx="8" fill="#2E6650"/>
+<text x="172" y="180" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">Phase 5 — règlement des fournisseurs</text>
+<text x="172" y="196" font-size="9.5" fill="rgba(255,255,255,0.72)" text-anchor="middle">Duffel : débit du solde prépayé (avance SASU)</text>
+<text x="172" y="208" font-size="9.5" fill="rgba(255,255,255,0.72)" text-anchor="middle">Hotelbeds : post-payé, réglé aussitôt</text>
+<text x="172" y="240" font-size="9" fill="#6B6966" text-anchor="middle">PayEnCash avance ces fonds : le cash</text>
+<text x="172" y="253" font-size="9" fill="#6B6966" text-anchor="middle">collecté n'est pas encore revenu.</text>
+<line x1="510" y1="106" x2="660" y2="140" stroke="#D8722B" stroke-width="1.5" marker-end="url(#cc-arr)"/>
+<text x="578" y="152" font-size="10" fill="#D8722B" text-anchor="start">B · Ensuite — récupérer les espèces</text>
+<rect x="578" y="160" width="300" height="62" rx="8" fill="#2E6650"/>
+<text x="728" y="180" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">Dépôt en automate</text>
+<text x="728" y="196" font-size="9.5" fill="rgba(255,255,255,0.72)" text-anchor="middle">Réseau Cash Services</text>
+<text x="728" y="208" font-size="9.5" fill="rgba(255,255,255,0.72)" text-anchor="middle">carte de dépôt nominative</text>
+<rect x="790" y="166" width="76" height="16" rx="8" fill="rgba(255,255,255,0.16)"/>
+<text x="828" y="177" font-size="8.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">declared</text>
+<line x1="728" y1="222" x2="728" y2="234" stroke="#D8722B" stroke-width="1.5" marker-end="url(#cc-arr)"/>
+<rect x="578" y="234" width="300" height="62" rx="8" fill="#D8722B"/>
+<text x="728" y="254" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">Rapport Cash Services quotidien</text>
+<text x="728" y="270" font-size="9.5" fill="rgba(255,255,255,0.72)" text-anchor="middle">rapprochement par la carte</text>
+<text x="728" y="282" font-size="9.5" fill="rgba(255,255,255,0.72)" text-anchor="middle">le rapport du réseau fait foi</text>
+<rect x="790" y="240" width="76" height="16" rx="8" fill="rgba(255,255,255,0.16)"/>
+<text x="828" y="251" font-size="8.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">reconciled</text>
+<line x1="728" y1="296" x2="728" y2="308" stroke="#D8722B" stroke-width="1.5" marker-end="url(#cc-arr)"/>
+<rect x="578" y="308" width="300" height="62" rx="8" fill="#1F4438"/>
+<text x="728" y="328" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">Compte bancaire AJEK</text>
+<text x="728" y="344" font-size="9.5" fill="rgba(255,255,255,0.72)" text-anchor="middle">virement des fonds rapprochés</text>
+<text x="728" y="356" font-size="9.5" fill="rgba(255,255,255,0.72)" text-anchor="middle">confirmé par synchronisation</text>
+<rect x="790" y="314" width="76" height="16" rx="8" fill="rgba(255,255,255,0.16)"/>
+<text x="828" y="325" font-size="8.5" font-weight="700" fill="#FFFFFF" text-anchor="middle">on_account</text>
+<line x1="728" y1="382" x2="728" y2="396" stroke="#D8722B" stroke-width="1.5" marker-end="url(#cc-arr)"/>
+<rect x="578" y="396" width="300" height="20" rx="6" fill="#FFFFFF"/>
+<text x="728" y="416" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle"></text>
+<text x="728" y="410" font-size="9.5" font-weight="700" fill="#1F4438" text-anchor="middle">Paie des agents · reconstitution de l’avance Duffel</text>
+<rect x="22" y="282" width="300" height="76" rx="8" fill="#FBEFE2"/>
+<rect x="22" y="282" width="4" height="76" rx="2" fill="#D8722B"/>
+<text x="38" y="302" font-size="9.5" fill="#B5781F" text-anchor="start">L’écart entre A et B, c’est le besoin</text>
+<text x="38" y="316" font-size="9.5" fill="#B5781F" text-anchor="start">de trésorerie. Il ne dépend plus d’un</text>
+<text x="38" y="330" font-size="9.5" fill="#B5781F" text-anchor="start">PSP qui retient les fonds, mais du</text>
+<text x="38" y="344" font-size="9.5" fill="#B5781F" text-anchor="start">délai de dépôt puis de rapprochement.</text>
+<text x="22" y="396" font-size="9" fill="#D8722B" text-anchor="start">⚠ On ne ventile jamais une paie sur du « declared » :</text>
+<text x="22" y="409" font-size="9" fill="#D8722B" text-anchor="start">« reconciled » prouve que Cash Services a reçu les fonds,</text>
+<text x="22" y="422" font-size="9" fill="#D8722B" text-anchor="start">« on_account » qu’ils sont disponibles pour payer.</text>
+</svg>
+
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>À reconfirmer avant développement</strong> Les modalités bancaires de dépôt d'espèces (plafonds, délais de disponibilité, frais de manipulation), les conditions de règlement Hotelbeds (facturation, VCC) et les modalités de rechargement du Duffel Balance doivent être confirmées auprès de la banque et des fournisseurs au moment de la mise en place. Ce document fixe le principe, pas des valeurs contractuelles figées.</div>
+    </div>
+  </section>
+
+  <section class="section" id="deux-modeles">
+    <h2>Ce qui change : l'encaissement physique immédiat</h2>
+    <p>Dans le modèle précédent, un prestataire externe encaissait le cash et ne reversait l'argent que plusieurs jours plus tard : la Phase 5 devait donc être financée par une avance de trésorerie couvrant ce délai. Avec la <strong>collecte par agent</strong>, l'argent est physiquement en main dès la validation de la collecte — il n'y a plus de tiers qui retient les fonds pendant des jours. Mais cela ne supprime pas tout besoin d'avance : des espèces à collecter puis déposer ne sont pas immédiatement un solde prépayé chez Duffel.</p>
+    <p>Le point structurant de ce document est que <strong>les deux fournisseurs ne se financent pas de la même façon</strong> :</p>
+    <table>
+      <thead><tr><th>Fournisseur</th><th>Modèle de règlement</th><th>Conséquence trésorerie</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Duffel</strong> (vols)</td><td>Solde <strong>prépayé</strong> débité en temps réel à la réservation (Phase 5)</td><td><strong>Avance nécessaire</strong> : le solde Duffel doit être approvisionné d'avance par la SASU, car le cash collecté n'est pas encore déposé au moment du débit.</td></tr>
+        <tr><td><strong>Hotelbeds</strong> (hôtels)</td><td><strong>Post-payé</strong> : réservation confirmée, facture réglée ensuite (immédiatement à la validation, D3)</td><td><strong>Aucune avance</strong> : le cash est déjà collecté avant que la facture ne soit due — trésorerie inversée.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Ce document corrige une ambiguïté</strong> Le Doc 1 (flux métier) et le Doc 5 (architecture) décrivent la Phase 5 comme un déclenchement immédiat des achats Duffel et Hotelbeds à la validation de la collecte. C'est exact du point de vue applicatif. Ce document précise la réalité financière sous-jacente : pour Duffel, cet achat consomme une avance de fonds ; pour Hotelbeds, il crée une dette réglée sans avance.</div>
+    </div>
+  </section>
+
+  <section class="section" id="cycle-cash">
+    <h2>Le cycle du cash collecté</h2>
+    <p>Puisque l'agent encaisse des espèces réelles, PayEnCash gère désormais un <strong>cycle de cash physique</strong> qui n'existait pas dans l'ancien modèle. Chaque étape doit être tracée pour la réconciliation comptable et la conformité.</p>
+    <table>
+      <thead><tr><th>Étape</th><th>Détail</th></tr></thead>
+      <tbody>
+        <tr><td>Collecte au domicile</td><td>L'agent encaisse le montant exact affiché sur le code interne, valide par code de sécurité + photo. Le montant réellement reçu est enregistré dans <code>payments.collected_amount_cents</code> (Doc 2).</td></tr>
+        <tr><td>Détention par l'agent</td><td>Le cash est en main de l'agent jusqu'à son dépôt. Le montant détenu est porté par <code>couriers.cash_on_hand_cents</code> et borné par un plafond de zone (<code>delivery_zones.max_cash_amount_cents</code>, Doc 2). <strong>Dépôt obligatoire et immédiat dès que <code>cash_on_hand_cents &gt; 40000</code> (400 €)</strong>, indépendamment de ce plafond de zone — voir la section conformité.</td></tr>
+        <tr><td>Dépôt au réseau Cash Services</td><td>L'agent dépose les espèces via le réseau <strong>Cash Services</strong>, avec sa <strong>carte de dépôt nominative</strong>. Il déclare le dépôt dans l'app (montant du reçu, n° de transaction, photo). Statut : <code>declared</code>.</td></tr>
+        <tr><td>Rapprochement Cash Services</td><td>PayEnCash récupère chaque jour le rapport de dépôts du réseau <strong>Cash Services</strong>. Le rapprochement automatique retrouve la ligne du dépôt via la carte nominative et la rattache à l'agent puis aux encaissements concernés. Statut : <code>reconciled</code>.</td></tr>
+        <tr><td>Disponibilité en trésorerie</td><td>Une fois <strong>rapproché</strong>, l'argent est éligible au virement vers le <strong>compte bancaire d'AJEK</strong> (statut <code>on_account</code>), d'où partent la ventilation des paies agents et le réapprovisionnement du solde prépayé Duffel.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong><code>declared</code> n'est pas <code>reconciled</code></strong> Un dépôt déclaré par l'agent est une <em>déclaration</em>, appuyée par une photo de reçu — ce n'est pas une preuve d'encaissement bancaire. Seul le rapprochement sur le rapport du réseau Cash Services prouve que les fonds sont arrivés. Aucune ventilation de paie, aucun réapprovisionnement Duffel ne doit s'appuyer sur du <code>declared</code>. Aplatir ces deux états reviendrait à payer sur de l'argent qu'on n'a peut-être pas reçu.</div>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Le décalage n'est plus un délai de versement PSP, mais un délai de dépôt puis de rapprochement</strong> Il ne dépend plus d'un tiers qui retient les fonds, mais de la fréquence à laquelle les agents déposent et du cycle quotidien du rapport bancaire (J+1 en pratique). Ce délai est généralement bien plus court que les 6 à 11 jours de l'ancien PSP, mais il conditionne toujours la taille de l'avance Duffel (voir dimensionnement).</div>
+    </div>
+  </section>
+
+  <section class="section" id="depot-cash-services">
+    <h2>Dépôt du cash — réseau Cash Services</h2>
+    <p>C'est la seconde moitié d'une tournée, et elle est aussi contraignante que la première : <strong>encaisser sans déposer ne termine rien</strong>. Le circuit complet va du réseau de dépôt au compte bancaire d'AJEK, d'où partent les paies.</p>
+
+    <h3>1. Le dépôt au réseau Cash Services</h3>
+    <p>AJEK dispose d'un accès au réseau <strong>Cash Services</strong>, qui permet d'émettre des <strong>cartes de dépôt nominatives</strong>. Chaque agent validé reçoit la sienne — c'est elle, et rien d'autre, qui rattache un versement à un agent dans le rapport du réseau.</p>
+    <p>Pendant sa tournée, l'agent dépose les espèces auprès d'un point du réseau Cash Services, récupère le reçu, et le déclare dans l'application : montant imprimé, numéro de transaction, photo du reçu. Le dépôt passe alors en <code>declared</code> et l'agent est <strong>débloqué</strong> — il peut reprendre une tournée sans attendre la confirmation.</p>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Dépôt immédiat obligatoire au-delà de 400 €</strong> Dès que l'encours d'un agent (<code>couriers.cash_on_hand_cents</code>) dépasse <strong>400 € (40000 centimes)</strong>, le dépôt au réseau Cash Services devient <strong>immédiat et obligatoire</strong>, indépendamment du plafond de zone (<code>delivery_zones.max_cash_amount_cents</code>). Le dispatch doit retirer l'agent des nouvelles collectes tant que ce dépôt n'est pas déclaré.</div>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Une carte par agent, jamais partagée</strong> Un dépôt fait avec la carte d'un collègue est attribué à ce collègue : le premier reste avec un encours de cash non soldé, le second se voit créditer un dépôt sans encaissement correspondant. Le rapprochement détecte l'anomalie, mais après coup. La règle doit être rappelée dans l'espace agent (elle l'est sur l'écran de dépôt).</div>
+    </div>
+
+    <h3>2. La récupération du rapport de dépôts Cash Services (quotidien)</h3>
+    <p>Chaque jour, un job planifié récupère auprès du réseau <strong>Cash Services</strong> le rapport des dépôts effectués (CSV, Excel ou API selon l'intégration retenue). Chaque ligne de dépôt d'espèces porte la carte nominative utilisée, le montant, l'horodatage et la référence du point de dépôt.</p>
+    <p>Le traitement est un <strong>import idempotent</strong> : le même fichier rejoué ne crée jamais deux fois la même transaction. La clé de déduplication est la référence de dépôt Cash Services, pas la date d'import.</p>
+    <table>
+      <thead><tr><th>Étape du job</th><th>Règle</th></tr></thead>
+      <tbody>
+        <tr><td>Récupération</td><td>Connexion au réseau Cash Services, récupération des rapports non encore traités. Le fichier brut est archivé tel quel (piste d'audit).</td></tr>
+        <tr><td>Parsing</td><td>Une ligne → une <code>bank_deposit_transactions</code>. Tout écart de format est journalisé et le fichier passe en erreur : on n'importe <strong>jamais</strong> partiellement en silence.</td></tr>
+        <tr><td>Rapprochement</td><td>Carte nominative → agent. Montant + horodatage → dépôt <code>declared</code> correspondant. Correspondance trouvée : le dépôt passe <code>reconciled</code>.</td></tr>
+        <tr><td>Écarts</td><td>Dépôt déclaré sans ligne du réseau, ou ligne du réseau sans dépôt déclaré, ou montants différents : l'anomalie est remontée au manager, jamais résolue automatiquement.</td></tr>
+        <tr><td>Affectation aux commandes</td><td>Le montant rapproché est imputé aux encaissements de l'agent dans l'ordre chronologique, jusqu'à épuisement. Chaque commande sait ainsi si son cash est revenu.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3. Le virement vers le compte bancaire d'AJEK, puis la ventilation</h3>
+    <p>Une fois rapprochés, les fonds sont marqués <strong>disponibles pour virement</strong>. Le manager déclenche (ou planifie) le transfert du réseau Cash Services vers le <strong>compte bancaire opérationnel d'AJEK</strong> : c'est de là que partent les <strong>paies des agents</strong>, à la fréquence configurée dans l'espace manager (hebdomadaire par défaut).</p>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>On ne ventile que de l'argent réellement présent sur le compte</strong> La chaîne est stricte : cash collecté → déposé au réseau Cash Services → <strong>rapproché via le rapport du réseau</strong> → viré sur le compte AJEK (<code>on_account</code>) → ventilé aux agents. Court-circuiter une étape, c'est payer des salaires sur une trésorerie supposée. La synchronisation bancaire (voir Doc 9) sert précisément à confirmer l'arrivée des fonds avant toute ventilation.</div>
+    </div>
+    <table>
+      <thead><tr><th>État des fonds</th><th>Signification</th><th>Utilisable pour payer ?</th></tr></thead>
+      <tbody>
+        <tr><td><code>collected</code></td><td>Encaissé par un agent, encore en sa possession</td><td>Non</td></tr>
+        <tr><td><code>declared</code></td><td>Déposé au réseau Cash Services selon l'agent, reçu photographié</td><td>Non</td></tr>
+        <tr><td><code>reconciled</code></td><td>Retrouvé dans le rapport du réseau Cash Services</td><td>Non — en attente de virement</td></tr>
+        <tr><td><code>on_account</code></td><td>Présent sur le compte bancaire d'AJEK, confirmé par synchronisation</td><td><strong>Oui</strong></td></tr>
+        <tr><td><code>paid_out</code></td><td>Ventilé sur le compte de l'agent</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="duffel-float">
+    <h2>Avance de fonds — Duffel uniquement</h2>
+    <p>Décision : PayEnCash conserve le principe d'avance de fonds, mais <strong>pour Duffel seulement</strong>. Duffel débite un solde prépayé en temps réel au moment de la réservation (Phase 5, Doc 3). Comme le cash collecté au domicile n'est pas encore déposé ni converti en solde Duffel à cet instant, la SASU doit maintenir en permanence un <strong>Duffel Balance approvisionné par sa propre trésorerie</strong>. Le cash déposé ensuite reconstitue cette avance.</p>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Ce que cela implique concrètement</strong> Le suivi du Duffel Balance (déjà documenté au Doc 3) devient un indicateur de pilotage financier : il doit rester au-dessus d'un seuil couvrant le volume de commandes vols traité pendant le délai de dépôt du cash. C'est un fonds de roulement classique, mais borné au seul canal Duffel — l'ancien besoin de couvrir un délai de versement de 6 à 11 jours disparaît.</div>
+    </div>
+  </section>
+
+  <section class="section" id="hotelbeds-postpay">
+    <h2>Hotelbeds post-payé — la trésorerie inversée</h2>
+    <p>Hotelbeds ne fonctionne pas comme Duffel. C'est un modèle <strong>post-payé</strong> : PayEnCash confirme la réservation (<code>POST /hotel-api/1.0/bookings</code>), ce qui crée une dette réglée ensuite — immédiatement à la validation de la collecte (décision D3), via facture / carte virtuelle (VCC), et non par le débit d'un solde prépayé. Comme le cash a déjà été encaissé au domicile <strong>avant</strong> que la facture ne soit due, PayEnCash n'a <strong>aucune avance de fonds à immobiliser</strong> pour l'hébergement.</p>
+    <div class="callout tip">
+      <span class="callout-icon">✅</span>
+      <div><strong>Trésorerie inversée = avantage structurel</strong> Pour la part hébergement, PayEnCash encaisse avant de payer : pas de fonds de roulement, pas de risque de solde insuffisant côté Hotelbeds, pas d'immobilisation de trésorerie. L'état de la dette est suivi via <code>supplier_bookings.settlement_status</code> (<code>not_due</code> / <code>settled</code> / <code>failed</code>) et <code>payment_timing = 'hotelbeds_postpaid'</code> (Doc 2), sans passer par <code>provider_wallets</code>.</div>
+    </div>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Échec de règlement après collecte</strong> Le cash est déjà collecté, mais si le règlement Hotelbeds échoue, la dette reste ouverte (<code>settlement_status = 'failed'</code>). Appliquer le mécanisme de mise en attente / retry, puis, si irrésoluble, remboursement du client par retour cash agent (décision D4, voir Doc 1 et Doc 7). Ne jamais considérer une réservation confirmée comme réglée tant que <code>settlement_status ≠ 'settled'</code>.</div>
+    </div>
+  </section>
+
+  <section class="section" id="flux-complet">
+    <h2>Flux complet, étape par étape</h2>
+    <div class="flow-diagram">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content"><strong>L'agent collecte le cash au domicile</strong><span>Il encaisse le montant exact affiché sur le code interne et valide par code de sécurité + photo depuis l'espace agent authentifiée.</span></div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content"><strong>La validation de la collecte déclenche la Phase 5</strong><span>C'est l'unique déclencheur du paiement fournisseur (Doc 3, <code>POST /deliveries/{id}/collect</code>) — il n'y a plus de webhook tiers.</span></div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content"><strong>Duffel : débit du solde prépayé (avance SASU)</strong><span>La réservation vol consomme le Duffel Balance déjà approvisionné par la trésorerie de la SASU — le cash collecté n'est pas encore déposé.</span></div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-content"><strong>Hotelbeds : confirmation + règlement immédiat (post-payé)</strong><span>La réservation hôtel est confirmée puis la facture réglée immédiatement (VCC / facture), sans avance — le cash est déjà encaissé.</span></div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-num">5</div>
+        <div class="flow-content"><strong>Réservations confirmées chez Duffel et Hotelbeds</strong><span>Le client reçoit son billet et son voucher. Il ne voit jamais le cycle de dépôt du cash ni la reconstitution de l'avance.</span></div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-num">6</div>
+        <div class="flow-content"><strong>L'agent dépose le cash collecté</strong><span>Selon la procédure interne (fréquence de dépôt, plafond de cash par agent), les espèces sont remises et créditées sur le compte de la SASU.</span></div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-num">7</div>
+        <div class="flow-content"><strong>Reconstitution de l'avance Duffel</strong><span>Le cash déposé réapprovisionne le Duffel Balance, prêt pour les prochaines commandes vols. (Rien à reconstituer côté Hotelbeds : post-payé.)</span></div>
+      </div>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Les étapes de paiement et de dépôt ne sont pas synchronisées</strong> L'étape 3 (débit Duffel) consomme un solde déjà existant chez PayEnCash ; l'étape 6 (dépôt du cash) suit le calendrier de dépôt des agents, indépendant. Le développeur ne doit jamais coder de logique qui suppose que le cash d'une commande donnée finance directement l'achat de cette même commande.</div>
+    </div>
+  </section>
+
+  <section class="section" id="dimensionnement">
+    <h2>Dimensionner l'avance Duffel</h2>
+    <p>Seul le canal Duffel exige une avance à dimensionner. Le montant de trésorerie que la SASU doit maintenir en permanence dans le Duffel Balance dépend du <strong>délai de dépôt du cash</strong> et du volume de commandes vols attendu — pas d'un délai de versement PSP.</p>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Principe de calcul, à affiner avec des données réelles</strong> L'avance Duffel minimale correspond approximativement au volume moyen de commandes <em>avec vol</em> traité pendant le délai de dépôt le plus défavorable. Si le cash met en moyenne D jours à être déposé et crédité, et que PayEnCash traite X commandes vols/jour pour un montant Duffel moyen Y, l'avance à prévoir couvre environ D × X × Y, plus une marge pour les pics. La part hébergement n'entre <strong>pas</strong> dans ce calcul (post-payé). Ce montant sera repris avec les vraies projections — non chiffré ici pour ne pas suggérer une fausse précision.</div>
+    </div>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Risque à anticiper</strong> Si le volume de commandes vols croît plus vite que le rythme de dépôt du cash, l'avance Duffel peut devenir insuffisante avant reconstitution — c'est exactement le scénario que l'alerte de solde insuffisant Duffel (Doc 3) doit détecter tôt, pour permettre un réapprovisionnement manuel d'urgence avant qu'une commande vol ne puisse plus être honorée.</div>
+    </div>
+  </section>
+
+  <section class="section" id="aml-cash">
+    <h2>Conformité &amp; manipulation d'espèces</h2>
+    <p>En collectant des espèces au domicile via ses propres agents salariés, AJEK gère directement la manipulation physique du cash — sans prestataire de paiement externe. <strong>À ce stade, AJEK est considérée non assujettie aux obligations LCB-FT</strong> (lutte contre le blanchiment et le financement du terrorisme) — <strong>à confirmer par un avis juridique</strong> avant lancement. L'encadrement du risque repose sur des garde-fous opérationnels concrets, pour l'essentiel déjà outillés par le schéma de données, plutôt que sur un dispositif LCB-FT formel.</p>
+    <table>
+      <thead><tr><th>Garde-fou</th><th>Mise en œuvre</th></tr></thead>
+      <tbody>
+        <tr><td>Plafond légal par transaction</td><td><strong>1 000 € / transaction</strong> (art. L112-6 / D112-3 du Code monétaire et financier) — contrôle <code>total_price_cents ≤ 100000</code> avant génération du code (Doc 4), avec <strong>anti-fractionnement</strong> : interdiction de scinder artificiellement une même prestation en plusieurs commandes pour contourner le plafond.</td></tr>
+        <tr><td>Seuil de dépôt agent</td><td><strong>400 € (<code>cash_on_hand_cents &gt; 40000</code>)</strong> déclenche un dépôt immédiat et obligatoire au réseau Cash Services (voir section précédente), en complément du plafond de zone <code>delivery_zones.max_cash_amount_cents</code> (Doc 2).</td></tr>
+        <tr><td>KYC client (gradué)</td><td>Vérification déclarative jusqu'à 3 achats ou 1 000 € cumulés sur 7 jours ; au-delà, pièce d'identité (PVID) exigée (voir Doc 5) — limite l'exposition avant identification renforcée.</td></tr>
+        <tr><td>KYB fournisseurs</td><td>Vérification des tiers avant intégration (Duffel, Hotelbeds, Stripe, et pour la ligne Mode les fournisseurs — voir Doc 5 et <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html"><code>Étape 4 · flux F11/F12</code></a>).</td></tr>
+        <tr><td>Rapprochement collecté / dû / déposé</td><td>Contrainte <code>payments.collected_amount_cents = amount_cents</code> à la validation (Doc 2) ; tout écart lève une alerte et bloque le passage à <code>PAID</code>. Le dépôt est ensuite rapproché du cumul collecté.</td></tr>
+        <tr><td>Traçabilité</td><td>Chaque collecte, validation et transition d'état est journalisée (<code>audit_log</code>, acteurs <code>courier</code> / <code>system</code> / <code>manager</code>) — piste d'audit continue de la porte du client au dépôt.</td></tr>
+        <tr><td>Preuve d'encaissement</td><td>Code de sécurité (haché) + photo de preuve (<code>payments.security_code_hash</code>, <code>proof_photo_url</code>) attestent la réalité de chaque encaissement.</td></tr>
+        <tr><td>Logiciel de caisse</td><td>Enregistrement sécurisé, inaltérable et archivé du cash encaissé, conforme à l'obligation de certification (art. 286-I-3° bis du CGI) — voir Doc 5.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>À cadrer avec l'expert conformité</strong> L'assujettissement LCB-FT, les obligations déclaratives liées à la manipulation d'espèces, les procédures de dépôt et les limites réglementaires par transaction / par client relèvent d'un cadrage juridique et comptable dédié. Ce document liste les garde-fous opérationnels déjà identifiés ; il ne se substitue pas à cet avis spécialisé.</div>
+    </div>
+  </section>
+
+  <section class="section" id="tva-collectee">
+    <h2>TVA collectée — ce qui n'est pas à vous</h2>
+    <p>Une partie du cash collecté par l'agent est de la <strong>TVA</strong> (<code>orders.vat_amount_cents</code>, Doc 2 / Doc 4) : elle est encaissée <strong>pour le compte de l'État</strong> et devra être reversée. Sous le régime de la marge (art. 297 A CGI, fixé pour Voyage — Doc 4), cette TVA porte uniquement sur la <strong>marge</strong> (marge fixe + marge de sécurité + frais de service), pas sur le prix fournisseur. Ce n'est ni un revenu, ni de la trésorerie disponible pour financer l'avance Duffel — elle doit être mise de côté et suivie séparément.</p>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Ne jamais confondre cash collecté et revenu</strong> Le cash déposé en banque contient : le prix fournisseur (à régler / déjà avancé), les marges PayEnCash (revenu), les frais de service (revenu), et la <strong>TVA collectée (dette envers l'État)</strong>. Seules les marges et les frais de service sont du revenu. Le calcul du bénéfice net (Doc 9) et le dimensionnement de l'avance Duffel doivent exclure la TVA collectée.</div>
+    </div>
+    <table>
+      <thead><tr><th>Composante du cash collecté</th><th>Nature</th></tr></thead>
+      <tbody>
+        <tr><td>Prix fournisseur (base)</td><td>Reconstitue l'avance Duffel / règle la dette Hotelbeds post-payée</td></tr>
+        <tr><td>Marges (fixe + sécurité) + frais de service</td><td><strong>Revenu</strong> PayEnCash</td></tr>
+        <tr><td>TVA (<code>vat_amount_cents</code>)</td><td><strong>Dette fiscale</strong> — TVA collectée à reverser à l'État (déclaration périodique)</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Suivi &amp; déclaration à cadrer avec le comptable</strong> Le total de <code>vat_amount_cents</code> sur les commandes <code>PAID</code> / <code>CONFIRMED</code> d'une période donne la TVA collectée à déclarer. La périodicité déclarative relève de l'expert-comptable. Le <code>vat_rate</code> est paramétrable dans le manager (défaut 20%).</div>
+    </div>
+  </section>
+
+  <section class="section" id="tva-deductible">
+    <h2>TVA déductible — non applicable sur la vente Voyage</h2>
+    <p>Sous le régime de la marge (art. 297 A CGI), <strong>fixé</strong> pour la ligne Voyage (Doc 4), la TVA n'est due que sur la marge — ce qui exclut par construction toute déduction de la TVA payée aux fournisseurs (Duffel, Hotelbeds) sur le prix d'achat : pas de double flux à suivre, la neutralité est déjà dans le régime lui-même.</p>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Aucune TVA déductible côté agent — l'agent est salarié</strong> Une version antérieure de ce document décrivait un mécanisme de TVA déductible sur la rémunération de <strong>agents micro-entrepreneurs</strong> (auto-facturation, franchise en base art. 293 B, mandat d'auto-facturation, SIRET agent). Ce mécanisme est <strong>supprimé</strong> : l'agent est <strong>exclusivement salarié</strong> d'AJEK (D11 rév.). Sa rémunération est un <strong>salaire</strong> soumis aux charges sociales, pas une prestation facturée — il n'existe donc <strong>aucune facture agent, aucune TVA, aucun mandat d'auto-facturation</strong> à ce titre. Les champs <code>courier_invoices.vat_amount_cents</code> et la logique associée n'ont plus lieu d'être.</div>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Ne pas prendre les taxes aériennes pour de la TVA</strong> <code>flight_offers.tax_amount_cents</code> porte le <code>tax_amount</code> de Duffel : redevances aéroportuaires et surcharges transporteur. Ce n'est <strong>pas</strong> de la TVA, et de toute façon non déductible sous le régime de la marge — simple rappel pour qui chercherait « la TVA fournisseur » ici ou en Doc 2.</div>
+    </div>
+    <table>
+      <thead><tr><th>Flux</th><th>Sens</th><th>Origine</th><th>Effet sur la déclaration</th></tr></thead>
+      <tbody>
+        <tr><td><strong>TVA collectée</strong></td><td>Dette envers l'État</td><td><code>orders.vat_amount_cents</code> sur les commandes <code>PAID</code> / <code>CONFIRMED</code>, assise sur la marge seule</td><td>C'est le montant à reverser</td></tr>
+        <tr><td>TVA déductible fournisseurs</td><td>—</td><td>Sans objet (régime de la marge)</td><td>Aucun effet</td></tr>
+        <tr><td>TVA déductible agents</td><td>—</td><td>Sans objet (agent salarié, pas de facture)</td><td>Aucun effet</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Ce qui reste hors périmètre</strong> AJEK peut par ailleurs récupérer de la TVA sur ses achats de fonctionnement courants (logiciels, assurances, hébergement serveur, etc.) — comptabilité générale de l'entreprise, sans rapport avec le mécanisme de vente Voyage/Mode et hors périmètre de ce document.</div>
+    </div>
+  </section>
+
+  <section class="section" id="schema-impact">
+    <h2>Impact sur le schéma de données</h2>
+    <p>Ce modèle confirme les tables du Doc 2 et clarifie l'usage de certains champs, en distinguant nettement le canal Duffel (avance) du canal Hotelbeds (post-payé).</p>
+    <table>
+      <thead><tr><th>Table / champ</th><th>Usage clarifié par ce document</th></tr></thead>
+      <tbody>
+        <tr><td><code>provider_wallets.last_known_balance_cents</code></td><td><strong>Duffel uniquement.</strong> Représente l'avance réelle disponible chez Duffel — indicateur de pilotage financier central. Hotelbeds n'a pas d'entrée ici (post-payé).</td></tr>
+        <tr><td><code>provider_wallets.low_balance_threshold_cents</code></td><td>Seuil fixé selon le délai de dépôt du cash et le volume vols, pas arbitrairement — voir dimensionnement.</td></tr>
+        <tr><td><code>supplier_bookings.settlement_status</code> / <code>payment_timing</code></td><td>Suivent l'état du règlement Hotelbeds post-payé (<code>not_due</code> / <code>settled</code> / <code>failed</code>) — c'est ici, pas dans <code>provider_wallets</code>, que se pilote la dette hébergement.</td></tr>
+        <tr><td><code>payments.collected_amount_cents</code></td><td>Montant de cash réellement encaissé par l'agent — base du rapprochement avec le montant dû puis avec le dépôt.</td></tr>
+        <tr><td><code>orders.vat_amount_cents</code> / <code>vat_rate</code></td><td>TVA collectée par commande — agrégée sur une période pour la déclaration de TVA ; à exclure du revenu et du dimensionnement de l'avance Duffel.</td></tr>
+        <tr><td><code>wallet_transactions</code></td><td>Trace deux types de mouvements du solde Duffel : les débits d'achat vol (avance consommée) et les crédits de réapprovisionnement (dépôts de cash / virements) — voir la suggestion ci-dessous.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Suggestion d'enrichissement du schéma</strong> Une colonne <code>wallet_transactions.transaction_type</code> (ENUM : <code>supplier_purchase</code>, <code>cash_deposit_topup</code>, <code>manual_topup</code>) permet de produire directement un état de rapprochement entre l'avance Duffel consommée et sa reconstitution par les dépôts de cash.</div>
+    </div>
+  </section>
+
+  <section class="section" id="checklist">
+    <h2>Checklist avant développement</h2>
+    <ul class="checklist">
+      <li>Définir la procédure de dépôt du cash par les agents au réseau <strong>Cash Services</strong> (fréquence, seuil de 400 € déclenchant un dépôt immédiat, plafond de zone, points de dépôt) et le rapprochement collecté → déposé</li>
+      <li>Dimensionner l'avance Duffel initiale sur le délai de dépôt le plus défavorable et le volume de commandes <em>vols</em> attendu — la part hébergement n'entre pas dans ce calcul (post-payé)</li>
+      <li>Confirmer avec Hotelbeds les modalités de règlement post-payé (facturation / VCC) et le déclenchement immédiat à la validation de la collecte</li>
+      <li>Mettre en place le suivi du Duffel Balance comme indicateur de pilotage financier quotidien, pas seulement comme alerte technique</li>
+      <li>Ajouter la colonne <code>transaction_type</code> sur <code>wallet_transactions</code> pour distinguer achats et reconstitutions</li>
+      <li>Confirmer par avis juridique le non-assujettissement d'AJEK aux obligations LCB-FT ; cadrer avec un expert le plafond de 1 000 €/transaction, l'anti-fractionnement, le KYC client gradué et le KYB fournisseurs</li>
+      <li>Suivre la TVA collectée (∑ <code>orders.vat_amount_cents</code>, assise sur la marge seule) et la mettre de côté pour reversement — pas de TVA déductible à suivre côté fournisseurs ni côté agents (régime de la marge, agent salarié)</li>
+      <li>Provisionner le logiciel de caisse certifié (art. 286-I-3° bis CGI) et les assurances de la société (RC pro, RC exploitation, vol d'espèces, auto mission — voir Doc 5)</li>
+    </ul>
+  </section>
+
+</main>
+
+</body>
+</html>

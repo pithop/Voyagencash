@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash MODE — Ta commande</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-mode-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-mode-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-panier-badge.js"></script><!-- (19/09) la pastille « commande en cours / pièces au sac » sur l'onglet Commandes -->
+<script src="../assets/payencash-qr.js"></script>
+<!-- MODE — TA COMMANDE. Aligné sur fly/02-ordre-paiement (fondatrice 02/09 : « aligne les pages de
+     paiement / récap sur le design Fly ») : MÊME trame — retour, titre, bandeau encre du montant, « Ta commande »,
+     « Détails du prix », livraison, attente, reçu.
+     (18/09, soir — l'agent de caisse mobile est abandonné) L'ÉCRAN NE CONNAÎT PLUS QUE CE QU'IL SAIT VRAIMENT :
+     le montant dû, le moyen choisi quand il l'est, et le code de la commande. Est parti avec l'agent le canal
+     'agent' — aucune commande ne le porte plus — et, avec lui, tout ce que cet écran en disait : le flashcode
+     « à faire scanner par l'agent », le titre « À payer à l'agent », l'adresse d'encaissement, la promesse qu'il
+     comptait billets et pièces devant la cliente, l'attente « en attente de l'agent », et le découpage
+     espèces/carte du bandeau de montant (D.reglementAppliquer / D.montantARegler / D.carteBandeauHTML, retirées
+     du data-layer). Restent DEUX états, et le bus fait foi dans les deux — le reçu n'apparaît que sur une
+     commande au statut 'paye' :
+       · À RÉGLER / EN LIGNE → le code de la commande, le montant dû, et l'ÉTAT de la transaction du prestataire
+                               (en attente / refusée / abandonnée) avec de quoi reprendre le paiement ;
+       · RÉGLÉE PAR UN BON D’ACHAT (bus : c.moyen === 'bon' ; locale : reglementMode 'bon' ou canal 'bon') → le bus a
+                               débité le bon d’achat, rien à attendre : le reçu, avec le reste du bon d’achat.
+     Un bon d’achat APPLIQUÉ en partie sur la commande (bus, non consommé) se lit sous le montant : le dû affiché est
+     le RESTE — le total « tout compris » et l'annonce au bus gardent le brut (c'est le bus qui recalcule la part du bon).
+     ZÉRO information écrite en dur : livraison (D.livraisonInfo — conditions Mondial Relay sourcées), montants
+     (commande groupée), moyens (D.moyensPaiement / D.libelleMoyen), phrase de règlement (D.reglementLibelle).
+     Régime de marge : pas de « dont TVA ». -->
+<style>
+  .h1{font-size:23px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;color:var(--color-ink);margin:14px 0 6px}
+  .h1 em{font-style:normal;color:var(--color-primary)}
+  .caps{letter-spacing:.13em;text-transform:uppercase}
+  .lead{font-size:14.5px;font-weight:500;line-height:1.5;color:var(--color-muted);margin:0 0 16px}
+  .dp{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--color-sep);font-size:12px}
+  .dp span{color:var(--color-muted);min-width:0}
+  .dp.tot{padding:9px 0 3px;font-size:13.5px;border-bottom:none}
+  .dp.sub{font-size:11px;padding:2px 0 0;border-bottom:none}
+  .lg{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--color-sep)}
+  .lg:last-child{border-bottom:none}
+  .lg img{flex:none;width:40px;height:48px;border-radius:8px;object-fit:cover;background:var(--color-bg)}
+  .lg .n{font-size:12px;font-weight:700;color:var(--color-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lg .s{font-size:10.5px;color:var(--color-muted);margin-top:1px}
+  .lg b{flex:none;font-size:12.5px;color:var(--color-ink)}
+  @keyframes pec-pulse{0%,100%{opacity:1}50%{opacity:.25}}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll">
+    <div class="pec-info-body" style="padding-top:14px">
+
+      <a href="03-panier.html" id="op-retour" class="tap" aria-label="Retour" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-chevron-left"/></svg>
+      </a>
+
+      <h1 class="h1" id="op-h1">Ta<br><em>commande</em></h1>
+      <p class="lead" id="op-lead">—</p>
+      <!-- (11/09) l'annonce au bus peut être refusée (stockage plein) : sans ce bandeau, la cliente attendait un agent
+           avec un flashcode qu'aucune app ne pouvait reconnaître — ou partait payer une commande que le bus ignorait. -->
+      <div id="op-refus" hidden style="background:#FDECEA;border:1px solid #F0B4AC;border-radius:12px;padding:11px 13px;margin:10px 0 0;font-size:13px;font-weight:700;color:#8E2A1E"></div>
+
+      <div id="bloc-code">
+
+      <!-- LE CODE DE LA COMMANDE — même carte que Fly : libellé, slab, réf, prix garanti.
+           (18/09, soir) « À faire scanner par l'agent » est tombé avec lui : ce code ne se tend plus à personne,
+           il IDENTIFIE la commande — de la reprise du paiement au suivi de la livraison, et à l'assistance. Il
+           reste affiché tant que la commande n'est pas réglée : c'est là que vivent aussi le prix garanti et la
+           bascule de moyen. -->
+      <div class="pec-card pec-card--elevated" id="op-carte-code">
+        <div class="scanby" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--color-primary-dark);margin-bottom:8px">
+          <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-receipt"/></svg> Le code de ta commande
+        </div>
+        <div class="pec-code-slab" id="op-slab">
+          <div class="pec-flashcode" id="barcode"></div>
+          <div class="pec-code-num" id="op-ref">—</div>
+          <div class="pec-code-caption">Code interne PayEnCash · identifie ta commande</div>
+          <div id="op-cd" style="margin-top:7px;display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:var(--color-amber-well);padding:4px 10px;font-size:11px;font-weight:700;color:var(--color-amber-text)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px"><use href="#i-clock"/></svg> Prix garanti — encore <b id="deadline" style="margin-left:2px">—</b></div>
+          <!-- BASCULE DE MOYEN (fondatrice 04/09 : « on ne peut pas basculer ») : tant que ce n'est PAS payé, le
+               client peut re-choisir COMMENT payer — les moyens sont dérivés du référentiel (.pec-moyens). -->
+          <a class="tap" id="op-changer" href="05-ou-payer.html" style="display:block;margin-top:9px;font-size:11.5px;font-weight:700;color:var(--color-primary-dark)">Payer autrement — <span class="pec-moyens">avec un bon d’achat</span> →</a>
+        </div>
+      </div>
+
+      <!-- L'ÉTAT DU PAIEMENT EN LIGNE — peint par le script depuis la transaction du prestataire (PEC_BUS).
+           Une transaction refusée ou abandonnée se DIT, avec son motif, et de quoi reprendre. -->
+      <div class="pec-card pec-card--elevated" id="op-enligne" hidden>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--color-primary-dark);margin-bottom:6px">
+          <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-phone"/></svg> <span id="op-el-eyebrow">Paiement en ligne</span>
+        </div>
+        <div id="op-el-titre" style="font-size:16px;font-weight:800;letter-spacing:-0.01em;color:var(--color-ink)">—</div>
+        <p id="op-el-txt" style="margin:6px 0 0;font-size:12.5px;font-weight:500;line-height:1.55;color:var(--color-muted)">—</p>
+        <a class="pec-cta pec-cta--tight tap" id="op-el-cta" href="05-ou-payer.html" style="display:block;text-align:center;margin-top:12px">Choisir un moyen de paiement</a>
+      </div>
+
+      <!-- LE MONTANT — bandeau encre. (18/09, soir) Plus de « règle plafond » : le dû est UN, quel que soit le
+           code qui le règle ; le libellé suit le seul état qui compte (réglée ou non). -->
+      <div class="pec-dark-banner pec-dark-banner--md" style="margin-top:12px">
+        <div style="min-width:0">
+          <div class="lbl" id="op-lbl">À régler</div>
+          <div class="sub" id="op-sub">—</div>
+          <div class="amt"><span class="n" id="op-montant">—</span><span class="e">€</span></div>
+        </div>
+      </div>
+      <!-- (18/09 — Bon d’achat PayEnCash) un bon APPLIQUÉ en partie se dit ici : lu sur la commande du bus, débité au règlement seulement -->
+      <div id="op-bon" hidden style="display:flex;align-items:center;gap:9px;border-radius:12px;background:var(--color-mint);padding:9px 12px;margin-top:8px;font-size:12px;font-weight:700;line-height:1.45;color:var(--color-mint-ink)">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:15px;color:var(--color-primary-dark)"><use href="#i-ticket"/></svg>
+        <span style="min-width:0" id="op-bon-txt">—</span>
+      </div>
+
+      <!-- TA COMMANDE — les pièces réservées (nom · taille · quantité · prix), depuis la commande groupée -->
+      <div class="pec-card" id="op-recap" style="margin-top:12px;padding:12px 16px 6px">
+        <div class="caps" style="font-size:9.5px;font-weight:800;color:var(--color-muted);padding-bottom:4px">Ta commande</div>
+        <div id="op-lignes"></div>
+      </div>
+
+      <!-- DÉTAILS DU PRIX — même carte que Fly : lignes · livraison · total tout compris · part espèces / carte -->
+      <div class="pec-card" style="margin-top:12px;padding:12px 16px 8px">
+        <div class="caps" style="font-size:9.5px;font-weight:800;color:var(--color-muted);padding-bottom:4px">Détails du prix</div>
+        <div class="dp"><span id="dp-art-lbl">Articles</span><b id="dp-art">—</b></div>
+        <div class="dp"><span id="dp-liv-lbl">Livraison</span><b id="dp-liv" style="color:var(--color-primary-dark)">—</b></div>
+        <div class="dp tot"><b>Total — tout compris</b><b id="dp-total">—</b></div>
+        <!-- (18/09, soir — l'agent de caisse mobile est abandonné) ICI SE DÉCOUPAIT LE TOTAL : « dont en espèces »
+             et « dont par carte, sur le terminal de l'agent (obligatoire) », au-dessus du plafond légal des
+             espèces. Aucun agent ne vient, aucune carte n'intervient, et D.montantARegler n'existe plus : le
+             total est le total. -->
+      </div>
+
+      <!-- LIVRAISON — le relais validé avec le panier ; conditions = référentiel Mondial Relay (D.livraisonInfo), sourcé -->
+      <div id="op-relais-box" style="display:none;align-items:flex-start;gap:9px;border-radius:14px;background:var(--color-mint);padding:11px 13px;margin-top:12px">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:15px;color:var(--color-primary-dark)"><use href="#i-map-pin"/></svg>
+        <span style="min-width:0;font-size:11.5px;color:var(--color-mint-ink);line-height:1.5"><b style="color:var(--color-primary-dark)">Livré à</b> — <span id="op-relais">—</span><span id="op-liv-suffix"></span><span id="op-liv-src" style="display:block;font-size:10px;color:var(--color-muted);margin-top:2px"></span></span>
+      </div>
+
+      <!-- LE PAIEMENT EST FAIT À PAYENCASH.
+           (17/09 — pivot) Ce bandeau décrivait le commerçant « partenaire mandaté » qui recevait les espèces au
+           nom d'AJEK : c'est exactement l'encaissement par un tiers que la fondatrice a abandonné. Le texte dit
+           désormais qui encaisse VRAIMENT, et il change selon le canal (rempli par le script). -->
+      <div class="pec-mint-banner" style="margin-top:12px">
+        <div style="font-size:12.5px;line-height:1.55" id="op-qui-encaisse">—</div>
+      </div>
+      <div id="op-qui-note" style="margin-top:6px;font-size:10.5px;color:var(--color-muted)"></div>
+
+
+      <!-- PAS de bouton : c'est le bus qui règle la commande — code d'un bon d’achat débité, ou notification du
+           prestataire → cet écran bascule TOUT SEUL en reçu. -->
+      <div id="attente" class="tap" style="display:flex;align-items:center;justify-content:center;gap:9px;border-radius:14px;background:var(--color-bg);padding:13px 14px;margin:14px 0 18px;cursor:pointer">
+        <span style="flex:none;width:9px;height:9px;border-radius:999px;background:var(--color-primary);animation:pec-pulse 1.2s infinite"></span>
+        <span style="font-size:12px;font-weight:700;color:var(--color-muted)">Ton reçu s’affichera ici tout seul, dès le règlement.</span>
+      </div>
+      </div><!-- /bloc-code -->
+
+      <!-- REÇU — même trame que Fly : merci d'abord, le reçu ensuite -->
+      <div id="ticket" style="display:none;margin:14px 0 18px">
+        <div style="text-align:center;margin-bottom:12px">
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:999px;background:var(--color-primary);color:#fff;box-shadow:var(--shadow-cta-tight)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:25px"><use href="#i-check"/></svg></div>
+          <div style="font-size:20px;font-weight:800;letter-spacing:-0.01em;color:var(--color-ink);margin-top:9px">Merci pour ta confiance.</div>
+          <div style="font-size:12.5px;line-height:1.55;color:var(--color-muted);margin-top:4px;max-width:270px;margin-left:auto;margin-right:auto">Ton paiement est bien reçu — ta commande est lancée, on te tient au courant dans tes notifications (Compte → Mes commandes).</div>
+        </div>
+        <div class="pec-card pec-card--elevated" style="padding:15px 16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span id="tk-quand" style="font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--color-muted)">Reçu · aujourd'hui</span>
+            <span class="pec-pill pec-pill--done" style="font-size:10px">Payé — soldé</span>
+          </div>
+          <div style="font-size:14px;font-weight:800;color:var(--color-ink)" id="tk-det">—</div>
+          <!-- (18/09, soir) PAR QUOI ça a été réglé — la phrase vient de D.reglementLibelle(commande) : moyen,
+               code du bon d’achat masqué, transaction du prestataire. Jamais recopiée dans l'écran. -->
+          <div id="tk-reglement" style="font-size:11.5px;font-weight:600;line-height:1.5;color:var(--color-primary-dark);margin-top:4px">—</div>
+          <hr style="border:none;border-top:1.5px dashed var(--color-sep);margin:11px 0">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--color-muted)"><span>Montant réglé — caisse PayEnCash</span><b style="color:var(--color-ink)" id="tk-n">—</b></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--color-muted);margin-top:5px"><span>Reçu n°</span><b style="color:var(--color-ink)" id="tk-recu">—</b></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--color-muted);margin-top:5px"><span>Reste dû</span><b style="color:var(--color-primary-dark)">0 €</b></div>
+          <!-- (18/09 — Bon d’achat PayEnCash) réglée par un bon (tout ou partie) : ce qu'il reste SUR LE BON, lu sur la commande du bus -->
+          <div id="tk-bon" hidden style="display:flex;justify-content:space-between;font-size:12px;color:var(--color-muted);margin-top:5px"><span id="tk-bon-lbl">Reste sur ton bon</span><b style="color:var(--color-primary-dark)" id="tk-bon-v">—</b></div>
+        </div>
+        <div style="border-radius:14px;background:var(--color-mint);padding:12px 13px;margin-top:12px;font-size:11.5px;line-height:1.55;color:var(--color-mint-ink);text-align:center"><b style="color:var(--color-primary-dark)">Ta commande est lancée ✓</b> — les pièces sont <b>bloquées pour toi</b> chez le fournisseur · <span id="tk-liv">expédition</span> jusqu'à ton relais.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+          <a class="pec-cta tap" href="04-commande.html" style="display:flex;align-items:center;justify-content:center;text-align:center">Suivre ma commande</a>
+          <a class="pec-btn-secondary tap" href="03-panier.html?tab=reglees" style="display:flex;align-items:center;justify-content:center;text-align:center">Voir dans mes commandes — Réglées</a>
+        </div>
+      </div><!-- /ticket -->
+
+    </div>
+  </div><!-- /pec-body -->
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="10-tendances.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-flame"/></svg>Tendances</a>
+    <a class="pec-tab" href="22-livraisons.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-package"/></svg>Suivi</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Mode</a>
+    <a class="pec-tab" aria-current="page" href="03-panier.html" style="position:relative"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-basket"/></svg>Commandes</a>
+    <a class="pec-tab" href="08-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+  (function () {
+
+    var D = window.PEC_DATA;
+    var $ = function (id) { return document.getElementById(id); };
+    // LIBÉRATION AUTO : si la commande a déjà expiré, on relâche les pièces et on renvoie
+    // vers Commandes (qui affiche « expirée — pièces relibérées »).
+    if (D.commandeExpiree && D.commandeExpiree()) { D.libererCommande(); location.replace('03-panier.html'); return; }
+    // La COMMANDE GROUPÉE lancée (N articles, 1 total) prime ; sinon repli sur le seed (mono).
+    var enc = D.panierCommandeGet && D.panierCommandeGet(), reglee = false;
+    // (03/09) le règlement se fait AU MOMENT du paiement (bus) : la commande groupée vient d'être soldée et n'est plus
+    // « en cours » → on présente le reçu de la commande RÉGLÉE la plus récente (15 min) au lieu de retomber sur le seed
+    if (!enc && D.commandesRegleesGet) { var _rg = D.commandesRegleesGet()[0]; if (_rg && _rg.lignes && _rg.lignes.length && Date.now() - (_rg.regleeTs || 0) < 15 * 60 * 1000) { enc = _rg; reglee = true; } }
+    var cmd, montant, subTxt, lignes, expTs = null, expSec = null;
+    if (enc && enc.lignes && enc.lignes.length) {
+      cmd = enc; montant = enc.total; lignes = enc.lignes;
+      subTxt = enc.nbArticles + ' article' + (enc.nbArticles > 1 ? 's' : '') + ' · livraison comprise dans ce montant';   // (19/09) le colis est facturé à part, mais il EST dans le total à régler
+      expTs = reglee ? null : enc.expireTs;
+      if (reglee) { var _cd = $('op-cd'); if (_cd) _cd.style.display = 'none'; }
+    } else {
+      cmd = D.mode.commandes.filter(function (c) { return c.statut === 'a_payer'; })[0];
+      // ÉTAT VIDE HONNÊTE (audit 05/09) : 24 comptes de démo sur 30 n'ont aucune commande à
+      // régler — la page levait une exception et restait figée sur les tirets du gabarit
+      // (ni code, ni montant, ni décompte). On le DIT, et on renvoie vers les commandes.
+      if (!cmd) {
+        var vide = document.querySelector('.pec-body');
+        if (vide) vide.innerHTML = '<div style="text-align:center;padding:54px 20px;color:var(--color-muted)">'
+          + '<svg class="pec-ico" viewBox="0 0 24 24" style="font-size:32px;color:var(--color-disabled)"><use href="#i-basket"/></svg>'
+          + '<div style="margin-top:10px;font-weight:800;color:var(--color-ink);font-size:15px">Aucune commande à régler</div>'
+          + '<div style="margin-top:6px;font-size:12.5px;line-height:1.55">Ta commande — son code, puis son reçu — apparaîtra ici dès que tu l\'auras lancée.</div>'
+          + '<a class="pec-cta pec-cta--tight tap" href="03-panier.html" style="display:inline-block;margin-top:16px">Voir mes commandes</a></div>';
+        return;
+      }
+      var a = D.article(cmd.articleId); montant = cmd.paye;
+      lignes = [{ articleId: a.id, nom: a.nom, taille: a.taille, qte: 1, prix: montant, photo: a.photo }];   // le prix payé de LA commande (seed canonique)
+      subTxt = a.nom + ' · T. ' + a.taille;
+      expSec = ((D.scenario && D.scenario.fenetreEncaissementMinutes) || 120) * 60 - 176;   // seed : fenêtre d'encaissement entamée (scenario)
+    }
+    /* (18/09, soir — l'agent de caisse mobile est abandonné) UN SEUL CHEMIN VERS LE RÈGLEMENT. `estAgent`
+       (cmd.canal === 'agent') ne pouvait plus être vrai : plus aucune commande ne porte ce canal, et l'écran
+       gardait une branche entière — flashcode à faire scanner, adresse d'encaissement, comptage devant la
+       cliente — pour un cas qui ne se produit jamais. Reste la commande à régler : son code et son montant.
+       (20/09 — « enlève la logique Neosurf ») LA TRANSACTION D'UN PRESTATAIRE N'EXISTE PLUS NON PLUS : le rail
+       en ligne est mort avec le réseau tiers. Une commande non réglée n'attend plus la notification de
+       personne — elle attend que la cliente présente le code de son bon d'achat. */
+    var cBus = (window.PEC_BUS && PEC_BUS.commande) ? PEC_BUS.commande(cmd.ref) : null;
+    /* LE MOYEN ne s'invente pas : la commande locale ne le porte pas (elle ne connaît que son canal), il vit sur
+       la commande du bus une fois réglée. À défaut, on ne nomme rien — on n'annonce pas un moyen à qui n'a
+       encore rien choisi. */
+    var moyen = (cBus && cBus.moyen) || null;
+    /* (18/09 — Bon d’achat PayEnCash) RÉGLÉE PAR UN BON : le bus fait foi. Ni flashcode, ni transaction : le bon
+       a été débité par le bus.
+       (20/09) LA CONDITION DISAIT « VA ÊTRE RÉGLÉE », PAS « EST RÉGLÉE ». Elle acceptait `canal === 'bon'`, qui
+       est posé dès « Comment payer » — avant tout paiement. Tant qu'il existait un second moyen, une commande
+       à régler portait un autre canal et le défaut ne se voyait pas ; depuis qu'il n'y en a plus qu'un, TOUTE
+       commande à régler tombait dans cette branche et l'écran annonçait « réglée par bon » à une cliente qui
+       n'avait encore rien payé. Ce qui fait foi, c'est le RÈGLEMENT : le bus l'a passée à « payé », ou la
+       commande locale porte son mode de règlement. */
+    var estBon = !!((cBus && cBus.statut === 'paye' && (cBus.moyen === 'bon' || cBus.par === 'bon')) || cmd.reglementMode === 'bon');
+    // un bon APPLIQUÉ en partie (bus, non consommé) : le dû affiché est le RESTE ; le total tout compris et l'annonce gardent le brut
+    var partBonBus = (cBus && cBus.bonApplique && !cBus.bonApplique.consommeAt) ? cBus.bonApplique.montant : 0;
+    var montantDu = Math.max(0, Math.round((montant - partBonBus) * 100) / 100);
+
+    if (estBon) {
+      $('op-h1').innerHTML = 'Ta commande<br><em>réglée par bon</em>';
+      $('op-lead').innerHTML = 'Réglée par <b style="color:var(--color-ink)">' + D.esc(D.libelleMoyen('bon')) + '</b> — avec un bon d’achat, sans prestataire.<br>Ton reçu est en dessous ; les pièces partent en préparation.';
+      var bc0 = $('op-carte-code'); if (bc0) bc0.hidden = true;   // rien à faire scanner
+      $('attente').style.display = 'none';                        // personne ne vient, aucune notification à attendre
+      var el0 = $('op-enligne'); if (el0) el0.hidden = true;      // aucune transaction du prestataire
+      $('op-qui-encaisse').innerHTML = '<b>Ton paiement est fait à PayEnCash.</b> Ton <b>Bon d’achat PayEnCash</b> a été débité par PayEnCash : <b>aucun prestataire, aucun numéro de carte</b>. Ton <b>reçu PayEnCash</b> est émis aussitôt — la pièce est alors <b>à toi</b>, et ton <b>droit de retour de <span data-liv="retourJours">14</span> jours</b> commence à sa réception. Un remboursement serait <b>re-crédité sur ton bon</b>, jamais en espèces.';
+      $('op-qui-note').textContent = '';
+    } else {
+      /* À RÉGLER : le code de la commande reste affiché (il identifie le dossier, il ne se scanne plus), et on
+         dit ce qu'il reste à faire. Le reçu, lui, viendra du bus (surPaiement), jamais du retour du navigateur.
+         (20/09) LES SIX ÉTATS D'UNE TRANSACTION DE PRESTATAIRE SONT PARTIS AVEC LE RAIL : les garder derrière un
+         `if` mort, c'était garder vivantes des phrases qui promettent une page hébergée qui n'existe plus. */
+      var lbl = moyen && D.libelleMoyen ? D.libelleMoyen(moyen) : '';
+      $('op-h1').innerHTML = 'Ta commande<br><em>à régler</em>';
+      $('op-lead').innerHTML = 'À régler avec un bon d’achat'
+        + (lbl ? ' — <b style="color:var(--color-ink)">' + D.esc(lbl) + '</b>' : ' — <span class="pec-moyens">un bon d’achat suffit</span>')
+        + '.<br>Ta pièce reste réservée à ton nom le temps du paiement.';
+      $('attente').style.display = 'none';                                    // personne ne vient : rien à attendre sur place
+      var el = $('op-enligne'); el.hidden = false;
+      // (17/09) les moyens viennent du référentiel, jamais écrits ici
+      $('op-el-titre').textContent = 'À régler';
+      $('op-el-txt').textContent = 'Choisis ton moyen de paiement — ' + (D.moyensPaiementLabel ? D.moyensPaiementLabel() : 'avec un bon d’achat') + '.';
+      $('op-el-cta').textContent = 'Choisir un moyen de paiement';
+      $('op-el-eyebrow').textContent = 'Où en est ton règlement';
+      $('op-qui-encaisse').innerHTML = '<b>Ton paiement est fait à PayEnCash.</b> Il se règle avec un <b>Bon d’achat PayEnCash</b>, débité par nous : <b>aucun numéro de carte bancaire</b> ne circule, et rien n’est débité tant que tu n’as pas présenté ton code. Ton <b>reçu PayEnCash</b> est émis à ce moment-là — la pièce est alors <b>à toi</b>, et ton <b>droit de retour de <span data-liv="retourJours">14</span> jours</b> commence à sa réception.';
+      $('op-qui-note').textContent = '';
+    }
+
+    // LE CODE + LE MONTANT
+    $('op-ref').textContent = cmd.ref;
+    if (window.PEC_QR) PEC_QR.render('barcode', cmd.ref);
+    $('op-sub').textContent = subTxt;
+    $('op-montant').textContent = String(montantDu);   // (18/09) le RESTE si un bon d’achat est appliqué
+    /* (18/09, soir) LE LIBELLÉ NE SE CALCULE PLUS. `D.reglementAppliquer` posait « À régler » puis, au-dessus du
+       plafond légal des espèces, une ligne .reg-detail « dont X € en espèces + Y € par carte sur le terminal de
+       l'agent » : elle n'existe plus, ni la fonction. Le libellé suit le seul état qui compte, et l'ancienne
+       ligne de détail est retirée si un rendu précédent l'avait laissée dans la page. */
+    (function () {
+      var lbl = $('op-lbl'); if (lbl) lbl.textContent = (cBus && cBus.statut === 'paye') ? 'Payé' : 'À régler';
+      var anc = $('op-montant').parentNode, det = anc && anc.nextElementSibling;
+      if (det && det.classList && det.classList.contains('reg-detail')) det.remove();
+    })();
+    // (18/09 — Bon d’achat PayEnCash) la part d'un bon appliqué se dit sous le montant — lue sur le bus, jamais mémorisée
+    (function () { var zb = $('op-bon'), zt = $('op-bon-txt'); if (!zb) return; zb.hidden = !(partBonBus > 0); if (partBonBus > 0 && zt) zt.innerHTML = 'Bon d’achat PayEnCash ' + D.esc(D.bonMasque ? D.bonMasque(cBus.bonApplique.code) : cBus.bonApplique.code) + ' appliqué <b>−' + D.esc(D.eur(partBonBus)) + '</b> — débité au règlement du reste, jamais avant.'; })();
+
+    // TA COMMANDE — une ligne par pièce réservée
+    $('op-lignes').innerHTML = lignes.map(function (l) {
+      var ph = l.photo ? D.photoSrc(l.photo) : '';
+      return '<div class="lg">' + (ph ? '<img loading="lazy" decoding="async" src="' + ph + '" alt="">' : '') + '<div style="min-width:0;flex:1"><div class="n">' + l.nom + '</div><div class="s">T. ' + l.taille + (l.qte > 1 ? ' · × ' + l.qte : '') + '</div></div><b>' + D.eur(l.prix * l.qte) + '</b></div>';
+    }).join('');
+
+    // DÉTAILS DU PRIX — articles · livraison (référentiel) · total tout compris
+    var L = D.livraisonInfo(), nb = lignes.reduce(function (s, l) { return s + l.qte; }, 0);
+    var sousTotal = lignes.reduce(function (s, l) { return s + l.prix * l.qte; }, 0);
+    $('dp-art-lbl').textContent = nb + ' article' + (nb > 1 ? 's' : '');
+    $('dp-art').textContent = D.eur(sousTotal);
+    $('dp-liv-lbl').textContent = 'Livraison ' + L.transporteur;
+    /* (19/09, soir) LE COLIS EST UNE LIGNE, plus une mention : c'est le tarif Mondial Relay de la commande. */
+    $('dp-liv').textContent = (cmd && cmd.livraisonCout > 0) ? D.eur(cmd.livraisonCout) : (L.incluse ? 'incluse' : '—');
+    $('dp-total').textContent = D.eur(montant);
+
+    // LIVRAISON = toujours Mondial Relay (le fournisseur expédie), indépendante du canal d'encaissement.
+    // Les CONDITIONS (garde, retrait) viennent du référentiel sourcé — pas d'une phrase écrite ici.
+    var liv = cmd.livraison || (cmd.relais ? (L.transporteur + ' · ' + cmd.relais) : '') || (D.relaisLabel ? (L.transporteur + ' · ' + D.relaisLabel()) : '');
+    if (liv) {
+      $('op-relais').textContent = liv;
+      $('op-liv-suffix').textContent = ' · ' + L.garde + ' · ' + L.retrait + '.';
+      $('op-liv-src').textContent = L.source + ' — délai indicatif ' + L.delai + ' après remise au réseau.';
+      $('op-relais-box').style.display = 'flex';
+    }
+    $('tk-liv').textContent = L.transporteur + ' (' + L.delai + ')';
+
+    // Bascule PAYÉ — SOLDÉ : déclenchée UNIQUEMENT par le bus — la déclaration de l'AGENT depuis son app, ou la
+    // NOTIFICATION du prestataire pour un paiement en ligne. Jamais par le retour du navigateur.
+    // fonction LOCALE (jamais sur window) + garde statut : le reçu n'apparaît QUE si le bus dit 'paye'.
+    function afficherRecuPaye() {
+      var _chg=document.getElementById('op-changer'); if(_chg) _chg.style.display='none';   // payé → plus de bascule (logique)
+      var c = window.PEC_BUS && PEC_BUS.commande(cmd.ref);
+      if (!c || c.statut !== 'paye') return;   // SÉCURITÉ : le statut du bus fait foi
+      var bloc = $('bloc-code'); if (bloc) bloc.style.display = 'none';   // code, état en ligne et attente disparaissent ensemble
+      $('attente').style.display = 'none';
+      $('ticket').style.display = 'block';
+      var pRecu = window.PEC_BUS ? PEC_BUS.paiement(cmd.ref) : null;   // reçu dérivé du bus (agent, ou notification du prestataire)
+      // horodatage RÉEL du paiement (bus : payeAt) — « aujourd'hui » seulement à défaut
+      var _ts = (c && c.payeAt) || (pRecu && pRecu.at) || null, _quand = 'aujourd’hui';
+      if (_ts) { var _d = new Date(_ts); _quand = 'le ' + String(_d.getDate()).padStart(2, '0') + '/' + String(_d.getMonth() + 1).padStart(2, '0') + ' à ' + String(_d.getHours()).padStart(2, '0') + ':' + String(_d.getMinutes()).padStart(2, '0'); }
+      /* (18/09, soir) PAR QUOI la commande a été réglée : la phrase vient de la donnée (reglementLibelle lit le
+         moyen, le code du bon d’achat masqué, la transaction du prestataire) — jamais recopiée ici. */
+      $('tk-det').textContent = cmd.ref + ' · ' + subTxt + ' · ' + _quand;
+      var _rg = $('tk-reglement'); if (_rg) _rg.textContent = D.reglementLibelle(c);
+      var _tkq = document.getElementById('tk-quand'); if (_tkq) _tkq.textContent = 'Reçu · ' + _quand;
+      /* (19/09, soir) LE MONTANT SE FORMATE, il ne se concatène pas : depuis que les prix portent des centimes,
+         `montant + ' €'` affichait « 157.99 € », avec le point décimal anglais, sur le reçu. */
+      $('tk-n').textContent = D.eur(montant);
+      var tkR = $('tk-recu'); if (tkR) tkR.textContent = (pRecu && pRecu.recu) || cmd.recu || '—';
+      /* (18/09 — Bon d’achat PayEnCash) RÉGLÉE PAR UN BON — en totalité (c.moyen 'bon', c.bon.resteApres) ou en partie (c.bonApplique consommé) :
+         le reste SUR LE BON se lit sur le reçu ; la phrase de règlement (reglementLibelle) dit déjà « Réglé par Bon d’achat PayEnCash ». */
+      var tkb = $('tk-bon'), tkbv = $('tk-bon-v'), tkbl = $('tk-bon-lbl');
+      var resteB = (c.moyen === 'bon' && c.bon && c.bon.resteApres != null) ? c.bon.resteApres
+                 : (c.bonApplique && c.bonApplique.consommeAt && c.bonApplique.resteApres != null) ? c.bonApplique.resteApres : null;
+      if (tkb) tkb.hidden = resteB == null;
+      if (resteB != null && tkbv) { tkbv.textContent = D.eur(resteB); if (tkbl) tkbl.textContent = c.moyen === 'bon' ? 'Réglé par Bon d’achat PayEnCash — reste sur ton bon' : 'Dont Bon d’achat PayEnCash −' + D.eur(c.bonApplique.montant) + ' — reste sur ton bon'; }
+      var zb2 = $('op-bon'); if (zb2) zb2.hidden = true;
+    }
+    if (window.PEC_BUS) {
+      /* (17/09 — pivot) LE CANAL N'EST PLUS EFFACÉ. Cet écran posait `canal: null, agent: null` : afficher le
+         flashcode « au point » annulait le choix « agent à domicile ». Il n'y a plus de point où basculer — et
+         effacer le canal ici retirait la course de l'app coursier pendant que l'agent était en route. Le canal
+         de la commande est ANNONCÉ tel qu'il est ; on change de moyen depuis « Comment payer » (05). */
+      /* (11/09) le refus du bus est LU : pas de flashcode pour une commande que personne n'a. */
+      /* (11/09) CE QUE LA COMMANDE DOIT DIRE AUX COMPTES. On n'envoyait que le montant À PAYER : le
+         régime de TVA, qui se dérive des lignes, retombait donc toujours sur la marge — une pièce
+         NEUVE déclarait 0 € de TVA — et la recette était amputée de la part réglée par Bon d’achat PayEnCash
+         ou par avoir (marchandise sortie, aucune vente enregistrée en face de la facture fournisseur).
+         La VALEUR vendue, les lignes, le caractère fiscal et le hors-espèces voyagent avec elle. */
+      // (19/09, soir) LE MÊME BLOC vivait ici et sur 05-ou-payer, et manquait à la commande soldée : il vit dans la donnée (annonceCommandeMode)
+      var rAnn = D.annonceCommandeMode(cmd, { montant: String(montant), moyen: moyen || undefined });   // la VALEUR se dérive (valeurCommande) : une seule arithmétique, dans la donnée
+      if (rAnn && rAnn.ok === false && rAnn.motif === 'stockage') {
+        var zRef = $('op-refus'), bCode = $('bloc-code');
+        if (zRef) { zRef.hidden = false; zRef.textContent = rAnn.message; }
+        if (bCode) bCode.hidden = true;
+      }
+      PEC_BUS.surPaiement(cmd.ref, afficherRecuPaye);
+      // (08/09 — audit « écran sourd ») la déclaration peut arriver par le bus ou par un autre onglet : le reçu suit
+      window.addEventListener('pec-bus', afficherRecuPaye);
+      window.addEventListener('storage', function (e) { if (!e.key || /^pec_bus_/.test(e.key)) afficherRecuPaye(); });
+    }
+
+    // DÉCOMPTE : commande groupée = dérivé de expireTs (verrou 2 h) ; seed = compte à rebours simple.
+    var dl = $('deadline');
+    if (reglee) { /* commande déjà réglée : aucun décompte */ }
+    else if (expTs) {
+      (function tick() {
+        var r = D.commandeRestant({ expireTs: expTs });
+        dl.textContent = r ? r.label : '00:00';
+        // délai écoulé → libération auto — SAUF si la commande a été payée (le bus fait foi).
+        if (r && r.expiree && D.panierCommandeGet && D.panierCommandeGet()) {
+          var _bp = window.PEC_BUS && PEC_BUS.commande(cmd.ref);
+          if (!(_bp && _bp.statut === 'paye')) { D.libererCommande(); }
+          location.replace('03-panier.html'); return;
+        }
+        setTimeout(tick, 1000);
+      })();
+    } else {
+      var sec = expSec;
+      (function tick() {
+        var m = Math.floor(sec / 60), s = sec % 60;
+        dl.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        if (sec > 0) sec--;
+        setTimeout(tick, 1000);
+      })();
+    }
+  })();
+</script>
+<script>
+  // (17/09 — pivot ; 20/09 — « enlève la logique Neosurf ») les moyens de paiement se LISENT dans le référentiel
+  // (PEC_DATA.moyensPaiement) — le span .pec-moyens ne porte qu'un texte de repli. Le nom d'un prestataire en
+  // ligne (.pec-moyens-psp / .pec-psp-nom) n'a plus rien à remplir : ce rail est supprimé.
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.moyensPaiement) return;
+    if (D.moyensPaiementLabel) [].forEach.call(document.querySelectorAll('.pec-moyens'), function (e) { e.textContent = D.moyensPaiementLabel(); });
+  })();
+</script>
+</body>
+</html>

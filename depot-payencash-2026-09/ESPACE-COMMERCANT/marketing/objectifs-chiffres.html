@@ -1,0 +1,131 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Objectifs chiffrés &amp; justification · PayEnCash</title>
+<style>
+:root{--ajek:#0f7a4d;--ajek-d:#0b5c3a;--ink:#1a1f1c;--muted:#5b675f;--line:#d9e5dd;--bg:#f4f7f5;--card:#fff;--chip:#e8f3ec;--gold:#b8860b;--goldbg:#fdf5e6;--blue:#1d6fa5}
+@media(prefers-color-scheme:dark){:root{--ink:#e8efe9;--muted:#9fb0a6;--line:#254034;--bg:#0d1512;--card:#121d18;--chip:#173026;--goldbg:#241d0f}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.sheet{max-width:1000px;margin:0 auto 60px;background:var(--card);border:1px solid var(--line)}
+header{background:linear-gradient(120deg,var(--ajek),var(--ajek-d));color:#fff;padding:26px 36px}.brand{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.9}header h1{margin:6px 0 2px;font-size:23px}header p{margin:3px 0 0;opacity:.93;font-size:13.5px}
+nav.j{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:8px 36px;display:flex;gap:8px;overflow-x:auto;white-space:nowrap}
+nav.j a{font-size:12.5px;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 11px;flex:none}nav.j a:hover{border-color:var(--ajek);color:var(--ajek)}
+.body{padding:22px 36px 40px}
+h2{font-size:17px;color:var(--ajek-d);margin:30px 0 8px;border-bottom:2px solid var(--line);padding-bottom:6px}h3{font-size:14px;color:var(--ajek-d);margin:16px 0 4px}@media(prefers-color-scheme:dark){h2,h3{color:#5fd39a}}
+p{margin:8px 0}ul{margin:6px 0 6px 2px;padding-left:20px}li{margin:5px 0}
+.note{background:var(--chip);border:1px solid var(--line);border-left:3px solid var(--ajek);border-radius:8px;padding:12px 14px;font-size:13.5px;color:var(--muted);margin:12px 0}
+.warn{background:var(--goldbg);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--ink);margin:12px 0}
+.est{display:inline-block;background:var(--goldbg);border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:11px;color:var(--gold);font-weight:700}
+.rec{display:inline-block;background:#8a6208;color:#fff;border-radius:5px;padding:1px 7px;font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12.8px}th,td{text-align:left;padding:7px 9px;border:1px solid var(--line);vertical-align:top}th{background:var(--chip);font-weight:600}
+td.n,th.n{text-align:right;white-space:nowrap}
+tr.tot td{font-weight:800;background:var(--chip)}
+tr.sub td{color:var(--muted)}
+.kpis{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}.kpi{flex:1;min-width:140px;border:1px solid var(--line);border-radius:12px;padding:11px 13px}.kpi b{display:block;font-size:21px;color:var(--ajek-d)}@media(prefers-color-scheme:dark){.kpi b{color:#5fd39a}}.kpi span{font-size:11.5px;color:var(--muted)}
+.toolbar{max-width:1000px;margin:16px auto 0;display:flex;gap:10px;justify-content:flex-end;padding:0 8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 12px;font-size:12.5px;text-decoration:none}.btn.p{background:var(--ajek);color:#fff;border-color:var(--ajek)}
+@media print{body{background:#fff}.toolbar,nav.j{display:none}.sheet{border:none}}
+</style></head><body>
+<div style="background:#E6F4EC;border:2px dashed #0C7F54;border-radius:10px;padding:10px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#0F2A24"><b>Pivot du 17/09/2026, complété le 18/09 au soir :</b> ce document de cadrage date du modèle « points partenaires (tabacs) qui encaissent », avec une grille de rémunération à paliers et 70 €/mois par point. <b>Deux changements invalident sa partie basse.</b> ① L'<b>agent salarié qui se déplaçait est supprimé</b> : un canal de vente disparaît, donc les hypothèses de volume perdent leur base. ② La <b>rémunération du commerçant a changé de nature</b> : ce n'est plus une grille reversée mensuellement, mais une <b>commission de 1,10 % HT retenue à la vente</b> — la carte du commerce est débitée du montant du bon d’achat moins cette commission. Toutes les lignes marquées <span class="rec">à recalculer</span> ci-dessous en découlent : elles ne sont pas remplacées par des valeurs plausibles, elles attendent un vrai calcul. Les hypothèses « 3 tabacs », « passage tabac → ventes », « part au point » sont à recaler — référence à jour : <a href="../documents/partie-4-flux.html" style="color:#0C7F54;font-weight:700">Étape 4</a> et <a href="../documents/partie-1b-financier.html" style="color:#0C7F54;font-weight:700">Étape 2 §1b</a>.</div>
+<div class="toolbar"><a class="btn" href="../documents/diagramme-principal.html">🗺️ Diagramme</a><a class="btn" href="index.html">Marketing</a><a class="btn" href="plan-marketing.html">Plan marketing</a><a class="btn" href="analyse-clientele.html">Analyse</a><a class="btn p" href="#" onclick="window.print();return false">Imprimer / PDF</a></div>
+<div class="sheet">
+<header><div class="brand">PayEnCash · AJEK — finance</div><h1>Objectifs chiffrés &amp; justification</h1><p>CA, commission, marge, seuil de rentabilité — et la cascade qui les justifie · 18 août 2026</p></header>
+<nav class="j"><a href="#quoi">Méthode</a><a href="#hypotheses">Hypothèses</a><a href="#cascade">Cascade de calcul</a><a href="#scenarios">3 scénarios</a><a href="#breakeven">Rentabilité</a><a href="#scale">Après le pilote</a><a href="#gonogo">Go / No-Go</a><a href="#justif">Comment on justifie</a></nav>
+<div class="body">
+
+<div class="note"><strong>Principe : aucun chiffre « sorti du chapeau ».</strong> Chaque objectif est <strong>construit</strong> à partir d'hypothèses explicites (§1), assemblées dans une <strong>cascade de calcul</strong> (§2), déclinée en <strong>3 scénarios</strong> (§3). Ce qui est <strong>sourcé</strong> : le panier (tarifs réels Duffel/compagnies, voir <a href="analyse-clientele.html">analyse §2</a>). Ce qui est <strong>à valider au pilote</strong> <span class="est">EST.</span> : les <strong>volumes</strong> (ventes/point) et le <strong>mix</strong> de destinations.</div>
+
+<h2 id="quoi">0 · De quoi parle-t-on ? (4 niveaux à ne pas confondre)</h2>
+<div class="tw"><table>
+<thead><tr><th>Indicateur</th><th>Définition</th></tr></thead>
+<tbody>
+<tr><td><strong>CA client (volume d'affaires)</strong></td><td>Ce que les clients paient (billets + hôtels). Ce n'est <em>pas</em> notre revenu.</td></tr>
+<tr><td><strong>Commission brute AJEK</strong></td><td>Notre marge sur le tarif Duffel (≈ 15–30 % du CA client).</td></tr>
+<tr><td><strong>Commission nette</strong></td><td>Commission brute − frais Duffel (~3 $/commande + 1 % + 1–2,5 $/segment).</td></tr>
+<tr><td><strong>Marge AJEK</strong></td><td>Commission nette − <strong>commission du commerçant distributeur</strong> (1,10 % HT de chaque bon d’achat vendu, retenue à la vente) − <strong>frais du prestataire de prélèvement</strong> (il débite la carte du commerce à chaque vente). C'est ce qui reste à AJEK (avant frais généraux). <span class="rec">à recalculer</span></td></tr>
+</tbody></table></div>
+
+<h2 id="hypotheses">1 · Les hypothèses (et leur justification)</h2>
+<div class="tw"><table>
+<thead><tr><th>Hypothèse</th><th class="n">Prudent</th><th class="n">Réaliste</th><th class="n">Ambitieux</th><th>Justification</th></tr></thead>
+<tbody>
+<tr><td>Ventes / mois / point</td><td class="n">20</td><td class="n">35</td><td class="n">60</td><td>Le seuil go/no-go est 30–40 → réaliste au milieu ; prudent en-dessous, ambitieux au-dessus <span class="est">EST.</span></td></tr>
+<tr><td>Nombre de points</td><td class="n">3</td><td class="n">3</td><td class="n">3</td><td>Décision : pilote 3 tabacs</td></tr>
+<tr><td>Durée</td><td class="n">3 mois</td><td class="n">3 mois</td><td class="n">3 mois</td><td>Durée du test</td></tr>
+<tr><td>Panier moyen</td><td class="n">140 €</td><td class="n">170 €</td><td class="n">200 €</td><td><strong>Sourcé Duffel</strong> : Europe ~80–200 € / diaspora ~280–450 € ; plus de diaspora → panier ↑ (§2 analyse)</td></tr>
+<tr><td>Taux de commission (marge)</td><td class="n">18 %</td><td class="n">20 %</td><td class="n">22 %</td><td>Marge libre côté Duffel ; norme agence 15–30 %</td></tr>
+<tr><td>Frais Duffel</td><td class="n" colspan="3" style="text-align:center">~2,5 % du CA + ~4 €/vente</td><td>Barème Duffel (~3 $/commande + 1 % + 1–2,5 $/segment)</td></tr>
+<tr><td>Commission du distributeur</td><td class="n" colspan="3" style="text-align:center"><strong>1,10 % HT</strong> du montant de chaque bon d’achat vendu (+ TVA 20 %)</td><td>Contrat de distribution du 18/09 — retenue à la vente, autofacturée. <strong>Attention :</strong> elle porte sur les <em>bons vendus</em>, pas sur le CA client ; les deux ne coïncident pas (un client peut payer par Bon d’achat PayEnCash, ou utiliser un bon acheté ailleurs). D'où le <span class="rec">à recalculer</span></td></tr>
+<tr><td>Frais du prestataire de prélèvement</td><td class="n" colspan="3" style="text-align:center"><span class="rec">à chiffrer</span></td><td>Nouveau poste du 18/09 : chaque vente déclenche un débit de la carte du commerce. Le tarif figure au référentiel (<code>ref.bons.psp</code>) mais reste <strong>à confirmer auprès du prestataire</strong> — non repris ici pour ne pas figer un coût non confirmé</td></tr>
+</tbody></table></div>
+
+<h2 id="cascade">2 · La cascade de calcul (comment on passe des ventes au résultat)</h2>
+<p>Illustration sur le scénario <strong>réaliste</strong> (les 3 scénarios sont au §3) :</p>
+<div class="tw"><table>
+<thead><tr><th>Étape</th><th class="n">Calcul</th><th class="n">Résultat</th></tr></thead>
+<tbody>
+<tr><td>Ventes totales</td><td class="n">35 × 3 points × 3 mois</td><td class="n">315 ventes</td></tr>
+<tr><td>CA client</td><td class="n">315 × 170 €</td><td class="n">≈ 54 000 €</td></tr>
+<tr class="sub"><td>Commission brute AJEK</td><td class="n">20 % × 54 000</td><td class="n">≈ 10 700 €</td></tr>
+<tr class="sub"><td>− Frais Duffel</td><td class="n">2,5 % × 54 000 + 315 × 4 €</td><td class="n">≈ − 2 600 €</td></tr>
+<tr><td>= Commission nette</td><td class="n"></td><td class="n">≈ 8 100 €</td></tr>
+<tr class="sub"><td>− Commission du distributeur (1,10 % des bons vendus)</td><td class="n">1,10 % × montant des bons vendus</td><td class="n"><span class="rec">à recalculer</span></td></tr>
+<tr class="sub"><td>− Frais de prélèvement (par vente de bon)</td><td class="n">tarif prestataire × nb de bons</td><td class="n"><span class="rec">à recalculer</span></td></tr>
+<tr class="tot"><td>= Marge AJEK (pilote, 3 mois)</td><td class="n"></td><td class="n"><span class="rec">à recalculer</span></td></tr>
+</tbody></table></div>
+<!-- (18/09, soir) On ne remplace pas « ~6 k€ » par une autre valeur plausible. La part reversée au
+     commerçant est passée d'une grille en euros par vente à 1,10 % du montant des BONS vendus : ce
+     n'est pas la même assiette que le CA client, et tant que le mix (part payée en bons d’achat vs
+     Bon d’achat PayEnCash) n'est pas observé, tout chiffre écrit ici serait inventé. -->
+<div class="note">Lecture : sur <strong>54 k€ payés par les clients</strong>, ce qui reste à AJEK est <span class="rec">à recalculer</span> — la commission du commerçant ne se calcule plus sur la vente de voyage mais sur le <strong>montant des bons d’achat vendus</strong>, et un nouveau poste s'ajoute (les frais de prélèvement). Ce qui ne change pas : le modèle reste <strong>volumique</strong> — la rentabilité vient du nombre de commerces × ventes, pas du panier.</div>
+
+<h2 id="scenarios">3 · Les 3 scénarios (pilote — 3 points × 3 mois)</h2>
+<div class="tw"><table>
+<thead><tr><th>Indicateur</th><th class="n">Prudent</th><th class="n">Réaliste</th><th class="n">Ambitieux</th></tr></thead>
+<tbody>
+<tr><td>Ventes totales</td><td class="n">180</td><td class="n">315</td><td class="n">540</td></tr>
+<tr><td>Panier</td><td class="n">140 €</td><td class="n">170 €</td><td class="n">200 €</td></tr>
+<tr class="tot"><td>CA client</td><td class="n">≈ 25 k€</td><td class="n">≈ 54 k€</td><td class="n">≈ 108 k€</td></tr>
+<tr><td>Commission brute</td><td class="n">≈ 4,5 k€</td><td class="n">≈ 10,7 k€</td><td class="n">≈ 23,8 k€</td></tr>
+<tr><td>− Frais Duffel</td><td class="n">≈ 1,3 k€</td><td class="n">≈ 2,6 k€</td><td class="n">≈ 4,9 k€</td></tr>
+<tr><td>Commission nette</td><td class="n">≈ 3,2 k€</td><td class="n">≈ 8,1 k€</td><td class="n">≈ 18,9 k€</td></tr>
+<tr><td>− Commission du distributeur + frais de prélèvement</td><td class="n"><span class="rec">à recalculer</span></td><td class="n"><span class="rec">à recalculer</span></td><td class="n"><span class="rec">à recalculer</span></td></tr>
+<tr class="tot"><td>Marge AJEK (3 mois)</td><td class="n"><span class="rec">à recalculer</span></td><td class="n"><span class="rec">à recalculer</span></td><td class="n"><span class="rec">à recalculer</span></td></tr>
+</tbody></table></div>
+<p style="font-size:12px;color:var(--muted)"><span class="est">EST.</span> — arrondis. Panier = sourcé Duffel ; volumes = à valider au pilote.</p>
+
+<h2 id="breakeven">4 · Seuil de rentabilité (vs budget marketing 10 k€)</h2>
+<!-- (18/09, soir) Ces trois délais se déduisaient tous de la marge mensuelle, qui vient de tomber
+     avec le changement d'assiette de la commission. Les remplacer par d'autres durées reviendrait à
+     inventer ; la règle de décision, elle, reste valable et est conservée telle quelle. -->
+<div class="kpis">
+<div class="kpi"><b><span class="rec">à recalculer</span></b><span>délai pour rembourser les 10 k€ — il se déduit de la marge mensuelle, elle-même à recalculer</span></div>
+<div class="kpi"><b>Règle inchangée</b><span>un remboursement en 2 à 6 mois vaut feu vert ; au-delà de 12 mois, signal no-go</span></div>
+<div class="kpi"><b>10 000 €</b><span>budget marketing du pilote — le seul terme de l'équation qui n'a pas bougé</span></div>
+</div>
+<p><strong>Le pilote (3 mois) n'a pas vocation à être rentable</strong> — c'est un investissement de validation. L'objectif du pilote est de <strong>prouver le flux</strong> et de <strong>caler les vraies hypothèses</strong>, pas de dégager un bénéfice. La rentabilité vient <strong>ensuite, par le nombre de points</strong> (§5).</p>
+<div class="warn"><strong>Point mort par commerce :</strong> le calcul reposait sur un coût direct de 70 €/mois par point plus une grille de rémunération — <strong>les deux ont disparu le 18/09</strong>. Un commerce partenaire ne nous coûte plus d'abonnement mensuel : il ne coûte que sa commission (1,10 % des bons qu'il vend) et les frais de prélèvement associés. Le point mort est donc <span class="rec">à recalculer</span>, et il devrait être atteint plus tôt qu'auparavant — ce qui reste à démontrer, pas à écrire.</div>
+
+<h2 id="scale">5 · Après le pilote — l'objectif de montée en charge</h2>
+<p>En régime établi (réaliste, ~35 ventes/mois par commerce), la marge générée par commerce est <span class="rec">à recalculer</span>. La projection ci-dessous ne conserve donc que le <strong>volume d'affaires</strong>, qui ne dépend que des ventes et du panier <span class="est">EST.</span> :</p>
+<div class="tw"><table>
+<thead><tr><th>Taille du réseau</th><th class="n">CA client / an</th><th class="n">Marge AJEK / an</th></tr></thead>
+<tbody>
+<tr><td>3 commerces (pilote étendu)</td><td class="n">≈ 216 k€</td><td class="n"><span class="rec">à recalculer</span></td></tr>
+<tr><td>10 commerces</td><td class="n">≈ 720 k€</td><td class="n"><span class="rec">à recalculer</span></td></tr>
+<tr><td>25 commerces</td><td class="n">≈ 1,8 M€</td><td class="n"><span class="rec">à recalculer</span></td></tr>
+</tbody></table></div>
+<p style="font-size:12px;color:var(--muted)">Hypothèse : réplication du run-rate réaliste par commerce, hors frais généraux (salaires, structure). Sert à fixer <strong>l'objectif de croissance</strong> (nombre de commerces à ouvrir), pas un résultat net. À noter : la suppression de l'agent retire aussi son coût salarial des frais généraux — un allègement qui n'est pas chiffré ici.</p>
+
+<h2 id="gonogo">6 · Objectifs go/no-go (les seuils de décision)</h2>
+<ul>
+<li><strong>Volume :</strong> ≥ <strong>30–40 ventes/mois/point</strong> sur au moins 2 des 3 points.</li>
+<li><strong>Cible :</strong> ≥ <strong>60 %</strong> des ventes issues des segments prioritaires (cœur budget + diaspora).</li>
+<li><strong>Panier :</strong> panier moyen réel ≥ <strong>150 €</strong> (dépend du mix diaspora/Europe).</li>
+<li><strong>Acquisition :</strong> &gt; <strong>50 %</strong> des clients par bouche-à-oreille (coût d'acquisition maîtrisé).</li>
+<li><strong>Marge :</strong> trajectoire vers le point mort par commerce atteinte — le seuil de ventes correspondant est <span class="rec">à recalculer</span>.</li>
+</ul>
+<p>Si ces seuils sont tenus → <strong>GO</strong> : densification du réseau de commerces partenaires. Sinon → itérer ou arrêter. <em>(L'ancien « + monnayeuses » est à réexaminer : il datait du modèle à borne, abandonné le 17/09.)</em></p>
+
+<h2 id="justif">7 · Comment on justifie (la logique en une phrase)</h2>
+<p>On ne promet pas un CA : on <strong>déduit</strong> une fourchette de CA d'un <strong>panier sourcé</strong> (Duffel) et d'un <strong>volume borné par un seuil de décision</strong> (go/no-go). Chaque euro affiché remonte à une <strong>hypothèse traçable</strong> (§1). Le <strong>pilote</strong> a une seule mission financière : <strong>remplacer nos hypothèses de volume par des chiffres réels</strong>, puis on réécrit ce tableau avec les vraies ventes.</p>
+<div class="note">À figer avec les vraies données : le <strong>taux de conversion réel</strong> (passages au comptoir → ventes), le <strong>mix destinations</strong> (part diaspora), les <strong>tarifs Duffel exacts</strong> (requête API, voir <a href="../documents/spec-duffel-offres.html">spec Duffel</a>), les <strong>coûts réels</strong> (avec l'expert-comptable) — et, depuis le 18/09, deux inconnues nouvelles : la <strong>part du CA réglée en bons d’achat</strong> (assiette de la commission du distributeur) et le <strong>tarif réel du prestataire de prélèvement</strong>. Voir aussi <a href="plan-marketing.html">plan marketing</a> et spec de calcul (Étape 2 §1b).</div>
+
+<p style="font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:12px;margin-top:22px">PayEnCash — marque d'AJEK SAS · objectifs chiffrés &amp; justification · 18 août 2026. Panier sourcé (Duffel) ; volumes &amp; mix = estimations à valider au pilote. Ne constitue pas une garantie de résultat.</p>
+</div></div></body></html>

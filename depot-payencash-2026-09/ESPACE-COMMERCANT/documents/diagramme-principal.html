@@ -1,0 +1,241 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Fil rouge · PayEnCash</title>
+<style>
+:root{--ajek:#0f7a4d;--ajek-d:#0b5c3a;--ink:#1a1f1c;--muted:#5b675f;--line:#d9e5dd;--bg:#f4f7f5;--card:#fff;--chip:#e8f3ec;--gold:#b8860b;--goldbg:#fdf5e6}
+@media(prefers-color-scheme:dark){:root{--ink:#e8efe9;--muted:#9fb0a6;--line:#254034;--bg:#0d1512;--card:#121d18;--chip:#173026;--goldbg:#2a2410}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.tb{display:flex;gap:8px;flex-wrap:wrap;padding:12px 22px 0}.btn{border:1px solid var(--line);background:var(--card);color:var(--ajek-d);border-radius:8px;padding:6px 11px;font-size:12.5px;text-decoration:none;font-weight:700}
+.wrap{max-width:1400px;margin:0 auto;padding:8px 22px 50px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:12px;background:linear-gradient(90deg,var(--ajek),var(--gold));color:#fff;padding:14px 22px;border-radius:14px;font-weight:800;margin:8px 0 8px}
+.head small{display:block;font-weight:500;font-size:11.5px;opacity:.92}
+.gbar{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 18px;margin:0 0 12px;display:flex;align-items:center;gap:14px}
+.gbar .t{font-size:12.5px;font-weight:800;color:var(--ajek-d);white-space:nowrap}
+.gbar .bar{flex:1;height:12px;border-radius:6px;background:var(--line);overflow:hidden}.gbar .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ajek),var(--gold))}
+.gbar .p{font-weight:800;font-size:14px;color:var(--ajek-d)}
+.how{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;font-size:13px;margin-top:6px}
+.how b{color:var(--ajek-d)}@media(prefers-color-scheme:dark){.how b{color:#5fd39a}}
+.how ol{margin:8px 0 0;padding-left:22px}.how li{margin:4px 0}
+/* La bande des 10 étapes COULISSE : molette, cliquer-glisser, flèches ‹ › — et une
+   vraie barre de défilement visible (l'audit fondatrice : « je n'arrive plus à
+   coulisser pour voir toutes les étapes »). */
+.flowwrap{position:relative}
+.flow{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:6px 0 14px;scroll-behavior:smooth;cursor:grab}
+.flow.drag{cursor:grabbing;scroll-behavior:auto;user-select:none}
+.flow::-webkit-scrollbar{height:10px}
+.flow::-webkit-scrollbar-track{background:rgba(255,255,255,.07);border-radius:99px}
+.flow::-webkit-scrollbar-thumb{background:var(--ajek);border-radius:99px}
+.fnav{position:absolute;top:50%;transform:translateY(-50%);z-index:5;width:38px;height:38px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(10,26,20,.88);color:#3FD99B;font-size:21px;font-weight:800;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.fnav:hover{background:var(--ajek);color:#06130d}
+.fnav[disabled]{opacity:.25;cursor:default}
+#f-prev{left:-6px}#f-next{right:-6px}
+.part{flex:1;min-width:158px;background:var(--card);border:2px solid var(--ajek);border-radius:14px;padding:12px 12px;display:flex;flex-direction:column;gap:6px;text-decoration:none;color:var(--ink)}
+.part:hover{box-shadow:0 4px 14px rgba(15,122,77,.22)}
+.part .n{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--muted)}
+.part .t{font-size:13.5px;font-weight:800;color:var(--ajek-d)}
+@media(prefers-color-scheme:dark){.part .t{color:#5fd39a}}
+.part .d{font-size:10.5px;color:var(--muted);flex:1}
+.part .g{height:7px;border-radius:4px;background:var(--line);overflow:hidden}.part .g i{display:block;height:100%;background:var(--ajek)}
+.part .st{font-size:10px;font-weight:800;color:var(--ajek-d)}
+.arr{display:flex;align-items:center;padding:0 3px;color:var(--gold);font-size:19px;font-weight:800;flex:none}
+.flag{display:flex;align-items:center;flex:none;padding:0 6px;flex-direction:column;justify-content:center;gap:4px}
+.flag .c{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#fff}
+.flag .l{font-size:9.5px;font-weight:800;color:var(--muted);text-align:center}
+</style><style>/*fresh*/
+:root{--ajek:#10A06A;--ajek-d:#0C7F54;--gold:#E39A2E}
+body{background:
+ radial-gradient(1100px 520px at 92% -12%, rgba(63,217,155,.16), transparent 62%),
+ radial-gradient(900px 460px at -12% 34%, rgba(227,154,46,.09), transparent 58%),
+ radial-gradient(700px 420px at 50% 115%, rgba(16,160,106,.10), transparent 60%),
+ var(--bg)}
+.head{background:linear-gradient(115deg,#0F2A24 0%,#0C7F54 55%,#10A06A 100%)!important;position:relative;overflow:hidden}
+.head::after{content:"";position:absolute;right:-40px;top:-60px;width:220px;height:220px;border-radius:50%;
+ background:radial-gradient(circle,rgba(63,217,155,.35),transparent 65%);pointer-events:none}
+h2{border-bottom:none!important;position:relative;padding-bottom:9px!important}
+h2::after{content:"";position:absolute;left:0;bottom:0;width:64px;height:4px;border-radius:2px;
+ background:linear-gradient(90deg,#10A06A,#3FD99B)}
+.card,.flux,.app,.part,.tbl{transition:transform .16s ease,box-shadow .16s ease}
+.card:hover,.flux:hover,.app:hover,.tbl:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(15,42,36,.13)}
+.btn{transition:transform .12s ease,box-shadow .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(16,160,106,.22)}
+.pill{background:linear-gradient(120deg,#E6F4EC,#d8f3e6)}
+.ok{background:linear-gradient(120deg,#E6F4EC,#f0faf4)}
+.note{background:linear-gradient(120deg,#FDF1E7,#fdf7ee)}
+.gbar .bar i,.part .g i,.lab .g i{background:linear-gradient(90deg,#10A06A,#3FD99B)!important}
+th{background:linear-gradient(115deg,#0C7F54,#10A06A)!important}
+</style>
+<!-- (18/09, soir) Deux décisions fondatrices de ce soir-là se répercutent sur toute cette carte, et il fallait
+     que la page la plus lue du dossier ne mente plus sur le périmètre : (1) l'agent de caisse mobile est abandonné,
+     parce qu'un salarié qui transporte des espèces chez le client expose l'entreprise à un risque humain et à un cadre
+     CNAPS qu'on ne veut pas porter — tout ce qui l'entourait (flotte, zones, dispatch, planning, paie, tournées,
+     rendu de monnaie) perd son objet ; (2) le reversement mensuel du partenaire est abandonné, parce qu'attendre
+     l'argent d'un commerçant crée une créance, une relance et un risque d'impayé : on le prélève désormais à la vente,
+     et le bon n'est créé que si la banque dit oui. Les compteurs d'écrans et de tables ont été recomptés sur le
+     disque et sur server/db/schema.sql le même soir : les anciens totaux dataient d'avant ces suppressions. -->
+</head><body>
+<div class="tb"><a class="btn" href="diagramme-principal.html">🧭 Fil rouge</a><a class="btn" href="feuille-de-route.html">📋 Ligne du temps</a><a class="btn" href="audit-coherence-etapes.html">🔍 Audit de cohérence (106 corrections)</a><a class="btn" href="#" onclick="window.print();return false">Imprimer / PDF</a></div>
+<div class="wrap">
+
+<div class="head"><span>🧭 LE FIL ROUGE<small>10 étapes — chacune se justifie par la précédente · tous les documents rangés par étape (l'index a fusionné ici)</small></span><span style="text-align:right">🏁 ARRIVÉE<small>9 apps maquettées, prêtes à coder</small></span></div>
+
+<div class="gbar"><span class="t">PROGRESSION RÉELLE — FAIT vs RESTE (registre des livrables)</span><span class="bar"><i style="width:80%"></i></span><span class="p">80 % fait · 20 % à faire —</span></div>
+<div class="how" style="margin:0 0 14px;border-color:var(--gold);background:var(--goldbg)"><b>📍 OÙ EN EST LE FIL ROUGE — 18/09 au soir, puis 23/09.</b> Deux décisions fondatrices ont été prises le 18/09 au soir et traversent tout le dossier ; une troisième, le 23/09, donne sa forme à la seconde ligne (③, en fin de paragraphe). <b>① L'agent de caisse mobile est abandonné</b> : plus personne ne se déplace chez le client, donc plus de flotte, de zones, de planning, de tournées, de paie d'agent ni de rendu de monnaie — l'app Agent et ses écrans sont supprimés, ainsi que huit écrans manager qui les pilotaient. Il reste <b>un seul titre, acheté au comptoir d'un commerce</b> : le <b>Bon d’achat PayEnCash</b> (notre réseau, sous contrat de distribution) — le titre d'un réseau tiers et son rail en ligne ont été supprimés le 20/09. <b>② Le reversement mensuel du partenaire est abandonné</b> au profit d'un <b>prélèvement à la vente</b> : à chaque bon vendu, la carte enregistrée du commerce est débitée du montant du bon moins sa commission, via <b>Stripe</b> — plus de créance, d'échéance, de relance ni d'IBAN de reversement ; il reste un <b>relevé mensuel</b>, support de l'autofacture de commission (art. 289 CGI). La promesse au client reste la même : <b>payer avec un bon d’achat</b>. <b>③ (23/09) PayEnCash Solution est l'espace des MARQUES, et AJEK y est GROSSISTE</b> : une marque émet ses propres bons d'achat (utilisables chez elle seule — réseau limité, art. L521-3 I 1° CMF), nous les lui <b>achetons</b> au moment où un commerce de notre réseau les vend, avec une remise sur le prix d'achat figée à la vente, et nous la payons à l'échéance de l'offre qu'elle a choisie (24 h · 7 jours ouvrés · 10 jours) ; le logiciel d'édition des bons s'abonne à part (10 bons offerts · 50 bons · Illimité*, sans limite de nombre dans la limite de 1 000 000 € de bons vendus sur douze mois). Le contrat-cadre est <b>signé par le dirigeant</b> une fois sa pièce d'identité contrôlée, chaque document est lu jusqu'au bout puis « lu et accepté », le compte reste inactif tant que le dossier n'est pas contrôlé. Une marque <b>propose</b> un bon d'un montant précis à un client (sa commande, son devis), qui l'achète au comptoir et l'utilise depuis l'<b>app Mes bons</b> (obligatoire, usage retraçable). Jamais de commission, de reversement ni d'encaissement pour compte : nous achetons, nous revendons, nous payons.</div>
+
+<div class="how" style="margin:0 0 14px;border-color:var(--gold)"><b>⚖️ Arbitrages TRANCHÉS par défaut</b> (justifications en <a href="partie-2-juridique-socle.html" style="color:var(--ajek-d);font-weight:800">Étape 3 §5</a>) : ① <b>SASU</b> (vérif. Kbis) · ② restitution : <b>re-crédit du bon → avoir → virement</b> (valid. avocat) · ③ TVA <b>297 A</b> (valid. expert-comptable) · ④ CCN <b>agences de voyage IDCC 1710</b> (valid. juriste social) · ⑤ prix mode <b>−8 % / +12 %</b> confirmé · ⑥ (18/09) <b>le Bon d’achat PayEnCash</b> : bon d’achat à usage limité (L521-3 CMF) vendu chez des commerçants partenaires — le partenaire vend, il n'encaisse rien pour nous ; à chaque vente sa carte enregistrée est <b>prélevée du montant du bon moins sa commission (1,10 % HT)</b> par <b>Stripe</b> (1,5 % + 0,25 €), et le bon n'existe que si la banque accepte (valid. avocat : qualification du contrat de distribution, seuil de déclaration ACPR).</div>
+
+<div class="flowwrap">
+<button class="fnav" id="f-prev" aria-label="Étapes précédentes">‹</button>
+<button class="fnav" id="f-next" aria-label="Étapes suivantes">›</button>
+<div class="flow" id="flow">
+  <div class="flag"><div class="c" style="background:var(--ajek)">🚩</div><div class="l">DÉPART</div></div>
+  <div class="arr">→</div>
+  <a class="part" href="partie-1-marketing.html">
+    <span class="n">ÉTAPE 1 · LA BASE</span><span class="t">📣 Marketing &amp; cibles</span>
+    <span class="d">CE QU'ON PROMET : étude complète des 2 branches (FLY + MODE), cibles, entonnoir, promesses P1–P10, vitrines.</span>
+    <span class="g"><i style="width:75%"></i></span><span class="st">75 % fait · reste 5 items</span>
+  </a>
+  <div class="arr">→</div>
+  <a class="part" href="partie-1b-financier.html">
+    <span class="n">ÉTAPE 2</span><span class="t">💶 Modèle financier</span>
+    <span class="d">COMMENT ON GAGNE : 3 lignes de revenus, grille de prix, cycle du cash (5 états), trésoreries, TVA par ligne, coûts, indicateurs.</span>
+    <span class="g"><i style="width:50%"></i></span><span class="st">50 % fait · reste 5 items</span>
+  </a>
+  <div class="arr">→</div>
+  <a class="part" href="partie-2-juridique-socle.html">
+    <span class="n">ÉTAPE 3</span><span class="t">⚖️ Juridique &amp; conformité</span>
+    <span class="d">CE QU'ON A LE DROIT DE FAIRE : société, Atout France, INPI, prestataire de paiement agréé  / DSP2, le Bon d’achat à usage limité (L521-3 CMF), le prélèvement du commerçant à la vente, banque, RGPD, arbitrages. Rien d'illégal ne monte sur la plateforme.</span>
+    <span class="g"><i style="width:18%"></i></span><span class="st">18 % fait · reste 9 items</span>
+  </a>
+  <div class="arr">→</div>
+  <a class="part" href="partie-4-flux.html">
+    <span class="n">ÉTAPE 4</span><span class="t">🔀 Flux métier</span>
+    <span class="d">COMMENT ÇA MARCHE : F1→F13 de bout en bout (acteurs, étapes, fonctions, règles) — dont F11 (vente MODE), F12 (fournisseurs) et F13 (exceptions &amp; litiges).</span>
+    <span class="g"><i style="width:100%"></i></span><span class="st">✔ 100 % fait</span>
+  </a>
+  <div class="arr">→</div>
+  <a class="part" href="partie-5-docs-flux.html">
+    <span class="n">ÉTAPE 5</span><span class="t">📜 Contrats &amp; documents</span>
+    <span class="d">CE QUI SÉCURISE CHAQUE FLUX : la matrice flux ↔ documents, les contrats D1–D24, les textes rédigés.</span>
+    <span class="g"><i style="width:77%"></i></span><span class="st">77 % fait · reste 2 items</span>
+  </a>
+  <div class="arr">→</div>
+  <a class="part" href="partie-6-donnees.html">
+    <span class="n">ÉTAPE 6</span><span class="t">🗄️ Données</span>
+    <span class="d">CE QU'ON STOCKE : 128 tables + 3 vues, 13 domaines, relations et droits par app — chaque table existe parce qu'un flux en a besoin (18/09 : <code>partner_cards</code> et <code>partner_charges</code> pour le prélèvement, plus aucune table d'agent).</span>
+    <span class="g"><i style="width:100%"></i></span><span class="st">✔ 100 % fait</span>
+  </a>
+  <div class="arr">→</div>
+  <a class="part" href="partie-6b-specs-dev.html">
+    <span class="n">ÉTAPE 7</span><span class="t">🧱 Architecture &amp; API</span>
+    <span class="d">CE QU'ON CODE : stack, mapping écran → endpoints → tables, intégrations (Duffel · Nuitée · Stripe · Mondial Relay), microservices + base prêts CapRover (dossier server/), checklist J-0.</span>
+    <span class="g"><i style="width:45%"></i></span><span class="st">45 % fait · reste 6 items</span>
+  </a>
+  <div class="arr">→</div>
+  <a class="part" href="partie-3-plan-depart.html">
+    <span class="n">ÉTAPE 8</span><span class="t">🚀 Plan de lancement</span>
+    <span class="d">COMMENT ON DÉMARRE : pilote — Bon d’achat PayEnCash en ligne + les premiers commerces qui vendent le Bon d’achat, J+40 puis 3 mois, go/no-go, BFR (avance Duffel), ce que le pilote doit prouver.</span>
+    <span class="g"><i style="width:22%"></i></span><span class="st">22 % fait · reste 7 items</span>
+  </a>
+  <div class="arr">→</div>
+  <a class="part" href="etape-9-recette.html">
+    <span class="n">ÉTAPE 9</span><span class="t">🧪 Tests &amp; recette</span>
+    <span class="d">ON PROUVE : banc de 289 scénarios réels, linkcheck, audit de cohérence (106/106), base validée sur Postgres réel, recette de sortie.</span>
+    <span class="g"><i style="width:50%"></i></span><span class="st">50 % fait · reste 4 items</span>
+  </a>
+  <div class="arr">→</div>
+  <a class="part" href="partie-7-maquettes.html">
+    <span class="n">ÉTAPE 10 · LA FINALITÉ</span><span class="t">🖼️ Maquettes</span>
+    <span class="d">CE QU'ON VOIT : 9 apps — ✈️ FLY · 👟 MODE · 📦 Fournisseur · 🏪 Partenaire · 🧑‍💼 Manager · 🎧 Hotline · 🤝 Commercial · 🗝️ PayEnCash Solution · 🎟️ Mes bons — 153 vues, parcours câblés, 10 galeries annotées.</span>
+    <span class="g"><i style="width:98%"></i></span><span class="st">98 % fait · reste 2 items</span>
+  </a>
+  <div class="arr">→</div>
+  <div class="flag"><div class="c" style="background:var(--gold)">🏁</div><div class="l">ARRIVÉE<br>9 apps</div></div>
+</div>
+</div><!-- /flowwrap -->
+<script>
+  (function () {
+    var fl = document.getElementById('flow');
+    var prev = document.getElementById('f-prev'), next = document.getElementById('f-next');
+    var PAS = 640;
+    function majFleches() {
+      prev.disabled = fl.scrollLeft <= 4;
+      next.disabled = fl.scrollLeft >= fl.scrollWidth - fl.clientWidth - 4;
+    }
+    prev.addEventListener('click', function () { fl.scrollLeft -= PAS; });
+    next.addEventListener('click', function () { fl.scrollLeft += PAS; });
+    fl.addEventListener('scroll', majFleches);
+    // Molette au-dessus de la bande = coulisser horizontalement
+    fl.addEventListener('wheel', function (e) {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.preventDefault(); fl.scrollLeft += e.deltaY; }
+    }, { passive: false });
+    // Cliquer-glisser (souris comme au doigt)
+    var sx = 0, sl = 0, down = false;
+    fl.addEventListener('pointerdown', function (e) {
+      if (e.pointerType !== 'mouse') return;
+      down = true; sx = e.clientX; sl = fl.scrollLeft; fl.classList.add('drag');
+    });
+    window.addEventListener('pointermove', function (e) {
+      if (!down) return;
+      fl.scrollLeft = sl - (e.clientX - sx);
+      if (Math.abs(e.clientX - sx) > 6) e.preventDefault();
+    });
+    window.addEventListener('pointerup', function () { down = false; fl.classList.remove('drag'); });
+    // Un glisser ne doit pas déclencher le clic sur une carte
+    fl.addEventListener('click', function (e) {
+      if (Math.abs(fl.scrollLeft - sl) > 6 && e.target.closest('a')) e.preventDefault();
+    }, true);
+    majFleches();
+  })();
+</script>
+
+<div class="how"><b>La logique de construction (comment on construit un produit complet, étape par étape) :</b>
+<ol>
+<li><b>Marketing &amp; cibles</b> — on ne construit rien qu'on ne sait pas vendre : l'étude des 2 branches et les promesses P1–P10 sont la matière première de tout.</li>
+<li><b>Modèle financier</b> — avant le droit, on sait d'où vient chaque euro : sans modèle économique, ni le juridique ni les flux n'ont d'assiette.</li>
+<li><b>Juridique &amp; conformité</b> — on vérifie qu'on a le DROIT : société, Atout France, prestataire de paiement agréé, salariat, RGPD. Un produit illégal n'est pas un produit.</li>
+<li><b>Flux métier</b> — chaque promesse devient un processus de bout en bout, avec ses acteurs et ses règles.</li>
+<li><b>Contrats &amp; documents</b> — chaque flux reçoit son contrat/texte : le juridique appliqué, flux par flux.</li>
+<li><b>Données</b> — la donnée est dérivée des flux, jamais inventée.</li>
+<li><b>Architecture &amp; API</b> — le pont vers le code : endpoints, microservices, intégrations, déploiement.</li>
+<li><b>Plan de lancement</b> — on démarre petit et mesurable (pilote) : périmètre, trésorerie, go/no-go.</li>
+<li><b>Tests &amp; recette</b> — rien ne sort sans preuve : banc de scénarios, audits, recette de sortie.</li>
+<li><b>Maquettes</b> — les écrans exécutent les flux, respectent les contrats, lisent/écrivent les tables. La finalité prouve tout le reste.</li>
+</ol>
+Ordre strict · chaque bloc cliquable · l'obsolète est supprimé · les anciens liens (index, sommaire, anciennes parties) redirigent automatiquement.</div>
+
+<h2 id="documents" style="font-size:18px;color:var(--ajek-d);margin:26px 0 10px">📚 Tous les documents, rangés dans leur étape</h2>
+<div class="how" style="margin:0 0 10px">L'ancien index a fusionné ici : <b>chaque document du dossier vit dans une étape</b> — et une seule. Les doublons et documents obsolètes ont été supprimés (leurs liens redirigent).</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px">
+
+<div class="how"><b>ÉTAPE 1 · 📣 Marketing &amp; cibles</b><br>
+<a href="../marketing/plan-marketing.html">Plan marketing</a> · <a href="benchmark-opodo-booking.html">Benchmark Opodo × Booking</a> · <a href="../marketing/etude-deux-branches.html">Étude des 2 branches FLY × MODE</a> · <a href="../marketing/strategie.html">Stratégie</a> · <a href="../marketing/analyse-clientele.html">Analyse clientèle</a> · <a href="../marketing/objectifs-chiffres.html">Objectifs chiffrés</a> · <a href="../marketing/scenarios.html">Scénarios</a> · <a href="../marketing/reseaux-sociaux.html">Réseaux sociaux</a> · <a href="../marketing/identite-marque.html">Identité de marque</a> · <a href="../marketing/positionnement-cash-cartes-cadeau.html">Positionnement cash &amp; cartes cadeaux</a> · <a href="../marketing/audit-zara.html">Audit Zara × Vinted</a> · <a href="../marketing/audit-opodo.html">Audit Opodo (benchmark FLY · Prime)</a> · <a href="brochure-commerciale.html">Brochure « Régler avec un bon d’achat »</a> · <b>Vitrines :</b> <a href="../marketing/landing-page.html">grand public (FLY + MODE)</a> · <a href="../marketing/landing-fournisseurs.html">fournisseurs</a> · <a href="../marketing/landing-equipe.html">équipe (manager &amp; commercial)</a></div>
+
+<div class="how"><b>ÉTAPE 2 · 💶 Modèle financier</b><br>
+<a href="../../docs/08-mecanisme-financier.html">Doc source · Mécanisme financier</a> · <i>(17/09 : plus de grille de rémunération de point, de barème, de simulateur de revenu — le coût d'encaissement par moyen vit à l'Étape 2 §1b)</i></div>
+
+<div class="how"><b>ÉTAPE 3 · ⚖️ Juridique &amp; conformité</b><br>
+<a href="checklist-atout-france.html">Checklist Atout France</a> · <a href="registre-traitements-rgpd.html">Registre des traitements (art. 30 RGPD)</a> · <a href="audit-juridique-fournisseur.html">Audit juridique fournisseur</a> · <a href="analyse-juridique-reseau-commissionnaires.html"><b>Réseau de commissionnaires — analyse juridique (23/09)</b></a> · <a href="audit-app-solution-2309.html"><b>Audit critique de l'app Solution (23/09)</b></a> · <a href="partie-2-juridique-socle.html#bon">Le Bon d’achat PayEnCash — §2b (L521-3 CMF, 18/09)</a> · <a href="sources/README.md">Source commerciale recoupée (guide cartes cadeaux)</a></div>
+
+<div class="how"><b>ÉTAPE 4 · 🔀 Flux métier</b><br>
+<a href="recu-client-code.html">Reçu client + code</a> · <a href="carte-etats-tickets.html">Carte des états</a> · <a href="politique-stock-zero-vente-perdue.html">Politique stock</a> · <a href="logique-assistance-flux.html">Logique d'assistance</a> · <i>(18/09, soir : la procédure « Un agent se déplace » est supprimée avec le flux — il reste un seul titre acheté au comptoir d'un commerce, le Bon d’achat PayEnCash ; 23/09 : le bon d'achat d'une MARQUE, acheté au même comptoir et utilisé chez elle depuis l'app Mes bons)</i></div>
+
+<div class="how"><b>ÉTAPE 5 · 📜 Contrats &amp; documents</b><br>
+<a href="contrat-cadre-achat-fournisseur.html">Contrat-cadre d'achat fournisseur</a> · <a href="cgu-espace-fournisseur.html">CGU espace fournisseur</a> · <a href="politique-confidentialite-fournisseur.html">Politique de confidentialité fournisseur</a> · <a href="charte-terminologie-fournisseur.html">Charte terminologie</a> · <a href="annexe-1-normes-publication.html">Annexe 1</a> · <a href="annexe-2-grille-prix.html">Annexe 2</a> · <a href="cgv-mode.html">CGV MODE</a> · <a href="reglement-jeu-concours.html">Règlement du jeu</a> · <b>(18/09)</b> <a href="contrat-distribution-bons.html">Contrat de distribution du bon d’achat PayEnCash</a> · <a href="cgu-espace-partenaire.html">CGU espace partenaire v2</a> · <a href="conditions-bon-payencash.html">Conditions du bon d’achat (consommateur)</a> · <i>(17/09 : les contrats de point D1–D24 et le mandat commercial sont supprimés avec le réseau ; 18/09 : le contrat de distribution du bon d’achat les remplace — le partenaire vend, il n'encaisse pas)</i> · <b>(23/09 — PayEnCash Solution, les marques)</b> <a href="cgu-espace-solution.html">CGU de l'espace Solution</a> · <a href="conditions-bons-de-marque.html">Conditions des bons de marque (annexe 1)</a> · <a href="conditions-logiciel-solution.html">Conditions du logiciel d’édition des bons (annexe 2)</a> · <a href="charte-communication-solution.html">Charte de communication (annexe 3)</a> · contrat-cadre d’achat et de distribution des bons d’achat (modèle <code>contrat_marchand</code> du coffre, signé par le dirigeant après KYC) · <a href="cgu-mes-bons.html">Conditions de l'app Mes bons (porteur)</a></div>
+
+<div class="how"><b>ÉTAPE 6 · 🗄️ Données</b><br>
+Tout vit dans <a href="partie-6-donnees.html">l'étape elle-même</a> (128 tables + 3 vues, 13 domaines, matrice des droits) — miroir SQL exécutable : <code>server/db/schema.sql</code> + <code>seed.sql</code>.</div>
+
+<div class="how"><b>ÉTAPE 7 · 🧱 Architecture &amp; API</b><br>
+<a href="spec-duffel-offres.html">Spec Duffel offres</a> · <a href="spec-annulations-remboursements.html">Spec annulations &amp; remboursements</a> · <a href="politique-reclamations-fournisseur.html">Politique réclamations &amp; recours fournisseur</a> · <a href="script-video-commerciale.html">Script vidéo commerciale</a> · <a href="spec-adresses-geolocalisation.html">Spec adresses &amp; géolocalisation</a> · <a href="spec-kyc-verifications.html">Spec vérifications KYC</a> · <a href="audit-api-integrations.html">Audit des intégrations</a> · dossier <code>server/</code> (schéma + seed + 8 microservices + passerelle + CapRover, guide <code>README-DEV.md</code>)</div>
+
+<div class="how"><b>ÉTAPE 8 · 🚀 Plan de lancement</b><br>
+<a href="../marketing/plan-lancement.html">Plan de lancement marketing</a> · <a href="feuille-de-route.html">Feuille de route (ligne du temps)</a> · <a href="../README.html">Hub du dossier ESPACE-COMMERCANT</a> · <i>(17/09 : le volet borne, l'ouverture de point et le mode test mandat B sont supprimés)</i></div>
+
+<div class="how"><b>ÉTAPE 9 · 🧪 Tests &amp; recette</b><br>
+<a href="audit-90-scenarios.html">Audit du banc au 21/08 — 175 scénarios</a><!-- (18/09, soir) ce lien annonçait 289 scénarios et ouvrait une page qui en titre 175 : un libellé qui contredit sa cible se lit comme une erreur de la page, il dit désormais ce qu'on y trouve vraiment, avec sa date --> · <a href="audit-expert-etapes.html">Audit expert — référentiel vs réel</a> · <a href="audit-coherence-etapes.html">Audit de cohérence (106 corrections)</a> · banc <code>test-runner.html</code> (serveur local) · linkcheck</div>
+
+<div class="how"><b>ÉTAPE 10 · 🖼️ Maquettes</b><br>
+<a href="maquette-app-fly.html">✈️ FLY (33)</a> · <a href="maquette-app-mode.html">👟 MODE (23)</a> · <a href="maquette-app-fournisseur.html">📦 Fournisseur (19)</a> · <a href="maquette-app-partenaire.html">🏪 Partenaire (9 — vend le Bon d’achat et les bons des marques, 18 et 23/09)</a> · <a href="maquette-app-manager.html">🧑‍💼 Manager (39)</a> · <a href="maquette-app-hotline.html">🎧 Hotline (2)</a> · <a href="maquette-app-commercial.html">🤝 Commercial (11)</a> · <a href="maquette-app-solution.html">🗝️ PayEnCash Solution (12 — l'espace des MARQUES qui émettent leurs bons, 19-23/09)</a> · <a href="maquette-app-bons.html">🎟️ Mes bons (5 — le porteur range et utilise les bons des marques, 23/09)</a> · <a href="maquette-app-vitrines.html">🌐 Vitrines (4 pages publiques)</a> · <a href="diagramme-navigation.html">Navigation (redirige ici)</a><br><span style="font-size:11.5px;color:var(--muted)">Total <b>153 vues</b> dans <code>ui/</code> (recomptées le 23/09 : <code>ls ui/*/*.html</code> — Solution 12, Mes bons 5) (FLY = 21 écrans client + 8 écrans de paiement + 4 parcours de réservation). Les 4 vitrines (grand public, partenaires, fournisseurs, équipe) sont des pages publiques de <code>marketing/</code>, hors de ce total.</span></div>
+
+</div>
+
+</div></body></html>

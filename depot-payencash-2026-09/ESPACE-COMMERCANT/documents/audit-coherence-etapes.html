@@ -1,0 +1,97 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Audit de cohérence — étape par étape · PayEnCash</title>
+<style>
+:root{--ajek:#10A06A;--ajek-d:#0C7F54;--ink:#1a1f1c;--muted:#5b675f;--line:#d9e5dd;--bg:#f4f7f5;--card:#fff;--chip:#e8f3ec;--gold:#E39A2E;--goldbg:#fdf5e6}
+@media(prefers-color-scheme:dark){:root{--ink:#e8efe9;--muted:#9fb0a6;--line:#254034;--bg:#0d1512;--card:#121d18;--chip:#173026;--goldbg:#2a2410}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.tb{display:flex;gap:8px;flex-wrap:wrap;padding:12px 22px 0}.btn{border:1px solid var(--line);background:var(--card);color:var(--ajek-d);border-radius:8px;padding:6px 11px;font-size:12.5px;text-decoration:none;font-weight:700}
+.wrap{max-width:1080px;margin:0 auto;padding:8px 22px 60px}
+.head{background:linear-gradient(115deg,#0F2A24 0%,#0C7F54 55%,#10A06A 100%);color:#fff;border-radius:14px;padding:22px 26px;margin:10px 0 18px}
+.head h1{margin:4px 0 6px;font-size:23px}.head p{margin:0;font-size:13px;opacity:.94}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 16px}
+.k{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--muted)}
+.k b{display:block;font-size:20px;color:var(--ajek-d)}
+h2{font-size:16.5px;color:var(--ajek-d);margin:26px 0 8px}
+table{width:100%;border-collapse:collapse;background:var(--card);font-size:12px}
+th{background:linear-gradient(115deg,#0C7F54,#10A06A);color:#fff;text-align:left;padding:8px 10px;font-size:11px}
+td{border-top:1px solid var(--line);padding:7px 10px;vertical-align:top}
+.tw{overflow-x:auto;border-radius:12px;border:1px solid var(--line);margin-bottom:8px}
+.ok{color:var(--ajek-d);font-weight:800;white-space:nowrap}
+.note{background:var(--goldbg);border-left:4px solid var(--gold);border-radius:8px;padding:10px 14px;font-size:12.5px;margin:12px 0}
+</style><!-- (18/09, soir) Le bandeau de cette page annonçait encore l'agent comme moyen de paiement en vigueur :
+     un lecteur pressé n'aurait lu que ça. Le corps de la page, lui, est un relevé daté du 21/08 (ce qui a été trouvé
+     puis corrigé ce jour-là) : on ne le réécrit pas, sans quoi on falsifierait l'historique — le bandeau dit
+     désormais explicitement que ses chiffres valent pour le 21/08.
+     Le fond est le même partout : l'agent de caisse mobile est abandonné, parce qu'un salarié qui
+     transporte des espèces chez le client expose l'entreprise à un risque humain et à un cadre CNAPS que le
+     projet ne veut pas porter ; et le reversement mensuel du partenaire est remplacé par un prélèvement à la
+     vente, parce qu'attendre l'argent d'un commerçant créait une créance à relancer. On ne dit plus nulle
+     part comment le client règle au comptoir : la promesse est de payer AVEC UN BON D’ACHAT. -->
+</head><body>
+<div style="background:#E6F4EC;border:2px dashed #0C7F54;border-radius:10px;padding:10px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#0F2A24"><b>Pivot du 17/09 :</b> plus de borne ni de point partenaire qui encaisse pour AJEK. <b>Décisions du 18/09 au soir :</b> l'<b>agent de caisse mobile est supprimé</b> (avec lui la flotte, les zones de dispatch, le planning, les tournées, les dépôts d'espèces, la paie d'agent, le rendu de monnaie et le découpage « part espèces + complément carte »), et le <b>reversement mensuel du partenaire</b> cède la place à un <b>prélèvement à la vente</b> (Stancer). Le client paie <b>avec un bon d’achat</b> par un <b>Bon d’achat PayEnCash</b> ou un <b>Bon d’achat PayEnCash</b>, achetés au comptoir d'un commerce. Ce document est un <b>relevé daté du 21/08</b> : ses chiffres et ses constats valent pour ce jour-là ; tout ce qui vise le réseau de points qui encaissent, la borne, le mandat B ou l'agent de caisse décrit un modèle abandonné et n'est plus à traiter. Référence à jour : <a href="partie-4-flux.html" style="color:#0C7F54;font-weight:700">Étape 4 · F1, F4, F6, F7</a>.</div>
+<div class="tb"><a class="btn" href="diagramme-principal.html">🧭 Fil rouge</a><a class="btn" href="audit-90-scenarios.html">🧪 Banc 175 scénarios</a><a class="btn" href="partie-1b-financier.html">💶 Étape 2 · Financier</a></div>
+<div class="wrap">
+
+<div class="head"><h1>🔍 Audit de cohérence — chaque étape s'appuie-t-elle sur la précédente ?</h1>
+<p>Relecture intégrale du fil rouge (1 → 1b → 2 → 3 → 4 → 5 → 6 → 6b → 7) après l'insertion de la <b>Partie 1b · Modèle financier</b>. Trois auditeurs indépendants, un correcteur par tranche. <b>Tout ce qui suit a été trouvé, noté, puis corrigé le 21/08/2026</b> — le banc (98/98) et le linkcheck repassent au vert après corrections.</p></div>
+
+<div class="kpi">
+<div class="k"><b>106</b>problèmes détectés</div>
+<div class="k"><b>106</b>corrigés</div>
+<div class="k"><b>9</b>documents du fil relus en intégralité</div>
+<div class="k"><b>98/98</b>scénarios re-validés après correction</div>
+</div>
+
+<h2>1 · Contradictions avec les décisions canoniques (les plus graves)</h2>
+<div class="tw"><table>
+<tr><th>Où</th><th>Le problème</th><th>La correction</th><th></th></tr>
+<tr><td>Parties 1, 4, 6, 6b + 4 écrans</td><td><b>Colissimo</b> encore présent (8 mentions + une table <code>shipments Colissimo</code> en doublon + un gsub de génération qui le réintroduisait)</td><td>Mondial Relay partout — doublon supprimé, générateur corrigé</td><td class="ok">✔</td></tr>
+<tr><td>Parties 1, 2, 4</td><td>Ancien exemple de prix MODE <b>190 → 175 → 221 €</b> (× 1,263, incompatible avec la grille × 1,217) répété en 3 endroits</td><td>Exemple canonique unique : achat <b>123 €</b> → client <b>141,80 €</b> (marge 7 % + frais en sus, colis 1,2 kg — grille du 12/09/2026), renvoi Partie 1b §1</td><td class="ok">✔</td></tr>
+<tr><td>Partie 4 · F1, F6</td><td>« Le point scanne le <b>QR</b> » — le canon est le <b>code-barres PEC-…</b> ; F1 avait aussi deux étapes numérotées « 6 »</td><td>Code-barres partout, F1 renuméroté 1→10 (lecture · contrôle · validation explicités)</td><td class="ok">✔</td></tr>
+<tr><td>Partie 4 · F2</td><td>« 300+ compagnies » — le chiffre verrouillé est « plus de 200 » (Duffel)</td><td>Aligné</td><td class="ok">✔</td></tr>
+<tr><td>Partie 4 · F11</td><td>« pièces des <b>partenaires</b> », « facture de la partenaire », « réservé partout » — vocabulaire pré-F12</td><td>« Fournisseurs », stock chez eux, pièce unique retirée à la vente, contrat-cadre d'achat</td><td class="ok">✔</td></tr>
+<tr><td>Partie 4 · F3</td><td>« Remise des espèces à AJEK / <b>au point</b> » — circuit inexistant : le flux va du point VERS l'agent, jamais l'inverse</td><td>Dépôt Cash Services au seuil 400 € (état <code>declared</code>), jamais de remise au point</td><td class="ok">✔</td></tr>
+<tr><td>Partie 2</td><td>CCN « À DÉTERMINER » ligne 77 et « ARBITRÉE IDCC 1710 » ligne 91 — dans le même document</td><td>IDCC 1710 arbitrée, risque résiduel noté</td><td class="ok">✔</td></tr>
+<tr><td>Partie 1</td><td>Deux paniers contradictoires pour « la » diaspora (280–450 € vs 85 €)</td><td>Maghreb 60–120 € (moy. 85) ≠ subsaharien long courrier 280–450 € — distingués</td><td class="ok">✔</td></tr>
+<tr><td>Partie 7 + galeries</td><td>« Gammes Spartiate / <b>Confort</b> » (2 gammes inventées) vs les 4 modes canoniques ; cross-promo FLY↔MODE promise alors que les galeries l'interdisent ; « app Public » disparue encore citée</td><td>4 modes partout, cross-promos supprimées, cascade réécrite en nomenclature actuelle</td><td class="ok">✔</td></tr>
+<tr><td>écran partenaire/04</td><td>« Karim B. » (l'agent !) présenté comme client, réf <b>F-2213</b> et champ <b>PEC-4F7-210</b> en dur, hors scénario canonique</td><td>Écran branché sur PEC_DATA (réf PEC-Z6DNX8HV, 62,35 €), client anonymisé</td><td class="ok">✔</td></tr>
+</table></div>
+
+<h2>2 · Fiscalité absente ou fausse (le déclencheur de cet audit)</h2>
+<div class="tw"><table>
+<tr><th>Où</th><th>Le problème</th><th>La correction</th><th></th></tr>
+<tr><td>mode/03 panier</td><td><b>Aucune ligne TVA</b>, livraison sans logique de coût transporteur</td><td>Ligne TVA composée (neuf = « dont TVA 20 % » · reconditionné = « sur la marge — non détaillée ») + mention 297 A + « Livraison Mondial Relay — incluse, prise en charge » ; calcul dans <code>PEC_DATA.panierTva()</code></td><td class="ok">✔</td></tr>
+<tr><td>ecrans/02 suivi</td><td>« dont TVA (20 %) 10,39 € » — <b>faux et interdit</b> sous régime de la marge (la TVA ne se détaille jamais)</td><td>« Prix TTC — TVA sur la marge (art. 297 A CGI) · incluse »</td><td class="ok">✔</td></tr>
+<tr><td>fly/07 + 3 tunnels</td><td>Récaps « avant de payer » sans mention fiscale</td><td>Terme « Prix TTC — TVA sur la marge (297 A) : elle ne figure pas sur la facture » ajouté aux 4 récaps</td><td class="ok">✔</td></tr>
+<tr><td>Partie 4 · F1, F2-promo, F4, F10, F11</td><td>Flux muets sur la TVA ; F10 disait « la TVA suit le principal remboursé » (faux sous 297 A) ; F4 ignorait le statut de bon multi-usage de la carte cadeau</td><td>Règles fiscales ajoutées flux par flux ; F10 : TVA régularisée sur la marge conservée ; F4 : TVA exigible à l'utilisation selon le régime consommé</td><td class="ok">✔</td></tr>
+<tr><td>Partie 6</td><td>Aucun champ fiscal : pas d'<code>order_items.vat_scheme</code>, pas d'<code>orders.vat_amount_cents</code> (et « total_eur » hors convention centimes)</td><td>Table order_items créée (vat_scheme 3 régimes), Commande en <code>*_cents</code> + vat_amount_cents</td><td class="ok">✔</td></tr>
+</table></div>
+
+<h2>3 · Le chaînage des étapes (renvois, numérotation, comptes)</h2>
+<div class="tw"><table>
+<tr><th>Où</th><th>Le problème</th><th>La correction</th><th></th></tr>
+<tr><td>Parties 1, 4</td><td>Toute l'ancienne numérotation « 5 parties » (Flux = Partie 2, Données = Partie 4…) encore dans les intros et tableaux — la chaîne se référençait FAUX</td><td>Renuméroté partout (Flux = 4, Docs = 5, Données = 6, Écrans = 7)</td><td class="ok">✔</td></tr>
+<tr><td>Parties 4, 6</td><td>Notes de sortie fausses (« Sortie de la Partie 2 », « 11 flux », « 27 tables, 6 domaines »)</td><td>« Sortie de la Partie 4 : 13 flux » · « Sortie de la Partie 6 : 46 tables, 7 domaines »</td><td class="ok">✔</td></tr>
+<tr><td>Partout</td><td>La <b>Partie 1b</b> (nouvelle) n'était référencée par personne ; la 6b était orpheline du fil séquentiel ; index/sommaire ne listaient aucune partie</td><td>Renvois croisés ajoutés dans 1, 2, 3, 4, 5, 6, 6b, 7 · nav 6 → 6b → 7 · bloc « fil rouge » dans index et sommaire · pieds de page uniformisés ← →</td><td class="ok">✔</td></tr>
+<tr><td>Partie 7 / fil rouge</td><td>Comptes faux : FLY annoncé 21 écrans (24 réels), 86/87 vues (90 réelles), « 5 apps » (6), Manager 25/26, « F1→F11 »</td><td>24 · 90 · 6 · 26 · F1→F12 partout</td><td class="ok">✔</td></tr>
+<tr><td>Partie 4</td><td>Aucun flux ne référençait ses écrans de maquette</td><td>Blocs « ÉCRANS » ajoutés à F1, F2-promo, F3, F11, F12 (liens directs)</td><td class="ok">✔</td></tr>
+<tr><td>Partie 6</td><td>Tables absentes : delivery_zones, bank_deposit_transactions, cycle du cash, seuil 400 €, matrice sans colonne Fournisseur ni promo_offers/suppliers</td><td>Tout ajouté (3 tables + colonne + 2 lignes de matrice + cycle 5 états)</td><td class="ok">✔</td></tr>
+<tr><td>Partie 6b</td><td>Mapping incomplet : Partenaire/Livreur/Commercial absents, MODE arrêté à l'écran 5, TVA composée non mappée, ?res=promo et carte code-barres non documentés, PEC_DATA jamais cité</td><td>Mapping complété (toutes les apps), section « 4b · Microservices &amp; CapRover » ajoutée (→ dossier <code>server/</code>)</td><td class="ok">✔</td></tr>
+<tr><td>Partie 5</td><td>F10 absent de la matrice · « 5 textes manquants » (11 réels) · F2 « ✔ appliqué » contredit par la Partie 4 · source .md hors corpus · Omnibus : « J−3 » fragile vs règle des 30 jours (L112-1-1)</td><td>Ligne F10 ajoutée · comptage honnête · ✔ partiel · renvoi F12 · méthodologie re-libellée, arbitrage Omnibus remonté</td><td class="ok">✔</td></tr>
+<tr><td>Partie 1b (elle-même)</td><td>4 imprécisions trouvées par contre-audit : 27 − 4,40 ≠ 20 · assiette du plancher · périmètre de la terminologie interdite · libellé Mondial Relay ambigu</td><td>Arithmétique explicitée (− atelier 2,20), assiette corrigée, périmètre précisé, coût moyen 4,40 € affiché</td><td class="ok">✔</td></tr>
+</table></div>
+
+<h2>4 · Ce qui a été COMBLÉ (pas seulement corrigé)</h2>
+<div class="tw"><table>
+<tr><th>Manque</th><th>Comblé par</th><th></th></tr>
+<tr><td>Partie financière absente du fil rouge</td><td><b>Partie 1b · Modèle d'affaires financier</b> (3 lignes de revenus, l'euro décomposé, cycle du cash 5 états, 3 trésoreries, TVA par ligne, coûts, 6 indicateurs, contrat dev) — insérée entre 1 et 2</td><td class="ok">✔</td></tr>
+<tr><td>Code-barres invisible dans Réservations</td><td>Carte « à payer au point » (commande promo Bucarest 179 €, réf PEC-B7CR31XA) avec code-barres + « Afficher en grand » (fly/02 <code>?res=promo</code>) + « M'y rendre » — chaîne complète re-testée au clic</td><td class="ok">✔</td></tr>
+<tr><td>Bug « on ne voit que le bas » des écrans hauts</td><td><code>align-items: safe center</code> dans le kit (le centrage flex coupait le haut de façon inatteignable)</td><td class="ok">✔</td></tr>
+<tr><td>Promesse marketing des promos absente</td><td>Ligne <b>P10</b> au tableau moteur de la Partie 1</td><td class="ok">✔</td></tr>
+<tr><td>51 vignettes de galeries sans annotations (Livreur, Manager, Partenaire, Commercial)</td><td>Blocs flux + tables + documents rédigés depuis les écrans réels</td><td class="ok">✔</td></tr>
+<tr><td>Base de données et services inexistants (au-delà des maquettes)</td><td>Dossier <b><code>server/</code></b> : schéma PostgreSQL complet (39 objets, validé sur Postgres 16 réel), seed = scénario canonique au centime, <b>8 microservices Node + passerelle</b> (testés : panier 90 €, scan 62,35 €, 9 promos, indicateurs), docker-compose, captain-definition <b>CapRover</b>, README-DEV — le dev branche DATABASE_URL, rien d'autre</td><td class="ok">✔</td></tr>
+<tr><td>Banc de test aveugle aux nouveautés</td><td>4 scénarios ajoutés (BC·95-96, TV·97-98) — <b>98/98 OK</b></td><td class="ok">✔</td></tr>
+</table></div>
+
+<div class="note"><b>⚖️ Arbitrages remontés à la fondatrice</b> (inchangés + 1 nouveau) : SASU · circuit de restitution cash · TVA 297 A (expert-comptable) · CCN 1710 · prix plancher Mode · <b>NOUVEAU — prix de référence Omnibus</b> : la règle légale d'une « réduction de prix » est le prix le plus bas des 30 derniers jours (art. L112-1-1 c. conso.) — soit on l'adopte, soit le « prix en normal » reste un comparatif estimé daté (jamais présenté comme une réduction). À trancher avant tout affichage public.</div>
+
+</div></body></html>

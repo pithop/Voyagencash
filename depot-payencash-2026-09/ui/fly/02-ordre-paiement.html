@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash FLY — Ta commande</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<!-- (18/09, soir) payencash-qr n'est plus chargé : le seul flashcode de cet écran était celui que l'agent scannait. -->
+<!-- FLY — TA COMMANDE (17/09 — pivot). Un écran, un état : où en est le règlement, puis le reçu.
+     · EN LIGNE (Bon d’achat) : le code est saisi sur « Comment payer », la commande est réglée par la
+       NOTIFICATION du prestataire — cet écran montre où en est le paiement, puis le reçu.
+     Plus de borne, plus de commerçant qui scanne une commande : un tiers qui encaisse pour AJEK, c'est illégal — les
+     commerçants partenaires (18/09) VENDENT le Bon d’achat PayEnCash, ils n'encaissent aucune commande.
+     (18/09, soir — l'agent de caisse mobile est abandonné) LE SECOND CANAL A DISPARU. Il portait ici : le
+     FLASHCODE « à faire scanner par l'agent, chez toi », le titre « Ton code pour l'agent », l'adresse
+     d'encaissement affichée sous le lead, la promesse qu'il « compte tes billets et tes pièces devant toi
+     (monnaie rendue) », l'attente « en attente de l'encaissement par l'agent », et le découpage espèces/carte
+     du bandeau de montant (D.montantARegler / D.reglementAppliquer). Personne ne vient : la commande n'a plus
+     de `canal`, plus d'`agent`, plus d'`adresse`, et l'écran ne connaît plus qu'un chemin — le code.
+     (18/09 — Bon d’achat PayEnCash) TROISIÈME cas : la commande RÉGLÉE PAR UN BON D’ACHAT (c.moyen === 'bon') — le bus a débité le bon d’achat,
+     il n'y a ni flashcode ni transaction du prestataire à attendre : le reçu s'affiche, avec le reste du bon d’achat. Un bon d’achat
+     APPLIQUÉ en partie (c.bonApplique, non consommé) se lit sous le montant : le dû affiché est le RESTE (c.montant).
+     Prix bloqué : durée lue dans PEC_DATA.scenario.prixBloqueMinutes. -->
+<style>
+  .h1{font-size:23px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;color:var(--color-ink);margin:14px 0 6px}
+  .h1 em{font-style:normal;color:var(--color-primary)}
+  .caps{letter-spacing:.13em;text-transform:uppercase}
+  .lead{font-size:14.5px;font-weight:500;line-height:1.5;color:var(--color-muted);margin:0 0 16px}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll">
+    <div class="pec-info-body" style="padding-top:14px">
+
+      <a href="01-ou-payer.html" id="op-retour" class="tap" aria-label="Retour" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-chevron-left"/></svg>
+      </a>
+
+      <h1 class="h1" id="op-titre">Ta commande</h1>
+      <p class="lead" id="op-lead">—</p>
+      <!-- (11/09) L'ANNONCE AU BUS PEUT ÊTRE REFUSÉE (stockage de l'appareil plein) : sans ce bandeau, le
+           client attendait devant un code qu'aucune app ne pouvait reconnaître. -->
+      <div id="op-refus" hidden style="background:#FDECEA;border:1px solid #F0B4AC;border-radius:12px;padding:11px 13px;margin:10px 0 0;font-size:13px;font-weight:700;color:#8E2A1E"></div>
+
+      <!-- (29/08) PLUS d'onglets « À régler / Soldé » ici : ils DOUBLONNAIENT les
+           états de « Réservations » (03-mes-codes : Réservations en cours · Réglé · …). Cet écran
+           fait UNE chose : dire où en est le règlement ; dès que le bus l'enregistre — code d'un bon d’achat
+           accepté, ou notification du prestataire —, il ouvre le TICKET en place (surPaiement → ticket). -->
+      <div id="bloc-code">
+
+      <!-- (17/09 — pivot) LE PAIEMENT EN LIGNE : où en est la transaction du prestataire. Rien n'est réglé
+           tant que SA notification n'est pas arrivée — cet écran ne décide rien, il rend compte. -->
+      <div class="pec-card pec-card--elevated" id="op-enligne" hidden style="padding:15px 16px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--color-primary-dark);margin-bottom:8px">
+          <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-phone"/></svg> <span id="op-el-lbl">Paiement en ligne</span>
+        </div>
+        <div id="op-el-txt" style="font-size:12.5px;line-height:1.55;color:var(--color-muted)">—</div>
+        <a class="pec-cta pec-cta--tight tap" id="op-el-cta" href="01-ou-payer.html" style="display:block;text-align:center;margin-top:11px">Choisir comment payer</a>
+      </div>
+
+      <!-- (18/09, soir — l'agent de caisse mobile est abandonné) ICI VIVAIT LE FLASHCODE « à faire scanner
+           par l'agent, chez toi » : un QR que le client tendait à quelqu'un qui ne vient plus. Le code de la
+           commande reste visible dans le reçu et dans « Réservations » — il identifie le dossier, il ne se
+           montre plus à personne. La référence continue de vivre dans #op-ref, masquée, parce que tout l'écran
+           (bus, transaction, ticket) la lit. -->
+      <span id="op-ref" hidden>—</span>
+
+      <div class="pec-dark-banner pec-dark-banner--md" style="margin-top:12px">
+        <div style="min-width:0">
+          <div class="lbl" id="op-lbl">À régler</div>
+          <div class="sub" id="op-sub">—</div>
+          <div class="amt"><span class="n" id="op-montant">—</span><span class="e">€</span></div>
+        </div>
+      </div>
+      <!-- (18/09 — Bon d’achat PayEnCash) un bon d’achat APPLIQUÉ en partie se dit ici : lu sur la commande du bus, débité au règlement seulement -->
+      <div id="op-bon" hidden style="display:flex;align-items:center;gap:9px;border-radius:12px;background:var(--color-mint);padding:9px 12px;margin-top:8px;font-size:12px;font-weight:700;line-height:1.45;color:var(--color-mint-ink)">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:15px;color:var(--color-primary-dark)"><use href="#i-ticket"/></svg>
+        <span style="min-width:0" id="op-bon-txt">—</span>
+      </div>
+
+<!-- LE RÉCAP COMPLET (fondatrice 27/08) : la même trame que l'écran avant de
+     payer — vol, hébergement (photos, note, avis), voyageurs. -->
+<div class="pec-card" id="op-recap" style="display:none;margin-top:12px;padding:2px 0 0"></div>
+
+<!-- DÉTAIL DU PRIX (fondatrice 22/08 : « comme Opodo ») : base · taxes · nos
+     frais · total · PAR PASSAGER — la transparence complète, à notre sauce -->
+<div class="pec-card" style="margin-top:12px;padding:12px 16px 8px">
+  <div class="caps" style="font-size:9.5px;font-weight:800;color:var(--color-muted);padding-bottom:4px">Détails du prix</div>
+  <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--color-sep);font-size:12px"><span style="color:var(--color-muted)">Tarif de base</span><b id="dp-base">—</b></div>
+  <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--color-sep);font-size:12px"><span style="color:var(--color-muted)">Taxes et frais compagnies</span><b id="dp-taxes">—</b></div>
+  <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--color-sep);font-size:12px"><span style="color:var(--color-muted)">Nos frais de service</span><b id="dp-frais" style="color:var(--color-primary-dark)">—</b></div>
+  <div style="display:flex;justify-content:space-between;padding:9px 0 3px;font-size:13.5px"><b>Total — tous les voyageurs</b><b id="dp-total">—</b></div>
+  <div id="dp-pax" style="display:flex;justify-content:space-between;padding:0 0 8px;font-size:11px;color:var(--color-muted)"><span>soit par voyageur</span><span id="dp-parpax">—</span></div>
+</div>
+
+<!-- Marketing comparatif : « en moyenne » + renvoi au tableau du jour — JAMAIS
+     une affirmation sur CE billet (pub comparative L122-1) -->
+<a class="tap" href="08-comparatif.html" style="display:flex;align-items:center;gap:10px;border-radius:14px;background:var(--color-mint);border:1.5px solid var(--color-primary);padding:11px 13px;margin-top:10px;text-decoration:none">
+  <span style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;background:var(--color-primary);color:#fff;font-weight:800;font-size:13px">ⓘ</span>
+  <span style="min-width:0;font-size:11.5px;line-height:1.5;color:var(--color-mint-ink)">Sur les vols comparés aujourd'hui, PayEnCash est <b style="color:var(--color-primary-dark)">en moyenne −<span id="dp-moy">—</span> % vs Opodo</b> — voir le comparatif du jour →</span>
+</a>
+
+<!-- Le beau visuel (fondatrice 22/08) : la destination fait rêver AU MOMENT de payer -->
+<div style="position:relative;height:120px;border-radius:16px;overflow:hidden;margin-top:12px">
+  <img id="op-dest-img" src="../assets/photos/photo-plage.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+  <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(6,42,74,.75) 100%)"></div>
+  <div style="position:absolute;left:14px;bottom:11px;right:14px">
+    <div style="font-size:15px;font-weight:800;color:#fff" id="op-dest">Ta destination t'attend.</div>
+    <div style="font-size:10.5px;font-weight:600;color:rgba(255,255,255,.85)">Règlement effectué — parti l'esprit léger.</div>
+  </div>
+</div>
+
+<div class="pec-urgency" id="op-urgence" style="margin-top:12px">
+
+        <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-clock"/></svg>
+        <span id="op-urgence-txt">Prix bloqué <b id="pb-duree">—</b> — encore <b id="deadline">—</b></span>
+      </div>
+
+      <!-- (17/09 — pivot) Le paiement est fait à PayEnCash, par le prestataire ou par le débit d'un bon d’achat :
+           plus aucun commerçant tiers n'encaisse pour notre compte. -->
+      <div class="pec-mint-banner" style="margin-top:12px">
+        <div style="font-size:12.5px;line-height:1.55" id="op-cadre">—</div>
+      </div>
+
+      <!-- PAS de bouton : c'est la notification du prestataire, ou le débit du bon d’achat par le bus, qui règle la
+           commande → cet écran bascule TOUT SEUL en ticket « payé — soldé ». -->
+      <div id="attente" class="tap" style="display:flex;align-items:center;justify-content:center;gap:9px;border-radius:14px;background:var(--color-bg);padding:13px 14px;margin:14px 0 18px;cursor:pointer">
+        <span style="flex:none;width:9px;height:9px;border-radius:999px;background:var(--color-primary);animation:pec-pulse 1.2s infinite"></span>
+        <span style="font-size:12px;font-weight:700;color:var(--color-muted)" id="op-attente-txt">Ton reçu s'affichera ici tout seul, dès le règlement.</span>
+      </div>
+      </div><!-- /bloc-code -->
+
+      <div id="ticket" style="display:none;margin:14px 0 18px">
+        <!-- MERCI — le remerciement d'abord (fondatrice 22/08), le reçu ensuite -->
+        <div style="text-align:center;margin-bottom:12px">
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:999px;background:var(--color-primary);color:#fff;box-shadow:var(--shadow-cta-tight)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:25px"><use href="#i-check"/></svg></div>
+          <div style="font-size:20px;font-weight:800;letter-spacing:-0.01em;color:var(--color-ink);margin-top:9px">Merci pour ta confiance.</div>
+          <div style="font-size:12.5px;line-height:1.55;color:var(--color-muted);margin-top:4px;max-width:270px;margin-left:auto;margin-right:auto">Ton paiement est bien reçu — ta réservation est lancée, on s'occupe de tout et on te tient au courant par SMS et email.</div>
+        </div>
+
+        <!-- LE(S) REÇU(S) — un ticket par facture soldée, du plus récent au plus ancien -->
+        <div class="pec-card pec-card--elevated" style="padding:15px 16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--color-muted)">Reçu · aujourd'hui</span>
+            <span class="pec-pill pec-pill--done" style="font-size:10px">Payé — soldé</span>
+          </div>
+          <div style="font-size:14px;font-weight:800;color:var(--color-ink)" id="tk-det">—</div>
+          <!-- (17/09 — pivot) PAR QUOI la commande a été réglée : reglementLibelle(commande) — le moyen et
+               sa preuve (transaction du prestataire, ou code du bon d’achat débité). Jamais « à la borne ». -->
+          <div style="font-size:11.5px;font-weight:700;color:var(--color-primary-dark);margin-top:3px" id="tk-reglement">—</div>
+          <hr style="border:none;border-top:1.5px dashed var(--color-sep);margin:11px 0">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--color-muted)"><span>Montant réglé</span><b style="color:var(--color-ink)" id="tk-n">—</b></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--color-muted);margin-top:5px"><span>Reçu n°</span><b style="color:var(--color-ink)" id="tk-recu">—</b></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--color-muted);margin-top:5px"><span>Reste dû</span><b style="color:var(--color-primary-dark)">0 €</b></div>
+          <!-- (18/09 — Bon d’achat PayEnCash) réglée par un bon d’achat (tout ou partie) : ce qu'il reste SUR LE BON D’ACHAT, lu sur la commande du bus -->
+          <div id="tk-bon" hidden style="display:flex;justify-content:space-between;font-size:12px;color:var(--color-muted);margin-top:5px"><span id="tk-bon-lbl">Reste sur ton bon d’achat</span><b style="color:var(--color-primary-dark)" id="tk-bon-v">—</b></div>
+        </div>
+        <!-- audit 28/08 : le reçu « 9 août · Alger · 154 € » était INVENTÉ (zéro
+             seed) — l'historique des reçus vit dans Réservations, depuis le bus -->
+
+        <div style="border-radius:14px;background:var(--color-mint);padding:12px 13px;margin-top:12px;font-size:11.5px;line-height:1.55;color:var(--color-mint-ink);text-align:center"><b style="color:var(--color-primary-dark)">Ta réservation est lancée ✓</b> — billet émis auprès de la compagnie · reçu + code de confirmation rangés dans « Réservations ».</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+          <a class="pec-cta tap" href="../ecrans/03-mes-codes.html?tab=regle" style="display:flex;align-items:center;justify-content:center;text-align:center">Voir dans mes réservations — Réglé</a>
+          <a class="pec-btn-secondary tap" id="tk-detail" href="10-reservation-detail.html" style="display:flex;align-items:center;justify-content:center;text-align:center">Le détail complet — PNR, e-ticket, enregistrement</a>
+        </div>
+      </div><!-- /ticket -->
+      <style>@keyframes pec-pulse{0%,100%{opacity:1}50%{opacity:.25}}</style>
+
+    </div>
+  </div><!-- /pec-body -->
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" aria-current="page" href="../ecrans/03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="../ecrans/01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="../ecrans/14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" href="../ecrans/10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+  (function () {
+
+    // Contenu depuis PEC_DATA. Par défaut : la commande canonique (vol MRS→BCN).
+    // ?res=promo : la commande promo en attente (chaîne Réservations → cet écran).
+    var D = window.PEC_DATA;
+    /* (18/09, soir — l'agent de caisse mobile est abandonné) LE BANDEAU DE MONTANT NE SE DÉCOUPE PLUS.
+       Il affichait, pour une commande à régler à l'agent, « dont X € en espèces + Y € par carte sur son
+       terminal » (D.reglementAppliquer / D.montantARegler, au-dessus du plafond légal des espèces). Aucune
+       commande ne porte plus de `canal`, ces deux fonctions n'existent plus, et le montant dû est UN — quel
+       que soit le code qui le règle. Le libellé est donc constant, et la ligne de détail qu'on posait sous
+       le montant est retirée si une ancienne page l'avait laissée. */
+    function majReg() {
+      var lbl = document.getElementById('op-lbl'); if (lbl) lbl.textContent = 'À régler';
+      var om = document.getElementById('op-montant'), anc = om && om.parentNode;
+      var det = anc && anc.nextElementSibling; if (det && det.classList && det.classList.contains('reg-detail')) det.remove();
+    }
+    if (/[?&]res=promo/.test(location.search)) {
+      var pc = D.promoCommande, P = D.promos.find(function (p) { return p.id === pc.promoId; });
+      document.getElementById('op-ref').textContent = pc.ref;
+      document.getElementById('op-sub').textContent = P.titre + ' · départ ' + pc.depart + ' · ' + pc.voyageurs + ' voyageur' + (pc.voyageurs > 1 ? 's' : '') + ' · dont TVA (marge) incluse';
+      document.getElementById('op-montant').textContent = String(P.prix * pc.voyageurs); majReg();
+      // le visuel : la destination et la photo de LA promo
+      document.getElementById('op-dest').textContent = P.titre.split(' ')[0].replace(/[,;:]$/, '') + ' t\'attend.';
+      if (P.vol && P.vol.photo) document.getElementById('op-dest-img').src = '../assets/photos/' + P.vol.photo;
+    } else {
+      // la RÉF suit la commande : ?m= → réf dérivée (jamais l'ancien règlement
+      // du canonique rejoué sur une nouvelle commande — fondatrice 27/08)
+      var mFlux = parseInt(new URLSearchParams(location.search).get('m'), 10);
+      var fluxOk = mFlux && mFlux >= 100 && mFlux <= 300000;
+      // RÉF DE LA COMMANDE — ?ref= explicite (porté depuis « Réservations ») d'abord,
+      // sinon dérivée du montant. ANTI-COLLISION (29/08 « au point affiché comme payé
+      // alors que c'est une nouvelle commande ») : refFlux(montant) est déterministe →
+      // une NOUVELLE commande du même montant héritait du « payé » d'une commande
+      // ANTÉRIEURE. Si la réf dérivée d'un ?m= est DÉJÀ 'paye' et non demandée
+      // explicitement, c'est une nouvelle commande → on lui forge une réf UNIQUE.
+      var refParam = (new URLSearchParams(location.search).get('ref') || '').toUpperCase();
+      var refCmd = refParam || ((fluxOk && D.refFlux) ? D.refFlux(mFlux) : D.scenario.refPaiement);
+      if (!refParam && fluxOk && window.PEC_BUS) {
+        var cDeja = PEC_BUS.commande(refCmd);
+        if (cDeja && cDeja.statut === 'paye') {
+          refCmd = 'PEC-' + (Date.now().toString(36) + Math.random().toString(36).slice(2, 6)).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(-8);
+        }
+      }
+      document.getElementById('op-ref').textContent = refCmd;
+      // le MONTANT et le SOUS-TITRE suivent LA COMMANDE (plus jamais le canonique
+      // affiché puis remplacé — l'annonce lisait l'ancien montant, la borne aussi)
+      var enC = (fluxOk && D.commandeEnCoursGet) ? D.commandeEnCoursGet(mFlux) : null;
+      document.getElementById('op-montant').textContent = fluxOk
+        ? (mFlux / 100).toFixed(2).replace('.', ',').replace(/,00$/, '')
+        : D.scenario.volPrix.toFixed(2).replace('.', ',');
+      majReg();
+      var canon = (D.comparatifJour || []).filter(function (l) { return Math.abs(l.nous - D.scenario.volPrix) < 0.005; })[0];
+      document.getElementById('op-sub').textContent = enC
+        ? enC.trajet + (enC.dates ? ' · ' + enC.dates : '') + ' · ' + (enC.voyageurs || 1) + ' voyageur' + ((enC.voyageurs || 1) > 1 ? 's' : '') + ' · dont TVA (marge) incluse'
+        : (canon ? canon.route + ' · ' + canon.detail : 'Ta réservation · 1 voyageur') + ' · dont TVA (marge) incluse';
+      // la DESTINATION du visuel suit la commande (dépôt du tunnel, sinon la ligne canonique)
+      var trajetV = enC ? (enC.trajet || '') : (canon ? canon.route : '');
+      var destV = (trajetV.split('→')[1] || '').split('·')[0].trim();
+      if (destV) document.getElementById('op-dest').textContent = destV + ' t\'attend.';
+      // le DÉTAIL DU PRIX = celui du tunnel, à l'identique (hébergement, bagages, pack compris)
+      if (enC && (enC.detailPrix || []).length) {
+        var dz = document.getElementById('dp-base').closest('.pec-card');
+        var lignes = enC.detailPrix.map(function (l) {
+          return '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--color-sep);font-size:12px"><span style="color:var(--color-muted)">' + l[0] + '</span><b>' + l[1] + '</b></div>';
+        }).join('');
+        dz.innerHTML = '<div class="caps" style="font-size:9.5px;font-weight:800;color:var(--color-muted);padding-bottom:4px">Détails du prix</div>' + lignes +
+          '<div style="display:flex;justify-content:space-between;padding:9px 0 8px;font-size:13.5px"><b>Total — tous les voyageurs</b><b>' + (mFlux / 100).toFixed(2).replace('.', ',') + ' €</b></div>';
+      }
+    }
+
+    /* ══ (17/09 — pivot) L'ÉCRAN SUIT L'ÉTAT DU RÈGLEMENT ══════════════════════════════════════════════
+       (18/09, soir) Il n'y a plus de CANAL à suivre : une seule branche, l'état de la transaction ouverte
+       chez le prestataire (aucune, en attente, refusée, abandonnée, remboursée) — et le ticket dès que le bus
+       dit « payé », qu'un bon d’achat ait été débité ou qu'une notification soit arrivée.
+       Aucun texte n'est écrit deux fois : les libellés de moyen viennent de PEC_DATA.libelleMoyen. ══ */
+    function peindreCanal() {
+      var ref = ((document.getElementById('op-ref') || {}).textContent || '').trim();
+      var c = (ref && window.PEC_BUS) ? PEC_BUS.commande(ref) : null;
+      var el = document.getElementById('op-enligne');
+      var cadre = document.getElementById('op-cadre'), att = document.getElementById('op-attente-txt');
+      var lead = document.getElementById('op-lead'), titre = document.getElementById('op-titre');
+      /* (18/09 — Bon d’achat PayEnCash) UN BON D’ACHAT APPLIQUÉ EN PARTIE : le dû affiché est le RESTE (c.montant, calculé par le bus), et la part
+         du bon d’achat se dit sous le montant — sans ça, le client lisait le brut au-dessus d'une transaction ouverte sur le reste. */
+      var ba = (c && c.bonApplique && !c.bonApplique.consommeAt) ? c.bonApplique : null, D0 = window.PEC_DATA;
+      var zb = document.getElementById('op-bon'), zbt = document.getElementById('op-bon-txt'), om = document.getElementById('op-montant');
+      if (om && om.getAttribute('data-brut') == null) om.setAttribute('data-brut', om.textContent);   // le brut du tunnel (?m), repris si le bon d’achat est retiré
+      if (om) om.textContent = (ba && c.montant) ? String(c.montant).replace(/,00$/, '') : om.getAttribute('data-brut');
+      if (zb) zb.hidden = !ba || (c && c.statut === 'paye');
+      if (ba && zbt && D0) zbt.innerHTML = 'Bon d’achat PayEnCash ' + D0.esc(D0.bonMasque ? D0.bonMasque(ba.code) : ba.code) + ' appliqué <b>−' + D0.esc(D0.eur(ba.montant)) + '</b> — débité au règlement du reste, jamais avant.';
+      majReg();
+      // réglée : c'est le TICKET qui parle — on ne repeint pas un écran « à régler » par-dessus un reçu
+      if (c && c.statut === 'paye') {
+        if (titre) titre.innerHTML = 'Ta commande<br><em>réglée</em>';
+        if (lead) lead.textContent = (window.PEC_DATA && PEC_DATA.reglementLibelle) ? PEC_DATA.reglementLibelle(c) : '';
+        return;
+      }
+      if (el) el.hidden = false;
+      /* (18/09, soir — l'agent de caisse mobile est abandonné) LA BRANCHE « AGENT » EST SUPPRIMÉE, pas
+         neutralisée : elle réécrivait le titre en « Ton code pour l'agent », le lead en « un agent salarié
+         PayEnCash vient encaisser tes espèces — <adresse> », le cadre en « il compte tes billets et tes pièces
+         devant toi (monnaie rendue) », et l'attente en « en attente de l'encaissement par l'agent ». Aucune
+         commande ne porte plus `canal: 'agent'` : la laisser derrière un `if` mort aurait gardé ces phrases
+         vivantes dans le fichier, prêtes à réapparaître. */
+      /* (20/09 — « enlève la logique Neosurf ») LE RAIL DU PRESTATAIRE EST MORT AVEC LE RÉSEAU TIERS. Une
+         commande non réglée n'attend plus la notification de personne : elle attend que le voyageur présente
+         le code de son bon d'achat. Les six états de transaction (ouverte, refusée, abandonnée, à rembourser…)
+         sont partis avec le rail — les laisser derrière un `if` mort, c'était garder vivantes des phrases qui
+         renvoient à une page hébergée qui n'existe plus. */
+      var D2 = window.PEC_DATA;
+      var lbl = document.getElementById('op-el-lbl'), txt = document.getElementById('op-el-txt'), cta = document.getElementById('op-el-cta');
+      if (titre) titre.innerHTML = 'Ta commande<br><em>à régler</em>';
+      if (cadre) cadre.innerHTML = '<b>Ton paiement est fait à PayEnCash.</b> Il se règle avec un <b>Bon d’achat PayEnCash</b> : aucun fonds ne passe par nous, et rien n\'est débité tant que tu n\'as pas présenté ton code. Ton reçu et ton code de confirmation arrivent dans « Réservations » dès le règlement.';
+      if (lead) lead.textContent = 'Choisis ton moyen de paiement : ' + ((D2 && D2.moyensPaiementLabel) ? D2.moyensPaiementLabel() : 'avec un bon d’achat') + '.';
+      if (lbl) lbl.textContent = 'Aucun paiement lancé';
+      if (txt) txt.textContent = 'Ta commande est réservée au prix affiché — il ne reste qu\'à choisir comment la régler.';
+      if (cta) { cta.hidden = false; cta.textContent = 'Choisir comment payer'; cta.setAttribute('href', lienOuPayer()); }
+      if (att) att.textContent = 'Ton reçu s\'affichera ici tout seul, dès le règlement.';
+    }
+    function lienOuPayer() { var q = location.search.match(/[?&](m=\d+|res=promo)/); return '01-ou-payer.html' + (q ? '?' + q[1] : ''); }
+    /* ACHAT FOURNISSEUR VOYAGE (03/09, déplacé le 17/09) : la commande FLY RÉGLÉE — en ligne comme par
+       le bus — consomme le solde prépayé Duffel (manager 08-finance et 13-solde-fournisseur). Idempotent par
+       commande, jamais pour MODE. PART VOL : on isole les lignes « vol / billet / taxes / tronçon » du détail
+       de prix mémorisé au tunnel ; À DÉFAUT, on enregistre le MONTANT TOTAL — c'est alors un MAJORANT (il
+       contient nos frais de service et, en package, l'hébergement) : dit ici plutôt que de n'enregistrer rien. */
+    function enregistrerAchatVoyage(ref) {
+      try {
+        var cmd = window.PEC_BUS ? PEC_BUS.commande(ref) : null;
+        if (!cmd || cmd.statut !== 'paye') return;
+        if (String(cmd.type || 'FLY').toUpperCase() !== 'FLY') return;
+        if (!window.PEC_DATA || !PEC_DATA.achatVoyageEnregistrer) return;
+        var nbA = function (v) { var x = parseFloat(String(v == null ? '' : v).replace(/[^\d,.\-]/g, '').replace(/\s/g, '').replace(',', '.')); return isFinite(x) ? x : 0; };
+        var partVol = 0;
+        ((cmd.detailPrix) || []).forEach(function (l) {
+          var lib = String((l && l[0]) || '');
+          if (!/vol|billet|taxe|tron/i.test(lib)) return;
+          if (/frais|service|h[oô]tel|h[ée]bergement|nuit|s[ée]jour|pack|assurance|bagage/i.test(lib)) return;
+          partVol += nbA(l[1]);
+        });
+        var mntAchat = partVol > 0 ? Math.round(partVol * 100) / 100 : nbA(cmd.montant);
+        if (mntAchat > 0) PEC_DATA.achatVoyageEnregistrer(cmd.ref || ref, { fournisseur: 'duffel', montant: mntAchat, type: 'achat' }, 'système');
+      } catch (eAch) {}
+    }
+
+    // (18/09, soir) PLUS DE FLASHCODE À ENCODER : le QR ne servait qu'à l'agent qui venait le scanner.
+    // Bascule PAYÉ — SOLDÉ : déclenchée UNIQUEMENT par le bus (notification du prestataire, ou débit d'un
+    // Bon d’achat PayEnCash) — plus aucune démo automatique.
+// AFFICHAGE DU REÇU — fonction LOCALE (jamais exposée sur window) : impossible à
+// déclencher depuis la console. Déclenchée UNIQUEMENT par surPaiement, et re-gardée
+// ici : le reçu n'apparaît QUE si le bus dit la commande réellement 'paye' (notifiée
+// par le prestataire, ou réglée par le débit d'un bon d’achat). Le client ne peut JAMAIS basculer son propre paiement.
+function afficherRecuPaye() {
+  var refEl = document.getElementById('op-ref');
+  var ticket = document.getElementById('ticket');
+  if (!refEl || !ticket || ticket.style.display === 'block') return;   // déjà réglé — ne pas rejouer
+  var refTxt = refEl.textContent;
+  var cmd = window.PEC_BUS && PEC_BUS.commande(refTxt);
+  if (!cmd || cmd.statut !== 'paye') return;   // SÉCURITÉ : le statut du bus fait foi — notification du prestataire, ou bon d’achat débité
+  var mntTxt = (document.getElementById('op-montant') || {}).textContent || '';
+  // paiement constaté → on masque l'état « à régler »
+  // et on OUVRE le ticket en place. Aucun onglet : « Réservations » (03-mes-codes)
+  // porte les états — ici on ne fait que présenter puis remettre le reçu.
+  var bloc = document.getElementById('bloc-code');
+  if (bloc) bloc.style.display = 'none';
+  ticket.style.display = 'block';
+      var tPay = new Date(cmd.payeAt || Date.now()), auj = new Date();
+      var memeJour = tPay.toDateString() === auj.toDateString();
+      var quandTxt = (memeJour ? 'aujourd’hui' : tPay.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })) + ' ' + ('0' + tPay.getHours()).slice(-2) + ':' + ('0' + tPay.getMinutes()).slice(-2);
+      // (17/09 — pivot) plus de lieu sur le reçu : la commande n'est plus réglée QUELQUE PART, elle est
+      // réglée PAR QUELQUE CHOSE — reglementLibelle(commande) le dit, moyen et preuve à l'appui.
+      document.getElementById('tk-det').textContent = refTxt + ' · ' + quandTxt;
+      var zReg = document.getElementById('tk-reglement');
+      if (zReg) zReg.textContent = (window.PEC_DATA && PEC_DATA.reglementLibelle) ? PEC_DATA.reglementLibelle(cmd) : '';
+      var pRecu = window.PEC_BUS ? PEC_BUS.paiement(refTxt) : null;
+      var tkR = document.getElementById('tk-recu');
+      if (tkR) tkR.textContent = (pRecu && pRecu.recu) || '—';
+      var tkd = document.getElementById('tk-detail'); if (tkd) tkd.href = '10-reservation-detail.html?ref=' + refTxt;
+      document.getElementById('tk-n').textContent = mntTxt + ' €';
+      /* (18/09 — Bon d’achat PayEnCash) RÉGLÉE PAR UN BON D’ACHAT — en totalité (c.moyen 'bon', c.bon.resteApres) ou en partie (c.bonApplique consommé,
+         resteApres) : le reste SUR LE BON D’ACHAT se lit sur le reçu. Aucun flashcode, aucune transaction du prestataire n'a existé :
+         c'est le bus qui a débité le bon d’achat — la phrase de règlement (reglementLibelle) le dit, cette ligne chiffre le solde. */
+      var tkb = document.getElementById('tk-bon'), tkbv = document.getElementById('tk-bon-v'), tkbl = document.getElementById('tk-bon-lbl'), D1 = window.PEC_DATA;
+      var reste = (cmd.moyen === 'bon' && cmd.bon && cmd.bon.resteApres != null) ? cmd.bon.resteApres
+                : (cmd.bonApplique && cmd.bonApplique.consommeAt && cmd.bonApplique.resteApres != null) ? cmd.bonApplique.resteApres : null;
+      if (tkb) tkb.hidden = reste == null;
+      if (reste != null && tkbv && D1) { tkbv.textContent = D1.eur(reste); if (tkbl) tkbl.textContent = cmd.moyen === 'bon' ? 'Réglé par Bon d’achat PayEnCash — reste sur ton bon d’achat' : 'Dont Bon d’achat PayEnCash −' + D1.eur(cmd.bonApplique.montant) + ' — reste sur ton bon d’achat'; }
+    }
+    // VRAIE INTERACTION INTER-APPS (fondatrice 25/08 : plus AUCUNE simulation) :
+    // ① la commande est ANNONCÉE au bus — le manager la voit, le prestataire n'ouvre
+    //    une transaction que sur elle ;
+    // ② cet écran ATTEND : il ne bascule QUE quand le prestataire notifie le paiement,
+    //    ou quand un Bon d’achat PayEnCash est débité — jamais tout seul.
+    (function () {
+      var ref = document.getElementById('op-ref').textContent.trim();
+      var mQ0 = parseInt(new URLSearchParams(location.search).get('m'), 10);
+      // le montant d'annonce vient de ?m — JAMAIS d'un DOM qui peut être en retard
+      var mnt = (mQ0 && mQ0 >= 100) ? (mQ0 / 100).toFixed(2).replace(',', '.').replace('.', ',') : document.getElementById('op-montant').textContent.trim();
+      if (window.PEC_BUS && ref) {
+        var mQ = parseInt(new URLSearchParams(location.search).get('m'), 10);
+        var enCours = (D.commandeEnCoursGet && !/[?&]res=promo/.test(location.search)) ? D.commandeEnCoursGet(mQ) : null;
+        /* (17/09 — pivot) plus de `point` posé ici : la commande n'appartient plus à un commerce.
+           (18/09, soir) et plus de `canal` non plus : il n'en reste qu'un. */
+        /* (11/09) le refus du bus est LU : on ne présente pas un code pour une commande que personne n'a. */
+        var rAnn = PEC_BUS.annoncerCommande(ref, Object.assign({ montant: mnt, client: ((window.PEC_DATA && PEC_DATA.voyageurParDefaut && PEC_DATA.voyageurParDefaut().nomComplet) || 'Client'), type: 'FLY' }, enCours || {}));
+        var zRef = document.getElementById('op-refus'), bCode = document.getElementById('bloc-code');
+        if (rAnn && rAnn.ok === false && rAnn.motif === 'stockage') {
+          if (zRef) { zRef.hidden = false; zRef.textContent = rAnn.message; }
+          if (bCode) bCode.hidden = true;
+        }   // les autres refus (déjà réglée, annulée…) sont des ÉTATS que surPaiement/afficherRecuPaye peignent déjà — on ne touche pas au bloc ici
+        peindreCanal();
+        PEC_BUS.surPaiement(ref, afficherRecuPaye);
+        /* (17/09 — pivot) L'ACHAT FOURNISSEUR VOYAGE suit le RÈGLEMENT, pas l'affichage du reçu : il est
+           enregistré dès que le bus dit « payé », que la commande ait été réglée en ligne ou par un bon d’achat. */
+        PEC_BUS.surPaiement(ref, function () { enregistrerAchatVoyage(ref); });
+        // (08/09 — audit « écran sourd ») la notification du prestataire peut arriver par le bus ou par un autre onglet : l'écran suit
+        window.addEventListener('pec-bus', function () { peindreCanal(); afficherRecuPaye(); });
+        window.addEventListener('storage', function (e) { if (!e.key || /^pec_bus_/.test(e.key)) { peindreCanal(); afficherRecuPaye(); } });
+      }
+    })();
+
+// Détail du prix (canonique : base+taxes+frais ; promo : prix voyage ×N + frais inclus)
+(function () {
+  var dv = D.detailVol, fmt = function (n) { return n.toFixed(2).replace('.', ',') + ' €'; };
+  var moy = document.getElementById('dp-moy');
+  if (moy) moy.textContent = String(D.comparatifMoyenne()).replace('.', ',');   // le comparatif vit hors du bloc
+  if (!document.getElementById('dp-base')) return;   // le détail RÉEL de la commande a déjà remplacé ce bloc (?m + dépôt)
+  if (/[?&]res=promo/.test(location.search)) {
+    var pc = D.promoCommande, Pp = D.promos.find(function (p) { return p.id === pc.promoId; });
+    var tot = Pp.prix * pc.voyageurs;
+    // la promo est un PRIX TOUT COMPRIS (data-layer) : aucune ventilation base/taxes n'existe → on ne l'invente pas
+    var dzP = document.getElementById('dp-base').closest('.pec-card');
+    function lg(a, b) { return '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--color-sep);font-size:12px"><span style="color:var(--color-muted)">' + a + '</span><b>' + b + '</b></div>'; }
+    dzP.innerHTML = '<div class="caps" style="font-size:9.5px;font-weight:800;color:var(--color-muted);padding-bottom:4px">Détails du prix</div>'
+      + lg('Prix promo par voyageur — ' + Pp.titre, fmt(Pp.prix))
+      + lg('Voyageurs', String(pc.voyageurs))
+      + lg('Nos frais de service', 'inclus dans le prix promo')
+      + '<div style="display:flex;justify-content:space-between;padding:9px 0 8px;font-size:13.5px"><b>Total — tous les voyageurs</b><b id="dp-total">' + fmt(tot) + '</b></div>';
+  } else {
+    document.getElementById('dp-base').textContent = fmt(dv.base);
+    document.getElementById('dp-taxes').textContent = fmt(dv.taxes);
+    document.getElementById('dp-frais').textContent = fmt(dv.fraisService);
+    document.getElementById('dp-total').textContent = fmt(D.scenario.volPrix);
+    document.getElementById('dp-pax').style.display = 'none';   // 1 voyageur : pas de ligne par-pax
+  }
+})();
+
+    // durée = PEC_DATA.scenario.prixBloqueMinutes ; point de départ = l'ANNONCE de la commande (bus, cmd.at)
+    var dureeMin = (D.scenario && D.scenario.prixBloqueMinutes) || (D.prixBloque && D.prixBloque.dureeMin) || 60;
+    var pbd = document.getElementById('pb-duree'); if (pbd) pbd.textContent = dureeMin % 60 === 0 ? (dureeMin / 60) + ' h' : dureeMin + ' min';
+    var cmdCd = window.PEC_BUS ? PEC_BUS.commande(document.getElementById('op-ref').textContent.trim()) : null;
+    var sec = Math.max(0, dureeMin * 60 - ((cmdCd && cmdCd.at) ? Math.floor((Date.now() - cmdCd.at) / 1000) : 0)), dl = document.getElementById('deadline');
+    if (!dl) return;   // état payé : plus de décompte à afficher (audit 28/08)
+    (function tick() {
+      var m = Math.floor(sec / 60), s = sec % 60;
+      dl.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+      if (sec > 0) sec--;
+      setTimeout(tick, 1000);
+    })();
+  })();
+</script>
+<script>
+/* PRIX BLOQUÉ (fondatrice 22/08) : à 0, le code devient INVALIDE — jamais un paiement au vieux prix, on
+   renvoie revalider l'offre.
+   (18/09, soir — l'agent de caisse mobile est abandonné) CE DÉCOMPTE VIVAIT DANS LE SLAB DU FLASHCODE
+   (#op-cd-t, #op-slab) — le QR qu'on tendait à l'agent. Le slab est parti avec lui, et ce bloc tombait donc
+   en panne muette (`if (!t) return`), emportant avec lui le seul endroit qui disait « Code expiré » et
+   proposait de revalider le prix. Il agit désormais sur le bandeau d'urgence, qui reste. */
+(function () {
+  var D2 = window.PEC_DATA;
+  var dureeMin2 = (D2 && D2.scenario && D2.scenario.prixBloqueMinutes) || (D2 && D2.prixBloque && D2.prixBloque.dureeMin) || 60;
+  var refCd = ((document.getElementById('op-ref') || {}).textContent || '').trim();
+  var cmdCd2 = (refCd && window.PEC_BUS) ? PEC_BUS.commande(refCd) : null;
+  var sec = Math.max(0, dureeMin2 * 60 - ((cmdCd2 && cmdCd2.at) ? Math.floor((Date.now() - cmdCd2.at) / 1000) : 0));
+  var zone = document.getElementById('op-urgence');
+  if (!zone) return;
+  setTimeout(function fin() {
+    if (sec > 0) { sec--; setTimeout(fin, 1000); return; }
+    if (!document.getElementById('op-urgence')) return;   // le pane a pu être re-rendu (payé)
+    var txt = document.getElementById('op-urgence-txt');
+    if (txt) txt.innerHTML = '<b>Code expiré</b> — le prix doit être revérifié';
+    if (document.getElementById('op-revalider')) return;   // une seule fois
+    var cta = document.createElement('a');
+    cta.id = 'op-revalider';
+    cta.className = 'pec-cta pec-cta--tight tap';
+    cta.href = '../parcours/01-vol-aller-simple.html';
+    cta.style.cssText = 'display:block;text-align:center;margin-top:10px';
+    cta.textContent = 'Revalider le prix — retour à l\'offre';
+    zone.insertAdjacentElement('afterend', cta);
+  }, 1000);
+})();
+
+// Récap complet sous le code (fondatrice 27/08) — même trame que l'avant-paiement.
+(function () {
+  var D = window.PEC_DATA; if (!D || !D.recapHTML) return;
+  var ref = (document.getElementById('op-ref') || {}).textContent || '';
+  ref = ref.trim();
+  var z = document.getElementById('op-recap');
+  if (!z) return;   // écran sans zone récap (état payé) — audit 28/08
+  if (D.recapPromoPourRef(ref)) {
+    var h = D.recapHTML(ref, (D.promoCommande && ref === D.promoCommande.ref ? D.promoCommande.voyageurs : 1) || 1, true);   // modifiable tant que ce n'est pas payé
+    z.innerHTML = '<div style="font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--color-muted);padding:11px 16px 0">Ta commande</div>' + h;
+    z.style.display = 'block';
+  } else if (D.voyageursHTML) {
+    // commande de flux (?m=) : les voyageurs se nomment ICI, avant le paiement
+    var mQ = parseInt(new URLSearchParams(location.search).get('m'), 10);
+    var ec = (D.commandeEnCoursGet && mQ) ? D.commandeEnCoursGet(mQ) : null;
+    var nv = (ec && ec.voyageurs) || 1;
+    var tete = ec ? '<div style="padding:9px 16px 0;font-size:11.5px;font-weight:700;color:var(--color-ink)">' + ec.trajet + (ec.dates ? ' <span style="font-weight:600;font-size:10px;color:var(--color-muted)">· ' + ec.dates + '</span>' : '') + '</div>' : '';
+    z.innerHTML = '<div style="font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--color-muted);padding:11px 16px 0">Qui voyage</div>' + tete
+      + '<div style="border-top:1px solid var(--color-sep);margin-top:9px;padding:2px 16px 12px">' + D.voyageursHTML(ref, nv, true) + '</div>';
+    z.style.display = 'block';
+  }
+})();
+
+// Cohérence du parcours (fondatrice 27/08) : le « détail complet » du ticket payé
+// pointe la RÉF RÉELLEMENT payée (elle était figée sur une réf d'exemple).
+(function () {
+  var lk = document.getElementById('tk-detail');
+  var ref = ((document.getElementById('op-ref') || {}).textContent || '').trim();
+  if (lk && ref && ref !== '—') lk.setAttribute('href', '10-reservation-detail.html?ref=' + ref);
+})();
+
+// le RETOUR garde la commande (?m / res=promo) — jamais un retour qui perd le contexte
+(function () {
+  var r = document.getElementById('op-retour'); if (!r) return;
+  var q = location.search.match(/[?&](m=\d+|res=promo)/);
+  if (q) r.setAttribute('href', '01-ou-payer.html?' + q[1]);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash — Outils et API à intégrer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Un fond et un color-scheme EXPLICITES : sans eux, un navigateur en mode
+       sombre repeint le fond en noir alors que le texte reste #1A1A1A. */
+    color-scheme: light;
+    --vert: #1F4438; --cuivre: #D8722B; --creme: #F7F5F0; --encre: #1A1A1A;
+    --gris: #6B6966; --gris-clair: #E4E0D6; --blanc: #FFFFFF; --rouge: #C0392B; --radius: 10px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; color: var(--encre); background: var(--creme); line-height: 1.7; font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+  .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: var(--vert); color: var(--creme); overflow-y: auto; padding: 24px 0; z-index: 100; }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 0.5px solid rgba(244,241,234,0.15); margin-bottom: 16px; }
+  .sidebar-logo .brand { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 4px; }
+  .sidebar-logo .brand .accent { color: var(--cuivre); }
+  .sidebar-logo .doc-num { font-size: 11px; color: rgba(244,241,234,0.5); margin-top: 4px; }
+  .sidebar nav a { display: block; padding: 7px 20px; font-size: 12.5px; color: rgba(244,241,234,0.7); text-decoration: none; border-left: 2px solid transparent; }
+  .sidebar nav a:hover { color: var(--creme); border-left-color: var(--cuivre); background: rgba(244,241,234,0.06); }
+  .sidebar nav .section-head { padding: 14px 20px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(244,241,234,0.35); font-weight: 600; }
+  .doc-nav { margin-top: 24px; padding: 16px 20px 0; border-top: 0.5px solid rgba(244,241,234,0.15); }
+  .doc-nav p { font-size: 11px; color: rgba(244,241,234,0.4); margin-bottom: 8px; }
+  .doc-nav a { display: block; font-size: 12px; color: rgba(244,241,234,0.6); text-decoration: none; padding: 4px 0; }
+  .doc-nav a:hover { color: var(--cuivre); }
+
+  .main { margin-left: 240px; max-width: 920px; padding: 48px 56px; }
+
+  .doc-header { border-bottom: 1px solid var(--gris-clair); padding-bottom: 24px; margin-bottom: 40px; }
+  .doc-header .doc-tag { display: inline-block; background: var(--cuivre); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px; letter-spacing: 0.04em; }
+  .doc-header h1 { font-family: 'Archivo', sans-serif; font-size: 30px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .doc-header .meta { font-size: 13px; color: var(--gris); }
+
+  .section { margin-bottom: 48px; scroll-margin-top: 24px; }
+  h2 { font-family: 'Archivo', sans-serif; font-size: 21px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--gris-clair); color: var(--vert); }
+  h3 { font-family: 'Archivo', sans-serif; font-size: 16.5px; font-weight: 600; margin: 26px 0 12px; color: var(--encre); }
+  p { margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+  a { color: var(--vert); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0 20px; }
+  th { background: var(--vert); color: var(--creme); padding: 9px 11px; text-align: left; font-weight: 600; font-size: 11.5px; }
+  td { padding: 8px 11px; border-bottom: 0.5px solid var(--gris-clair); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(244,241,234,0.5); }
+  td code { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: rgba(31,68,56,0.07); color: var(--vert); padding: 2px 6px; border-radius: 4px; }
+
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; vertical-align: middle; }
+  .badge.retenu { background: var(--vert); color: #fff; }
+  .badge.alternatif { background: var(--gris-clair); color: var(--gris); }
+  .badge.obligatoire { background: var(--cuivre); color: #fff; }
+
+  /* Ancien `.note` conservé pour ne pas réécrire tout le contenu, mais rendu
+     comme les `.callout` des autres documents. */
+  .note { border-radius: var(--radius); padding: 14px 16px; margin: 16px 0; font-size: 13.5px; background: rgba(216,114,43,0.08); border-left: 3px solid var(--cuivre); }
+  .note strong { font-weight: 600; color: var(--encre); }
+
+  .checklist { background: rgba(31,68,56,0.06); border-left: 3px solid var(--vert); border-radius: var(--radius); padding: 16px 20px; }
+  ul.checklist-items { list-style: none; padding-left: 0; margin: 0; }
+  ul.checklist-items li { padding: 6px 0 6px 28px; position: relative; font-size: 14px; }
+  ul.checklist-items li::before { content: "☐"; position: absolute; left: 0; color: var(--vert); font-size: 16px; }
+
+  @media print { .sidebar { display: none; } .main { margin-left: 0; padding: 24px; } }
+  @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; padding: 24px 20px; } }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">PayEn<span class="accent">Cash</span></div>
+    <div class="doc-num">Documentation technique · v2.0 (livraison livreur)</div>
+  </div>
+  <nav>
+    <div class="section-head">Outils à intégrer</div>
+    <a href="#duffel">1. Duffel — Réservation de billets d'avion Retenu</a>
+    <a href="#hotelbeds">2. Hotelbeds APItude — Hébergements Retenu</a>
+    <a href="#expedia">2bis. Expedia Rapid API — Option écartée</a>
+    <a href="#encaissement">3. Encaissement en espèces par livreur — Cœur du produit, développé en interne</a>
+    <a href="#retour-cash">4. Retour du cash — Contrats bancaires à ouvrir</a>
+    <a href="#autres-outils">5. Autres outils techniques à prévoir</a>
+    <a href="#checklist">6. Checklist avant de démarrer l'intégration</a>
+  </nav>
+  <div class="doc-nav">
+    <p>Documents</p>
+    <a href="../docs/01-flux-metier.html">← Doc 1 : Flux métier</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">← Doc 2 : Schéma BDD</a>
+    <a href="../docs/03-api-specs.html">← Doc 3 : Spécifications API</a>
+    <a href="../docs/05-architecture.html">← Doc 5 : Architecture technique</a>
+    <a href="../docs/08-mecanisme-financier.html">← Doc 8 : Mécanisme financier</a>
+    <a href="../docs/09-espace-manager.html">← Doc 9 : Espace manager</a>
+    <a href="../GUIDE-DEMARRAGE.html">🚀 Guide de démarrage</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">📖 Glossaire central des champs</a>
+    <a href="../INDEX.html">🗂 Index du projet</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html">Ligne Mode — Étape 4, flux F11/F12</a>
+  </div>
+</aside>
+
+<main class="main">
+
+  <div class="doc-header">
+    <span class="doc-tag">Synthèse d'intégration</span>
+    <h1>PayEnCash — Outils et API tierces à intégrer</h1>
+    <p class="meta">Document de synthèse à destination du développeur. Référez-vous à <code>docs/03-api-specs.html</code> pour les contrats d'interface détaillés (endpoints, payloads, codes d'erreur). Ce document liste les comptes à créer, les accès à obtenir et les points de vigilance avant intégration.</p>
+  </div>
+
+  <section class="section" id="duffel">
+<h2>1. Duffel — Réservation de billets d'avion <span class="badge retenu">Retenu</span></h2>
+<table>
+  <tr><th>Élément</th><th>Détail</th></tr>
+  <tr><td>Rôle</td><td>Recherche d'offres de vol, création et paiement des commandes billets</td></tr>
+  <tr><td>URL de base</td><td><code>https://api.duffel.com</code></td></tr>
+  <tr><td>Authentification</td><td>Bearer token (<code>duffel_test_xxx</code> en sandbox, <code>duffel_live_xxx</code> en production)</td></tr>
+  <tr><td>Compte à créer</td><td><a href="https://duffel.com">duffel.com</a> — espace développeur self-service, sandbox immédiatement accessible</td></tr>
+  <tr><td>Couverture Maghreb</td><td>Royal Air Maroc, Air Algérie et Tunisair sont référencées. Certaines compagnies nécessitent une accréditation IATA/ARC propre, sauf à passer par l'offre "Managed Content" de Duffel (frais additionnels) — à clarifier avec leur équipe commerciale avant intégration.</td></tr>
+  <tr><td>Mécanisme de paiement</td><td>Duffel Balance — solde prépayé à créditer en amont, débité à chaque commande confirmée</td></tr>
+  <tr><td>Variable d'environnement</td><td><code>DUFFEL_API_KEY</code></td></tr>
+</table>
+<div class="note">Le Duffel Balance doit être réapprovisionné manuellement ou via une alerte automatique avant épuisement — prévoir un seuil d'alerte technique (voir doc-03, section codes d'erreur <code>insufficient_balance</code>).</div>
+  </section>
+
+  <section class="section" id="hotelbeds">
+<h2>2. Hotelbeds APItude — Hébergements <span class="badge retenu">Retenu</span></h2>
+<table>
+  <tr><th>Élément</th><th>Détail</th></tr>
+  <tr><td>Rôle</td><td>Recherche et réservation d'hébergements (hostels, hôtels, chambres privées)</td></tr>
+  <tr><td>Compte à créer</td><td><a href="https://developer.hotelbeds.com">developer.hotelbeds.com</a> — inscription en ligne self-service, immédiate, sans dossier commercial à faire approuver au préalable</td></tr>
+  <tr><td>Processus d'accès</td><td>Inscription en ligne → obtention immédiate de trois clés API (Hôtel, Activités, Transferts) avec accès à l'environnement d'évaluation → développement et tests → soumission de cas de test à l'équipe de certification → obtention des identifiants de production</td></tr>
+  <tr><td>Quota en évaluation</td><td>50 requêtes par jour dans l'environnement de test (erreur 403 au-delà) — largement suffisant pour le développement initial, à anticiper pour les tests d'intégration poussés</td></tr>
+  <tr><td>Identifiants requis</td><td>Clé API + secret, utilisés pour calculer le header <code>X-Signature</code> (hash SHA-256 hexadécimal de la clé API, du secret et du timestamp Unix courant) à chaque requête</td></tr>
+  <tr><td>Mécanisme de paiement</td><td><strong>POST-PAYÉ</strong> : le booking est confirmé puis la facture est réglée immédiatement, dès la validation de la collecte du cash. Contrairement à Duffel, <strong>aucun solde prépayé ni fonds de roulement Hotelbeds à porter</strong> — voir <code>docs/08-mecanisme-financier.html</code></td></tr>
+  <tr><td>Identifiants destination</td><td>Chaque destination nécessite un code propre au référentiel Hotelbeds (Content API) — pas systématiquement un code IATA standard</td></tr>
+  <tr><td>mTLS</td><td>Une authentification mutuelle par certificat peut être requise sur certains endpoints sensibles de réservation, en plus des headers Api-key/X-Signature — à vérifier à l'implémentation</td></tr>
+</table>
+<div class="note"><strong>Pourquoi Hotelbeds plutôt qu'Expedia Rapid API :</strong> Expedia Rapid n'est accessible que par candidature partenaire examinée individuellement par leur équipe commerciale, sans garantie d'acceptation pour une jeune structure sans volume de réservation déjà établi. Hotelbeds permet au contraire un accès self-service immédiat — c'est le critère décisif qui a fait pencher le choix, dans un contexte où le calendrier de lancement ne peut pas dépendre d'une validation commerciale incertaine.</div>
+<div class="note"><strong>Trésorerie inversée par rapport à Duffel :</strong> l'argent du client est encaissé <strong>en espèces, en main propre</strong>, au moment même de la collecte par le livreur — il n'y a plus de délai de versement d'un prestataire. Hotelbeds étant post-payé, la facture est réglée après l'encaissement : aucune avance n'est nécessaire de ce côté. Seul <strong>Duffel</strong> exige un solde prépayé à approvisionner en avance. Voir <code>docs/08-mecanisme-financier.html</code> pour le cycle du cash (collecte → dépôt) et le dimensionnement de l'avance Duffel.</div>
+  </section>
+
+  <section class="section" id="expedia">
+<h2>2bis. Expedia Rapid API — Option écartée</h2>
+<table>
+  <tr><th>Élément</th><th>Détail</th></tr>
+  <tr><td>Rôle envisagé</td><td>Alternative initialement étudiée pour la recherche et réservation d'hébergements</td></tr>
+  <tr><td>Compte à créer</td><td>Partenariat B2B Expedia Rapid — accès non self-service, nécessite une demande commerciale auprès d'Expedia Group, examinée individuellement</td></tr>
+  <tr><td>Délai typique</td><td>2 à 4 semaines pour les flux d'hébergement de base si la candidature est acceptée, certification incluse — variable selon la réactivité d'Expedia, sans garantie d'acceptation</td></tr>
+  <tr><td>Identifiants requis</td><td>Deux secrets distincts : la clé API et le secret partagé, nécessaires au calcul de la signature HMAC-SHA512 à chaque requête</td></tr>
+</table>
+<div class="note" style="background:#FAECE7; border-left-color:#A8402F;"><strong>⚠️ Motif d'écartement :</strong> Expedia est reconnu comme très sélectif dans l'acceptation de nouveaux partenaires — leur équipe doit s'engager individuellement sur chaque intégration, et une petite structure sans volume de réservation déjà établi n'est pas certaine d'être acceptée. C'est précisément ce risque d'incertitude sur le calendrier de lancement qui a conduit à retenir Hotelbeds à la place, sans phase d'essai parallèle.</div>
+  </section>
+
+  <section class="section" id="encaissement">
+<h2>3. Encaissement en espèces par livreur — <span class="badge obligatoire">Cœur du produit, développé en interne</span></h2>
+<div class="note"><strong>Aucun prestataire de paiement à intégrer.</strong> PayEnCash génère lui-même le code-barres et le code de sécurité, et encaisse en espèces — <strong>plafonnées à 1 000 €/transaction</strong> — au domicile du client via ses propres livreurs, tous <strong>salariés</strong>. Il n'y a donc ni contrat PSP, ni webhook entrant à sécuriser. En contrepartie, trois briques techniques deviennent nécessaires (ci-dessous), un <strong>KYC client gradué</strong> (3 achats ou 1 000 €/7 jours, PVID) doit être mis en place, et <strong>AJEK SASU n'est a priori pas assujettie à la LCB-FT — à confirmer par avis juridique</strong> — voir <code>docs/08-mecanisme-financier.html</code>.</div>
+<table>
+  <tr><th>Brique</th><th>Rôle</th><th>À prévoir</th></tr>
+  <tr><td>SDK cartographique + tuiles</td><td>Carte live de suivi du livreur (position + ETA) côté client, et navigation côté app livreur</td><td>Fournisseur de tuiles vectorielles (MapLibre côté rendu). <strong>Prévoir une clé et un quota dédiés en production</strong> — les tuiles de démonstration publiques ne sont pas utilisables à l'échelle. Variables : <code>MAP_TILES_URL</code>, <code>MAP_TILES_KEY</code></td></tr>
+  <tr><td>Canal temps réel</td><td>Diffusion de la position du livreur et de l'ETA vers le client, et des nouvelles courses vers l'app livreur</td><td>WebSocket ou SSE (choix technique figé au plan d'implémentation). Variable : <code>REALTIME_URL</code>. S'appuie sur Redis pour la diffusion multi-instances</td></tr>
+  <tr><td>Notifications push</td><td>Alerter le livreur d'une nouvelle course, et le client de l'arrivée imminente</td><td>Service de push mobile/web. Variable : <code>PUSH_PROVIDER_KEY</code></td></tr>
+  <tr><td>Stockage de la photo de preuve</td><td>Conserver la photo prise par le livreur à la collecte</td><td>Bucket <strong>chiffré</strong>, accès restreint, <strong>rétention bornée</strong> avec purge automatique (RGPD — <code>docs/05-architecture.html</code>). Variables : <code>PROOF_STORAGE_BUCKET</code>, <code>PROOF_STORAGE_KEY</code>, <code>PROOF_RETENTION_DAYS</code></td></tr>
+  <tr><td>SMS transactionnels</td><td>OTP de connexion, confirmation de commande, rappels de collecte et de départ</td><td>Brevo SMS — validation de l'expéditeur à anticiper</td></tr>
+</table>
+<div class="note">Idempotence obligatoire sur la <strong>validation de collecte</strong> : une même course validée deux fois (double tap, rejeu réseau) ne doit jamais déclencher deux achats fournisseur. La clé d'idempotence est <code>deliveries.id</code>.</div>
+<div class="note" style="background:#FAECE7; border-left-color:#A8402F;"><strong>⚠️ Point de vigilance remboursement :</strong> le remboursement se fait en <strong>espèces, par une course de retour</strong> du livreur — le client est remboursé intégralement quoi qu'il arrive. Ce que l'on récupère côté fournisseur dépend en revanche des <em>cancellation policies</em> (Hotelbeds <code>rateClass</code> NRF/NOR, Duffel <code>order_cancellation</code>) et peut être nul. Voir <code>docs/07-annulations-remboursements.html</code>.</div>
+  </section>
+
+  <section class="section" id="retour-cash">
+<h2>4. Retour du cash — <span class="badge obligatoire">Contrats bancaires à ouvrir</span></h2>
+<div class="note"><strong>C'est la moitié du produit qu'on oublie de provisionner.</strong> Encaisser des espèces ne sert à rien tant qu'elles ne sont pas revenues sur un compte. Deux contrats à ouvrir, tous <strong>hors développement</strong> : ils demandent des démarches commerciales et des délais bancaires qu'il faut anticiper très tôt, avant même le premier livreur.</div>
+<table>
+  <tr><th>Service</th><th>Rôle</th><th>À prévoir</th></tr>
+  <tr><td><strong>Cash Services</strong> — réseau de dépôt</td><td>Émission de <strong>cartes de dépôt nominatives</strong> et dépôt d'espèces en borne par les livreurs, jusqu'au <strong>seuil de 400 €</strong> par dépôt. Fourniture du <strong>rapport de transactions</strong> quotidien pour rapprocher les dépôts</td><td>Contrat entreprise auprès du réseau Cash Services. Une carte par livreur, à commander à chaque habilitation et à révoquer à chaque sortie. Cartographie des bornes accessibles dans chaque zone de livraison. Accès au rapport de dépôt (export quotidien) : identifiants, clé, format. Obtenir un <strong>fichier d'exemple réel</strong> avant de coder le parseur — le format est imposé par le prestataire et n'est pas négociable. Variables : <code>CASH_SERVICES_API_KEY</code>, <code>CASH_SERVICES_MERCHANT_ID</code>, <code>CASH_SERVICES_REPORT_ENDPOINT</code></td></tr>
+  <tr><td><strong>Compte bancaire de l'entreprise</strong> — API</td><td>Compte opérationnel : réception des fonds rapprochés (état <code>on_account</code>), puis <strong>ventilation des paies</strong> aux livreurs salariés</td><td>Compte pro + accès API (identifiant d'organisation et clé secrète). Portée nécessaire : lecture des transactions (confirmer l'arrivée des fonds) et initiation de virements (payer les livreurs)</td></tr>
+</table>
+<div class="note" style="background:#FAECE7; border-left-color:#A8402F;"><strong>⚠️ Ne jamais payer sur un dépôt seulement déclaré.</strong> Le livreur déclare son dépôt avec la photo du reçu : c'est une déclaration, pas une preuve d'encaissement bancaire. La chaîne est <code>collected → declared → reconciled → on_account → paid_out</code>, et seul <code>on_account</code> autorise un virement de paie. Voir <code>docs/08-mecanisme-financier.html</code>.</div>
+<div class="note">Le parseur du rapport Cash Services doit être <strong>idempotent</strong> : la clé de déduplication est la référence de transaction bancaire, jamais la date d'import. Un fichier rejoué ne doit pas créer de doublons, et un format inattendu doit mettre l'import en erreur plutôt que d'importer partiellement en silence.</div>
+<div class="note">La ligne <strong>Mode</strong> (articles, achat ferme, partenaires) partage ce même circuit d'encaissement et de dépôt, mais a sa propre logique de facturation et de TVA, et son propre <strong>KYB fournisseurs</strong> — voir <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html"><code>Étape 4 · flux F11/F12</code></a>.</div>
+  </section>
+
+  <section class="section" id="autres-outils">
+<h2>5. Autres outils techniques à prévoir</h2>
+<table>
+  <tr><th>Outil</th><th>Usage</th><th>Statut</th></tr>
+  <tr><td>Coffre de secrets (vault)</td><td>Stockage chiffré de toutes les clés API (Duffel, Hotelbeds, carto, push, SMS) et du sel de hachage des codes de sécurité</td><td>À choisir selon l'hébergeur retenu</td></tr>
+  <tr><td>File d'attente asynchrone</td><td>Dispatch livreur, diffusion du tracking, paiement fournisseur après collecte, retry en cas d'échec (D4), agrégation des notes</td><td>Redis / BullMQ</td></tr>
+  <tr><td>Hébergement et nom de domaine</td><td>Infrastructure de production</td><td>Auto-hébergé : <strong>OVH + CapRover</strong></td></tr>
+</table>
+  </section>
+
+  <section class="section" id="checklist">
+<h2>6. Checklist avant de démarrer l'intégration</h2>
+<div class="checklist">
+<ul class="checklist-items">
+  <li>Créer un compte développeur Duffel (sandbox) et obtenir une clé de test</li>
+  <li>Créer un compte développeur Hotelbeds (inscription en ligne immédiate) et obtenir les trois clés API d'évaluation</li>
+  <li>Dimensionner et provisionner l'avance de trésorerie nécessaire pour le <strong>solde Duffel uniquement</strong> (Hotelbeds étant post-payé) — voir <code>docs/08-mecanisme-financier.html</code></li>
+  <li>Définir le <strong>cycle de dépôt du cash</strong> collecté par les livreurs (fréquence, seuil de dépôt 400 €, plafond 1 000 €/transaction, traçabilité) et faire confirmer par avis juridique le statut d'AJEK au regard de la LCB-FT (a priori non assujettie)</li>
+  <li>Mettre en place le <strong>KYC client gradué</strong> (déclenché à 3 achats ou 1 000 €/7 jours, pièce d'identité — PVID) et, pour la ligne Mode, le <strong>KYB fournisseurs</strong> (voir <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html"><code>Étape 4 · flux F11/F12</code></a>)</li>
+  <li><strong>Ouvrir le contrat auprès du réseau Cash Services</strong> (cartes de dépôt nominatives) et relever les bornes accessibles dans chaque zone — délai commercial à anticiper avant le premier recrutement</li>
+  <li>Obtenir l&#39;<strong>accès au rapport de dépôt Cash Services</strong> (identifiants, clé, format) et surtout un <strong>fichier de rapport réel</strong> pour écrire le parseur sur le vrai format</li>
+  <li>Ouvrir le <strong>compte bancaire de l'entreprise</strong> et sa clé API (lecture des transactions + initiation de virements), qui sert de compte de ventilation des paies des livreurs</li>
+  <li>Fixer la <strong>fréquence de ventilation</strong> des paies et le <strong>plafond d&#39;encours de cash</strong> par livreur — deux réglages de l&#39;espace manager, à trancher avant la mise en service</li>
+  <li>Souscrire un fournisseur de <strong>tuiles cartographiques</strong> avec clé et quota dédiés, et choisir le service de <strong>notifications push</strong></li>
+  <li>Choisir la techno du <strong>canal temps réel</strong> (WebSocket ou SSE) et valider son passage à l'échelle multi-instances</li>
+  <li>Définir la politique de <strong>rétention des photos de collecte et des positions GPS</strong> (durée, purge automatique) avant d'ouvrir le service — prérequis RGPD</li>
+  <li>Préparer le processus de <strong>recrutement et d'habilitation des livreurs, tous salariés</strong> (candidature → session de recrutement → embauche → habilitation) et le paramétrage initial des zones et plafonds</li>
+  <li>Définir la stratégie de coffre de secrets pour les clés API en production</li>
+  <li>Lire intégralement <code>docs/03-api-specs.html</code> avant tout développement d'intégration</li>
+  <li>Valider avec Duffel le statut d'accréditation requis pour Royal Air Maroc / Air Algérie / Tunisair si le segment Maghreb est prioritaire au lancement</li>
+</ul>
+</div>
+  </section>
+
+</main>
+</body>
+</html>

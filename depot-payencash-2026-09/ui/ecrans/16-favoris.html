@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PayEnCash — Mes favoris</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<!-- MES FAVORIS (fondatrice 27/08) — sous-page du COMPTE. LA POLITIQUE : seuls les
+     HÉBERGEMENTS se mettent en favoris (jamais les vols — prix et places volatils) ;
+     gardés sur l'appareil, retirables ici d'un tap sur le cœur, réservables en
+     hôtel seul. Les métadonnées sont stockées AU MOMENT du toggle (autonome). -->
+</head>
+<body>
+
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:0 16px 12px">
+
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 2px 4px">
+      <a href="10-compte.html" class="tap" aria-label="Retour au compte" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-chevron-left"/></svg></a>
+      <div style="min-width:0">
+        <div style="font-size:17px;font-weight:800;letter-spacing:-0.02em;color:var(--color-ink)">Mes favoris</div>
+        <div style="font-size:10.5px;font-weight:600;color:var(--color-muted)">Tes hébergements mis de côté — gardés sur cet appareil.</div>
+      </div>
+    </div>
+
+    <p style="margin:6px 2px 12px;font-size:10px;line-height:1.5;color:var(--color-muted)"><span style="color:#E23B57">♥</span> Seuls les hébergements se mettent en favoris — jamais les vols : leurs prix et leurs places bougent en permanence.</p>
+
+    <div id="fav-liste" style="display:flex;flex-direction:column;gap:12px"></div>
+
+    <div id="fav-vide" style="display:none;flex-direction:column;align-items:center;gap:8px;border-radius:20px;background:var(--color-card);box-shadow:var(--shadow-card);padding:38px 24px;text-align:center">
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:999px;background:var(--color-mint);color:#E23B57;font-size:21px">♥</span>
+      <div style="font-size:13.5px;font-weight:800;color:var(--color-ink)">Aucun favori pour l'instant</div>
+      <div style="font-size:11.5px;line-height:1.55;color:var(--color-muted);max-width:250px">Touche le cœur sur un hébergement pendant ta recherche — il t'attendra ici.</div>
+      <a class="pec-cta pec-cta--tight tap" href="../parcours/03-vol-hotel.html?mode=stay" style="margin-top:6px">Chercher un hébergement</a>
+    </div>
+
+    <div style="height:16px"></div>
+  <div id="fermeture-slot"></div>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('');})();</script>
+</div>
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" href="10-compte.html" aria-current="page"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+
+<script>
+// Rendu des favoris — retirer = tap sur le cœur (délégation [data-fav] de
+// payencash-filters.js), la liste se re-rend via window.surFavori.
+function renderFavoris() {
+  var D = window.PEC_DATA;
+  var favs = D.favorisHebGet();
+  var z = document.getElementById('fav-liste'), vide = document.getElementById('fav-vide');
+  vide.style.display = favs.length ? 'none' : 'flex';
+  z.innerHTML = favs.map(function (f) {
+    return '<div class="pec-card" style="padding:0;overflow:hidden">'
+      + '<div data-lb-set data-photos="../assets/photos/' + (f.photo || '') + '" style="position:relative;height:110px;overflow:hidden">'
+      + (f.photo ? '<img loading="lazy" decoding="async" data-lb data-src="../assets/photos/' + f.photo + '" src="../assets/photos/' + f.photo + '" alt="" style="cursor:pointer;position:absolute;inset:0;width:100%;height:100%;object-fit:cover">' : '')
+      + '<button type="button" data-fav="' + f.id + '" aria-label="Retirer des favoris" class="tap" style="position:absolute;right:10px;top:10px;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:999px;background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(9,32,26,.25);color:#E23B57"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px;fill:#E23B57"><use href="#i-heart"/></svg></button>'
+      + (f.note ? '<span style="position:absolute;left:10px;top:10px;display:inline-flex;align-items:center;gap:5px"><span style="border-radius:7px 7px 7px 2px;background:var(--color-primary-dark);color:#fff;font-size:10.5px;font-weight:800;padding:3px 6px">' + f.note + '</span><span style="border-radius:6px;background:rgba(255,255,255,.92);color:var(--color-ink);font-size:9px;font-weight:800;padding:3px 7px">' + (f.label || '') + '</span></span>' : '')
+      + '</div>'
+      + '<div style="padding:11px 14px 13px">'
+      + '<div style="font-size:13.5px;font-weight:800;color:var(--color-ink)">' + (f.nom || f.id) + ' ' + (f.etoiles ? '<span style="color:var(--color-primary-dark)">' + '★'.repeat(+f.etoiles || 0) + '</span>' : '') + '</div>'
+      + (f.quartier ? '<div style="font-size:10.5px;color:var(--color-muted);margin-top:2px">' + f.quartier + '</div>' : '')
+      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px">'
+      + (f.nuit ? '<span style="font-size:11px;color:var(--color-muted)">dès <b style="font-size:13px;color:var(--color-primary-dark)">' + f.nuit + ' €</b>/nuit</span>' : '<span></span>')
+      + '<a class="tap" href="../parcours/03-vol-hotel.html?mode=stay" style="display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));color:#fff;font-size:10.5px;font-weight:800;padding:7px 12px;text-decoration:none">Réserver — hôtel seul<svg class="pec-ico" viewBox="0 0 24 24" style="font-size:12px"><use href="#i-arrow-right"/></svg></a>'
+      + '</div></div></div>';
+  }).join('');
+}
+window.surFavori = renderFavoris;
+renderFavoris();
+</script>
+</body>
+</html>

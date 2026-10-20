@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test d'ampleur — moteur de réservation FLY (serveur simulé)</title>
+<style>
+  :root{
+    --ink:#0F2A24;
+    --primary:#10A06A;
+    --primary-dark:#0B7A50;
+    --bg:#F4F7F5;
+    --card:#FFFFFF;
+    --line:#DEE8E3;
+    --muted:#5B7268;
+    --ok:#10A06A;
+    --warn:#B7791F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    line-height:1.6;
+    padding:32px 16px 64px;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+  header.doc{
+    background:linear-gradient(135deg,var(--primary-dark),var(--primary));
+    color:#fff;border-radius:14px;padding:32px 28px;margin-bottom:24px;
+  }
+  header.doc .kicker{font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;opacity:.85;margin-bottom:8px;}
+  header.doc h1{font-size:1.6rem;line-height:1.3;font-weight:700;}
+  header.doc .meta{margin-top:14px;font-size:.85rem;opacity:.9;}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:24px 26px;margin-bottom:20px;
+  }
+  h2{font-size:1.15rem;color:var(--primary-dark);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  h2 .num{
+    background:var(--primary);color:#fff;border-radius:8px;font-size:.8rem;
+    width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;flex:none;
+  }
+  p{margin-bottom:10px;}
+  p:last-child{margin-bottom:0;}
+  ul{margin:6px 0 10px 22px;}
+  li{margin-bottom:6px;}
+  .muted{color:var(--muted);font-size:.9rem;}
+  code{
+    background:#EAF3EE;border:1px solid var(--line);border-radius:6px;
+    padding:1px 6px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:.84em;color:var(--ink);
+  }
+  .tablewrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.9rem;}
+  th{
+    text-align:left;background:#EAF3EE;color:var(--primary-dark);
+    padding:10px 12px;border-bottom:2px solid var(--primary);white-space:nowrap;
+  }
+  td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  .pass{
+    display:inline-block;background:#E3F5EC;color:var(--primary-dark);
+    border:1px solid var(--primary);border-radius:999px;padding:1px 10px;font-weight:600;font-size:.82rem;white-space:nowrap;
+  }
+  .pill{
+    display:inline-block;background:#EAF3EE;border:1px solid var(--line);border-radius:999px;
+    padding:1px 10px;font-size:.8rem;color:var(--muted);white-space:nowrap;
+  }
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:6px;}
+  .kpi{
+    background:#F7FBF9;border:1px solid var(--line);border-radius:14px;
+    padding:14px 16px;text-align:center;
+  }
+  .kpi .v{font-size:1.5rem;font-weight:700;color:var(--primary-dark);}
+  .kpi .l{font-size:.78rem;color:var(--muted);margin-top:2px;}
+  .invariant{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);}
+  .invariant:last-child{border-bottom:none;}
+  .invariant .tick{
+    flex:none;width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:.8rem;margin-top:2px;
+  }
+  footer{margin-top:28px;text-align:center;font-size:.8rem;color:var(--muted);}
+</style>
+<!-- (18/09, soir) Cette batterie de charge (22/08) prouvait des invariants sur un mock, dont deux ne
+     décrivaient plus rien : le couple « part espèces + complément carte » avec rendu de monnaie, et le scan du
+     flashcode par un agent. Un invariant « prouvé » sur un geste qui n'existe plus se lirait comme une garantie :
+     la règle de la grâce est donc réécrite sur le geste réel (la saisie d'un bon d’achat), et le test de la somme
+     au centime est daté. Les chiffres de charge, eux, restent le relevé du 22/08.
+     Le fond est le même partout : l'agent de caisse mobile est abandonné, parce qu'un salarié qui
+     transporte des espèces chez le client expose l'entreprise à un risque humain et à un cadre CNAPS que le
+     projet ne veut pas porter ; et le reversement mensuel du partenaire est remplacé par un prélèvement à la
+     vente, parce qu'attendre l'argent d'un commerçant créait une créance à relancer. On ne dit plus nulle
+     part comment le client règle au comptoir : la promesse est de payer AVEC UN BON D’ACHAT. -->
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc">
+    <div class="kicker">PayEnCash · Documentation technique · Audit interne</div>
+    <h1>Test d'ampleur — moteur de réservation FLY (serveur simulé)</h1>
+    <div class="meta">Exécuté le 22 août 2026 · Node.js v24.19.0 · mock local <code style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff">127.0.0.1:8899</code> · Résultat global : <strong>8 tests / 8 réussis</strong> · Deuxième vague (22/08) : <strong>5 scénarios mixtes / 5 réussis</strong>, T1–T8 re-passés · Troisième vague (22/08) : <strong>7 preuves « zéro vente perdue » / 7 réussies</strong>, T1–T8 et M1–M5 re-passés</div>
+  </header>
+
+  <section class="card">
+    <h2><span class="num">1</span>Méthode : un serveur simulé, les vraies règles</h2>
+    <p>Le client a choisi de ne pas exposer de vraies clés API pendant la phase de maquettes. La logique de réservation a donc été testée contre un <strong>mock-serveur local</strong> écrit en Node.js pur (module <code>http</code> natif, zéro dépendance externe), qui reproduit fidèlement les contrats de nos fournisseurs :</p>
+    <ul>
+      <li><strong>Vols — modèle Duffel (prépayé)</strong> : recherche d'offres, puis <em>prix bloqué</em> (<code>price-lock</code>) valable 120 minutes — tant que le lock est valide, la réservation garde ce prix même si l'offre sous-jacente change.</li>
+      <li><strong>Hôtels — modèle Nuitée (LiteAPI)</strong> : flux <code>rates → prebook → book</code>, le prebook verrouillant le prix pendant 25 minutes.</li>
+      <li><strong>Règles PayEnCash</strong> : total exact au centime (espèces + carte), plafond espèces de 1 000 € par ordre avec proposition de paiement mixte, statut <code>AWAITING_CASH</code> jusqu'à l'encaissement, anti-double encaissement.</li>
+    </ul>
+    <p>Pourquoi cette approche est valable : les règles métier testées (expirations, sommes, plafonds, concurrence sur l'inventaire) sont <strong>les nôtres</strong>, indépendantes du fournisseur — le mock permet de les prouver sans aucun risque financier ni fuite de données. Une horloge simulable (header <code>X-Mock-Now</code>) permet de tester les expirations à +119 min ou +26 min sans attendre. Le harnais de test (Node natif, <code>fetch</code>) exécute chaque scénario et mesure les latences réelles.</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">2</span>Les 8 tests — résultats réellement mesurés</h2>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Scénario</th><th>Résultat</th><th>Chiffres mesurés</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>T1</strong></td>
+            <td>Vol simple, 1 passager, bout en bout<br><span class="muted">search → lock → order → pay</span></td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>Base 266,24 € → prix client <strong>367,41 €</strong> (formule <code>arrondi((base + max(3 €, 15 %)) × 1,20)</code> vérifiée au centime). Ordre <code>PEC-22B9FA</code>, encaissement 372,41 € → rendu <strong>5,00 €</strong> exact.</td>
+          </tr>
+          <tr>
+            <td><strong>T2</strong></td>
+            <td>Multi-passagers (2 et 5 pax)</td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>Par pax 421,49 € → 2 pax = <strong>842,98 €</strong>, 5 pax = <strong>2 107,45 €</strong> : total = prix/pax × N, exact au centime dans les deux cas, ordres créés (201).</td>
+          </tr>
+          <tr>
+            <td><strong>T3</strong></td>
+            <td>Concurrence : 30 clients simultanés sur la même offre à 9 sièges</td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td><strong>9 ordres créés, 21 refus 409, 0 autre statut.</strong> Jamais un 10ᵉ siège vendu : décrément atomique vérifié sous <code>Promise.all</code>.</td>
+          </tr>
+          <tr>
+            <td><strong>T4</strong></td>
+            <td>Prix bloqué 120 minutes (horloge simulée)</td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>À <strong>+119 min</strong> : ordre accepté (201) et facturé exactement au prix locké 289,19 €. À <strong>+121 min</strong> : <code>410 Gone</code> « prix bloqué expiré — relancer un price-lock ».</td>
+          </tr>
+          <tr>
+            <td><strong>T5</strong></td>
+            <td>Anti-double encaissement : 2 <code>pay</code> simultanés sur le même ordre</td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td><strong>1 seul PAID, 1 refus 409</strong> sur un dû espèces de 1 000,00 €. Impossible d'encaisser deux fois le même ordre.</td>
+          </tr>
+          <tr>
+            <td><strong>T6</strong></td>
+            <td>Plafond espèces 1 000 €</td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>Total 1 500,00 € tout espèces → <strong>422</strong> avec proposition mixte automatique (1 000,00 € espèces + 500,00 € carte). Le même ordre en mixte 1 000 € + 500 € → <strong>accepté (201)</strong>.</td>
+          </tr>
+          <tr>
+            <td><strong>T7</strong></td>
+            <td>Hôtel Nuitée (LiteAPI) : validations et prebook</td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>checkin ≥ checkout → <strong>400</strong>. Prebook 2 nuits (600,00 €) → ordre accepté (201). Prebook consommé à <strong>+26 min</strong> (fenêtre 25 min) → <strong>410 Gone</strong>.</td>
+          </tr>
+          <tr>
+            <td><strong>T8</strong></td>
+            <td>Charge : 200 réservations complètes en parallèle<br><span class="muted">800 appels HTTP (search + lock + order + pay)</span></td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td><strong>0 erreur inattendue</strong> sur 200 réservations. Latence bout-en-bout : p50 = 111,5 ms, p95 = 113,9 ms, max = 116,6 ms. Campagne totale : 122 ms (~1 641 réservations/s en local).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">3</span>Latences mesurées</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="v">111,5 ms</div><div class="l">p50 — réservation complète (4 appels), sous charge ×200</div></div>
+      <div class="kpi"><div class="v">113,9 ms</div><div class="l">p95 — réservation complète, sous charge ×200</div></div>
+      <div class="kpi"><div class="v">116,6 ms</div><div class="l">max observé sur 200 réservations</div></div>
+      <div class="kpi"><div class="v">0</div><div class="l">erreur inattendue sur 800 appels HTTP</div></div>
+    </div>
+    <p class="muted" style="margin-top:12px">Hors charge (T1), chaque appel unitaire répond en 2 à 3 ms : <code>search</code> 3,2 ms · <code>lock</code> 2,2 ms · <code>order</code> 2,0 ms · <code>pay</code> 2,1 ms. Ces chiffres mesurent notre logique en local ; en production s'ajoutera la latence réseau des fournisseurs réels.</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">4</span>Invariants prouvés</h2>
+    <div class="invariant"><span class="tick">✓</span><div><strong>Pas de survente.</strong> 30 demandes concurrentes sur 9 sièges → exactement 9 ventes, jamais 10. Le décrément d'inventaire est atomique à la création d'ordre (T3).</div></div>
+    <div class="invariant"><span class="tick">✓</span><div><strong>Prix bloqué 2 h honoré.</strong> Un ordre passé à +119 min est facturé exactement au prix du lock ; à +121 min le système répond 410 et exige un nouveau lock — aucun prix obsolète ne peut être facturé (T4).</div></div>
+    <div class="invariant"><span class="tick">✓</span><div><strong>Plafond de règlement 1 000 €.</strong> Tout ordre dépassant le plafond est refusé (422) et le moteur propose un découpage (T6). <i>(18/09, soir : le découpage testé le 22/08 était « part espèces + complément carte » d'un règlement remis à un agent — sans objet, il n'y a plus de carte dans le parcours client. Le plafond, lui, existe toujours sous une autre forme : <b>1 000 € de bons d’achat utilisés par client et par jour</b>, et un bon d’achat va jusqu'à 250 €, donc une grosse commande se solde par plusieurs bons.)</i></div></div>
+    <div class="invariant"><span class="tick">✓</span><div><strong>Anti-double encaissement.</strong> Deux encaissements simultanés sur le même ordre → un seul PAID, le second reçoit 409 (T5).</div></div>
+    <div class="invariant"><span class="tick">✓</span><div><strong>Total exact au centime.</strong> La somme des moyens présentés doit être strictement égale au total (sinon 422), au centime (T1, T2). <i>(18/09, soir : ce test vérifiait le couple « part espèces + complément carte » et le rendu de monnaie d'un règlement à l'agent — sans objet. L'invariant lui-même vaut toujours : un bon d’achat se débite du reste dû au centime, et plusieurs bons peuvent solder une commande.)</i></div></div>
+    <div class="invariant"><span class="tick">✓</span><div><strong>Expirations strictes côté hôtel.</strong> Fenêtre prebook de 25 minutes respectée : à +26 min la réservation est refusée en 410, conformément au modèle LiteAPI (T7).</div></div>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">5</span>Deuxième vague — multi-utilisateurs, multi-services (22/08)</h2>
+    <p>Sur demande de la direction, la batterie a été étendue au-delà du seul moteur FLY : <strong>plusieurs utilisateurs en même temps, sur des services différents</strong>. Le mock a été enrichi d'un service <strong>MODE</strong> minimal (boutique à stock limité : baskets « airmax » stock 1, sac stock 5, robe stock 1) avec réservation de 60 minutes, décrément atomique du stock, <strong>libération automatique du stock à l'expiration</strong> et anti-double paiement. Les cinq scénarios mixtes M1–M5 ont été exécutés, puis la batterie T1–T8 a été rejouée intégralement pour prouver qu'aucune régression n'a été introduite.</p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Scénario</th><th>Résultat</th><th>Chiffres mesurés</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>M1</strong></td>
+            <td>60 utilisateurs simultanés répartis sur 3 services<br><span class="muted">20 vols + 20 hôtels + 20 MODE, chacun son flux complet en parallèle</span></td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>Vols <strong>20/20</strong> (p50 40,3 ms · p95 41,1 ms), hôtels <strong>20/20</strong> (p50 41,7 ms · p95 41,8 ms), MODE : <strong>exactement 5 ventes</strong> (stock sac = 5) et 15 refus 409 propres (p50 20,3 ms · p95 30,6 ms). Tous les totaux exacts au centime. Campagne complète : <strong>46 ms</strong>. Zéro interférence entre services.</td>
+          </tr>
+          <tr>
+            <td><strong>M2</strong></td>
+            <td>Le même utilisateur mène de front un vol, un hôtel et un achat MODE</td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>Les trois flux aboutissent indépendamment en <strong>8 ms</strong> au total : vol <strong>728,74 €</strong>, hôtel <strong>1 500,00 €</strong>, article MODE <strong>89,90 €</strong> — trois paiements PAID, trois codes PEC distincts.</td>
+          </tr>
+          <tr>
+            <td><strong>M3</strong></td>
+            <td>Ruée : 12 clients simultanés sur l'airmax (stock 1), pendant que 12 autres réservent des vols</td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td><strong>Exactement 1 airmax vendu, 11 refus 409</strong> — jamais une 2ᵉ paire fantôme. Les 12 réservations de vol menées en parallèle réussissent toutes : <strong>l'inventaire MODE n'affecte pas les vols</strong>.</td>
+          </tr>
+          <tr>
+            <td><strong>M4</strong></td>
+            <td>Expiration MODE et isolation des horloges<br><span class="muted">réservation 60 min vs price-lock vol 120 min</span></td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>Client A réserve la robe (stock 1). À +30 min, client B est refusé (409, réservation A active). À <strong>+61 min</strong> : réservation A expirée → <strong>stock libéré</strong> → B réserve et paie (PAID) ; A qui tente de payer reçoit <strong>410 Gone</strong>. Pendant ce temps, un price-lock vol posé au même instant reste <strong>honoré à +119 min</strong> (201, total 1 005,68 € facturé au prix locké) : les horloges des services ne se polluent pas.</td>
+          </tr>
+          <tr>
+            <td><strong>M5</strong></td>
+            <td>Rafale désordonnée : 100 requêtes mélangées<br><span class="muted">search, lock, order, pay, reserve entremêlés — dont invalides volontaires : lock inexistant, double encaissement, montant faux, quantité nulle</span></td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>Chaque erreur reçoit <strong>le bon code</strong> : 30×200, 1×201, 20×404 (cibles inexistantes), 24×409 (doubles paiements + stock épuisé), 10×410 (lock expiré), 15×422 (montant faux, quantité invalide). <strong>0 mauvais code, 0 erreur 500.</strong> État final vérifié : pour chaque article, disponible + réservé + vendu = stock initial (aucune corruption).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:14px"><strong>Invariants supplémentaires prouvés par cette vague :</strong></p>
+    <div class="invariant"><span class="tick">✓</span><div><strong>Isolation des services.</strong> 60 utilisateurs mélangés sur 3 services (M1), ruée sur un article pendant des réservations de vol (M3) : aucun service ne dégrade ni ne corrompt les autres.</div></div>
+    <div class="invariant"><span class="tick">✓</span><div><strong>Isolation des horloges.</strong> L'expiration d'une réservation MODE (60 min) n'affecte pas un price-lock vol de 120 min posé au même moment — chaque compte à rebours vit sa vie (M4).</div></div>
+    <div class="invariant"><span class="tick">✓</span><div><strong>Libération de stock à l'expiration.</strong> Une réservation MODE non payée sous 60 minutes rend son stock, qui redevient achetable par un autre client ; le retardataire reçoit 410, jamais un article fantôme (M4).</div></div>
+    <div class="invariant"><span class="tick">✓</span><div><strong>Codes d'erreur exacts sous chaos.</strong> 100 requêtes désordonnées, valides et invalides mêlées : 404 / 409 / 410 / 422 toujours au bon endroit, zéro 500, compteurs finaux cohérents (M5).</div></div>
+    <p style="margin-top:14px"><strong>Non-régression :</strong> après extension du mock, la batterie <strong>T1–T8 a été rejouée deux fois : 8/8 réussis à chaque passage</strong>. Reprise T8 : 200 réservations complètes en parallèle, 0 erreur inattendue, p50 = 105,5 ms, p95 = 115,7 ms, max = 115,8 ms, campagne en 120 ms (~1 661 réservations/s en local). Aucun bug n'a été découvert dans le moteur existant au cours de cette vague ; aucun correctif n'a été nécessaire.</p>
+    <p class="muted">Fichiers : <code>mock-api.js</code> (étendu : <code>POST /mode/reserve</code>, <code>POST /mode/pay/:id</code>, hooks de test <code>GET /mode/stock</code> et <code>POST /mode/reset</code>) et <code>load-test-mix.js</code> (harnais M1–M5). L'horloge simulable <code>X-Mock-Now</code> est portée par chaque requête, ce qui permet de faire vieillir un service sans toucher aux autres.</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">6</span>Troisième vague — zéro vente perdue (22/08)</h2>
+    <p>Décision fondatrice de PayEnCash : <strong>aucune vente ne doit être perdue</strong> à cause d'une expiration, d'un stock épuisé ou d'un aléa au guichet. Le mock a été étendu pour implémenter cette politique, et sept preuves W1–W7 la vérifient chiffres à l'appui. Les cinq règles :</p>
+    <ul>
+      <li><strong>R1 — File d'attente prioritaire.</strong> Quand un article est épuisé ou réservé, le client peut rejoindre une file FIFO (<code>POST /mode/waitlist</code>). Dès qu'une réservation expire ou est annulée, le stock libéré n'est <em>pas</em> remis en vente publique : il est <strong>pré-réservé 15 minutes pour le premier de la file</strong>. Pendant cette fenêtre, lui seul peut réserver ; tout autre client reçoit un refus « réservé prioritairement ». Fenêtre écoulée sans conversion → elle passe au suivant, en cascade ; file vide → le stock redevient public.</li>
+      <li><strong>R2 — La grâce.</strong> (révisé le 18/09 au soir) Quand un bon d’achat est saisi sur une commande <em>encore valide</em>, ou qu'une transaction en ligne est ouverte dans la fenêtre valide, la vente est <strong>figée</strong> : même si l'expiration tombe pendant la saisie du code ou avant la notification du prestataire, l'encaissement aboutit. Un scan ou une ouverture <em>après</em> expiration reçoit 410 « commande expirée — le client doit revalider ». Une seconde transaction sur la même commande et le même moyen est reprise, jamais dupliquée.</li>
+      <li><strong>R3 — Offre partielle.</strong> Demander 3 unités quand il n'en reste qu'une n'est plus un échec sec : la réponse 409 porte <code>{available: 1, proposal: "reserver_1"}</code> et l'appel suivant avec la quantité proposée réussit.</li>
+      <li><strong>R4 — Plancher fournisseur.</strong> Le fournisseur ne peut jamais abaisser le stock (<code>POST /fournisseur/stock</code>) sous le total des ventes en cours (réservations actives + encaissements scannés) : refus 422 motivé — on ne retire jamais le sol sous une vente. Toute <em>augmentation</em> de stock notifie la file d'attente (fenêtres de 15 minutes).</li>
+      <li><strong>R5 — Annulation client.</strong> <code>POST /mode/cancel/:id</code> libère le stock immédiatement — et ce stock passe d'abord par la file d'attente (R1), jamais directement au public tant que quelqu'un attend.</li>
+    </ul>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Scénario</th><th>Résultat</th><th>Chiffres mesurés</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>W1</strong></td>
+            <td>La vente n'est pas perdue : expiration → file → conversion<br><span class="muted">A réserve la dernière paire ; B puis C rejoignent la file</span></td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>B refusé (409) puis inscrit <strong>position 1</strong>, C <strong>position 2</strong>. À +61 min la réservation de A expire : C tente sa chance → <strong>409 « réservé prioritairement »</strong> (fenêtre de B affichée jusqu'à +76 min). B réserve (201) et paie : <strong>PAID</strong>. Stock final : 1 vendu, 0 disponible, 0 fenêtre restante — l'article a bien trouvé preneur.</td>
+          </tr>
+          <tr>
+            <td><strong>W2</strong></td>
+            <td>Grâce au scan : la vente scannée est figée<br><span class="muted">scan à 5 s de l'expiration, comptage des espèces de 10 min</span></td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>Scan à <strong>59 min 55 s</strong> → statut <code>SCAN_HOLD</code>. Encaissement à <strong>69 min 55 s</strong> (10 min après le scan, 9 min 55 s <em>après</em> l'expiration théorique) → <strong>PAID</strong>. Contre-cas : réservation jamais scannée, scan à +61 min → <strong>410 « code expiré — le client doit revalider »</strong>.</td>
+          </tr>
+          <tr>
+            <td><strong>W3</strong></td>
+            <td>Offre partielle : 3 demandés, 1 disponible</td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>Réponse <strong>409</strong> avec <code>available: 1</code> et <code>proposal: "reserver_1"</code>. L'appel suivant du même client avec qty 1 → <strong>201</strong> (89,90 €), puis encaissement <strong>PAID</strong>. Une unité vendue au lieu de zéro.</td>
+          </tr>
+          <tr>
+            <td><strong>W4</strong></td>
+            <td>Plancher fournisseur et notification de la file<br><span class="muted">2 réservations actives sur le sac (stock 5)</span></td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>Passer le stock à 1 → <strong>422</strong> motivé : « 2 unité(s) engagée(s) dans des ventes en cours », plancher = 2. À 2 → <strong>accepté</strong> (0 disponible au public). Le fournisseur ajoute 3 unités (2 → 5) → <strong>2 clients de la file notifiés</strong> (2 fenêtres prioritaires), 1 unité publique : un tiers la réserve (201), le suivant est refusé « réservé prioritairement » (409), et le client notifié convertit sa fenêtre (201).</td>
+          </tr>
+          <tr>
+            <td><strong>W5</strong></td>
+            <td>Scans simultanés du même code<br><span class="muted">même point de vente, puis deux points différents</span></td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>Même point : 2 scans simultanés → <strong>1 accepté, 1 refus 409 « déjà en cours d'encaissement »</strong>. Deux points de vente différents : même résultat, <strong>1 / 1</strong>. Les deux ventes figées sont ensuite encaissées normalement (PAID). Un code = un seul guichet.</td>
+          </tr>
+          <tr>
+            <td><strong>W6</strong></td>
+            <td>Fenêtre prioritaire non convertie : cascade puis retour au public</td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>B, notifié après une annulation, laisse passer sa fenêtre (16 min) → <strong>C hérite d'une fenêtre en cascade et convertit</strong> (201 puis PAID) ; B revenu trop tard est refusé (409). Second cas : un seul inscrit qui ne convertit pas, file vide → <strong>le stock redevient public</strong> : un client jamais inscrit réserve (201), 0 fenêtre et 0 inscrit restants.</td>
+          </tr>
+          <tr>
+            <td><strong>W7</strong></td>
+            <td>Chaos : 120 requêtes mêlées<br><span class="muted">reserve, waitlist, scan, pay, cancel, stock fournisseur — valides et invalides entremêlés</span></td>
+            <td><span class="pass">✓ Réussi</span></td>
+            <td>120 requêtes en <strong>30 ms</strong> : 7×200, 12×201, 55×404, 21×409, 25×422 — <strong>0 mauvais code, 0 erreur 500</strong>. Ruée sur le sac (stock 5) : exactement 5 réservations. Ruée de 5 scans sur un même code : un seul passe. Ruée de 5 annulations : une seule passe. Invariant final vérifié article par article : <strong>disponible + réservés + scanHold + vendus = stock total</strong>, et <strong>aucune fenêtre prioritaire fantôme</strong>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:14px"><strong>Invariants supplémentaires prouvés par cette vague :</strong></p>
+    <div class="invariant"><span class="tick">✓</span><div><strong>Le stock libéré passe d'abord par la file.</strong> Expiration (W1) comme annulation (W6) : tant que quelqu'un attend, l'unité libérée lui est pré-réservée 15 minutes — elle ne repart jamais en vente publique par-dessus la file.</div></div>
+    <div class="invariant"><span class="tick">✓</span><div><strong>Une vente en cours de règlement n'expire jamais sous le nez de celui qui paie.</strong> La saisie d'un bon d’achat ou la transaction en ligne ouverte fige la réservation : le temps de taper le code ou d'attendre la notification ne peut plus faire perdre la vente (W2) — et une commande ne s'encaisse qu'une fois (W5, W7).</div></div>
+    <div class="invariant"><span class="tick">✓</span><div><strong>Jamais d'échec sec quand il reste de quoi vendre.</strong> Une demande trop grande reçoit une contre-proposition chiffrée immédiatement convertible (W3).</div></div>
+    <div class="invariant"><span class="tick">✓</span><div><strong>Le fournisseur ne casse jamais une vente en cours.</strong> Le stock ne peut pas descendre sous les ventes engagées (422 motivé), et toute hausse profite d'abord à la file d'attente (W4).</div></div>
+    <div class="invariant"><span class="tick">✓</span><div><strong>Comptabilité de stock inviolée sous chaos.</strong> Après 120 requêtes mêlées : disponible + réservés + scanHold + vendus = stock total pour chaque article, zéro fenêtre prioritaire fantôme (W7).</div></div>
+    <p style="margin-top:14px"><strong>Non-régression :</strong> après cette extension, <strong>T1–T8 et M1–M5 ont été rejoués deux fois chacun : 8/8 et 5/5 à chaque passage</strong>. Reprise T8 : 200 réservations complètes en parallèle, 0 erreur inattendue, p50 = 108,9 ms, p95 = 111,0 ms, max = 112,2 ms, campagne en 122 ms (~1 645 réservations/s en local). Aucun bug n'a été découvert dans le moteur existant ; le seul rebranchement porte sur la libération de stock (expiration et paiement tardif), qui route désormais chaque unité libérée vers la file d'attente au lieu du stock public — c'est précisément la règle R1.</p>
+    <p class="muted">Fichiers : <code>mock-api.js</code> (étendu : <code>POST /mode/waitlist</code>, <code>POST /mode/scan/:id</code>, <code>POST /mode/cancel/:id</code>, <code>POST /fournisseur/stock</code>, statut <code>SCAN_HOLD</code>, fenêtres prioritaires 15 min) et <code>load-test-vente.js</code> (harnais W1–W7). L'horloge simulable <code>X-Mock-Now</code> permet de jouer expirations et fenêtres à la seconde près.</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="num">7</span>Ce qu'il restera à faire avec les vraies clés</h2>
+    <ul>
+      <li><strong>Sandbox Duffel</strong> : rejouer T1–T4 contre l'environnement de test Duffel (offres réelles, <em>offer expiration</em> et création d'ordre prépayé), vérifier le mapping exact de nos montants en cents avec les devises Duffel et le comportement réel en cas d'offre expirée.</li>
+      <li><strong>Sandbox Nuitée (LiteAPI)</strong> : rejouer T7 sur le flux réel <code>rates → prebook → book</code>, confirmer la durée de vie effective du prebook et les codes d'erreur renvoyés à expiration.</li>
+      <li><strong>Latences réelles</strong> : re-mesurer p50/p95 avec la latence réseau des fournisseurs (les 2–3 ms locaux deviendront des centaines de ms) et fixer les timeouts et retries côté app.</li>
+      <li><strong>Cas fournisseurs non simulables</strong> : changements de prix entre search et lock, sièges refusés côté compagnie au moment du paiement, annulations — à couvrir en sandbox uniquement.</li>
+      <li><strong>Inchangé</strong> : les invariants PayEnCash (plafond de règlement, total au centime, anti-double encaissement, statut AWAITING_CASH) sont indépendants des fournisseurs et restent valables — <i>sauf le découpage « espèces + carte », sans objet depuis le 18/09 au soir (voir l'invariant T6).</i></li>
+    </ul>
+  </section>
+
+  <footer>
+    PayEnCash — audit interne · Test d'ampleur du moteur FLY sur serveur simulé · 22 août 2026<br>
+    <h2><span class="num">7</span>Quatrième vague — 700 utilisateurs en 3 minutes (23/08)</h2>
+    <p>Demande fondatrice : « comme si 700 utilisateurs, ~600 € de budget en moyenne, commandaient EN MÊME TEMPS sur une plage de 3 minutes — des commandes très variées ». Harnais <code>wave-u.js</code> : chaque client reçoit sa propre seconde d'arrivée dans la fenêtre de 3 minutes (horloge simulée X-Mock-Now), un budget tiré entre 200 € et 1 200 € (moyenne ≈ 600 €), et UN des 4 parcours réels : <b>vol aller simple</b> (174), <b>vol aller-retour</b> (175 — deux locks, deux encaissements), <b>hôtel seul</b> (175 — rates → prebook → book), <b>vol + hôtel</b> (176 — lock + prebook dans une seule commande). 5 % de « saboteurs » envoient une somme volontairement fausse.</p>
+    <p style="margin-top:10px"><strong>Résultat (reproduit sur 2 passages)</strong> : <b>700/700 parcours aboutis · 0 erreur 500 · 0 échec inattendu</b>. Les 36 saboteurs ont TOUS été rejetés avec le code exact attendu (422, somme au centime). Comptabilité globale : <b>756 736,18 €</b> encaissés — 550 227,39 € en espèces + 206 508,79 € par carte, <b>somme exacte au centime</b>, plafond légal des 1 000 € d'espèces respecté sur chaque commande (bascule mixte automatique au-delà). Campagne exécutée en ~0,4 s réelle (~2 100 requêtes).</p>
+    <p style="margin-top:10px"><strong>Ce que cette vague prouve en plus :</strong> le mélange des 4 parcours d'achat dans la même fenêtre ne crée aucune interférence (les horloges par client restent isolées) ; le chemin aller-retour en 2 dossiers tient la charge ; et le contrôle de somme rejette précisément les paiements faux SANS jamais toucher les paiements justes arrivés au même moment.</p>
+
+    Fichiers d'exécution : <code>mock-api.js</code> (serveur, port 8899), <code>load-test.js</code> (harnais T1–T8), <code>load-test-mix.js</code> (harnais M1–M5, deuxième vague) et <code>load-test-vente.js</code> (harnais W1–W7, zéro vente perdue) et <code>wave-u.js</code> (vague U, 700 utilisateurs) — Node.js natif, aucune dépendance.
+  </footer>
+
+</div>
+</body>
+</html>

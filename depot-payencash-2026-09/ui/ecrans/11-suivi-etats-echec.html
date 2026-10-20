@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Suivi : états d'échec et de remboursement</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-qr.js"></script>
+<!--
+  SUIVI — LES QUATRE ÉTATS NON NOMINAUX D'UNE COMMANDE.
+
+  (18/09, soir — l'agent de caisse mobile est abandonné) CETTE PAGE ÉTAIT BÂTIE AUTOUR DE L'AGENT :
+  carte de l'agent avec son véhicule et son numéro, « relancer un agent », « appeler l'agent », échec
+  d'encaissement à domicile (COLLECTION_FAILED), fenêtre pendant laquelle un second agent pouvait
+  repasser, et un état FAILED « somme encaissée, billet refusé » qui ne pouvait naître que d'espèces
+  comptées sur un palier. Personne ne se déplace plus, personne ne compte d'espèces pour PayEnCash :
+  ces états n'ont plus d'objet, et un écran qui les montrerait promettrait un service qui n'existe pas.
+
+  CE QUI RESTE, ET QUI NAÎT VRAIMENT QUELQUE PART :
+
+      BON_REFUSE   le code du bon d'achat a été refusé             → gift_cards.status / balance_cents
+      EXPIRED      la fenêtre de paiement s'est fermée           → orders.status = CANCELLED + expired_at
+      CANCELLED    la commande a été annulée avant tout paiement → orders.status = CANCELLED
+      REFUNDED     l'argent revient au client                    → orders.status = REFUNDED
+
+  (18/09, soir — pivot de positionnement) LA PROMESSE EST « PAYER AVEC UN BON D’ACHAT » : le client achète
+  un CODE PRÉPAYÉ — le Bon d’achat PayEnCash — puis le saisit. Comment il règle
+  ce code au comptoir ne nous regarde pas et n'est écrit nulle part. Un échec ne se produit donc plus chez
+  lui : il se produit sur le code (refusé, fenêtre fermée) ou sur la commande (annulée, remboursée). Les
+  moyens affichés sont DÉRIVÉS (D.moyensPaiementLabel) : le jour où la liste change, la page suit.
+
+  DEUX PRINCIPES DE CONCEPTION, tous deux dictés par le produit :
+
+  1. « Où est mon argent » est la seule question qui compte dans un état d'échec. Le bandeau de
+     montant est donc CONSTANT d'un état à l'autre — seule sa nature change : neutre quand rien
+     n'a été débité, menthe quand la somme repart vers le client. Chaque état DIT ce qui a été
+     débité ou non, et où aller ensuite.
+
+  2. Le fil d'avancement garde les MÊMES étapes dans les quatre états. Seul l'endroit où il casse
+     change. Un client qui a suivi une commande nominale reconnaît la même carte du parcours.
+
+  CE QU'ON N'UTILISE PAS, ET POURQUOI :
+  · Pas de rouge. La charte le réserve à la suppression (« Supprimer mon compte »). Un paiement
+    refusé n'est pas une destruction, et teindre l'écran en rouge ferait paniquer sur un incident
+    dont on garantit l'issue — d'autant qu'à ce stade rien n'a quitté les poches du client.
+  · L'ambre uniquement quand une horloge tourne et que le client peut encore agir (BON_REFUSE :
+    la fenêtre est ouverte, il peut repayer). Ailleurs, rien à presser chez lui.
+  · L'échec dans le fil suit la charte : pastille grise + tiret, jamais une croix rouge.
+-->
+<style>
+  /* Chrome de démonstration — HORS device, hors charte produit (fond scène #E7EBE9).
+     Sert au relecteur à basculer d'un statut à l'autre ; n'existe pas dans l'app. */
+  .demo-bar { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:18px; max-width:520px; }
+  .demo-bar button { border:0; cursor:pointer; border-radius:999px; padding:7px 13px; font-family:var(--font-mono);
+                     font-size:11px; font-weight:700; letter-spacing:.02em; background:#fff; color:#5C6B64;
+                     box-shadow:0 2px 6px rgba(15,42,36,.08); }
+  .demo-bar button[aria-pressed="true"] { background:var(--color-ink); color:#fff; }
+  .demo-bar button:focus-visible { outline:2px solid var(--color-primary); outline-offset:2px; }
+  .demo-note { max-width:520px; margin:0 0 14px; text-align:center; font-size:12px; line-height:1.5; color:#5C6B64; }
+</style>
+</head>
+<body>
+
+<div class="pec-scene" style="flex-direction:column">
+
+  <p class="demo-note"><b>Route <code>/suivi/[orderId]</code> — états non nominaux.</b>
+     Même composant, même fil d'avancement, même place pour le montant. Seuls <code>orders.status</code>
+     et l'état du bon (<code>gift_cards.status</code>) changent.</p>
+
+  <div class="demo-bar" role="group" aria-label="Statut de commande à afficher">
+    <button type="button" data-state="BON_REFUSE" aria-pressed="true">BON_REFUSE</button>
+    <button type="button" data-state="EXPIRED" aria-pressed="false">EXPIRED</button>
+    <button type="button" data-state="CANCELLED" aria-pressed="false">CANCELLED</button>
+    <button type="button" data-state="REFUNDED" aria-pressed="false">REFUNDED</button>
+  </div>
+
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-header">
+    <a class="pec-back tap" href="03-mes-codes.html" aria-label="Retour">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-chevron-left"/></svg>
+    </a>
+    <div class="pec-header-title">
+      <div class="t">Suivi de ta commande</div>
+      <div class="s">Réf. <b id="ref-hdr">—</b></div>
+    </div>
+    <span class="pec-pill" id="pill">—</span>
+  </div>
+
+  <div class="pec-body">
+
+    <!-- Bloc d'état : ce qui s'est passé, en une phrase, et quand. -->
+    <div class="pec-card">
+      <div style="display:flex;align-items:flex-start;gap:11px">
+        <span class="pec-tile" id="state-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-clock" id="state-ico"/></svg></span>
+        <div style="min-width:0;flex:1">
+          <div style="font-size:15px;font-weight:800;color:var(--color-ink)" id="head">—</div>
+          <div style="margin-top:3px;font-size:12.5px;font-weight:500;line-height:1.5;color:var(--color-muted)" id="sub">—</div>
+        </div>
+      </div>
+
+      <!-- Bandeau montant — l'élément constant des quatre états. -->
+      <div id="money">
+        <div class="row">
+          <div style="min-width:0">
+            <div class="lbl" id="money-lbl">—</div>
+            <div class="sub" id="money-sub">—</div>
+          </div>
+          <div class="amt"><span class="n" id="money-n">0,00</span><span class="e">€</span></div>
+        </div>
+      </div>
+
+      <!-- Compte à rebours : seulement quand le client peut encore agir. -->
+      <div class="pec-urgency" id="urgency" style="margin-top:14px" hidden>
+        <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-clock"/></svg>
+        <span class="t">Fenêtre de paiement</span><span class="n" id="deadline">—</span>
+      </div>
+    </div>
+
+    <!-- (18/09, soir) LA CARTE DE L'AGENT A DISPARU : plus personne ne vient, il n'y a plus de visage ni
+         de numéro à montrer. Ce qui la remplace : le MOYEN par lequel la commande devait être réglée,
+         et — quand elle l'a été — la preuve du règlement, dérivée par D.reglementLibelle(commande). -->
+    <div class="pec-card" id="moyen-card" hidden>
+      <div class="pec-eyebrow pec-eyebrow--off" id="moyen-eyebrow" style="margin-bottom:11px">—</div>
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span class="pec-tile"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-banknote"/></svg></span>
+        <div style="min-width:0;flex:1">
+          <div style="font-size:13.5px;font-weight:800;color:var(--color-ink)" id="moyen-nom">—</div>
+          <div style="margin-top:2px;font-size:12px;line-height:1.5;color:var(--color-muted)" id="moyen-sub">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fil d'avancement : mêmes étapes partout, seul le point de rupture bouge. -->
+    <div class="pec-card">
+      <div class="pec-section-label" style="margin-bottom:13px">Avancement</div>
+      <div class="pec-track" id="track"></div>
+    </div>
+
+    <!-- Code interne : tamponné « Expiré » quand il ne vaut plus rien. -->
+    <div class="pec-card" id="code-card" hidden>
+      <div style="position:relative">
+        <div class="pec-code-slab" id="code-slab">
+          <div class="pec-flashcode" id="barcode"></div>
+          <div class="pec-code-num" id="code-num">—</div>
+          <div class="pec-code-caption">Code interne PayEnCash · identifie ta commande</div>
+        </div>
+        <div class="pec-stamp pec-stamp--off" id="stamp" hidden><span>Expiré</span></div>
+      </div>
+    </div>
+
+    <div class="pec-reassure">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-shield"/></svg>
+      <p id="reassure">—</p>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:9px;margin-top:2px">
+      <button class="pec-cta pec-cta--tight tap" id="cta">—</button>
+      <button class="pec-btn-secondary tap" id="cta2" hidden>—</button>
+      <div id="cta-ok" hidden style="border-radius:12px;background:var(--color-mint);padding:10px 12px;font-size:11.5px;line-height:1.55;color:var(--color-mint-ink)"></div>
+    </div>
+
+  </div>
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" aria-current="page" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+
+<script>
+(function () {
+  /* ZÉRO DUR (audit 03/09) : la réf vient de l'URL (?ref=) ou du scénario canonique, le montant de la commande du
+     BUS, les horaires de ses horodatages RÉELS (sinon omis — jamais une heure inventée), la fenêtre de
+     PEC_DATA.scenario.fenetreEncaissementMinutes, les moyens de D.moyensPaiementLabel(), le motif du refus de la
+     TRANSACTION du prestataire. La barre de démo ne fait que choisir l'ÉTAT affiché.
+     (18/09, soir — l'agent de caisse mobile est abandonné) Ont disparu d'ici : le total « vol + déplacement »
+     (SC.agentTotal : plus aucun frais de déplacement), le nom et le véhicule de l'agent, le référentiel des motifs
+     d'échec d'encaissement (ref.motifsEchecEncaissement — ils décrivaient tous une remise de main à la main)
+     et l'ETA. Ce qui les remplace : la transaction du prestataire et le moyen de la commande. */
+  var D = window.PEC_DATA || {}, SC = D.scenario || {};
+  var qs = {}; try { location.search.replace(/^\?/, '').split('&').forEach(function (kv) { var t = kv.split('='); if (t[0]) qs[decodeURIComponent(t[0])] = decodeURIComponent(t[1] || ''); }); } catch (e) {}
+  var REF = qs.ref || SC.refPaiement || '—';
+  var CMD = null; try { CMD = (window.PEC_BUS && PEC_BUS.commande) ? PEC_BUS.commande(REF) : null; } catch (e1) {}
+  var MONTANT = (CMD && CMD.montant != null) ? String(CMD.montant).replace('.', ',') : '—';
+  var FEN = SC.fenetreEncaissementMinutes || 120;
+  var FEN_TXT = (D.infosPubliques ? (D.infosPubliques().fenetre || '') : '') || (FEN + ' min');
+  var MOYENS = (D.moyensPaiementLabel ? D.moyensPaiementLabel() : '') || 'Bon d’achat PayEnCash';
+  function hm(ts) { if (!ts) return ''; var d = new Date(ts); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function dj(ts) { if (!ts) return ''; var d = new Date(ts); return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + ' à ' + hm(ts); }
+  var T_CMD = CMD ? hm(CMD.at) : '', T_FIN = (CMD && CMD.at) ? hm(CMD.at + FEN * 60000) : '';
+  var T_PAY = CMD ? hm(CMD.payeAt) : '', T_ANN = CMD ? dj(CMD.annuleAt) : '', T_REMB = CMD ? dj(CMD.rembourseAt) : '';
+
+  /* (20/09 — « enlève la logique Neosurf ») LE REFUS N'EST PLUS CELUI D'UN PRESTATAIRE : le rail en ligne
+     n'existe plus, et `txDe` interrogeait un magasin parti avec lui — tout ce qui en dépendait était du texte
+     mort. LE SEUL REFUS QUI SE PRODUIT ENCORE EST CELUI D'UN CODE DE BON D'ACHAT : bloqué, expiré, déjà épuisé,
+     ou au-dessus du plafond du jour. Son motif est RÉDIGÉ PAR LA COUCHE DE DONNÉES (bonEtatLbl), jamais ici, et
+     un refus ne débite RIEN — c'est la première chose que le client doit lire. */
+  var MOYEN_K = (CMD && CMD.moyen) || null;
+  var MOYEN_LBL = (MOYEN_K && D.libelleMoyen) ? D.libelleMoyen(MOYEN_K) : '';
+
+  /* (18/09) LE BON D’ACHAT PAYENCASH QUI A RÉGLÉ, en tout (c.bon) ou en partie (c.bonApplique) : un remboursement le
+     RE-CRÉDITE — jamais autre chose à sa place (PEC_BUS.rembourser mode 'bon'). */
+  /* (19/09, soir) une commande MODE peut porter plusieurs bons (bornés à 250 € chacun) : le premier nomme la série. */
+  var BON = (CMD && (CMD.bons || []).length) ? CMD.bons[0] : ((CMD && CMD.bon && CMD.bon.code) ? CMD.bon : ((CMD && CMD.bonApplique && CMD.bonApplique.code) ? CMD.bonApplique : null));
+  var BON_MASQUE = (BON && D.bonMasque) ? D.bonMasque(BON.code) : '';
+  var BON_NON_DEBITE = !!(CMD && CMD.bonApplique && CMD.bonApplique.code && !CMD.bonApplique.consommeAt);
+  /* (20/09) LE MOTIF D'UN REFUS SE LIT SUR LE BON, il ne s'écrit pas ici : bonEtat en donne l'état réel
+     (bloqué, expiré, épuisé, annulé) et bonEtatLbl la phrase. Sans bon en main — un code jamais reconnu —
+     c'est la couche de données qui le dit aussi, par son refus standard. */
+  var BON_VIF = (BON && D.bonParCode) ? D.bonParCode(BON.code) : null;
+  var MOTIF_REF = (BON_VIF && D.bonEtatLbl) ? D.bonEtatLbl(D.bonEtat(BON_VIF)) : 'code inconnu, ou déjà utilisé en totalité';
+  var MODE_REMB = (CMD && CMD.modeRemboursement) || null;
+
+  /* PAR OÙ L'ARGENT REVIENT — dérivé du moyen qui a payé, jamais écrit. Le Bon d’achat se re-crédite (il ne se rembourse
+     ni sur une carte : c'est un titre à usage limité) ; le reste part en avoir ou par virement. */
+  var RETOUR = (MODE_REMB === 'bon' || (!MODE_REMB && BON)) ? 're-créditée sur ton Bon d’achat PayEnCash' + (BON_MASQUE ? ' ' + BON_MASQUE : '')
+    : 'créditée en avoir ou virée sur ton RIB';
+  var aRef = function (id) { var e = document.getElementById(id); if (e) e.textContent = REF; };
+  aRef('ref-hdr'); aRef('code-num');
+
+  // Les étapes sont les mêmes dans tous les états. `k` = done | failed | active | pending.
+  // C'est l'endroit de la rupture qui porte l'information, pas un jeu d'icônes différent par cas.
+  var S = {
+    /* (18/09, soir) REMPLACE COLLECTION_FAILED ; (20/09) ET LE REFUS D'UN PRESTATAIRE. Un encaissement ne
+       « n'aboutit » plus chez le client, et aucune page hébergée ne refuse plus rien : ce qui se refuse, c'est
+       UN CODE DE BON D'ACHAT — bloqué, expiré, déjà épuisé, ou au-dessus du plafond du jour. Rien n'est débité,
+       et la commande reste payable tant que sa fenêtre est ouverte, avec un autre bon. */
+    BON_REFUSE: {
+      pill: 'Code refusé', pillMod: 'wait', ico: 'i-alert',
+      head: 'Le code de ton bon d’achat a été refusé',
+      sub: 'Nous n\'avons pas pu débiter ' + (BON_MASQUE ? 'le bon ' + BON_MASQUE : 'ce bon d’achat') + ' : ' + MOTIF_REF + '.',
+      money: 'neutral', moneyLbl: 'Aucune somme débitée', moneySub: 'Un code refusé ne prélève rien', moneyN: '0,00',
+      urgency: true, code: true, stamp: false,
+      moyen: 'Moyen tenté', moyenNom: MOYEN_LBL || MOYENS, moyenSub: (BON_MASQUE ? 'Bon ' + BON_MASQUE + ' · ' : '') + MOTIF_REF,
+      steps: [['done', 'Commande confirmée', T_CMD ? 'Code généré à ' + T_CMD : 'Code généré'],
+              ['done', 'Code de bon d’achat présenté', BON_MASQUE || MOYENS],
+              ['failed', 'Code refusé', MOTIF_REF],
+              ['active', 'Nouveau code', 'la fenêtre est encore ouverte']],
+      reassure: 'Aucune somme n\'a été débitée. Tant que la fenêtre reste ouverte (' + FEN_TXT + ' max), tu peux régler la même commande avec le même code de commande — il te suffit d\'un autre ' + MOYENS + '.',
+      cta: 'Présenter un autre bon', cta2: 'Annuler ma commande',
+      href: '../fly/01-ou-payer.html',
+    },
+    EXPIRED: {
+      pill: 'Expirée', pillMod: 'off', ico: 'i-clock',
+      head: 'La fenêtre de paiement est passée',
+      sub: 'Elle s\'est fermée' + (T_FIN ? ' à ' + T_FIN : ' au bout de ' + FEN_TXT) + '. Le code ' + REF + ' n\'est plus valable.',
+      money: 'neutral', moneyLbl: 'Aucune somme débitée', moneySub: 'Aucune réservation engagée', moneyN: '0,00',
+      urgency: false, code: true, stamp: true,
+      moyen: null,
+      steps: [['done', 'Commande confirmée', T_CMD ? 'Code généré à ' + T_CMD : 'Code généré'],
+              ['done', 'Fenêtre de paiement ouverte', FEN_TXT],
+              ['failed', 'Aucun règlement enregistré', 'ni ' + MOYENS],
+              ['failed', 'Fenêtre fermée', T_FIN || ('après ' + FEN_TXT)]],
+      reassure: 'Rien n\'a été débité et aucun billet n\'a été réservé.' + (BON_NON_DEBITE ? ' Le Bon d’achat PayEnCash ' + BON_MASQUE + ' que tu avais appliqué n\'a pas été débité : son solde est intact.' : '') + ' Les prix ont pu changer depuis ta recherche — une nouvelle réservation repart du tarif du jour.',
+      cta: 'Refaire ma réservation', cta2: null,
+      href: '01-accueil.html',
+    },
+    /* (09/09 — lot 2 l'argent) ANNULÉE = rien n'a été débité (une commande payée ne s'annule jamais : elle se
+       rembourse) ; REMBOURSÉE = re-crédit du Bon d’achat, avoir crédité sur le compte, ou virement (RIB) — jamais
+       d'argent rendu de la main à la main (LCB-FT, PEC_BUS.rembourser). */
+    CANCELLED: {
+      pill: 'Annulée', pillMod: 'off', ico: 'i-x',
+      head: 'Commande annulée — rien n\'a été débité',
+      sub: (CMD && CMD.motifAnnulation ? 'Motif : ' + CMD.motifAnnulation + '. ' : '') + 'Aucun règlement n\'a été enregistré : tu ne dois rien, rien ne t\'est dû.',
+      money: 'neutral', moneyLbl: 'Rien à rembourser', moneySub: 'Aucun règlement n\'a eu lieu', moneyN: '0,00',
+      urgency: false, code: false, stamp: false,
+      moyen: null,
+      steps: [['done', 'Commande annulée', T_ANN],
+              ['done', 'Code de paiement désactivé', 'plus aucun règlement possible'],
+              ['done', 'Rien à rembourser', 'aucun règlement enregistré']],
+      reassure: 'Une commande annulée avant paiement ne coûte rien.' + (BON_NON_DEBITE ? ' Le Bon d’achat PayEnCash ' + BON_MASQUE + ' que tu avais appliqué n\'a pas été débité : son solde est intact.' : '') + ' Si tu veux toujours voyager, relance une recherche : le prix affiché est celui du moment.',
+      cta: 'Refaire une réservation', cta2: null,
+      href: '01-accueil.html',
+    },
+    REFUNDED: {
+      pill: 'Remboursée', pillMod: 'done', ico: 'i-check',
+      head: MODE_REMB === 'bon' ? 'Ton Bon d’achat PayEnCash a été re-crédité'
+        : MODE_REMB === 'virement' ? 'Remboursement par virement' : 'Remboursement crédité en avoir',
+      sub: MODE_REMB === 'bon'
+        ? ('Le montant est revenu sur le bon d’achat' + (BON_MASQUE ? ' ' + BON_MASQUE : '') + (T_REMB ? ' le ' + T_REMB : '') + ' — utilisable sur FLY et MODE, en une ou plusieurs fois. Un bon d’achat se rembourse sur lui-même, jamais ailleurs.')
+        : MODE_REMB === 'virement'
+        ? ((CMD.remboursements || []).some(function (m) { return m.virement && m.virement.statut === 'vire'; }) ? 'Le virement a été émis sur ton RIB' + (T_REMB ? ' (décidé le ' + T_REMB + ')' : '') + '.' : 'Le virement est en préparation — sous ' + (((window.PEC_DATA || {}).scenario || {}).lcbft || {}).virementHeures + ' h sur le RIB de ton compte' + (T_REMB ? ' (décidé le ' + T_REMB + ')' : '') + '.')
+        : ((CMD && CMD.avoirNonCredite) ? 'Avoir en cours de rattachement à ton compte — un conseiller s\'en occupe.' : 'Un avoir est crédité sur ton compte' + (T_REMB ? ' le ' + T_REMB : '') + ' — valable FLY et MODE, déduit à ta prochaine commande.'),
+      money: 'mint',
+      moneyLbl: MODE_REMB === 'bon' ? 'Re-crédité sur ton bon d’achat' : MODE_REMB === 'virement' ? 'Viré sur ton compte bancaire' : 'Crédité en avoir',
+      moneySub: T_REMB || 'Horodaté au journal',
+      moneyN: (CMD && CMD.montantRembourse != null) ? String(CMD.montantRembourse).replace('.', ',') : MONTANT,
+      urgency: false, code: false, stamp: false,
+      moyen: 'Réglée par', moyenNom: MOYEN_LBL || (BON ? ((D.bonsRef ? D.bonsRef().nom : 'Bon d’achat PayEnCash')) : MOYENS),
+      moyenSub: (CMD && D.reglementLibelle) ? D.reglementLibelle(CMD) : '',
+      steps: [['done', 'Règlement encaissé', T_PAY || ''],
+              ['done', 'Remboursement décidé', T_ANN || T_REMB || ''],
+              ['done', MODE_REMB === 'bon' ? 'Bon d’achat re-crédité' : MODE_REMB === 'virement' ? 'Virement' : 'Avoir crédité',
+                (T_REMB ? T_REMB + ' · ' : '') + ((CMD && CMD.montantRembourse != null) ? String(CMD.montantRembourse).replace('.', ',') : MONTANT) + ' €']],
+      reassure: MODE_REMB === 'bon' ? 'Un Bon d’achat PayEnCash est un titre à usage limité : ce qu\'il a réglé lui revient. Son solde est visible dans Compte.'
+        : 'Un remboursement se fait en re-crédit du bon d’achat, en avoir ou par virement — jamais sur une carte, tu n\'en as pas donné (conformité LCB-FT). Le solde de ton avoir est visible dans Compte.',
+      cta: 'Voir mon compte', cta2: null,
+      href: '10-compte.html',
+    },
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var etatCourant = 'BON_REFUSE';
+
+  function renderTrack(steps) {
+    $('track').innerHTML = steps.map(function (s, i) {
+      var k = s[0], last = i === steps.length - 1;
+      // Charte : done = pastille verte + check ; failed = pastille grise + tiret ;
+      // active = pastille ambre pulsée ; pending = pastille grise + numéro.
+      var inner = k === 'done' ? '<svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-check"/></svg>'
+                : k === 'failed' ? '<svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-minus"/></svg>'
+                : k === 'active' ? '' : (i + 1);
+      return '<div class="pec-track-step pec-track-step--' + k + '">' +
+               '<div class="pec-track-badge"><div class="pec-track-dot">' + inner + '</div>' +
+                 (last ? '' : '<div class="pec-track-line"></div>') + '</div>' +
+               '<div class="pec-track-body"><div class="t">' + D.esc(s[1]) + '</div>' +
+                 (s[2] ? '<div class="s">' + D.esc(s[2]) + '</div>' : '') + '</div>' +
+             '</div>';
+    }).join('');
+  }
+
+  function render(key) {
+    var c = S[key]; etatCourant = key;
+    $('pill').textContent = c.pill;
+    $('pill').className = 'pec-pill pec-pill--' + c.pillMod;
+    $('state-ico').setAttribute('href', '#' + c.ico);
+    // Le puits de l'icône suit la nature de l'état : menthe quand l'argent revient, neutre sinon.
+    $('state-tile').className = 'pec-tile' + (c.money === 'mint' ? ' pec-tile--mint' : '');
+    $('head').textContent = c.head;
+    $('sub').textContent = c.sub;
+
+    $('money').className = c.money === 'mint' ? 'pec-mint-banner' : 'pec-neutral-banner';
+    $('money').style.marginTop = '14px';
+    $('money-lbl').textContent = c.moneyLbl;
+    $('money-sub').textContent = c.moneySub;
+    $('money-n').textContent = c.moneyN;
+
+    $('urgency').hidden = !c.urgency;
+    $('deadline').textContent = T_FIN || (FEN_TXT + ' max');   // fermeture réelle (commande du bus) sinon la durée de la fenêtre
+    $('code-card').hidden = !c.code;
+    $('stamp').hidden = !c.stamp;
+    $('code-slab').style.opacity = c.stamp ? '.45' : '1';
+
+    // (18/09, soir) la carte du MOYEN a pris la place de la carte de l'agent : elle ne s'affiche que si l'état a
+    // quelque chose à dire sur le règlement — sinon rien, plutôt qu'un bloc vide.
+    $('moyen-card').hidden = !c.moyen;
+    if (c.moyen) {
+      $('moyen-eyebrow').textContent = c.moyen;
+      $('moyen-nom').textContent = c.moyenNom || '—';
+      $('moyen-sub').textContent = c.moyenSub || '';
+    }
+
+    renderTrack(c.steps);
+    $('reassure').textContent = c.reassure;
+    $('cta').textContent = c.cta;
+    $('cta2').hidden = !c.cta2;
+    if (c.cta2) $('cta2').textContent = c.cta2;
+    $('cta-ok').hidden = true;
+  }
+
+  /* Les CTA MÈNENT quelque part (plus de bouton mort) : choisir un autre moyen de paiement, refaire une
+     recherche, ouvrir son compte. (18/09, soir) « Relancer un agent » et « Suivre mon agent » ont disparu —
+     ils ne pointaient plus nulle part. « Annuler ma commande » ANNULE vraiment, par le bus. */
+  $('cta').addEventListener('click', function () { var c = S[etatCourant]; if (c && c.href) window.location = c.href; });
+  $('cta2').addEventListener('click', function () {
+    var ok = $('cta-ok'); ok.hidden = false;
+    var r = null; try { r = (window.PEC_BUS && PEC_BUS.annulerParClient) ? PEC_BUS.annulerParClient(REF, 'annulée par le client après un paiement refusé') : null; } catch (eA) {}
+    if (r && r.ok) { ok.innerHTML = '✓ Commande <b>' + D.esc(REF) + '</b> annulée — rien n\'a été débité.'; suivreBus(true); }
+    else if (r && r.message) { ok.innerHTML = D.esc(r.message) + ' Besoin d\'aide ? <a href="14-assistance.html" style="font-weight:800;color:var(--color-primary-dark)">Assistance</a>.'; }
+    else { ok.innerHTML = 'Pour annuler, contacte l\'<a href="14-assistance.html" style="font-weight:800;color:var(--color-primary-dark)">Assistance</a> — rien n\'est débité.'; }
+  });
+
+  var btns = [].slice.call(document.querySelectorAll('.demo-bar button')), demoTouchee = false;
+  btns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      demoTouchee = true;   // la barre de démo garde la main : le bus ne repeint plus par-dessus un état choisi
+      btns.forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+      render(b.dataset.state);
+    });
+  });
+
+  /* (08/09 — audit « écran sourd ») l'état AFFICHÉ suit la commande du BUS : paiement refusé par le prestataire,
+     fenêtre expirée, annulée, remboursée — ils arrivent par pec-bus ou par un autre onglet.
+     (18/09, soir) le statut 'echec' du bus naissait de l'agent (echecEncaissement) : il ne se produit plus. */
+  function etatDuBus() {
+    var c = null; try { c = (window.PEC_BUS && PEC_BUS.commande) ? PEC_BUS.commande(REF) : null; } catch (e) {}
+    if (!c) return null;
+    if (c.statut === 'rembourse') return 'REFUNDED';
+    if (c.statut === 'annule') return (c.expire === true || c.annulePar === 'systeme') ? 'EXPIRED' : 'CANCELLED';   // (09/09 — lot 3) l'expiration est un fait porté par la commande (expire/expireAt), plus une regex
+    return null;
+  }
+  function suivreBus(force) {
+    if (demoTouchee && force !== true) return;
+    var k = etatDuBus(); if (!k || k === etatCourant) return;
+    btns.forEach(function (o) { o.setAttribute('aria-pressed', String(o.dataset.state === k)); });
+    render(k);
+  }
+  render(etatDuBus() || 'BON_REFUSE');
+  btns.forEach(function (o) { o.setAttribute('aria-pressed', String(o.dataset.state === etatCourant)); });
+  window.addEventListener('pec-bus', function () { suivreBus(); });
+  window.addEventListener('storage', function (e) { if (!e.key || /^pec_bus_/.test(e.key)) suivreBus(); });
+})();
+</script>
+<script>
+  // FLASHCODE = vrai QR de la réf affichée (le code voisin dans le slab).
+  (function () {
+    if (!window.PEC_QR) return;
+    document.querySelectorAll('.pec-flashcode').forEach(function (bc) {
+      var slab = bc.closest('.pec-code-slab'); var cn = slab && slab.querySelector('.pec-code-num');
+      if (cn) PEC_QR.render(bc, cn.textContent.trim());
+    });
+  })();
+</script>
+</body>
+</html>

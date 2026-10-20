@@ -1,0 +1,20 @@
+{
+  "name": "payencash-fly",
+  "version": "1.0.0",
+  "description": "PayEnCash Fly — Application de réservation de billets d’avion",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve ."
+  },
+  "keywords": [
+    "payencash",
+    "fly",
+    "billets-avion",
+    "duffel",
+    "flights"
+  ],
+  "author": "AJEK",
+  "license": "UNLICENSED",
+  "private": true
+}

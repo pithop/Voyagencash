@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PayEnCash — Note développeur v3.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Sans ceci, un navigateur en mode sombre rend champs, listes et ascenseurs
+     en sombre sur notre fond creme. La doc est concue en clair, on le declare. */
+  color-scheme: light;--vert:#1F4438;--cuivre:#D8722B;--creme:#F7F5F0;--encre:#1A1A1A;--gris:#6B6966;--gc:#E4E0D6;--blanc:#FFFFFF;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--creme);color:var(--encre);max-width:860px;margin:0 auto;padding:32px 18px 80px;}
+.hdr{background:var(--vert);border-radius:16px;padding:28px 24px;margin-bottom:32px;}
+.hdr h1{font-family:'Archivo',sans-serif;font-size:28px;font-weight:800;color:var(--creme);margin-bottom:6px;}
+.hdr-sub{font-size:14px;color:rgba(244,241,234,0.65);}
+.meta{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.meta span{font-size:11px;font-weight:600;color:rgba(244,241,234,0.7);background:rgba(255,255,255,0.1);padding:4px 10px;border-radius:6px;}
+h2{font-family:'Archivo',sans-serif;font-size:20px;font-weight:800;color:var(--encre);margin:32px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--gc);}
+h3{font-family:'Archivo',sans-serif;font-size:15px;font-weight:700;color:var(--vert);margin:18px 0 8px;}
+p{font-size:14px;color:var(--gris);line-height:1.75;margin-bottom:10px;}
+strong{color:var(--encre);}
+code{font-family:'JetBrains Mono',monospace;font-size:12px;background:#E8F5FF;color:#1a3a5c;padding:2px 6px;border-radius:4px;}
+pre{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--encre);color:#e8f5e9;padding:16px;border-radius:10px;overflow-x:auto;margin:10px 0;line-height:1.7;}
+.alert{border-radius:10px;padding:14px 16px;margin:12px 0;font-size:13px;line-height:1.65;}
+.ai{background:#E1F5EE;border:1.5px solid rgba(15,110,86,0.2);color:#0F6E56;}
+.aw{background:#FEF5EE;border:1.5px solid rgba(216,114,43,0.3);color:var(--cuivre);}
+.ac{background:#FEEEEE;border:1.5px solid rgba(204,0,0,0.2);color:#CC0000;}
+ul{margin:6px 0 10px 18px;display:flex;flex-direction:column;gap:6px;}
+li{font-size:13px;color:var(--gris);line-height:1.6;}
+li strong{color:var(--encre);}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12px;}
+th{background:var(--vert);color:var(--creme);padding:9px 12px;text-align:left;font-weight:700;}
+td{padding:9px 12px;border-bottom:1px solid var(--gc);color:var(--encre);vertical-align:top;}
+tr:nth-child(even) td{background:rgba(0,0,0,0.015);}
+.score{display:inline-block;background:#0F6E56;color:#fff;font-family:'Archivo',sans-serif;font-size:13px;font-weight:800;padding:3px 8px;border-radius:6px;margin-right:4px;}
+</style>
+</head>
+<body>
+<div style="background:#E6F4EC;border:2px dashed #0C7F54;border-radius:10px;padding:12px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#0F2A24;line-height:1.7">
+  <b>État au 18/09/2026, au soir — c'est cette note qui fait foi côté développeur.</b> Trois décisions la résument :
+  <b>①</b> le client dispose de <b>deux moyens de paiement sans carte</b>, tous deux achetés au comptoir d'un commerce — le
+  <b>Bon d'achat PayEnCash</b> (notre réseau de commerçants sous contrat) et le <b>Bon d’achat PayEnCash</b> (réseau de distribution) ;
+  <b>②</b> le <b>commerçant partenaire vend le bon d'achat</b> et sa carte bancaire est <b>prélevée à la seconde</b>, du montant
+  du bon moins sa commission, via <b>Stripe</b> — il n'y a plus de reversement mensuel, plus de créance ;
+  <b>③</b> le <b>règlement</b> est le <b>débit du bon sous verrou</b>, côté serveur, et c'est lui seul qui règle la
+  commande — jamais l'app, jamais un tiers. <i>(20/09 : le rail d'un prestataire en ligne est supprimé.)</i>
+  <br><b>Retiré le 18/09 au soir :</b> l'agent de caisse mobile et tout son circuit d'espèces (dispatch, position, code de
+  sécurité, encours, dépôts en automate, chaîne <code>collected → declared → …</code>, service <code>/logistique</code>, app
+  coursier), parce qu'un salarié qui transporte des billets est un risque CNAPS et qu'il imposait un complément par carte —
+  exactement ce que « payer sans carte » promet d'éviter. Plus aucune espèce ne transite par AJEK.
+  Références à jour : <a href="server/README-DEV.md"><code>server/README-DEV.md</code></a> ·
+  <a href="ESPACE-COMMERCANT/documents/partie-4-flux.html">Étape 4 — flux</a> ·
+  <a href="ESPACE-COMMERCANT/documents/partie-6-donnees.html">Étape 6 — données</a>.
+</div>
+
+<div class="hdr">
+  <h1>Note développeur — v3.0</h1>
+  <div class="hdr-sub">PayEnCash · Ce qui fait naître un bon d'achat, et ce qui règle une commande</div>
+  <div class="meta">
+    <span>AJEK SASU · Émilie Ruiz</span><span>18 septembre 2026 (au soir)</span>
+    <span>Confidentiel</span>
+  </div>
+</div>
+
+<h2>1. Le chemin de l'argent — à lire avant de coder quoi que ce soit</h2>
+<p>Un seul trajet, quatre gestes, et rien entre les deux :</p>
+<pre>① Le client achète son Bon d'achat PayEnCash au comptoir d'un commerce partenaire.
+   → Comment il règle le commerçant ne nous regarde pas : le commerçant encaisse
+     pour SON propre compte, par les moyens qu'il accepte.
+
+② Au moment même, la carte bancaire enregistrée du commerce est PRÉLEVÉE
+   (prestataire Stripe) de : valeur du bon − sa commission TTC.
+   → La banque accepte  : le code est tiré, le ticket s'imprime.
+   → La banque refuse   : AUCUN bon n'existe. La charge refusée reste en base
+                          avec son motif, l'API répond 402.
+
+③ Le client saisit le code du ticket sur le site (Mode ou Fly).
+
+④ Le bon est DÉBITÉ sous verrou, dans une seule transaction SQL, et la commande
+   est réglée. S'il ne couvre pas tout, le reste dû se règle par un autre moyen.</pre>
+
+<h3>Les trois invariants</h3>
+<div class="alert ai">🟢 <strong>Aucun numéro de carte n'entre jamais chez nous.</strong> Le PAN et le cryptogramme sont tokenisés
+<em>depuis le navigateur du gérant</em>, avec la clé publique du prestataire. Le serveur ne reçoit qu'une <strong>empreinte</strong>
+(<code>card_…</code>), les <strong>quatre derniers chiffres</strong>, la <strong>marque</strong> et l'<strong>échéance</strong> — c'est tout ce que porte
+<code>partner_cards</code>. <code>stripe.refuserDonneesCarte()</code> parcourt toute charge utile entrante et la refuse si elle
+porte un numéro ou un cryptogramme, même déguisé. Ne jamais contourner cet appel : c'est lui qui met AJEK hors du périmètre
+PCI-DSS par construction.</div>
+<div class="alert ai">🟢 <strong>Un bon d'achat ne naît qu'après l'accord de la banque.</strong> Le prélèvement précède l'émission, dans
+la même transaction. La contrainte <code>partner_charges_refus</code> le fait respecter en base : une charge <code>refused</code>
+ne peut pas porter de <code>gift_card_id</code>. Et <code>partner_charges_motif</code> interdit le refus muet.</div>
+<div class="alert ai">🟢 <strong>Une commande ne se règle que de deux façons.</strong> Sur la <strong>notification serveur du prestataire</strong>
+en ligne, ou sur le <strong>débit d'un bon d'achat</strong> sous verrou. La contrainte <code>valideur_obligatoire</code> de la table
+<code>payments</code> l'écrit dans la base : <code>collected_at</code> ne peut être posé que si <code>psp_transaction_id</code> existe,
+ou si <code>method = 'bon'</code> avec un <code>gift_card_id</code>. Aucun humain ne valide un encaissement.</div>
+
+<h3>Ce que le commerçant ne fait jamais</h3>
+<p>Il <strong>vend un titre</strong> ; il <strong>n'encaisse jamais une commande</strong> PayEnCash. C'est ce qui sépare ce modèle du réseau
+abandonné le 17/09 (un tiers qui encaisse pour le compte d'AJEK relève de l'agrément). Le bon d'achat est un moyen de paiement à
+usage limité accepté par le seul émetteur — art. L521-3 I 1° CMF, hors monnaie électronique (art. L315-1 CMF), bon à usages
+multiples (art. 256 ter CGI : TVA due à l'utilisation, pas à la vente). Voir
+<a href="ESPACE-COMMERCANT/documents/partie-2-juridique-socle.html#bon">Étape 3 §2b</a>,
+<a href="ESPACE-COMMERCANT/documents/contrat-distribution-bons.html">le contrat de distribution</a> et
+<a href="ESPACE-COMMERCANT/documents/conditions-bon-payencash.html">les conditions du bon</a>.</p>
+
+<h3>Ce qui reste plafonné, et où ça se lit</h3>
+<p>Le plafond de 1 000 € par transaction en espèces (art. L112-6 CMF) <strong>n'a plus d'objet côté serveur</strong> : plus personne
+ne reçoit de billets chez nous. Les plafonds qui comptent sont ceux du <strong>bon d'achat</strong>, et ils vivent dans
+<code>server/lib/bons.js</code> (<code>CFG_DEFAUT</code>) et <code>ref.bons</code> côté app : minimum 5 €, <strong>250 € par bon</strong>,
+<strong>1 000 € de bons utilisés par client et par jour</strong>, validité 12 mois, commission 1,10 % HT + TVA 20 %, annulation au
+comptoir dans les 30 min. <strong>Ce sont des défauts, pas la vérité</strong> : le service les relit dans <code>settings</code> à chaque
+appel, le manager les ajuste dans <a href="ui/manager/10-configuration.html">Configuration</a>. Ne jamais les écrire en dur.</p>
+
+<h2>2. Les deux moyens du client</h2>
+<p>La promesse tenue à l'écran est unique : <strong>« payer sans carte bancaire, aucune donnée bancaire n'est requise »</strong>.
+Elle porte sur ce que le client saisit <em>chez nous</em> — jamais sur la façon dont il règle le commerçant, qui ne nous regarde
+pas et qu'aucun écran ne doit affirmer.</p>
+<table>
+  <tr><th>Moyen</th><th>Ce que le client saisit</th><th>Qui règle la commande</th><th>Où</th></tr>
+  <tr><td><strong>Bon d'achat PayEnCash</strong><br><code>bon</code></td><td>Le code à 12 caractères du ticket (XXXX-XXXX-XXXX), en une ou plusieurs fois</td><td>Notre serveur, qui débite le bon sous verrou</td><td>Réseau de commerçants <strong>sous contrat</strong> avec AJEK — <a href="ui/ecrans/25-ou-acheter-un-bon.html">Où acheter un bon</a></td></tr>
+</table>
+<p>La liste vit dans <code>PEC_DATA.MOYENS_PAIEMENT</code> (<code>ui/assets/payencash-data.js</code>) et chaque moyen porte son pays.
+Un écran qui affiche des moyens en dur se contredira le jour d'un ajout : dériver de <code>moyensPaiement(pays)</code>.
+Côté base, <code>orders.pay_method</code> et <code>payments.method</code> ne connaissent que <code>'bon'</code>
+<i>(20/09 — « enlève la logique Neosurf » : les moyens en ligne sont partis avec leur rail)</i>.</p>
+<div class="alert aw">⚠️ Un Bon d’achat PayEnCash n'est <strong>pas</strong> de la monnaie électronique (art. L315-1 CMF) : c'est un titre
+à usage limité, accepté par le seul émetteur (art. L521-3, I, 1° CMF). Ses bornes sont les nôtres, pas celles d'un tiers :
+<strong>250 € par bon</strong>, <strong>1 000 € par client et par jour</strong> — et elles se lisent sur
+<code>gift_card_movements</code>, jamais ailleurs.</div>
+
+<div class="note"><b>(19/09) Le catalogue Mode de démonstration passe enfin par la grille.</b> Le générateur écrivait <b>le même prix</b> sur l'article (ce que le client paie) et sur le lot (ce qu'on doit à l'atelier) : la marge Mode existait dans <code>scenario.grilleMode</code> et n'était appliquée nulle part. Conséquences réelles : le compte de résultat lisait une branche Mode à marge nulle, une « remise » creusait directement sous le prix d'achat, et la remise d'un lien partagé n'avait rien à rendre. Le prix client est désormais <b>construit</b> par <code>prixClientMode(achat, poids)</code> — la même fonction que toute publication fournisseur — et le lot porte le <code>prixVente</code> qu'il a produit. Marqueur de révision du seed : <code>:r5</code>. Deux arrondis sont devenus visibles et ont été corrigés avec : une démarque s'arrondit <b>au centime</b> (« −20 % » sur 129,40 € donnait 104 €, soit −19,6 %) et le sous-total du panier aussi (une somme brute traînait le bruit des flottants).</div>
+
+<h2>3. Le commerçant partenaire — prélevé à la vente (Stripe)</h2>
+<p>Un point naît <code>contrat_a_signer</code>, passe <code>contrat_signe</code> à la signature, puis <code>actif</code> quand le
+contrat est signé <em>et</em> le dossier KYB validé — <strong>seul l'état actif ouvre la vente</strong>. Restent <code>suspendu</code>
+(qui coupe la vente et garde l'état d'avant dans <code>status_before</code>) et <code>clos</code>. Tout est dans
+<code>partners</code> ; le KYB n'est pas une colonne, il se dérive de <code>kyc_documents</code>.</p>
+<h3>Le calcul, au centime</h3>
+<pre>// server/lib/bons.js — montantPreleve(faceValueCents, cfg, tauxPoint)
+// (19/09) tauxPoint = partners.commission_pct : le taux NÉGOCIÉ par CE commerce.
+// NULL n'est pas zéro : c'est « le taux du réseau » (settings ref.bons.commissionPct).
+commissionPct      = tauxPoint ?? cfg.commissionPct            // 1,10 % par défaut
+commissionHtCents  = round(faciale × commissionPct / 100)
+vatCents           = round(commissionHtCents × tvaCommissionPct / 100)   // 20 %
+commissionTtcCents = commissionHtCents + vatCents
+amountCents        = faciale − commissionTtcCents              // CE QUI EST DÉBITÉ
+
+// 50,00 € vendus → 0,55 € HT · 0,11 € TVA · 0,66 € gardés · 49,34 € débités
+// Chaque étape arrondit au centime, DANS CET ORDRE : c'est ce qui garantit que
+// le serveur et l'écran tombent sur le même chiffre. Ne pas appliquer le taux
+// au total d'un mois — ce n'est pas ce qui a été retenu à chaque vente.
+// (19/09) Le taux retenu est ÉCRIT sur partner_charges.commission_pct : le relevé
+// et l'autofacture le relisent là, jamais ailleurs — un taux changé depuis (pour
+// ce commerce ou pour tout le réseau) ne réécrit aucune vente passée.</pre>
+<p>Ce que le prestataire nous coûte (<code>fraisPsp()</code> : 1,5 % + 0,25 € par transaction carte EEE) est la marge réelle du
+manager. <strong>Il ne s'affiche jamais au commerçant.</strong></p>
+<table>
+  <tr><th>Table</th><th>Ce qu'elle porte</th></tr>
+  <tr><td><code>partner_cards</code></td><td>L'empreinte (<code>psp_card_id</code>), <code>last4</code>, <code>brand</code>, <code>exp_month</code>/<code>exp_year</code>, <code>psp_customer_id</code>. Jamais un PAN. Une carte expirée ne vend plus.</td></tr>
+  <tr><td><code>partner_charges</code></td><td>Un prélèvement : faciale, commission HT, TVA, TTC, montant débité, <code>psp_fee_cents</code>, <code>status</code> ∈ <code>accepted · refused · refunded</code>, <code>decline_reason</code>, <code>psp_payment_id</code>, <code>reference</code> (<code>PAY-000012</code> acceptée · <code>ECH-000012</code> refusée).</td></tr>
+  <tr><td><code>gift_cards</code></td><td>Le bon : <code>code_hash</code> (SHA-256 salé), <code>code_masque</code>, <code>face_value_cents</code>, <code>balance_cents</code>, <code>ticket_number</code> (<code>BV-000012</code>), <code>expires_at</code>, <code>valid_lines</code>. Seuls <code>blocked</code> et <code>cancelled</code> s'écrivent dans <code>status</code>.</td></tr>
+  <tr><td><code>gift_card_movements</code></td><td>Un mouvement : <code>issue</code> · <code>debit</code> · <code>recredit</code>, avec <code>order_ref</code> et <code>user_id</code>. C'est la somme des <code>debit</code> du compte qui fait le plafond journalier.</td></tr>
+  <tr><td><code>v_partner_monthly_statements</code></td><td>Le relevé mensuel, <strong>calculé</strong> : ventes, commission, prélevé, remboursé, frais du prestataire, refus, et le numéro d'autofacture <code>AFB-&lt;AAAAMM&gt;-&lt;code&gt;</code>. Une vue, pas une table : un relevé ne se stocke pas.</td></tr>
+</table>
+<div class="alert ac">🔴 <strong>« Épuisé » et « expiré » se DÉRIVENT</strong> — le solde et la date les disent. Les écrire dans
+<code>status</code> crée deux vérités pour un même fait. L'ordre de lecture compte : un bon annulé reste annulé même expiré, un bon
+bloqué reste bloqué même à zéro (<code>bons.etatBon()</code>).</div>
+<div class="alert ac">🔴 <strong>Le code n'est rendu qu'une fois</strong>, à l'émission, sur le ticket. La base n'en garde que
+l'empreinte, salée par <code>BONS_HASH_PEPPER</code>. Partout ailleurs, c'est <code>••••-••••-XXXX</code>. Un code mal formé, inconnu
+ou annulé rend <strong>le même 404</strong> : rien ne doit renseigner sur l'existence d'un bon.</div>
+<p>Le relevé mensuel survit au reversement pour une seule raison : la TVA exige une <strong>autofacture de commission</strong>
+(art. 289 CGI), même quand plus rien n'est dû. Le numéro se dérive du mois et du point, il ne se stocke pas.</p>
+
+<h2>4. Le règlement — le débit d'un Bon d’achat</h2>
+<div class="alert aw">⚠️ <strong>(20/09 — décision fondatrice « enlève la logique Neosurf, supprime toute mention Neosurf »)</strong>
+Cette section décrivait le rail d'un prestataire de paiement en ligne : page hébergée, notification signée, Delivery
+Confirmation, ticket de remboursement. <strong>Ce rail est supprimé</strong>, avec <code>lib/paymentwall.js</code>, ses 25 tests,
+ses quatre routes et ses deux tables. PayEnCash n'émet plus qu'un titre, le sien.</div>
+<pre>① POST /bons/payments/:ref/bon   {code, client_id?}
+   → vérifie le code, VERROUILLE le bon, débite ce qu'il couvre, écrit le
+     mouvement 'debit' ET le paiement DANS LA MÊME TRANSACTION SQL.
+     Un double clic ne débite pas deux fois : le verrou l'interdit.
+
+② Le bon ne couvre qu'une part → la commande garde son reste à régler,
+   et le client présente le bon suivant de sa série (au-delà de 250 €,
+   la vente au comptoir s'est découpée en plusieurs bons).
+
+③ Un code refusé (bloqué, expiré, épuisé, au-dessus du plafond du jour)
+   se dit à l'écran, avec son motif, et ne débite RIEN.</pre>
+<p>La base fait respecter la règle, pas seulement le code : <code>payments.valideur_obligatoire</code> exige
+<code>method = 'bon'</code> ET <code>gift_card_id</code> posé dès qu'un <code>collected_at</code> existe. <strong>Une collecte sans
+valideur est impossible en base.</strong></p>
+<h3>Remboursement</h3>
+<p>L'argent repart par où il est venu : <strong>le bon se re-crédite</strong> (mouvement <code>recredit</code>, borné à
+Σ débits − Σ re-crédits de la même commande, et il prolonge la validité d'un bon expiré). Jamais d'espèces, jamais de carte.
+Ce qui ne peut pas revenir sur un bon part par <strong>virement au RIB du client</strong>, à son nom.</p>
+
+<h2>5. Ce que le développeur reprend — inventaire recompté</h2>
+<table>
+  <tr><th>Ensemble</th><th>Compté</th><th>Ce que c'est</th></tr>
+  <tr><td><code>ui/*/*.html</code></td><td><strong>133 écrans</strong></td><td>9 dossiers : manager 38 · ecrans (client Fly) 23 · mode 21 · fournisseur 18 · commercial 11 · partenaire 8 · fly 8 · parcours 4 · hotline 2</td></tr>
+  <tr><td><code>ui/assets/</code></td><td><strong>14 fichiers JS</strong> · 2 CSS</td><td>Le data-layer (<code>payencash-data.js</code>), le bus inter-apps (<code>payencash-bus.js</code>), la garde de session, les modules partagés (vérif, notifs, filtres, icônes, QR…)</td></tr>
+  <tr><td>Clés de stockage</td><td><strong>77 littéraux distincts</strong></td><td>Toutes préfixées <code>pec-</code> dans <code>localStorage</code>. Le bus écrit en plus sous son propre préfixe <code>pec_bus_</code>, avec des clés construites à l'exécution (<code>cmd_&lt;réf&gt;</code>, <code>etat_psp-transactions</code>, <code>etat_prelevements</code>…).</td></tr>
+  <tr><td><code>server/</code></td><td><strong>8 services</strong> + passerelle · <strong>8 libs</strong></td><td>Un service = un domaine = une app. Découpage <code>index.js</code> (routes) → <code>service.js</code> (métier pur) → <code>repo.js</code> (SQL).</td></tr>
+  <tr><td><code>server/db/schema.sql</code></td><td><strong>128 tables</strong> · 3 vues · 18 types</td><td>+ 9 migrations datées dans <code>server/db/migrations/</code>. Le miroir lisible est <a href="ESPACE-COMMERCANT/documents/partie-6-donnees.html">Étape 6 — données</a>.</td></tr>
+  <tr><td>Routes de service</td><td><strong>66</strong></td><td>Plus <code>/health</code> sur la passerelle et sur chaque service.</td></tr>
+</table>
+<div class="alert aw">⚠️ Le data-layer et le seed portent <strong>les mêmes montants au centime</strong> que les libs du serveur :
+<code>lib/bons.js</code> reproduit exactement les bornes, les arrondis et les motifs de refus de
+<code>ui/assets/payencash-data.js</code>. Basculer la maquette sur l'API ne doit changer ni un chiffre affiché, ni une phrase de
+refus. Si les deux divergent, c'est un bug, pas un arbitrage.</div>
+
+<h2>6. Conventions d'API</h2>
+<p>La passerelle (<code>server/gateway/index.js</code>) est le <strong>seul point d'entrée public</strong>. Elle route par préfixe,
+retire le préfixe et relaie au service interne. L'URL publique est donc <code>&lt;préfixe&gt; + &lt;chemin du service&gt;</code>.</p>
+<table>
+  <tr><th>Préfixe</th><th>Domaine</th><th>Routes</th></tr>
+  <tr><td><code>/identite</code></td><td>Comptes, bons du client</td><td>2</td></tr>
+  <tr><td><code>/voyage</code></td><td>Offres Duffel/Nuitée, commandes, changements, annulations</td><td>7</td></tr>
+  <tr><td><code>/promos</code></td><td>Offres J−21</td><td>2</td></tr>
+  <tr><td><code>/encaissement</code></td><td>Paiement en ligne, pingback, reçus, Delivery Confirmation, remboursements</td><td>6</td></tr>
+  <tr><td><code>/mode</code></td><td>Catalogue, stock, réservations, publication, expéditions, retours, factures</td><td>20</td></tr>
+  <tr><td><code>/fournisseurs</code></td><td>Aperçu prix, articles, factures, codes promo, liens de partage, préinscription</td><td>11</td></tr>
+  <tr><td><code>/reporting</code></td><td>Indicateurs, marketing, concours</td><td>6</td></tr>
+  <tr><td><code>/bons</code></td><td>Bon d'achat PayEnCash, carte du commerce, relevé mensuel</td><td>12</td></tr>
+</table>
+<h3>Les routes du bon d'achat (préfixe <code>/bons</code>)</h3>
+<table>
+  <tr><th>Route</th><th>Ce qu'elle fait</th></tr>
+  <tr><td><code>POST /partners/:id/bons</code></td><td>Émettre au comptoir. Point <strong>actif</strong> seulement, montant dans les bornes, confirmation du paiement au comptoir (<code>especes_recues: true</code>). <strong>Prélève d'abord</strong>, émet ensuite. Répond 201 avec le code en clair — une seule fois — ou <strong>402</strong> si la banque refuse.</td></tr>
+  <tr><td><code>POST /bons</code></td><td>La carte cadeau du manager : même objet, <code>origin = 'manager'</code>, rien n'est prélevé.</td></tr>
+  <tr><td><code>GET /partners/:id/bons?mois=AAAA-MM</code></td><td>Les bons vendus par le point, état dérivé, code masqué.</td></tr>
+  <tr><td><code>GET /bons/:code</code></td><td>État, solde, validité — <strong>sans aucune donnée personnelle</strong>.</td></tr>
+  <tr><td><code>POST /payments/:ref/bon</code></td><td>Régler. Sous verrou, dans une transaction : plafond client/jour, débit de min(solde, reste dû), mouvement, compte posé au premier usage. Si tout est couvert, la commande est réglée ; sinon <code>reste_du_cents</code> est rendu.</td></tr>
+  <tr><td><code>POST /bons/:code/recredit</code></td><td>Rembourser : au plus ce que ce bon a réglé sur cette commande. Un bon expiré entre-temps reprend une validité.</td></tr>
+  <tr><td><code>POST /bons/:code/bloquer</code> · <code>/debloquer</code></td><td>Perte, vol, fraude (manager). Motif obligatoire — le client lit la raison.</td></tr>
+  <tr><td><code>POST /bons/:code/annuler</code></td><td>Le partenaire (son point, dans le délai, aucun débit) ou le manager. <strong>Rembourse la charge</strong>, qui passe <code>refunded</code> et reste tracée.</td></tr>
+  <tr><td><code>POST /partners/:id/cards</code> · <code>DELETE /partners/:id/cards/:carteId</code></td><td>La carte du commerce, par son empreinte. Sans carte, le point ne vend plus.</td></tr>
+  <tr><td><code>GET /partners/:id/releve/:mois</code></td><td>Le relevé calculé par la vue. Une preuve, pas une créance.</td></tr>
+</table>
+<h3>Règles transverses</h3>
+<ul>
+  <li><strong>Centimes partout</strong> (<code>*_cents</code>, entiers). <code>62,35 €</code> est un format d'affichage, jamais une donnée.</li>
+  <li><strong>Un refus a toujours sa phrase.</strong> Le métier pur rend un motif lisible par le client ou le commerçant ; jamais un échec muet, jamais un repli silencieux sur un autre canal.</li>
+  <li><strong>Le métier est testable à sec.</strong> <code>lib/bons.js</code>, <code>lib/stripe.js</code>, <code>lib/money.js</code> ne touchent ni la base ni le réseau : ils construisent des requêtes et savent en simuler la réponse.</li>
+  <li><strong>Sans clé, on simule et on le dit.</strong> Chaque réponse porte <code>simulation: true</code> et une note. Jamais un succès qui laisserait croire à un vrai débit.</li>
+</ul>
+
+<h2>7. Champs voyageurs Duffel</h2>
+<p><strong>Aucune pièce d'identité n'est collectée pour le billet</strong> — l'identité du passager se vérifie à l'aéroport, Duffel
+ne la demande pas (sauf tarif qui l'exige : la colonne <code>identity_doc_enc</code> est là pour ce cas, chiffrée).
+<strong>Ne pas confondre avec le KYC client</strong>, qui porte sur la personne qui commande et vit dans <code>kyc_checks</code> /
+<code>kyc_documents</code>.</p>
+<table>
+  <tr><th>Champ</th><th>Colonne <code>order_travelers</code></th><th>Contrainte</th></tr>
+  <tr><td>Civilité</td><td><code>title</code></td><td>Reprise telle quelle vers Duffel</td></tr>
+  <tr><td>Genre</td><td><code>gender</code></td><td><code>CHECK (gender IN ('m','f'))</code></td></tr>
+  <tr><td>Prénom</td><td><code>given_name_enc</code></td><td><strong>chiffré</strong> · NOT NULL</td></tr>
+  <tr><td>Nom</td><td><code>family_name_enc</code></td><td><strong>chiffré</strong> · NOT NULL</td></tr>
+  <tr><td>Date de naissance</td><td><code>born_on_enc</code></td><td><strong>chiffrée</strong> — l'âge ne se stocke jamais, il se calcule</td></tr>
+  <tr><td>E-mail</td><td><code>email_enc</code></td><td><strong>chiffré</strong></td></tr>
+  <tr><td>Téléphone</td><td><code>phone_enc</code></td><td><strong>chiffré</strong> · E.164</td></tr>
+  <tr><td>Rang</td><td><code>rank</code></td><td><code>UNIQUE (order_id, rank)</code> — le voyageur 1 est le titulaire</td></tr>
+  <tr><td>Identifiant Duffel</td><td><code>duffel_passenger_id</code></td><td>Rendu par Duffel à l'émission</td></tr>
+</table>
+<p>Le carnet de voyageurs du client est <code>saved_travelers</code>, chiffré de la même façon ;
+<code>order_travelers.saved_traveler_id</code> garde le lien quand la fiche en vient. Un voyageur de commande est une
+<strong>copie figée à l'achat</strong> : modifier le carnet ne doit jamais réécrire une commande passée. Le numéro du compte est
+<code>users.phone</code> (<code>UNIQUE NOT NULL</code>), validé par code SMS avant la première commande.</p>
+
+<h2>8. Prix</h2>
+<p>Deux grilles, deux fichiers, et aucune n'est écrite en dur.</p>
+<h3>Fly — la marge sur l'offre fournisseur</h3>
+<p><code>ref.marges</code> (<code>ui/assets/payencash-data.js</code>) : <strong>vol seul 15 %</strong>, <strong>séjour seul 10 %</strong>,
+<strong>package 8 %</strong>. Ces valeurs sont <em>vivantes</em> : les écrans les lisent par <code>margesVives()</code>, jamais en
+direct — la Configuration manager écrit <code>ref.marges.volSeul</code> et tout doit suivre sans redéploiement. Côté serveur, la
+grille de restitution d'une annulation applique <code>Math.max(300, Math.round(subtotal_cents * 0.15))</code> : le plancher de 3 €
+est réel, ne pas l'oublier. Le détail du calcul (assiette TVA, re-fetch d'offre expirée, écart entre prix affiché et prix débité)
+reste dans <a href="docs/04-pricing.html">Doc 4 — pricing</a>, qui en est la référence.</p>
+<h3>Mode — la marge sur le prix d'achat</h3>
+<pre>// server/lib/money.js — la marge est INDÉPENDANTE des frais
+prix client = prix d'achat + 7 % de marge + livraison au poids + atelier
+
+// MARGE_MODE (7 %), ATELIER_CENTS (2,20 €) et PLANCHER_ACHAT_CENTS (5 €) sont
+// des DÉFAUTS : configurerGrilleMode() les remplace au démarrage avec ce que
+// disent les réglages. Une valeur vidée est IGNORÉE — un champ de marge vide
+// n'est pas une marge à zéro.</pre>
+<div class="alert ac">🔴 <strong>Un colis lourd renchérit le prix client, il n'entame jamais la marge</strong>, et le fournisseur
+touche son prix en entier. La livraison suit la <strong>grille Mondial Relay par tranche de poids en grammes</strong> (la même unité que
+le paramètre <code>Poids</code> de leur API), pas un forfait moyen : c'est un forfait moyen qui creusait la marge sur les colis
+lourds.</div>
+<h3>TVA</h3>
+<p>Le régime suit la ligne : <strong>marge</strong> pour le voyage et l'occasion (art. 297 A CGI — la TVA <em>ne figure pas</em> sur la
+facture), <strong>régime classique</strong> pour le neuf. Les mentions sont générées par <code>server/lib/fiscalite.js</code>, jamais
+écrites dans un écran. Un panier composé porte les deux mentions. Ne jamais agréger deux régimes dans un même état comptable —
+la vue <code>vat_collected_by_period</code> les tient séparés.</p>
+
+<h2>9. Hébergement — Nuitée / LiteAPI</h2>
+<div class="alert ac">🔴 <strong>Hotelbeds n'est plus le fournisseur d'hébergement</strong> et son vocabulaire a disparu du code :
+il n'existe ni <code>rateKey</code>, ni <code>stay_offers</code>, ni <code>hotelbeds_hotel_code</code>. Toute intégration écrite
+contre ces noms est à refaire.</div>
+<p>Le cache d'offres est <code>hotel_offers</code>. Le flux LiteAPI est <strong>Availability → Prebook → Booking</strong>, et c'est le
+<em>prebook</em> qui tient lieu de verrou de prix :</p>
+<table>
+  <tr><th>Colonne</th><th>Rôle</th></tr>
+  <tr><td><code>nuitee_hotel_id</code></td><td>Le code hôtel, tel quel</td></tr>
+  <tr><td><code>rate_id</code></td><td>L'offre rendue par LiteAPI — opaque, <strong>ne jamais la reconstruire</strong></td></tr>
+  <tr><td><code>prebook_id</code> · <code>prebook_expires_at</code></td><td>Le verrou de prix et sa fenêtre : c'est ça, « le prix bloqué » côté hôtel. Passée la date, il faut re-deviser.</td></tr>
+  <tr><td><code>refundable</code> · <code>cancellation_policy</code></td><td>Non remboursable (NRF) et politique <strong>datée ligne à ligne</strong> : c'est elle qui décide de ce qu'une annulation rend.</td></tr>
+  <tr><td><code>max_guests</code></td><td>Le nombre de personnes que le logement accepte — règle sans ambiguïté, à appliquer avant d'afficher une offre</td></tr>
+  <tr><td><code>house_rules</code> · <code>includes</code> · <code>not_included</code></td><td>Consignes et périmètre de l'offre. <strong>Toutes</strong> les consignes s'affichent : la taxe de séjour payée sur place n'est pas une surprise.</td></tr>
+</table>
+<p>Le référentiel des villes est <code>nuitee_cities</code>, miroir de <code>GET /data/cities</code>, relié aux aéroports par
+<code>places</code> et <code>place_city_links</code>. Les avis vivent dans <code>hotel_reviews</code>.
+Duffel est <strong>prépayé</strong> (solde à recharger en avance), Nuitée est <strong>post-payé</strong> — aucun fonds de roulement à
+porter sur l'hébergement.</p>
+
+<h2>10. Livraison Mode — Mondial Relay</h2>
+<p><strong>Il n'y a plus de ramassage : le fournisseur expédie lui-même</strong>, en Point Relais. Tout vit dans
+<code>shipments</code> : <code>mr_ref</code>, <code>label_url</code>, <code>relay_id</code>/<code>relay_name</code>/<code>relay_address</code>,
+<code>pickup_code</code>, <code>hold_days</code>, et la timeline brute du transporteur dans <code>events</code>.</p>
+<ul>
+  <li><strong>Le destinataire est copié à la vente</strong> (<code>recipient_name</code>, <code>recipient_phone</code>, <code>recipient_email</code>), jamais dérivé d'une session : l'API du transporteur les exige, et une session change.</li>
+  <li><strong>L'échéance d'expédition est une date</strong> (<code>ship_by</code>), pas une phrase. Sans elle, aucun retard n'est mesurable — ni pour le fournisseur, ni pour la hotline, ni pour le client. Le retard se dérive, il ne se stocke pas.</li>
+  <li><strong>Le contrôle aléatoire est un état du colis</strong> (<code>blocked_control</code>), pas un booléen à côté du statut.</li>
+  <li>Le colis relie <code>supplier_id</code> et <code>order_item_id</code> : sur une commande groupée, on sait qui devait expédier quoi.</li>
+</ul>
+<p>Ces mêmes données alimentent la Delivery Confirmation du §4 : transporteur, n° de suivi dès la préparation, URL de suivi dès
+l'acheminement, initiales du destinataire à la livraison. <strong>Un champ manquant est refusé avec son nom</strong> — jamais envoyé
+à moitié.</p>
+
+<h2>11. Secrets — rien en clair, jamais</h2>
+<div class="alert ac">🔴 <strong>Aucune clé secrète ne figure dans ce dépôt, ni dans un écran, ni dans un journal, ni dans une trace
+d'API.</strong> Tout se lit depuis <code>process.env</code>, côté serveur uniquement.</div>
+<table>
+  <tr><th>Variable</th><th>À quoi elle sert</th></tr>
+  <tr><td><code>STRIPE_MODE</code></td><td><code>test</code> ou <code>live</code> — le jeu de clés qui sert. Le réglage manager <code>stripe.mode</code> l'emporte quand il existe.</td></tr>
+  <tr><td><code>STRIPE_SECRET_KEY_TEST</code> / <code>_LIVE</code></td><td>Prélève le commerçant, ouvre et lit les comptes des marques (Connect). <strong>Serveur uniquement.</strong> Absente → le service prélève en simulation et le dit ; une clé qui n'est pas du mode annoncé est refusée.</td></tr>
+  <tr><td><code>STRIPE_PUBLISHABLE_KEY_TEST</code> / <code>_LIVE</code></td><td>Monte le composant de carte <strong>dans le navigateur du gérant</strong> (SetupIntent). C'est la seule clé qui va côté client.</td></tr>
+  <tr><td><code>STRIPE_WEBHOOK_SECRET_*</code>, <code>STRIPE_CONNECT_WEBHOOK_SECRET_*</code></td><td>Vérifient la signature des notifications (notre compte, comptes connectés) avant toute lecture.</td></tr>
+  <tr><td><code>STRIPE_CONNECT_CLIENT_ID_*</code></td><td>Identifiant public de la plateforme, pour relier par OAuth une marque qui a déjà un compte Stripe.</td></tr>
+  <tr><td><code>BONS_HASH_PEPPER</code></td><td>Sale l'empreinte des codes de bons : sans lui, une fuite de <code>gift_cards</code> rendrait les codes rejouables ailleurs.</td></tr>
+  <tr><td><code>DUFFEL_API_KEY</code></td><td>L'adaptateur vol. Mock en dev, vraie clé en prod.</td></tr>
+  <tr><td><code>DATABASE_URL</code> · <code>SVC_*</code> · <code>PORT</code></td><td>Base et routage interne de la passerelle.</td></tr>
+</table>
+
+<h2>12. Tests</h2>
+<table>
+  <tr><th>Suite</th><th>Compté</th><th>Comment la lancer</th></tr>
+  <tr><td><code>server/test/run-tests.js</code></td><td><strong>64 cas déclarés</strong></td><td><code>cd server &amp;&amp; npm test</code> — métier pur : fiscalité, grille Mode, bons, Stripe, Solution (vente à commission, comptes des marques, notifications), refus du service</td></tr>
+  <tr><td><code>tests/test-runner.html</code></td><td><strong>396 scénarios</strong></td><td>Le banc navigateur : il ouvre les <strong>140 écrans</strong> réels et joue les parcours. À servir en HTTP (<code>python3 serve-8777.py</code>), jamais en <code>file://</code>.</td></tr>
+</table>
+<div class="alert ac">🔴 <strong><code>npm test</code> ne passe pas en l'état</strong> (constaté le 18/09 au soir) : il s'arrête après
+42 cas verts sur un assert qui attend encore <code>/Bon inconnu/</code> alors que le message rendu est désormais
+« Bon d'achat inconnu… ». C'est le test qui est en retard sur le code, pas l'inverse — corriger l'attendu dans
+<code>server/test/run-tests.js</code> avant de se fier à la suite.</div>
+
+<h2>13. Checklist d'intégration</h2>
+<ul>
+  <li><strong>Téléphone et e-mail vérifiés avant la première commande</strong> — <code>users.phone_verified_at</code> et <code>users.email_verified_at</code> : c'est par e-mail qu'arrivent les billets.</li>
+  <li><strong>Exclure du comparateur les offres Duffel à paiement instantané.</strong> Entre la commande et son règlement, le client doit avoir le temps d'aller acheter son bon ou son ticket au comptoir : une offre qui exige d'être payée dans la seconde ne tient pas dans cette fenêtre. <em>Ce filtre n'est implémenté nulle part aujourd'hui</em> — l'adaptateur Duffel lit encore le cache <code>flight_offers</code>.</li>
+  <li><strong>Trier les vols sur le prix TTC marge incluse</strong>, calculé sur chaque ligne du comparateur — jamais sur le prix brut fournisseur, puis marge après coup : l'ordre affiché serait faux.</li>
+  <li><strong>Timeout Duffel généreux</strong> (l'émission est longue) et re-fetch de l'offre avant règlement : une offre Duffel expire.</li>
+  <li><strong><code>rate_id</code> et <code>prebook_id</code> opaques</strong> — stockés tels quels, jamais reconstruits, et re-devisés passé <code>prebook_expires_at</code>.</li>
+  <li><strong>Le code d'un bon n'existe qu'une fois</strong> : rendu à l'émission, jamais relu, jamais journalisé. La base ne garde que <code>gift_cards.code_hash</code>.</li>
+  <li><strong>Prélever avant d'émettre</strong>, dans la même transaction. Un refus de la banque ne produit aucun bon — et le répondre en 402, avec le motif de la banque, pour que le commerçant sache quoi dire au client.</li>
+  <li><strong>Débiter un bon sous verrou</strong> (<code>FOR UPDATE</code> sur le bon <em>et</em> sur le paiement) : solde, mouvement, tender et commande dans une seule transaction. Un bon débité deux fois, c'est de l'argent créé.</li>
+  <li><strong>Idempotence du pingback</strong> : une transaction déjà tranchée répond « OK » sans rien refaire. Le prestataire réémet tant qu'il n'a pas lu « OK » en clair.</li>
+  <li><strong>Jamais de remboursement en espèces.</strong> Une commande réglée par bon se rembourse par <strong>re-crédit du bon</strong>, au plus ce que ce bon a réglé sur cette commande.</li>
+  <li><strong>Plafonds et réglages lus depuis <code>settings</code></strong> à chaque appel — 250 €, 1 000 €/jour, 1,10 %, 12 mois sont des défauts modifiables sans redéploiement.</li>
+  <li><strong>Une commande expire ou s'annule</strong> — il n'y a pas de troisième sort. La fenêtre d'encaissement est une donnée (<code>orders.expires_at</code>), l'expiration se dérive à la lecture.</li>
+  <li><strong>Écart de collecte interdit</strong> : <code>collected_amount_cents = amount_cents</code>, la contrainte <code>ecart_collecte</code> le refuse en base.</li>
+  <li><strong>Fournisseur Mode : facture → virement ≤ 7 jours</strong> — la contrainte <code>delai_7j</code> de <code>supplier_invoices</code> le refuse en base. Occasion = pièce unique ; sneakers neuves = facture d'origine obligatoire.</li>
+  <li><strong>Reçu de caisse certifié</strong> (art. 286-I-3° bis CGI), séquentiel, horodaté, inaltérable et <strong>distinct du récapitulatif</strong> affiché avant paiement — <em>aucune colonne du schéma ne le porte encore</em>.</li>
+  <li><strong>Données personnelles chiffrées</strong>, rétention bornée, purge automatique : noms, dates de naissance, e-mails et téléphones des voyageurs ne sont jamais en clair.</li>
+  <li><strong>Un écran ne code jamais une règle en dur</strong> — moyens de paiement, plafonds, marges, grilles : tout se dérive du data-layer, qui se dérive des réglages.</li>
+</ul>
+
+<h2>14. Ce qui a été retiré, et pourquoi</h2>
+<p><strong>Le 18/09/2026 au soir, l'agent de caisse mobile a été supprimé</strong> — parce qu'un salarié qui transporte des espèces
+dans la rue est un risque réglementaire (CNAPS) et parce qu'il imposait un complément par carte au-delà du plafond légal, ce qui
+vidait la promesse « payer sans carte ». Sont partis avec lui, du schéma comme du code :</p>
+<ul>
+  <li>Le <strong>dispatch</strong>, la position temps réel, l'ETA, la notation de l'agent, le code de sécurité à 4 chiffres, la photo de preuve.</li>
+  <li>L'<strong>encours de caisse</strong>, le seuil de dépôt, les dépôts en automate, l'import du rapport de l'automate, la chaîne <code>collected → declared → reconciled → on_account → paid_out</code>.</li>
+  <li>Le service <code>/logistique</code> de la passerelle, l'app coursier, le rendu de monnaie, les frais de déplacement, le mode d'encaissement <em>à domicile</em> / <em>au point</em>, et l'état d'échec d'encaissement.</li>
+</ul>
+<p>Le 17/09 avait déjà retiré la <strong>borne</strong> et le <strong>point partenaire qui encaissait une commande</strong> : un tiers qui
+encaisse pour le compte d'AJEK relève de l'agrément. Le commerçant est revenu le 18/09 <em>autrement</em> — il vend un titre.</p>
+<div class="alert aw">⚠️ Plusieurs documents du dépôt décrivent encore l'ancien modèle et portent un bandeau qui le signale :
+<a href="docs/03-api-specs.html">Doc 3 — specs API</a>, <a href="docs/08-mecanisme-financier.html">Doc 8 — mécanisme financier</a>,
+<a href="docs/09-espace-manager.html">Doc 9 — espace manager</a>. Ne pas coder d'après eux sans recouper avec
+<a href="server/README-DEV.md"><code>server/README-DEV.md</code></a> et le schéma. <a href="docs/04-pricing.html">Doc 4 — pricing</a> et
+<a href="docs/07-annulations-remboursements.html">Doc 7 — annulations</a> restent valables sur leur sujet propre.</div>
+
+<p style="margin-top:40px;padding-top:20px;border-top:1px solid var(--gc);font-size:12px;color:var(--gris);">
+  AJEK SASU · Note développeur v3.0 · 18 septembre 2026 (au soir) · Confidentiel
+</p>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commande — démonstration du bouton PayEnCash Solution</title>
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-docs.js"></script><!-- (23/09) le coffre : les fixtures et la signature du contrat-cadre le lisent -->
+<!-- LA PAGE DE COMMANDE D'UNE MARQUE, EN SITUATION (19/09, nuit — décision fondatrice : « lorsque le
+     e-commerce l'ajoute, il doit automatiquement avoir la page avec Comment tu paies : tu as un bon, chez un
+     partenaire, un agent se déplace — c'est notre marque de fabrique. Il choisit PayEnCash, ça ouvre la modale
+     avec les trois solutions »).
+     CE N'EST PAS UNE PAGE PAYENCASH : c'est la maquette du site e-commerce d'une MARQUE, avec SA charte, SES
+     moyens de paiement, et notre bouton posé à côté — exactement ce que la marque obtient en collant deux
+     lignes. Elle sert à montrer le résultat, et à le tester pour de vrai. (23/09, soir — audit) LA MARQUE EST
+     CELLE DE LA CLÉ : son nom s'écrit en haut et dans les messages ; les deux lignes montrées sont celles que
+     la page porte réellement (montant et référence calculés), pas un exemple qui les contredisait.
+     AUCUN ENCAISSEMENT N'EST SIMULÉ : le bouton propose un bon, la page est prévenue quand la commande est
+     couverte — rien d'autre ne transite. -->
+<style>
+  body{margin:0;background:#f4f1ec;font-family:var(--font-ui,system-ui,-apple-system,"Segoe UI",sans-serif);color:#2c2a26}
+  .bt-wrap{max-width:760px;margin:0 auto;padding:0 18px 60px}
+  .bt-bar{background:#2c2a26;color:#fff;padding:13px 18px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:12px}
+  .bt-bar span{float:right;font-weight:600;letter-spacing:0;text-transform:none;opacity:.75}
+  .bt-note{max-width:760px;margin:14px auto 0;padding:11px 14px;border-radius:12px;background:#fff8e6;border:1px solid #e4cf94;font-size:12.5px;line-height:1.6;color:#6b5418}
+  h1{font-size:24px;letter-spacing:-0.02em;margin:22px 0 3px}
+  .sub{margin:0;font-size:13px;color:#7b756c}
+  .bt-card{background:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(44,42,38,.08);padding:16px 17px;margin-top:14px}
+  .bt-l{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #f0ece4;font-size:13.5px}
+  .bt-l:last-of-type{border-bottom:none}
+  .bt-l img,.bt-l .ph{flex:none;width:44px;height:44px;border-radius:10px;background:#efe9df}
+  .bt-l b{display:block}
+  .bt-l small{color:#7b756c}
+  .bt-l .px{margin-left:auto;font-weight:800}
+  .bt-tot{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding-top:12px;border-top:2px solid #2c2a26;font-size:15px;font-weight:800}
+  .bt-tot b{font-size:22px}
+  .bt-moy{display:flex;align-items:center;gap:11px;width:100%;border:1.5px solid #e3ded4;border-radius:14px;background:#fff;padding:13px 14px;margin-top:9px;font:inherit;font-size:13.5px;text-align:left;cursor:pointer}
+  .bt-moy .ic{flex:none;font-size:19px}
+  .bt-moy small{display:block;color:#7b756c;font-size:11.5px;margin-top:2px}
+  .bt-ok{margin-top:12px;border-radius:14px;background:#e8f5ef;padding:12px 14px;font-size:13px;line-height:1.6;color:#115c46}
+  .bt-cfg{margin-top:18px;border-radius:14px;background:#fff;border:1px dashed #cfc7ba;padding:13px 15px;font-size:12.5px;line-height:1.6;color:#7b756c}
+  .bt-cfg code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:#2c2a26}
+  .bt-cfg a{color:#10a06a;font-weight:800}
+</style>
+</head>
+<body>
+
+<div class="bt-bar"><span id="bt-marque" style="float:none;font-weight:800;letter-spacing:.14em;text-transform:uppercase;opacity:1">Boutique de démonstration</span> <span>maquette du site e-commerce d’une marque — démonstration</span></div>
+
+<div class="bt-note" id="bt-note">—</div>
+
+<div class="bt-wrap">
+  <h1>Ta commande</h1>
+  <p class="sub">Commande <b id="bt-ref">—</b> · livraison offerte</p>
+
+  <!-- (23/09, audit) LE PANIER SE CALCULE, IL NE SE RECOPIE PAS. Trois nombres écrits à la main — deux lignes et
+       un total — c'est trois occasions de les laisser diverger, et le total est celui qu'on ne relit jamais. Les
+       articles viennent d'une boutique de démonstration déclarée comme telle, le total est leur somme, et le
+       montant passé au bouton PayEnCash est CE total. Les pièces sont de la mode : c'est à ces marques-là que
+       nous nous adressons, et une démonstration qui vend des bougies ne démontre rien. -->
+  <div class="bt-card" id="bt-panier"></div>
+
+  <div class="bt-card">
+    <div style="font-weight:800;font-size:14px">Tes moyens de paiement — et le bon d’achat de la marque</div>
+
+    <!-- LES MOYENS DE LA MARQUE — les siens, pas les nôtres. Ils ne font rien ici : la démonstration porte
+         sur le nôtre, et on ne fait pas semblant d'encaisser une carte. -->
+    <button type="button" class="bt-moy" id="bt-cb"><span class="ic">💳</span><span style="min-width:0;flex:1"><b>Carte bancaire</b><small>Visa, Mastercard, CB</small></span></button>
+    <button type="button" class="bt-moy" id="bt-vir"><span class="ic">🏦</span><span style="min-width:0;flex:1"><b>Virement</b><small>les moyens de la boutique, pas les nôtres</small></span></button>
+
+    <!-- ══ LES DEUX LIGNES QUE LA MARQUE COLLE, ET RIEN D'AUTRE ══════════════════════════════════════════
+         Le bouton « Bon d'achat {marque} » apparaît ici, à côté de ses moyens ; au clic, la fenêtre du bon proposé
+         — celle de Mode et de Fly, appliquée au réseau (21/09). -->
+    <div data-payencash="" data-commande="" id="bt-pec" style="margin-top:9px"></div>
+
+    <div class="bt-ok" id="bt-ok" hidden>—</div>
+  </div>
+
+  <div class="bt-cfg" id="bt-cfg">—</div>
+</div>
+
+<script>
+/* LA CLÉ PUBLIQUE VIENT DU COMPTE DE LA MARQUE, jamais d'une valeur écrite ici : soit celle passée dans
+   l'adresse (?pk=…, le lien « Mon bouton, en situation » de Compte › Intégration), soit la clé active de la
+   première marque de cet appareil. Sans marque ni clé, la page le DIT et renvoie là où on en crée une — elle
+   ne fait pas semblant d'avoir un réseau. */
+(function () {
+  'use strict';
+  var D = window.PEC_DATA, $ = function (i) { return document.getElementById(i); };
+  var hote = $('bt-pec');
+  var pk = new URLSearchParams(location.search).get('pk') || '';
+  var m = null;
+
+  if (D && D.techMarchands) {
+    if (pk) {
+      m = D.techMarchands().filter(function (x) { return (D.techCles(x.id) || []).some(function (c) { return c.clePublique === pk && !c.revoqueLe; }); })[0] || null;
+    }
+    if (!m) {
+      m = D.techMarchands().filter(function (x) { return !!D.techCleActive(x.id); })[0] || null;
+      if (m) pk = D.techCleActive(m.id).clePublique;
+    }
+  }
+
+  /* ══ (23/09, audit) LE PANIER SE CALCULE ═══════════════════════════════════════════════════════════════
+     Les pièces sont celles d'une marque de mode — c'est à ces marques-là que nous nous adressons — et leurs
+     photos viennent du même fonds que le catalogue (D.photoArticle). Le TOTAL est leur somme, et c'est LUI qui
+     part au bouton PayEnCash : un total recopié à la main est un total qui ment dès qu'on touche une ligne.
+     La référence de commande se dérive de la date : deux démonstrations ne portent pas le même numéro. */
+  var PANIER = [
+    { nom: 'Hoodie oversize', det: 'Taille M · coton lourd', prix: 89, cat: 'pap', sous: 'Sweats & hoodies' },
+    { nom: 'Sneakers basses', det: 'Pointure 42 · cuir blanc', prix: 129, cat: 'sneakers', sous: 'Lifestyle' }
+  ];
+  var mnt = Math.round(PANIER.reduce(function (a, p) { return a + p.prix; }, 0) * 100) / 100;
+  var eur = function (x) { return D ? D.eur(x) : String(x).replace('.', ',') + ' €'; };
+  var cmd = 'CMD-' + new Date().getFullYear() + '-' + String(Math.floor(Date.now() / 1000) % 100000).padStart(5, '0');
+  hote.setAttribute('data-montant', mnt.toFixed(2));
+  hote.setAttribute('data-commande', cmd);
+  $('bt-panier').innerHTML = PANIER.map(function (p) {
+    var img = (D && D.photoArticle) ? D.photoArticle(p.cat, p.sous, p.nom) : '';
+    return '<div class="bt-l"><span class="ph"' + (img ? ' style="background-image:url(' + img + ');background-size:cover;background-position:center"' : '') + '></span>'
+      + '<span style="min-width:0"><b>' + p.nom + '</b><small>' + p.det + '</small></span>'
+      + '<span class="px">' + eur(p.prix) + '</span></div>';
+  }).join('') + '<div class="bt-tot"><span>Total</span><b id="bt-total">' + eur(mnt) + '</b></div>';
+  $('bt-ref').textContent = cmd;
+
+  if (!m) {
+    /* PAS DE MARQUE AVEC UNE CLÉ : on ne monte pas un bouton qui ne pourra rien faire. */
+    $('bt-note').innerHTML = '<b>Cette démonstration a besoin d’une marque avec une clé d’API.</b> '
+      + 'Crée-en une (<a href="00-inscription.html" style="color:#10a06a;font-weight:800">inscription</a>), fais contrôler son dossier et valider sa déclaration « réseau limité », '
+      + 'puis génère sa clé depuis <a href="10-compte.html?s=integration#api" style="color:#10a06a;font-weight:800">Compte › Intégration</a>. Reviens ensuite ici.';
+    hote.innerHTML = '';
+    $('bt-cfg').innerHTML = 'Le widget n’est pas monté : aucune clé publique à lui donner.';
+    return;
+  }
+
+  hote.setAttribute('data-payencash', pk);
+  $('bt-marque').textContent = m.raisonSociale;
+  document.title = m.raisonSociale + ' — Commande (démonstration du bouton PayEnCash Solution)';
+  $('bt-note').innerHTML = '<b>Ceci n’est pas une page PayEnCash.</b> C’est la maquette du site de <b>' + D.esc(m.raisonSociale) + '</b>, '
+    + 'avec sa charte et ses moyens de paiement — et notre bouton posé à côté, exactement ce qu’elle obtient en collant deux lignes. '
+    + 'Le bon proposé ici est <b>le sien</b>, utilisable uniquement sur ' + D.esc(String(m.siteUrl || '').replace(/^https?:\/\//, '')) + '.';
+
+  /* CE QUE LA PAGE PORTE VRAIMENT : le montant est le total du panier, la référence celle de la commande — les deux lignes
+     montrées sont celles qui sont posées, pas un exemple à côté. */
+  $('bt-cfg').innerHTML = 'Ce que cette marque a collé dans sa page :<br>'
+    + '<code>&lt;script src="…/ui/tech/payencash-tech-widget.js"&gt;&lt;/script&gt;</code><br>'
+    + '<code>&lt;div data-payencash="' + D.esc(pk) + '" data-montant="' + D.esc(mnt.toFixed(2)) + '" data-commande="' + D.esc(cmd) + '"&gt;&lt;/div&gt;</code><br><br>'
+    + 'Sa clé <b>secrète</b> n’apparaît nulle part dans cette page — elle vit sur son serveur, et nous n’en gardons que l’empreinte. '
+    + '<a href="10-compte.html?s=integration#api">Retour à son compte</a>';
+
+  /* LE BOUTON PRÉVIENT LA PAGE DE LA MARQUE QUAND SA COMMANDE EST COUVERTE — entièrement, par un bon ou par
+     plusieurs (21/09 ; 23/09 : « couvert », pas « payé » — nous n'avons rien réglé) — et c'est SON tunnel qui décide
+     de la suite. Les codes n'y figurent qu'ABRÉGÉS : un bon entamé se dépense encore, et la page de la marque n'a
+     pas à en connaître le code entier. Ici, la démonstration se contente de le montrer : rien n'est créé chez nous. */
+  hote.addEventListener('payencash:couvert', function (e) {
+    var d = e.detail || {}, bons = d.bons || [];
+    var z = $('bt-ok'); z.hidden = false;
+    z.innerHTML = '<b>Commande ' + D.esc(d.commande || '') + ' couverte</b> — ' + D.esc(D.eur(d.montant))
+      + ' avec ' + (bons.length > 1 ? bons.length + ' bons d’achat ' + D.esc(m.raisonSociale) : 'un bon d’achat ' + D.esc(m.raisonSociale)) + ' ('
+      + bons.map(function (b) { return D.esc(b.apercu) + ' : ' + D.esc(D.eur(b.pris)); }).join(' · ') + ').'
+      + '<br><span style="font-size:11.5px">Ton site a reçu l’événement <code>payencash:couvert</code> : c’est à lui de valider la commande '
+      + '— et à son serveur de vérifier le bon proposé <code>' + D.esc(d.offre || '') + '</code> avec sa clé secrète. '
+      + 'Aucun fonds n’est passé par PayEnCash Solution.</span>';
+    z.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });
+
+  /* LES MOYENS DE LA MARQUE NE SONT PAS SIMULÉS : on le dit plutôt que d'ouvrir un faux formulaire. */
+  ['bt-cb', 'bt-vir'].forEach(function (id) {
+    $(id).addEventListener('click', function () {
+      var z = $('bt-ok'); z.hidden = false;
+      z.innerHTML = 'Ce moyen appartient à la marque : il n’est pas simulé dans cette démonstration. '
+        + 'Seul le chemin <b>PayEnCash</b> est réel ici.';
+    });
+  });
+})();
+</script>
+<script src="payencash-tech-widget.js"></script>
+</body>
+</html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash FLY — Bienvenue</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<!-- (17/09 — pivot) La promesse d'entrée n'est plus « payé en espèces chez un commerçant » : le point
+     d'encaissement n'existe plus. Elle devient « un bon d’achat suffit » — le Bon d'achat PayEnCash (acheté en
+     espèces chez un buraliste) ou un agent qui se déplace. Les moyens affichés sont DÉRIVÉS de
+     PEC_DATA.moyensPaiementLabel() : cet écran n'écrit pas la liste lui-même.
+     ONBOARDING premier lancement (fondatrice 23/08, inspiré du cycle Opodo SANS ses travers) :
+     3 écrans de valeur + 1 écran de pré-permission notifications (la popup iOS ne tombe jamais à froid)
+     + les portes finales avec « Découvrir sans compte » AUSSI visible que le reste (anti dark-pattern).
+     Aucune urgence artificielle, aucun interstitiel : la marque parle, c'est tout. -->
+<style>
+  .ob-slide{display:none;flex-direction:column;flex:1;min-height:0}
+  .ob-slide.on{display:flex}
+  .ob-visual{position:relative;margin:10px 18px 0;height:352px;border-radius:26px;overflow:hidden;background:linear-gradient(155deg,#0d3227,#0e5e40 55%,#10a06a 135%);box-shadow:0 18px 40px rgba(15,42,36,.22)}
+  .ob-visual .halo{position:absolute;right:-46px;top:-56px;width:210px;height:210px;border-radius:50%;background:radial-gradient(circle,rgba(63,217,155,.4),transparent 65%);pointer-events:none}
+  .ob-badge{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;width:92px;height:92px;border-radius:30px;background:rgba(255,255,255,.14);backdrop-filter:blur(2px);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+  .ob-badge svg{font-size:44px}
+  .ob-float{position:absolute;display:flex;align-items:center;gap:8px;border-radius:14px;background:var(--color-card);box-shadow:0 10px 26px rgba(15,42,36,.25);padding:9px 12px;font-size:11.5px;font-weight:700;color:var(--color-ink)}
+  .ob-float svg{font-size:15px;color:var(--color-primary-dark)}
+  .ob-title{margin:22px 22px 0;font-size:23px;font-weight:800;letter-spacing:-0.02em;line-height:1.22;color:var(--color-ink)}
+  .ob-sub{margin:10px 22px 0;font-size:13.5px;line-height:1.65;color:var(--color-muted)}
+  .ob-dots{display:flex;justify-content:center;gap:7px;margin:14px 0 4px}
+  .ob-dots i{width:7px;height:7px;border-radius:999px;background:var(--color-sep);transition:all .25s}
+  .ob-dots i.on{width:22px;background:var(--color-primary)}
+  .ob-foot{margin:10px 18px 16px}
+  .ob-skip{position:absolute;right:16px;top:52px;z-index:5;font-size:12.5px;font-weight:700;color:var(--color-muted);background:var(--color-card);border-radius:999px;padding:7px 14px;box-shadow:0 4px 12px rgba(15,42,36,.12)}
+  .ob-line{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--color-sep);font-size:12.5px;line-height:1.55;color:var(--color-muted)}
+  .ob-line:last-child{border-bottom:0}
+  .ob-line svg{flex:none;font-size:16px;color:var(--color-primary-dark);margin-top:1px}
+  .ob-line b{color:var(--color-ink)}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device" style="position:relative;display:flex;flex-direction:column">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <button type="button" id="ob-skip" class="ob-skip tap" onclick="goStep(5)">Passer</button>
+
+  <!-- 1 · LA PROMESSE — payer ses voyages en espèces -->
+  <section class="ob-slide on" id="ob-1">
+    <div class="ob-visual" style="background:none;box-shadow:0 18px 40px rgba(15,42,36,.22)">
+      <img src="../assets/photos/photo-plage.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,50,39,.02) 40%,rgba(13,50,39,.55))"></div>
+      <div class="ob-float" style="left:16px;bottom:16px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-banknote"/></svg> Payé avec un bon d’achat</div>
+      <div class="ob-float" style="left:16px;top:16px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-plane"/></svg> <span id="ob1-vol">Vol · payé avec un bon d’achat</span></div>
+      <!-- (21/09, fondatrice : « voici les logos ») LE LOGO DE L'APP, posé sur la photo d'accueil comme une icône sur un écran.
+           (21/09, « vérifie où le logo n'est pas bien repris ») Il était en haut à droite, SOUS le bouton « Passer » qui le
+           coupait : il descend en bas à droite, sur le dégradé sombre de la photo — la version noire y est chez elle. -->
+      <img class="pec-appicone pec-appicone--lg" src="../assets/logos/payencash-fly-180.png" alt="PayEnCash Fly" width="52" height="52" style="position:absolute;right:16px;bottom:16px">
+    </div>
+    <h1 class="ob-title">Tes voyages, payés avec un bon d’achat.</h1>
+    <p class="ob-sub">Vols, hôtels, séjours : tu réserves dans l'app et tu règles comme tu veux — <span id="ob1-moyens">—</span>.</p>
+    <div style="flex:1"></div>
+    <div class="ob-foot">
+      <div class="ob-dots"><i class="on"></i><i></i><i></i><i></i></div>
+      <button type="button" class="pec-cta tap" style="display:block;width:100%;text-align:center" onclick="goStep(2)">Continuer</button>
+    </div>
+  </section>
+
+  <!-- 2 · LE PRIX BLOQUÉ — notre mécanique unique -->
+  <section class="ob-slide" id="ob-2">
+    <div class="ob-visual">
+      <span class="halo"></span>
+      <div class="ob-badge"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-lock"/></svg></div>
+      <div class="ob-float" style="left:16px;bottom:16px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-clock"/></svg> Prix bloqué · <span id="ob2-pb">—</span></div>
+      <div class="ob-float" style="left:16px;top:16px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-check"/></svg> <span class="pec-atot">70,25</span> € — garanti</div>
+    </div>
+    <h1 class="ob-title">Ton prix t'attend pendant que tu vas payer.</h1>
+    <p class="ob-sub">Dès que tu valides, ton tarif est bloqué. Tu as le temps de payer en ligne, d'aller chercher un ticket ou d'attendre l'agent — pas de mauvaise surprise au moment de régler.</p>
+    <div style="flex:1"></div>
+    <div class="ob-foot">
+      <div class="ob-dots"><i></i><i class="on"></i><i></i><i></i></div>
+      <button type="button" class="pec-cta tap" style="display:block;width:100%;text-align:center" onclick="goStep(3)">Continuer</button>
+    </div>
+  </section>
+
+  <!-- 3 · L'HUMAIN — l'hôte, la vraie différence -->
+  <section class="ob-slide" id="ob-3">
+    <div class="ob-visual">
+      <span class="halo"></span>
+      <div class="ob-badge"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg></div>
+      <div class="ob-float" style="left:16px;bottom:16px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-phone"/></svg> <span id="ob3-tel">—</span> · appel gratuit</div>
+      <div class="ob-float" style="left:16px;top:16px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg> Ton hôte · <span id="ob3-h">—</span></div>
+    </div>
+    <h1 class="ob-title">Des humains, pas des robots.</h1>
+    <p class="ob-sub">Un(e) hôte te répond au téléphone, t'appelle avant ta première commande à domicile, et reste joignable jusqu'à ton retour.</p>
+    <div style="flex:1"></div>
+    <div class="ob-foot">
+      <div class="ob-dots"><i></i><i></i><i class="on"></i><i></i></div>
+      <button type="button" class="pec-cta tap" style="display:block;width:100%;text-align:center" onclick="goStep(4)">Continuer</button>
+    </div>
+  </section>
+
+  <!-- 4 · PRÉ-PERMISSION NOTIFICATIONS — la popup iOS ne tombe jamais à froid (pattern Opodo, version honnête) -->
+  <section class="ob-slide" id="ob-4">
+    <div class="ob-visual" style="height:210px">
+      <span class="halo"></span>
+      <div class="ob-badge" style="top:50%"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-bell"/></svg></div>
+    </div>
+    <h1 class="ob-title" style="font-size:21px">Les notifications, c'est ton filet de sécurité.</h1>
+    <div class="pec-card" style="margin:12px 18px 0;padding:4px 15px">
+      <div class="ob-line"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-ticket"/></svg><span><b>Ton code de paiement</b> arrive par notification et SMS dès qu'il est émis.</span></div>
+      <div class="ob-line"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-clock"/></svg><span><b>On te prévient avant l'expiration</b> de ton prix bloqué — jamais de tarif perdu en silence.</span></div>
+      <div class="ob-line"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-flame"/></svg><span><b>Un article se libère ?</b> Il est réservé pour toi <span data-info="waitlistPriorite">15</span> minutes — la notification te donne la priorité.</span></div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="ob-foot">
+      <div class="ob-dots"><i></i><i></i><i></i><i class="on"></i></div>
+      <button type="button" class="pec-cta tap" style="display:block;width:100%;text-align:center" data-done="✓ Choix enregistré — la demande système (popup iOS) suit dans l'app installée" onclick="if(window.PEC_DATA&&PEC_DATA.consentir)PEC_DATA.consentir('notifications-push','Pré-permission notifications acceptée (onboarding) — code de paiement, expiration du prix bloqué, file de priorité');goStep(5)">Activer les notifications</button>
+      <button type="button" class="tap" style="display:block;width:100%;text-align:center;margin-top:9px;font-size:12.5px;font-weight:700;color:var(--color-muted)" onclick="goStep(5)">Plus tard</button>
+    </div>
+  </section>
+
+  <!-- 5 · LES PORTES — découvrir sans compte est AUSSI visible que le reste (anti dark-pattern) -->
+  <section class="ob-slide" id="ob-5">
+    <div class="ob-visual" style="background:none;box-shadow:0 18px 40px rgba(15,42,36,.22)">
+      <img src="../assets/photos/photo-voyage-aile.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,50,39,.05) 35%,rgba(13,50,39,.7))"></div>
+      <div style="position:absolute;left:18px;bottom:16px;right:18px;color:#fff">
+        <div style="font-size:12px;font-weight:800;letter-spacing:.02em;color:#9fe8c8">payEnCash Fly</div>
+        <div style="font-size:20px;font-weight:800;letter-spacing:-0.01em;margin-top:3px">C'est parti.</div>
+      </div>
+    </div>
+    <h1 class="ob-title" style="font-size:21px">Explore d'abord, décide ensuite.</h1>
+    <p class="ob-sub">Pas besoin de compte pour chercher un vol ou comparer les hôtels — il ne te sera demandé qu'au moment de réserver.</p>
+    <div style="flex:1"></div>
+    <div class="ob-foot">
+      <a class="pec-cta tap" href="01-accueil.html" style="display:block;width:100%;text-align:center">Découvrir sans compte</a>
+      <button type="button" class="tap" onclick="if(window.PEC_DATA&&PEC_DATA.consentir)PEC_DATA.consentir('cgu-inscription','Création de compte — CGU et politique de confidentialité acceptées');window.obMode='creer';goStep(6)" style="display:block;width:100%;text-align:center;margin-top:9px;border-radius:999px;padding:13px;font-size:14px;font-weight:800;color:var(--color-primary-dark);background:var(--color-mint)">Créer un compte</button>
+      <p style="margin-top:7px;text-align:center;font-size:9.5px;line-height:1.5;color:var(--color-muted)">En créant ton compte, tu acceptes les <a href="18-informations-legales.html#cgu" style="color:var(--color-primary-dark);font-weight:700">conditions d'utilisation</a> et la <a href="18-informations-legales.html#confidentialite" style="color:var(--color-primary-dark);font-weight:700">politique de confidentialité</a>.</p>
+      <button type="button" class="tap" onclick="window.obMode='connexion';goStep(6)" style="display:block;width:100%;text-align:center;margin-top:8px;font-size:12.5px;font-weight:700;color:var(--color-muted)">J'ai déjà un compte</button>
+      <!-- la boucle vitrine ↔ app : le site public mène ici, et on peut y revenir -->
+      <a class="tap" href="../../ESPACE-COMMERCANT/marketing/landing-page.html" style="display:block;text-align:center;margin-top:9px;font-size:11px;font-weight:700;color:var(--color-muted-2);text-decoration:none">payencash.fr — le site</a>
+    </div>
+  </section>
+
+</div>
+  <!-- 6 · TON TÉLÉPHONE — le compte EST le téléphone (finalité aboutie 28/08) -->
+  <section class="ob-slide" id="ob-6">
+    <h1 class="ob-title" style="margin-top:46px" id="ob6-titre">Ton numéro de téléphone.</h1>
+    <p class="ob-sub">C'est ton identifiant. Un code te sera envoyé par SMS pour vérifier que ce numéro est bien le tien — ensuite, tu te connecteras avec un mot de passe. Ton e-mail viendra après.</p>
+    <div style="margin:16px 22px 0">
+      <label class="pec-input-label" for="ob-tel">Numéro de mobile</label>
+      <div style="display:flex;gap:8px">
+        <select class="pec-input" id="ob-indicatif" style="flex:none;width:104px"><option value="+33" selected>🇫🇷 +33</option><option value="+32">🇧🇪 +32</option><option value="+41">🇨🇭 +41</option></select>
+        <input class="pec-input" id="ob-tel" type="tel" inputmode="numeric" maxlength="10" placeholder="06 12 34 56 78" style="min-width:0;flex:1">
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="ob-foot">
+      <button type="button" id="ob-tel-ok" class="pec-cta tap" style="display:block;width:100%;text-align:center;opacity:.45;pointer-events:none">Recevoir mon code par SMS</button>
+    </div>
+  </section>
+
+  <!-- 7 · LE CODE SMS -->
+  <section class="ob-slide" id="ob-7">
+    <h1 class="ob-title" style="margin-top:46px">Le code reçu par SMS.</h1>
+    <p class="ob-sub" id="ob7-sub">Envoyé au —.</p>
+    <div style="margin:16px 22px 0">
+      <input class="pec-input" id="ob-code" type="text" inputmode="numeric" maxlength="6" placeholder="______" style="width:100%;text-align:center;font-size:22px;letter-spacing:.45em;font-weight:800">
+      <p style="margin-top:8px;text-align:center;font-size:11px;color:var(--color-muted)">Rien reçu ? <button type="button" class="tap" id="ob-renvoyer" style="color:var(--color-primary-dark);font-weight:700;background:none;padding:0">Renvoyer</button></p>
+    </div>
+    <div style="flex:1"></div>
+    <div class="ob-foot">
+      <button type="button" id="ob-code-ok" class="pec-cta tap" style="display:block;width:100%;text-align:center;opacity:.45;pointer-events:none">Vérifier</button>
+    </div>
+  </section>
+
+  <!-- 8 · TON NOM (création seulement) → l'app -->
+  <section class="ob-slide" id="ob-8">
+    <h1 class="ob-title" style="margin-top:46px">Et ton nom — comme sur ta pièce.</h1>
+    <p class="ob-sub">Il servira à tes billets (nominatifs) et au 1ᵉʳ paiement. Exactement comme sur ta pièce d'identité.</p>
+    <div style="margin:16px 22px 0">
+      <label class="pec-input-label" for="ob-prenom">Prénom</label>
+      <input class="pec-input" id="ob-prenom" type="text" style="margin-bottom:10px">
+      <label class="pec-input-label" for="ob-nom">Nom</label>
+      <input class="pec-input" id="ob-nom" type="text">
+    </div>
+    <div style="flex:1"></div>
+    <div class="ob-foot">
+      <button type="button" id="ob-fini" class="pec-cta tap" style="display:block;width:100%;text-align:center;opacity:.45;pointer-events:none">Créer mon compte — c'est parti</button>
+    </div>
+  </section>
+
+</div>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<script>
+  // Navigation testable (pas de timers — règle du banc)
+  function goStep(n) {
+    for (var i = 1; i <= 8; i++) {
+      var s = document.getElementById('ob-' + i);
+      if (s) s.classList.toggle('on', i === n);
+    }
+    var skip = document.getElementById('ob-skip');
+    if (skip) skip.style.display = (n >= 5) ? 'none' : 'inline-block';
+  }
+  // ── LE FLUX COMPTE, ABOUTI (28/08) : téléphone → code SMS → nom → l'app.
+  //    « J'ai déjà un compte » saute l'écran nom. Le profil est ÉCRIT (profilSet)
+  //    et toute l'app le lit — zéro impasse, zéro zone statique.
+  (function () {
+    var tel = document.getElementById('ob-tel'); if (!tel) return;
+    tel.addEventListener('input', function () {
+      this.value = this.value.replace(/\D/g, '').slice(0, 10);
+      var ok = this.value.length >= 9, b = document.getElementById('ob-tel-ok');
+      b.style.opacity = ok ? '1' : '.45'; b.style.pointerEvents = ok ? 'auto' : 'none';
+    });
+    // (03/09) PROTOCOLE DE COMPTE : le téléphone CRÉE (ou retrouve) le compte client dans PEC_DATA.comptes ; le code
+    // attendu est celui du compte (code de démo déterministe, affiché — en production envoyé par SMS). Plus jamais
+    // « n'importe quel code passe ».
+    var D = window.PEC_DATA;
+    // (03/09) ZÉRO DUR sur les écrans de valeur : prix du scénario, durée du prix bloqué, numéro et horaires du service client — lus dans PEC_DATA
+    if (D) {
+      var e1 = document.getElementById('ob1-vol'); if (e1 && D.scenario && D.eur) e1.textContent = 'Vol · ' + D.eur(D.scenario.volPrix) + ' tout compris';
+      // (17/09 — pivot) les moyens de la promesse d'entrée : dérivés, jamais écrits dans l'écran
+      var em = document.getElementById('ob1-moyens'); if (em && D.moyensPaiementLabel) { var lm = D.moyensPaiementLabel(); if (lm) em.textContent = lm; }
+      var pbm = (D.scenario && D.scenario.prixBloqueMinutes) || (D.prixBloque && D.prixBloque.dureeMin) || 60;
+      var e2 = document.getElementById('ob2-pb'); if (e2) e2.textContent = pbm >= 60 ? (pbm / 60) + ' h' : pbm + ' min';
+      var e3 = document.getElementById('ob3-tel'); if (e3 && D.serviceClient) e3.textContent = D.serviceClient.tel;
+      var e4 = document.getElementById('ob3-h'); if (e4 && D.serviceClient) e4.textContent = String(D.serviceClient.horaires).split(' · ')[0];
+    }
+    function masque(n) { return document.getElementById('ob-indicatif').value + ' ' + n.slice(0, 2) + ' •• •• •• ' + n.slice(-2); }
+    document.getElementById('ob-tel-ok').addEventListener('click', function () {
+      var n = tel.value, cpt = D && D.compteParIdentifiant ? D.compteParIdentifiant('client', n) : null, sub = document.getElementById('ob7-sub');
+      if (D && D.compteCreer) {
+        if (window.obMode === 'connexion' && !cpt) { sub.textContent = 'Aucun compte avec ce numéro — choisis « Créer un compte ».'; return; }
+        if (window.obMode !== 'connexion' && !cpt) { var r = D.compteCreer('client', { tel: n }); if (!r.ok) { sub.textContent = r.motif; return; } cpt = r.compte; }
+        if (cpt && cpt.statut === 'suspendu') { sub.textContent = 'Compte suspendu — contacte PayEnCash.'; return; }
+        window.__obCompte = cpt;
+        sub.textContent = 'Envoyé au ' + masque(n) + '. Code de démo : ' + D.compteCode(cpt, 'sms') + ' (en production : reçu par SMS).';
+      } else {
+        sub.textContent = 'Envoyé au ' + masque(n) + '.';
+      }
+      goStep(7);
+      document.getElementById('ob-code').focus();
+    });
+    document.getElementById('ob-code').addEventListener('input', function () {
+      this.value = this.value.replace(/\D/g, '').slice(0, 6);
+      var ok = this.value.length === 6, b = document.getElementById('ob-code-ok');
+      b.style.opacity = ok ? '1' : '.45'; b.style.pointerEvents = ok ? 'auto' : 'none';
+    });
+    // « Renvoyer » : la maquette n'envoie rien — état HONNÊTE : le code de démo du compte est ré-affiché (plus de « ✓ Code renvoyé » sans effet)
+    document.getElementById('ob-renvoyer').addEventListener('click', function () {
+      var n = tel.value, cpt = window.__obCompte, sub = document.getElementById('ob7-sub'), inp = document.getElementById('ob-code');
+      if (D && cpt && D.compteCode) sub.textContent = 'Rien n\'est envoyé dans la maquette — ton code de démo : ' + D.compteCode(cpt, 'sms') + ' (en production : nouveau SMS au ' + masque(n) + ').';
+      else sub.textContent = 'Aucun compte en cours — reviens à l\'étape du téléphone.';
+      inp.value = ''; inp.dispatchEvent(new Event('input')); inp.focus();
+    });
+    document.getElementById('ob-code-ok').addEventListener('click', function () {
+      var code = document.getElementById('ob-code').value, cpt = window.__obCompte, sub = document.getElementById('ob7-sub');
+      if (D && cpt) {
+        if (window.obMode === 'connexion') {
+          var cx = D.compteConnecter('client', tel.value, code);
+          if (!cx.ok) { sub.textContent = cx.motif + ' — réessaie.'; return; }
+          if (D.profilSet && cx.compte.profil) D.profilSet({ nomComplet: cx.compte.profil.nom, tel: tel.value.slice(0, 2) + ' •• •• •• ' + tel.value.slice(-2), verifie: true });
+          window.location = '01-accueil.html';   // compte existant : sa session est posée, direction l'app
+          return;
+        }
+        if (!cpt.verifs.sms) { var v = D.compteVerifier(cpt.id, 'sms', code); if (!v.ok) { sub.textContent = v.motif + ' — réessaie.'; return; } window.__obCompte = v.compte; }
+        else if (code !== D.compteCode(cpt, 'sms')) { sub.textContent = 'Code incorrect — réessaie.'; return; }
+        // compte DÉJÀ nommé (créé lors d'une session précédente) : l'écran nom arrive PRÉ-REMPLI depuis le compte / sa fiche client — rien à ressaisir
+        cpt = window.__obCompte;
+        if (cpt.profil && cpt.profil.prenom) {
+          var fiche = (cpt.refId && D.client) ? D.client(cpt.refId) : null;
+          document.getElementById('ob-prenom').value = cpt.profil.prenom || '';
+          document.getElementById('ob-nom').value = (fiche && fiche.nom) || '';
+          majFini();
+        }
+      } else if (window.obMode === 'connexion') { window.location = '01-accueil.html'; return; }
+      goStep(8);
+      document.getElementById('ob-prenom').focus();
+    });
+    function majFini() {
+      var ok = document.getElementById('ob-prenom').value.trim() && document.getElementById('ob-nom').value.trim();
+      var b = document.getElementById('ob-fini');
+      b.style.opacity = ok ? '1' : '.45'; b.style.pointerEvents = ok ? 'auto' : 'none';
+    }
+    document.getElementById('ob-prenom').addEventListener('input', majFini);
+    document.getElementById('ob-nom').addEventListener('input', majFini);
+    document.getElementById('ob-fini').addEventListener('click', function () {
+      var prenom = document.getElementById('ob-prenom').value.trim();
+      var nom = document.getElementById('ob-nom').value.trim();
+      var n = tel.value, cpt = window.__obCompte;
+      if (D && cpt && D.compteProfilMaj) { D.compteProfilMaj(cpt.id, { prenom: prenom, nom: nom }); D.compteConnecter('client', n, D.compteCode(cpt, 'sms')); }   // le compte porte le nom, la session est ouverte
+      if (window.PEC_DATA && PEC_DATA.profilSet) PEC_DATA.profilSet({ nomComplet: prenom + ' ' + nom, tel: n.slice(0, 2) + ' •• •• •• ' + n.slice(-2), verifie: true });
+      window.location = '01-accueil.html';
+    });
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash Manager — Détail de commande</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-p-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-p-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<link rel="stylesheet" href="../assets/payencash-manager.css">
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-filters.js"></script><!-- (07/09) recherche · tri · pagination par convention -->
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-manager-nav.js"></script>
+<!--
+  DÉTAIL D'UNE COMMANDE — route `/reservations/[id]`.
+  Écran révélé manquant par l'audit de traçabilité : l'app manager expose déjà
+  `confirm-payment`, `cancel` et `force-cancel`, sans qu'aucune maquette ne les
+  porte. Ces trois actions contournent les garde-fous du flux automatique — elles
+  sont donc isolées dans leur propre panneau, avec motif et journalisation.
+-->
+</head>
+<body>
+<!-- (07/09 — audit manager « connexion table / donnée ») tables du schéma reflétées par cet écran : `orders`, `order_items`, `payments`, `payment_tenders`, `audit_log` — miroir server/db/schema.sql — la table des dépôts d'espèces est partie avec l'agent le 18/09 au soir (partie 6) -->
+<!-- (18/09 — Bon d’achat PayEnCash) + `gift_cards`, `gift_card_movements` : une commande réglée par un Bon d’achat PayEnCash se rembourse par RE-CRÉDIT du bon d’achat, jamais en espèces -->
+
+<div class="pec-admin">
+
+  <aside class="pec-aside" data-pec-nav></aside>
+
+  <main class="pec-main">
+    <div class="pec-topbar">
+      <div>
+        <h1 id="cd-titre">Détail de commande</h1>
+        <p class="sub" id="cd-sub">—</p>
+      </div>
+      <div class="pec-topbar-actions"><button class="pec-btn pec-btn--ghost tap" id="cd-export" disabled style="opacity:.45;cursor:not-allowed" title="Ouvre une commande réelle pour exporter son cheminement">Exporter (CSV)</button></div>
+    </div>
+
+    <div class="pec-grid pec-grid--3" style="margin-bottom:16px">
+      <div class="pec-kpi">
+        <div class="lbl"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-banknote"/></svg> Total TTC encaissé</div>
+        <div class="val" id="cd-total">—</div>
+        <div class="hint" id="cd-total-hint">—</div>
+      </div>
+      <div class="pec-kpi">
+        <!-- (18/09, soir — l'agent de caisse mobile est abandonné) la tuile nommait l'AGENT affecté (« En attente de dispatch »,
+             « Karim B. ») : elle nomme le MOYEN de règlement, la seule chose qui distingue encore deux commandes. -->
+        <div class="lbl"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-card"/></svg> Règlement</div>
+        <div class="val" style="font-size:19px" id="cd-moyen">—</div>
+        <div class="hint" id="cd-moyen-hint">—</div>
+      </div>
+      <div class="pec-kpi">
+        <div class="lbl"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-plane"/></svg> Fournisseurs</div>
+        <div class="val" style="font-size:19px" id="cd-fournisseur">—</div>
+        <div class="hint" id="cd-fournisseur-hint">—</div>
+      </div>
+    </div>
+
+    <div class="pec-panel" style="margin-bottom:16px">
+      <div class="pec-panel-head">
+        <div><h2>Cheminement de la commande</h2><p class="s">Chaque étape, son horodatage et ce qu’elle a déclenché.</p></div>
+      </div>
+      <div class="pec-panel-body">
+        <table data-fsortable class="pec-table">
+          <thead><tr><th>Horodatage</th><th>Étape</th><th>Statut atteint</th><th>Effet</th></tr></thead>
+          <!-- (03/09 — zéro-dur) la timeline « 05/08 · Karim B. » était INVENTÉE : jalons DÉRIVÉS du bus
+               (18/09, soir — l'agent de caisse mobile est abandonné) c.at / payeAt / rembourseAt / annuleAt et les
+               transactions du prestataire ; accepteAt, arriveAt et c.agent ne sont plus lus — ils datent de la course. -->
+          <tbody id="cd-timeline"><tr><td colspan="4" class="meta" style="text-align:center;padding:18px">Ouvre une commande réelle depuis la liste — son cheminement se lit du bus.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="pec-grid pec-grid--2">
+      <div class="pec-panel">
+        <div class="pec-panel-head"><div><h2>Voyageurs et prestations</h2><p class="s">Données chiffrées en base, affichées en clair ici.</p></div></div>
+        <div class="pec-panel-body">
+          <table class="pec-table">
+            <tbody>
+              <tr><td class="who" id="cd-client">—</td><td class="meta" id="cd-client-meta">—</td></tr>
+              <!-- (03/09) « Vueling VY1234 · PNR ABC123 » inventés → c.vols / c.compagnie / c.bagages du bus, sinon « — » -->
+              <tr><td class="who" id="cd-vol">—</td><td class="meta" id="cd-vol-meta">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="pec-panel">
+        <div class="pec-panel-head"><div><h2>Actions exceptionnelles</h2><p class="s">Hors du parcours normal. Motif obligatoire, trace nominative.</p></div></div>
+        <div class="pec-panel-body">
+          <!-- (03/09 — audit) les trois boutons n'appelaient rien. « Confirmer » est RÉEL : PEC_BUS.payer(ref, {par:'manager', motif})
+               — la commande passe `paye`, journal `paiement` par manager (motif obligatoire). « Annuler » est désormais RÉEL :
+               PEC_BUS.annuler(ref, {motif, par}) — motif obligatoire, JAMAIS sur une commande payée (celle-là se REMBOURSE :
+               PEC_BUS.rembourser, avoir ou virement, jamais d'espèces — LCB-FT). « Forcer » reste désactivée : le bus ne porte pas
+               de dérogation aux politiques fournisseur (besoin : PEC_BUS.annuler(ref, {…, force:true})). -->
+          <div class="pec-setting">
+            <!-- (18/09, soir — l'agent de caisse mobile est abandonné) le geste ne rattrape plus « une validation agent qui a
+                 échoué » : il rattrape un règlement bien arrivé — bon d’achat encaissé au comptoir, notification du prestataire reçue —
+                 que la commande n'a pas enregistré. L'attestation LCB-FT du manager (pièce contrôlée par l'agent au domicile)
+                 part avec lui : le contrôle d'identité se fait désormais au comptoir du commerce, sur le parcours du Bon d’achat. -->
+            <div><div class="t">Confirmer le règlement manuellement</div><div class="s">Le client a bien réglé (bon d’achat encaissé au comptoir, paiement notifié par le prestataire) mais la commande n’est pas passée « réglée ». <b>Déclenche l’achat fournisseur.</b> Motif obligatoire, journalisé à ton nom.</div></div>
+            <div class="pec-setting-control" style="gap:8px;flex-wrap:wrap"><input class="pec-search" id="cd-motif" placeholder="motif (obligatoire)" aria-label="Motif de confirmation manuelle" style="max-width:190px">
+              <button class="pec-btn pec-btn--ghost pec-btn--sm tap" id="cd-confirmer" disabled style="opacity:.45;cursor:not-allowed">Confirmer…</button></div>
+          </div>
+          <p class="meta" id="cd-msg" style="margin:0 0 8px"></p>
+          <div class="pec-setting">
+            <div><div class="t">Rembourser la commande</div><div class="s">Une commande <b>encaissée</b> se rembourse en <b>avoir</b>, par <b>virement</b> ou — si un Bon d’achat PayEnCash l'a réglée — par <b>re-crédit du bon d’achat</b> ; <b>jamais en espèces</b> (LCB-FT). Montant pré-rempli au total encaissé, motif obligatoire, journalisé à ton nom.</div></div>
+            <div class="pec-setting-control" style="gap:8px;flex-wrap:wrap">
+              <!-- (18/09 — Bon d’achat PayEnCash) l'option « Re-crédit du Bon d’achat PayEnCash » (valeur bon d’achat) n'est proposée que si un bon d’achat a réglé la commande : posée par le script, jamais offerte à une commande sans bon d’achat -->
+              <select class="pec-search" id="cd-rb-mode" aria-label="Mode de remboursement" style="max-width:220px"><option value="avoir">Avoir</option><option value="virement">Virement</option></select>
+              <input class="pec-search" id="cd-rb-montant" placeholder="montant" aria-label="Montant remboursé" style="max-width:100px">
+              <input class="pec-search" id="cd-rb-motif" placeholder="motif (obligatoire)" aria-label="Motif du remboursement" style="max-width:180px">
+              <button class="pec-btn pec-btn--ghost pec-btn--sm tap" id="cd-rembourser" disabled style="opacity:.45;cursor:not-allowed" title="Seule une commande encaissée se rembourse">Rembourser…</button>
+            </div>
+          </div>
+          <p class="meta" id="cd-rb-msg" style="margin:0 0 8px"></p>
+          <div class="pec-setting">
+            <div><div class="t">Annuler dans les règles</div><div class="s">Politiques fournisseurs appliquées. Une commande <b>déjà payée ne s’annule pas</b> — elle se rembourse (ci-dessus). Motif obligatoire.</div></div>
+            <div class="pec-setting-control" style="gap:8px;flex-wrap:wrap">
+              <input class="pec-search" id="cd-an-motif" placeholder="motif (obligatoire)" aria-label="Motif d’annulation" style="max-width:180px">
+              <button class="pec-btn pec-btn--ghost pec-btn--sm tap" id="cd-annuler" disabled style="opacity:.45;cursor:not-allowed" title="Une commande payée ne s’annule jamais — elle se rembourse (avoir ou virement)">Annuler la commande…</button>
+            </div>
+          </div>
+          <p class="meta" id="cd-an-msg" style="margin:0 0 8px"></p>
+          <div class="pec-setting">
+            <div><div class="t">Annulation forcée</div><div class="s">Hors politique fournisseur : la perte est assumée par PayEnCash.</div></div>
+            <div class="pec-setting-control"><button class="pec-btn pec-btn--danger pec-btn--sm tap" disabled style="opacity:.45;cursor:not-allowed" title="Dérogation aux politiques fournisseur non portée par le bus — besoin : PEC_BUS.annuler(ref, {par, motif, force:true})">Forcer…</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pec-notice" style="margin-top:16px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-alert"/></svg>
+      <div><b>Ces trois actions déplacent de l’argent réel hors du parcours normal.</b> Chacune demande une confirmation explicite et un motif, et laisse une trace nominative au journal d’audit. « Confirmer le règlement » est la plus sensible : utilisée à tort, elle fait acheter un billet pour un règlement jamais reçu.</div>
+    </div>
+
+    <div class="pec-notice pec-notice--info" style="margin-top:16px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-info"/></svg>
+      <div>Ce détail est celui d’une commande <b>Voyage</b>. Une commande <b>Mode</b> s’instruit différemment — encaissement, puis achat ferme au fournisseur, contrôle atelier, puis expédition par le fournisseur (Mondial Relay) — sans étape « Duffel » ni billet. Voir l'Étape 4 du fil rouge (flux F11/F12).</div>
+    </div>
+  </main>
+
+</div>
+
+<script src="../assets/payencash-bus.js"></script>
+<script>
+  // le détail suit ?ref (bus) — un gabarit sans commande réelle le DIT (28/08)
+  /* (09/09 — audit manager↔agent) la fiche se REND en place (rendre) : après un geste (confirmation, remboursement, annulation)
+     et à chaque écriture du bus — avant, location.reload() à chaque événement de stockage : une navigation avortée
+     dès qu'une autre app écrivait, et la saisie perdue. Les gestes sont posés par onclick (idempotent d'un rendu à l'autre). */
+  function rendre() {
+    var ref = new URLSearchParams(location.search).get('ref');
+    var c = (ref && window.PEC_BUS) ? PEC_BUS.commande(ref) : null;
+    var h = document.getElementById('cd-titre');
+    var D = window.PEC_DATA || null;
+    function set(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; }
+    function num(x) { return parseFloat(String(x == null ? '0' : x).replace(',', '.')) || 0; }
+    function eur(n) { return n.toFixed(2).replace('.', ',') + ' €'; }
+    function quand(t) { var d = new Date(t); return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+    function hhmm(t) { var d = new Date(t); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+    function pill(cl, t) { return '<span class="pec-pill pec-pill--' + cl + '">' + t + '</span>'; }
+    var fisc = (D && D.fiscalite) || {};
+    var fv = (D && D.ref && D.ref.fournisseursVoyage) || {};
+    if (c) {
+      var isMode = String(c.type || '').toUpperCase() === 'MODE';
+      var paye = c.statut === 'paye';
+      // TOTAL = le montant du bus ; régime de la marge → PAS de « dont TVA » (art. 297 A CGI)
+      set('cd-total', c.montant ? eur(num(c.montant)) : '—');
+      var regime = isMode ? (fisc.occasion || fisc.neuf) : fisc.voyage;
+      set('cd-total-hint', regime && regime.mention ? regime.mention : (paye ? 'règlement effectué' : 'à encaisser'));
+      // (08/09 — rendu de monnaie par virement) une ligne d'état, si la donnée existe : espèces / par virement X € (à virer | viré le …)
+      var rv = c.renduVirement, rg = c.reglement || null, renduTxt = '';
+      if (rv && rv.montant > 0) renduTxt = ' · Rendu de monnaie : par virement ' + eur(num(rv.montant)) + (rv.statut === 'vire' ? ' (viré le ' + quand(rv.vireAt) + (rv.par ? ' par ' + rv.par : '') + ')' : ' (à virer' + (rv.dueAt ? ' avant ' + hhmm(rv.dueAt) : '') + ')');
+      else if (rg && (num(rg.rendu) > 0 || rg.renduMode)) renduTxt = ' · Rendu de monnaie : espèces' + (num(rg.rendu) > 0 ? ' ' + eur(num(rg.rendu)) : ' (aucun)');
+      var moyenLbl = function (k) { return (D && D.libelleMoyen) ? D.libelleMoyen(k) : k; };
+      /* (18/09, soir — l'agent de caisse mobile est abandonné ; 20/09 — le rail du prestataire est mort avec le
+         réseau tiers) IL NE RESTE QUE DEUX FAÇONS DE RÉGLER : le Bon d’achat PayEnCash débité par le bus, et la
+         confirmation manuelle du manager. Les états « Agent arrivé », « Course acceptée », « Scan + code de
+         sécurité + photo » et la transaction ouverte chez un prestataire n'existent plus. */
+      set('cd-moyen-hint', (paye
+        ? ((c.par === 'manager' ? 'Confirmation manuelle du manager'
+            : ((D && D.reglementLibelle) ? D.reglementLibelle(c) : 'Réglé par Bon d’achat PayEnCash'))   /* (18/09 — Bon d’achat PayEnCash) la phrase de règlement du data-layer : bon d’achat masqué, reste sur le bon d’achat */
+           + (c.payeAt ? ' · ' + hhmm(c.payeAt) : ''))
+        : 'En attente du choix du moyen de paiement') + renduTxt);
+      // FOURNISSEUR : aucun achat n'est encore déclaré au bus → état honnête, jamais « OK · 46,80 € »
+      if (isMode) { set('cd-fournisseur', 'Fournisseur Mode'); set('cd-fournisseur-hint', paye ? 'Achat ferme au fournisseur — expédition Mondial Relay' : 'Achat ferme déclenché à l’encaissement'); }
+      else {
+        var duf = fv.duffel || {}, nui = fv.nuitee || {};
+        var noms = [duf.nom, c.heb ? nui.nom : null].filter(Boolean).join(' + ') || '—';
+        set('cd-fournisseur', noms);
+        set('cd-fournisseur-hint', paye ? 'Aucun achat fournisseur déclaré pour l’instant' + (duf.mode ? ' (' + duf.nom + ' ' + duf.mode + (typeof duf.solde === 'number' ? ', solde ' + eur(duf.solde) : '') + ')' : '') : 'Achat déclenché à l’encaissement — rien avant');
+      }
+      // CHEMINEMENT : les jalons RÉELS du bus (annonce, acceptation, arrivée, règlement, dépôt)
+      var rows = [];
+      if (c.at) rows.push([c.at, 'Commande annoncée', pill('wait', 'AWAITING_PAYMENT'), 'Prix bloqué, le client choisit son moyen de paiement']);
+      /* (18/09, soir — l'agent de caisse mobile est abandonné) CINQ JALONS ONT DISPARU du cheminement, tous propres à
+         la course : course acceptée / attribuée, agent arrivé au domicile, encaissement commencé (scan, code, comptage),
+         échec d'encaissement déclaré, course réaffectée. Le règlement n'a plus d'étapes intermédiaires — il arrive
+         d'un coup, du comptoir ou du prestataire. */
+      var sqlDe = function (st) { return (PEC_BUS.statutSql && PEC_BUS.statutSql('commande', st)) || st; };
+      if (c.payeAt) rows.push([c.payeAt, 'Règlement validé — ' + (c.par === 'manager' ? 'confirmation manuelle' : ((D && D.reglementLibelle) ? D.reglementLibelle(c) : 'Réglé par Bon d’achat PayEnCash')), pill('done', sqlDe('paye')), isMode ? 'Déclenche l’achat ferme au fournisseur' : 'Déclenche l’achat fournisseur']);
+      if (c.rembourseAt) rows.push([c.rembourseAt, 'Remboursement ' + (c.modeRemboursement === 'bon' ? 'par re-crédit du Bon d’achat PayEnCash' : (c.modeRemboursement || 'avoir'))   /* (18/09 — Bon d’achat PayEnCash) */ + (c.rembourseePar ? ' — ' + c.rembourseePar : ''), pill('wait', sqlDe('rembourse')), (c.motifRemboursement ? 'Motif : ' + c.motifRemboursement + ' · ' : '') + 'jamais en espèces (LCB-FT)']);
+      if (c.annuleAt) rows.push([c.annuleAt, 'Commande annulée' + (c.annulePar ? ' — ' + c.annulePar : ''), pill('off', sqlDe('annule')), c.motifAnnulation ? 'Motif : ' + c.motifAnnulation : 'Motif non renseigné']);
+      /* (18/09, soir) le jalon « Cash déposé / remis au manager » (dépôt à l'automate Cash Services contenant cette réf)
+         est retiré : aucune espèce ne circule plus entre le client et PayEnCash, il n'y a donc rien à déposer. */
+      rows.sort(function (a, b) { return a[0] - b[0]; });
+      document.getElementById('cd-timeline').innerHTML = rows.length ? rows.map(function (r) {
+        return '<tr><td class="meta">' + quand(r[0]) + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td></tr>';
+      }).join('') : '<tr><td colspan="4" class="meta" style="text-align:center;padding:18px">Aucun jalon horodaté sur cette commande.</td></tr>';
+      // VOLS / PRESTATIONS : ce que la commande porte — sinon « — », jamais un PNR inventé
+      var vols = c.vols || [];
+      if (vols.length || c.compagnie || c.trajet) {
+        set('cd-vol', (c.trajet ? c.trajet : 'Vol') + (vols.length ? ' — ' + vols.map(function (v) { return (v.sens ? v.sens + ' ' : '') + (v.compagnie || '') + (v.heures ? ' ' + v.heures : ''); }).join(' · ') : (c.compagnie ? ' — ' + c.compagnie : '')));
+        set('cd-vol-meta', [c.dates, c.bagages ? (typeof c.bagages === 'string' ? c.bagages : 'bagages : ' + JSON.stringify(c.bagages)) : null, c.heb && c.heb.nom ? 'Hébergement : ' + c.heb.nom : null, c.pnr ? 'PNR ' + c.pnr : 'PNR — (émis après l’achat fournisseur)'].filter(Boolean).join(' · '));
+      } else { set('cd-vol', isMode ? 'Articles Mode' : '—'); set('cd-vol-meta', isMode ? 'expédition par le fournisseur (Mondial Relay)' : 'aucune prestation détaillée sur cette commande'); }
+      var ETAT = { paye: ' · réglée', rembourse: ' · remboursée', annule: ' · annulée', a_payer: ' · à payer' };   // (18/09, soir) « échec d'encaissement » était l'échec déclaré par l'agent sur place : il n'existe plus
+      h.textContent = 'Commande ' + c.ref + ' · ' + (c.client || '') + ' · ' + (c.montant || '—') + ' €' + (ETAT[c.statut] || ' · ' + c.statut);
+      set('cd-sub', (c.client || 'Client') + (c.trajet ? ' · ' + c.trajet : '') + (c.montant ? ' · ' + c.montant + ' €' : ''));
+      set('cd-moyen', c.moyen ? moyenLbl(c.moyen) : (c.par === 'manager' ? 'Confirmé à la main' : 'Moyen non choisi'));
+      set('cd-client', c.client || 'Client');
+      set('cd-client-meta', [c.trajet, c.adresse].filter(Boolean).join(' · ') || 'Aucune prestation détaillée');
+      // EXPORT RÉEL du cheminement (CSV dérivé des jalons ci-dessus, journalisé)
+      var ex = document.getElementById('cd-export');
+      ex.disabled = false; ex.style.opacity = ''; ex.style.cursor = ''; ex.title = 'Exporter le cheminement de ' + c.ref;
+      ex.onclick = function () {
+        if (!window.PEC_MGR || !PEC_MGR.csv) return;
+        PEC_MGR.csv('commande-' + c.ref, ['ref', 'client', 'montant_eur', 'statut', 'horodatage', 'etape', 'effet'], rows.map(function (r) { return [c.ref, c.client || '', c.montant || '', c.statut, new Date(r[0]).toISOString(), r[1], r[3]]; }));
+      };
+      // CONFIRMATION MANUELLE (réelle) : seulement une commande encore à payer ; motif obligatoire ; acteur = session manager
+      var btn = document.getElementById('cd-confirmer'), motif = document.getElementById('cd-motif'), msg = document.getElementById('cd-msg');
+      /* (18/09, soir) l'attestation LCB-FT (pièce contrôlée + 4 derniers caractères) ne s'affiche plus : elle ne
+         valait que pour une course à domicile au-dessus du seuil, où l'agent avait vu la pièce. Le statut « échec
+         d'encaissement », déclaré depuis l'app agent, disparaît avec elle. */
+      if (!paye && c.statut !== 'rembourse' && c.statut !== 'annule') {
+        btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = '';
+        btn.onclick = function () {
+          var m = (motif.value || '').trim();
+          if (!m) { msg.textContent = 'Un motif est obligatoire — dis pourquoi la commande n’est pas passée « réglée » toute seule.'; motif.focus(); return; }
+          var par = (window.PEC_MGR && PEC_MGR.acteur) ? PEC_MGR.acteur() : 'manager (démo)';
+          if (!window.confirm('Confirmer le règlement de ' + c.ref + ' (' + (c.montant || '—') + ' €) à la main ? Déclenche l’achat fournisseur. Motif : ' + m)) return;
+          var rP = PEC_BUS.payer(c.ref, { par: 'manager', motif: m, manager: par });
+          if (rP && rP.ok === false) { msg.textContent = 'Confirmation refusée — ' + (rP.message || rP.motif); msg.style.color = '#B3372B'; return; }
+          msg.style.color = '';
+          PEC_BUS.noter('confirmation_manuelle', c.ref, { par: par, motif: m, montant: c.montant });
+          msg.textContent = 'Règlement confirmé manuellement par ' + par + ' (motif : ' + m + ') — journalisé.';
+          rendre();
+        };
+      } else { btn.title = c.statut === 'rembourse' ? 'Commande remboursée' : c.statut === 'annule' ? 'Commande annulée' : 'Commande déjà réglée' + (c.par === 'manager' ? ' — confirmée manuellement' : ''); motif.disabled = true; }
+      // ACTEUR des gestes manager (règle 03/09) : la session SI elle est manager, jamais une session voisine
+      function acteurMgr() { return (window.PEC_MGR && PEC_MGR.acteur) ? PEC_MGR.acteur() : 'manager (démo)'; }
+      function ouvrir(b, titre) { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; if (titre) b.title = titre; }
+      // REMBOURSEMENT (réel) : seulement une commande ENCAISSÉE ; avoir ou virement — jamais d'espèces (LCB-FT)
+      var rbBtn = document.getElementById('cd-rembourser'), rbMode = document.getElementById('cd-rb-mode'),
+          rbMontant = document.getElementById('cd-rb-montant'), rbMotif = document.getElementById('cd-rb-motif'), rbMsg = document.getElementById('cd-rb-msg');
+      /* (18/09 — Bon d’achat PayEnCash) UNE COMMANDE ENTIÈREMENT RÉGLÉE PAR UN BON D’ACHAT porte un reste dû de 0,00 : ce qu'elle a encaissé, c'est la part
+         du bon d’achat (c.bon.montant, = montantBrut) — c'est CE montant qui se rembourse, sur le bon d’achat ; pré-remplir 0,00 aurait fait un geste vide. */
+      var encaisse = (c.moyen === 'bon' && c.bon && c.bon.montant != null) ? String(c.bon.montant).replace('.', ',') : (c.montant || '');
+      rbMontant.value = c.montantRembourse || encaisse || '';
+      /* (18/09 — Bon d’achat PayEnCash) UNE COMMANDE RÉGLÉE PAR UN BON D’ACHAT SE REMBOURSE SUR LE BON D’ACHAT : l'option n'existe que si un bon d’achat l'a réglée
+         (moyen bon d’achat, ou bon d’achat appliqué en complément d'un autre moyen). Le bus re-crédite ce que ce bon d’achat a réglé sur CETTE commande,
+         et dit quand il ne peut pas (dern.bonNonCredite) — jamais un « remboursé » sans qu'un centime ne bouge. */
+      var parBon = c.moyen === 'bon' || !!(c.bonApplique && c.bonApplique.code);
+      var optBon = rbMode.querySelector('option[value="bon"]');
+      if (parBon && !optBon) { optBon = document.createElement('option'); optBon.value = 'bon'; optBon.textContent = 'Re-crédit du Bon d’achat PayEnCash'; rbMode.insertBefore(optBon, rbMode.firstChild); if (c.moyen === 'bon') rbMode.value = 'bon'; }
+      if (!parBon && optBon) optBon.remove();
+      if (c.statut === 'rembourse') {
+        rbBtn.title = 'Déjà remboursée' + (c.modeRemboursement ? ' — ' + c.modeRemboursement : '');
+        rbMsg.textContent = 'Remboursée' + (c.modeRemboursement ? (c.modeRemboursement === 'bon' ? ' par re-crédit du Bon d’achat PayEnCash' : ' en ' + c.modeRemboursement) : '') + (c.montantRembourse ? ' · ' + c.montantRembourse + ' €' : '') + (c.rembourseePar ? ' · par ' + c.rembourseePar : '') + (c.motifRemboursement ? ' · motif : ' + c.motifRemboursement : '') + '.';
+        rbMode.disabled = rbMontant.disabled = rbMotif.disabled = true;
+      } else if (!paye) {
+        rbBtn.title = 'Rien à rembourser : cette commande n’a pas été encaissée';
+        rbMsg.textContent = 'Le remboursement n’existe que pour une commande encaissée — celle-ci est encore à payer (elle s’annule).';
+      } else {
+        ouvrir(rbBtn, 'Rembourser ' + c.ref);
+        /* (20/09) UNE COMMANDE SE RÈGLE PAR UN BON D’ACHAT, ET SE REMBOURSE SUR LUI : le bon est re-crédité,
+           jamais en espèces ni sur une carte — c'est un titre à usage limité, il revient là d'où il vient. */
+        if (parBon && !rbMsg.textContent) rbMsg.textContent = ((D && D.reglementLibelle) ? D.reglementLibelle(c) + ' ' : '') + 'Le remboursement re-crédite le bon d’achat (jamais en espèces) : choisis « Re-crédit du Bon d’achat PayEnCash ».';
+        rbBtn.onclick = function () {
+          var m = (rbMotif.value || '').trim();
+          if (!m) { rbMsg.textContent = 'Un motif est obligatoire — dis pourquoi la commande est remboursée.'; rbMotif.focus(); return; }
+          var mode = rbMode.value === 'virement' ? 'virement' : (rbMode.value === 'bon' ? 'bon' : 'avoir'), montant = (rbMontant.value || encaisse || '').trim();
+          var par = acteurMgr();
+          if (!window.confirm('Rembourser ' + c.ref + ' — ' + montant + ' € ' + (mode === 'bon' ? 'par re-crédit du Bon d’achat PayEnCash' : 'en ' + mode) + ' (jamais en espèces) ? Motif : ' + m)) return;
+          var rc = PEC_BUS.rembourser(c.ref, { mode: mode, montant: montant, motif: m, par: par });
+          // (09/09 — lot 2) le remboursement est RÉEL : avoir crédité (ou non — compte inconnu), virement à émettre en trésorerie, partiel dit
+          var dern = (rc && rc.remboursements || [])[(rc && rc.remboursements || []).length - 1] || {};
+          rbMsg.textContent = 'Remboursement enregistré ' + (mode === 'bon' ? 'par re-crédit du Bon d’achat PayEnCash' : 'en ' + mode) + ' (' + String(dern.montant != null ? dern.montant : montant).replace('.', ',') + ' €) par ' + par + (rc && rc.remboursePartiel ? ' — partiel : ' + String(rc.remboursePartiel).replace('.', ',') + ' € rendus sur ' + encaisse + ' €' : '') + ' — '
+            + (mode === 'bon' ? (dern.bon ? 'bon d’achat ' + ((D && D.bonMasque) ? D.bonMasque(dern.bon) : dern.bon) + ' re-crédité — solde restant ' + ((D && D.eur) ? D.eur(dern.bonSolde || 0) : String(dern.bonSolde) + ' €') + ' (le client le retrouve dans « Mes bons d’achat »).' : '⚠ bon d’achat NON re-crédité : ' + (dern.bonNonCredite || 'aucun Bon d’achat PayEnCash sur cette commande') + '.') : mode === 'avoir' ? (dern.avoirId ? 'avoir ' + dern.avoirId + ' crédité sur le compte du client.' : '⚠ avoir NON crédité : ' + (dern.avoirNonCredite || 'compte inconnu') + '.') : ('virement à émettre depuis Trésorerie (07)' + (dern.virement && !dern.virement.iban ? ' — RIB manquant.' : '.')));
+          rbMsg.style.color = (mode === 'bon' && !dern.bon) || (mode === 'avoir' && !dern.avoirId) || (dern.virement && !dern.virement.iban) ? '#B3372B' : '';
+          rendre();
+        };
+      }
+      // ANNULATION (réelle) : motif obligatoire, JAMAIS sur une commande payée
+      var anBtn = document.getElementById('cd-annuler'), anMotif = document.getElementById('cd-an-motif'), anMsg = document.getElementById('cd-an-msg');
+      if (c.statut === 'annule') {
+        anBtn.title = 'Commande déjà annulée';
+        anMsg.textContent = 'Annulée' + (c.annulePar ? ' par ' + c.annulePar : '') + (c.motifAnnulation ? ' · motif : ' + c.motifAnnulation : '') + '.';
+        anMotif.disabled = true;
+      } else if (paye || c.statut === 'rembourse') {
+        anBtn.title = 'Une commande payée ne s’annule jamais — elle se rembourse (avoir ou virement)';
+        anMsg.textContent = 'Commande encaissée : l’annulation est fermée, le geste possible est le remboursement ci-dessus.';
+        anMotif.disabled = true;
+      } else {
+        ouvrir(anBtn, 'Annuler ' + c.ref + ' — impossible sur une commande payée');
+        anBtn.onclick = function () {
+          var m = (anMotif.value || '').trim();
+          if (!m) { anMsg.textContent = 'Un motif est obligatoire — dis pourquoi la commande est annulée.'; anMotif.focus(); return; }
+          var par = acteurMgr();
+          if (!window.confirm('Annuler ' + c.ref + ' (' + (c.montant || '—') + ' €) ? Motif : ' + m)) return;
+          var r = PEC_BUS.annuler(c.ref, { motif: m, par: par });
+          if (!r || r.statut !== 'annule') { anMsg.textContent = 'Annulation refusée par le bus : la commande est encaissée — passe par le remboursement.'; return; }
+          anMsg.textContent = 'Commande annulée par ' + par + ' (motif : ' + m + ') — journalisé.';
+          rendre();
+        };
+      }
+    } else {
+      h.textContent = 'Détail de commande — gabarit (ouvre une commande réelle depuis la liste)';
+      set('cd-sub', 'Ouvre une commande réelle depuis la liste — les champs se remplissent du bus.');
+      set('cd-moyen', '—'); set('cd-client', '—'); set('cd-client-meta', '—');
+      set('cd-total', '—'); set('cd-total-hint', fisc.voyage && fisc.voyage.mention ? fisc.voyage.mention : '—');
+      set('cd-moyen-hint', '—'); set('cd-fournisseur', '—'); set('cd-fournisseur-hint', 'Aucune commande ouverte');
+    }
+    /* (07/09 — audit « écran sourd ») la fiche suit la commande : un paiement, un dépôt ou une annulation faits
+       dans une autre app la rafraîchissent — sauf pendant une saisie (motif, montant), pour ne rien effacer. */
+  }
+  rendre();
+  (function () {
+    function suivre() { var a = document.activeElement; if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.value) return; rendre(); }
+    window.addEventListener('storage', suivre); window.addEventListener('pec-bus', suivre);
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Tunnel villes multiples</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-verif.js"></script>
+<!-- TUNNEL VILLES MULTIPLES (fondatrice 23/08, comme Ryanair « Villes multiples ») —
+     mécanique DUFFEL multi-slices : UNE offer_request avec slices[] {origin, destination,
+     departure_date}, les offers couvrent TOUS les tronçons, UN SEUL order → un seul code,
+     un seul paiement (par bon d’achat — 17/09 pivot). On choisit un vol PAR TRONÇON, le total suit.
+     Audit 03/09 : aligné sur les tunnels 01/02/03 — voyageur depuis le carnet (jamais un nom
+     en dur), porte de vérification du compte (PEC_VERIF.exiger), consentement CGV, dépôt de la
+     commande complète (PEC_DATA.commandeEnCoursSet, réf unique) avant « Comment payer », reprise
+     (?reprise=1), prix bloqué lu dans D.scenario.
+     (18/09, soir — l'agent de caisse mobile est abandonné, puis pivot de positionnement) LE PLAFOND DES
+     ESPÈCES et le complément carte obligatoire ont quitté le bloc « avant de payer » : ils ne visaient que
+     l'agent. La promesse est « avec un bon d’achat ». -->
+<style>
+  .h1{font-size:21px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;color:var(--color-ink)}
+  .vol{display:block;width:100%;text-align:left;background:var(--color-card);border-radius:16px;padding:13px 14px;margin-bottom:9px;box-shadow:var(--shadow-card);cursor:pointer}
+  .vol[aria-pressed="true"]{box-shadow:var(--shadow-selected)}
+  .vol .top{display:flex;align-items:center;gap:10px}
+  .vol .heures{display:flex;align-items:baseline;gap:8px;font-size:15px;font-weight:800;color:var(--color-ink);min-width:0;flex-wrap:wrap}
+  .vol .heures small{font-size:11px;font-weight:600;color:var(--color-muted)}
+  .vol .px{margin-left:auto;font-size:15.5px;font-weight:800;color:var(--color-primary-dark);white-space:nowrap}
+  .vol .px small{font-size:10px;font-weight:700;color:var(--color-muted)}
+  .tron{margin-bottom:18px}
+  .tron-t{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+  .tron-t .num{flex:none;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:12px;font-weight:800}
+  .tron-t b{font-size:14.5px;color:var(--color-ink)}
+  .tron-t small{font-size:11.5px;color:var(--color-muted);font-weight:600}
+  .tf-field { display:flex; flex-direction:column; gap:4px; flex:1; min-width:0; }
+  .tf-label { font-size:11px; font-weight:500; color:var(--color-muted-2); }
+  .tf-input { width:100%; border-radius:12px; background:var(--color-surface); padding:12px 13px;
+    font-size:14px; font-weight:600; color:var(--color-ink); border:none; outline:none; }
+  .tf-input::placeholder { font-weight:400; color:var(--color-muted-2); }
+  .sheet-scrim { position:fixed; inset:0; z-index:50; display:none; align-items:flex-end; justify-content:center; background:rgba(15,42,36,0.4); }
+  .sheet-scrim.on { display:flex; }
+  .sheet { display:flex; flex-direction:column; width:100%; max-width:var(--frame-max); max-height:85vh;
+    background:var(--color-surface); border-radius:28px 28px 0 0; box-shadow:var(--shadow-sheet); }
+  .sheet-head { flex-shrink:0; padding:8px 16px 12px; }
+  .sheet-head h2 { margin-top:6px; padding:0 4px; font-size:18px; font-weight:800; color:var(--color-ink); }
+  .sheet-body { min-height:0; overflow-y:auto; padding:0 16px 28px; }
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:14px 18px 8px">
+
+    <div style="display:flex;align-items:center;gap:11px;margin-bottom:4px">
+      <a class="pec-back tap" href="../ecrans/01-accueil.html" aria-label="Retour à l'accueil"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-chevron-left"/></svg></a>
+      <div>
+        <h1 class="h1">Villes multiples</h1>
+        <div style="font-size:11.5px;color:var(--color-muted);font-weight:600;margin-top:2px" id="sous-titre">Un vol par tronçon · un seul dossier · un seul paiement, par bon d’achat</div>
+      </div>
+    </div>
+
+    <div class="pec-reassure" style="margin:8px 0 14px">
+      <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-info"/></svg>
+      <p>Tes tronçons voyagent ensemble : <b>une seule réservation</b>, un seul paiement — <b>avec un bon d’achat</b>.</p>
+    </div>
+
+    <!-- BANDEAU REPRISE (fondatrice 30/08) : arrivée par « Relancer » depuis une réservation
+         annulée/expirée — tronçons repris, tarif du moment recalculé. -->
+    <div id="reprise-banner" hidden style="display:flex;align-items:flex-start;gap:9px;border-radius:14px;background:var(--color-mint);padding:11px 13px;margin-bottom:14px">
+      <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:18px;color:var(--color-primary-dark)"><use href="#i-refresh"/></svg>
+      <div style="min-width:0"><div style="font-size:12.5px;font-weight:800;color:var(--color-ink)">Recherche reprise — tarif du moment</div>
+      <div style="font-size:11px;line-height:1.5;color:var(--color-mint-ink);margin-top:1px">On a repris tes tronçons et tes voyageurs. Voici les vols au <b>tarif réactualisé</b> — vérifie et confirme.</div></div>
+    </div>
+
+    <div id="troncons"></div>
+
+    <!-- VOYAGEUR — le titulaire du compte par défaut (carnet), modifiable ; jamais un nom en dur -->
+    <section style="margin-bottom:18px">
+      <div class="pec-section-head">
+        <span class="pec-section-label" style="margin:0">Voyageur(s)</span>
+        <button type="button" class="pec-tap-confort" onclick="openSheet()">Modifier</button>
+      </div>
+      <div class="pec-card" style="display:flex;align-items:center;gap:12px;padding:14px">
+        <span style="display:flex;height:42px;width:42px;flex-shrink:0;align-items:center;justify-content:center;border-radius:13px;background:var(--color-mint);font-size:17px;font-weight:800;text-transform:uppercase;color:var(--color-primary-dark)" id="r-initial">?</span>
+        <div style="min-width:0">
+          <p style="font-size:15px;font-weight:700;color:var(--color-ink)" id="r-name">À compléter</p>
+          <p style="font-size:12px;font-weight:500;color:var(--color-muted-2)" id="r-sub">1 voyageur</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- AVANT DE PAYER : les règles LUES dans D.scenario (prix bloqué) et les moyens dans le data-layer -->
+    <div class="pec-card" style="padding:13px 15px;margin-bottom:14px">
+      <div style="display:flex;flex-direction:column;gap:9px;font-size:12px;font-weight:500;line-height:1.5;color:var(--color-muted)">
+        <div style="display:flex;gap:10px"><svg class="pec-ico" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px;font-size:16px;color:var(--color-primary)"><use href="#i-clock"/></svg><span>Prix <b style="color:var(--color-ink)">bloqué <span class="pec-bloque">—</span></b> après confirmation — <b style="color:var(--color-ink)">rien n'est encaissé</b> tant que tu n'as pas réglé.</span></div>
+        <div style="display:flex;gap:10px"><svg class="pec-ico" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px;font-size:16px;color:var(--color-primary)"><use href="#i-banknote"/></svg><span>Paiement <b style="color:var(--color-ink)">avec un bon d’achat</b> — <span class="cp-moyens">—</span> · <b style="color:var(--color-ink)">un bon d’achat suffit</b>, et aucun paiement ne bascule sur une carte.</span></div>
+        <div style="display:flex;gap:10px"><svg class="pec-ico" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px;font-size:16px;color:var(--color-primary)"><use href="#i-receipt"/></svg><span>Prix <b style="color:var(--color-ink)">tout compris · TTC</b> — TVA sur la marge (art. 297 A CGI), non détaillée sur la facture.</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="pec-sticky">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:700;color:var(--color-muted)" id="total-lbl">Total — tous les tronçons</span>
+      <span id="total" style="font-size:17px;font-weight:800;color:var(--color-ink)">—</span>
+    </div>
+    <div id="total-sub" hidden style="margin:-4px 0 8px;font-size:10.5px;font-weight:600;color:var(--color-muted);text-align:right"></div>
+    <button class="pec-cta tap" id="cta" onclick="confirmer()" style="width:100%;opacity:.5">Choisis un vol par tronçon</button>
+    <p style="margin-top:7px;text-align:center;font-size:9.5px;line-height:1.5;color:var(--color-muted)">En confirmant, tu acceptes nos <a href="../ecrans/18-informations-legales.html#cgv" style="color:var(--color-primary-dark);font-weight:700">CGV</a>, les <b>conditions de transport des compagnies</b> et les <b>conditions du tarif</b>.</p>
+  </div>
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="../ecrans/03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="../ecrans/01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="../ecrans/14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" href="../ecrans/10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+</div>
+</div>
+
+<!-- ===== BOTTOM SHEET VOYAGEUR (carnet + formulaire) — même feuille que les tunnels 01/02 ===== -->
+<div class="sheet-scrim" id="scrim" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet">
+    <div class="sheet-head">
+      <button type="button" class="tap" aria-label="Fermer" onclick="closeSheet()" style="display:block;margin:0 auto;padding:6px 0"><span style="display:block;height:5px;width:38px;border-radius:999px;background:var(--color-handle)"></span></button>
+      <h2>Voyageurs</h2>
+    </div>
+    <div class="sheet-body">
+      <p style="margin-bottom:12px;padding:0 4px;font-size:12.5px;font-weight:500;color:var(--color-muted-2)">Les noms doivent correspondre exactement à la pièce d'identité.</p>
+      <div style="margin-bottom:12px;display:flex;flex-direction:column;gap:8px;border-radius:13px;background:var(--color-bg);padding:12px">
+        <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-muted-2)">Depuis ton carnet</p>
+        <div id="carnet-chips" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      </div>
+      <div style="margin-bottom:10px;border-radius:16px;background:var(--color-bg);padding:14px">
+        <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px">
+          <span style="display:flex;height:34px;width:34px;flex-shrink:0;align-items:center;justify-content:center;border-radius:11px;background:var(--color-mint);font-size:15px;font-weight:800;color:var(--color-primary-dark)" id="sh-initial">1</span>
+          <span style="min-width:0;flex:1;font-size:14.5px;font-weight:800;color:var(--color-ink)">Voyageur 1 <span style="margin-left:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--color-muted-2)">Adulte</span></span>
+          <span style="border-radius:999px;background:var(--color-mint);padding:4px 9px;font-size:10px;font-weight:800;color:var(--color-primary-dark)">Principal</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:8px">
+            <label class="tf-field"><span class="tf-label">Civilité</span><select class="tf-input" id="f-civ"><option value="">Choisir…</option><option>M.</option><option>Mme</option><option>Mlle</option><option>Dr</option></select></label>
+            <label class="tf-field"><span class="tf-label">Genre</span><select class="tf-input" id="f-genre"><option value="">Choisir…</option><option>Masculin</option><option>Féminin</option></select></label>
+          </div>
+          <div style="display:flex;gap:8px">
+            <label class="tf-field"><span class="tf-label">Prénom</span><input class="tf-input" type="text" id="f-given" placeholder="Prénom"></label>
+            <label class="tf-field"><span class="tf-label">Nom</span><input class="tf-input" type="text" id="f-family" placeholder="Nom"></label>
+          </div>
+          <!-- Date de naissance en LISTES (fondatrice 22/08) — 3 selects, zéro clavier -->
+          <div class="tf-field"><span class="tf-label">Date de naissance</span>
+            <div style="display:flex;gap:6px">
+              <select class="tf-input" id="n-jour" aria-label="Jour" style="flex:1"><option value="">Jour</option></select>
+              <select class="tf-input" id="n-mois" aria-label="Mois" style="flex:1.4"><option value="">Mois</option></select>
+              <select class="tf-input" id="n-annee" aria-label="Année" style="flex:1.2"><option value="">Année</option></select>
+            </div>
+          </div>
+          <!-- remplissage commun (07/09) : PEC_DATA.formulairesAppliquer, au chargement -->
+          <label class="tf-field"><span class="tf-label">Email</span><input class="tf-input" type="email" id="f-email" placeholder="email@exemple.fr"></label>
+          <label class="tf-field"><span class="tf-label">Téléphone</span>
+            <span style="display:flex;align-items:center;gap:8px;border-radius:12px;background:var(--color-surface);padding:0 13px">
+              <span style="display:flex;flex-shrink:0;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--color-muted-2)">FR <span style="color:var(--color-ink)">+33</span></span>
+              <input class="tf-input" type="tel" id="f-tel" placeholder="6 12 34 56 78" style="padding-left:0;background:transparent">
+            </span>
+          </label>
+        </div>
+      </div>
+      <p style="margin-bottom:6px;padding:0 4px;text-align:center;font-size:11.5px;font-weight:500;color:var(--color-muted-2)">Le nombre de voyageurs correspond à ta recherche — modifie-le depuis la recherche.</p>
+      <button type="button" class="tap" onclick="saveTravelers()" style="margin-top:4px;display:flex;height:54px;width:100%;align-items:center;justify-content:center;border-radius:15px;background:var(--color-primary);font-size:16px;font-weight:800;color:#fff;box-shadow:var(--shadow-cta)">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  var D = window.PEC_DATA;
+  /* (17/09 — pivot) CE QUE LE CLIENT LIT SUR LE TOTAL : « avec un bon d’achat — <moyens dérivés> ».
+     (18/09, soir — l'agent de caisse mobile est abandonné, puis pivot de positionnement) LA FONCTION PRENAIT
+     LA RÉPARTITION D'UN RÈGLEMENT À L'AGENT (D.montantARegler : « X € en espèces au plus, Y € par carte sur
+     son terminal ») — plus d'agent, plus de terminal, plus de complément carte : la fonction n'existe plus et
+     la phrase non plus. Ce qui reste est la promesse, et elle tient en une ligne : avec un bon d’achat. */
+  function reglerTxt() {
+    return 'avec un bon d’achat' + ((D && D.moyensPaiementLabel) ? ' — ' + D.moyensPaiementLabel() : '');
+  }
+  (function () { if (!D || !D.moyensPaiementLabel) return; [].forEach.call(document.querySelectorAll('.cp-moyens'), function (z) { z.textContent = D.moyensPaiementLabel(); }); })();
+  var QS = new URLSearchParams(location.search);
+  function eur(c) { return (c / 100).toFixed(2).replace('.', ',') + ' €'; }
+  function esc(s) { return (window.PEC_DATA && PEC_DATA.esc) ? PEC_DATA.esc(s) : String(s == null ? '' : s); }
+  // Durée DÉRIVÉE des horaires (jamais figée) : '07:15','08:18' → '1h03'
+  function dureeVol(dep, arr) {
+    var a = String(dep || '').match(/(\d{1,2})[:h](\d{2})/), b = String(arr || '').match(/(\d{1,2})[:h](\d{2})/); if (!a || !b) return '';
+    var d = (+b[1] * 60 + +b[2]) - (+a[1] * 60 + +a[2]); if (d < 0) d += 1440;
+    return Math.floor(d / 60) + 'h' + ('0' + d % 60).slice(-2);
+  }
+  function bloqueTxt() { var m = (D && D.scenario && D.scenario.prixBloqueMinutes) || 60; return m >= 60 ? (m / 60) + ' h' : m + ' min'; }
+  // Nombre de voyageurs : transmis par l'accueil (?voy=N) — liste = prix PAR VOYAGEUR si N>1, total dominant
+  var VOY = Math.max(1, Math.min(9, parseInt(QS.get('voy'), 10) || 1));
+  // LE DÉPART du 1er tronçon vient de ?dep sinon de LA PRÉFÉRENCE du compte (D.aeroportDefautGet)
+  var DEP_LBL = QS.get('dep') || ((D && D.aeroportDefautGet) ? D.aeroportDefautGet() : ''), DEST_LBL = QS.get('dest') || '';
+  var DATES = String(QS.get('dates') || '').replace(/\s*·\s*aller[- ](simple|retour)\s*$/i, '').trim();
+
+  // Un « slice » Duffel par tronçon — chaque vol proposé = une offre pour CE tronçon.
+  // OFFRES DE DÉMO (tarifs TOUT COMPRIS, TTC) : aucune API n'est branchée — les tronçons (origine,
+  // destination, date) suivent la recherche (?slices=[{origin,destination,departure_date}] quand
+  // l'accueil les transmet, sinon ?dep / ?dest / ?dates sur le canevas de démo).
+  var SLICES = [
+    { origin: 'Marseille (MRS)', destination: 'Barcelone (BCN)', departure_date: '29 août', vols: [
+      { id: 'm1a', iata: 'IB', nom: 'Iberia',   dep: '07:15', arr: '08:18', prix: 43 },
+      { id: 'm1b', iata: 'FR', nom: 'Ryanair',  dep: '12:40', arr: '13:45', prix: 39 },
+      { id: 'm1c', iata: 'U2', nom: 'easyJet',  dep: '18:05', arr: '19:10', prix: 47 }
+    ]},
+    { origin: 'Barcelone (BCN)', destination: 'Lisbonne (LIS)', departure_date: '2 sept.', vols: [
+      { id: 'm2a', iata: 'TP', nom: 'TAP',      dep: '09:20', arr: '10:05', prix: 58 },
+      { id: 'm2b', iata: 'FR', nom: 'Ryanair',  dep: '15:35', arr: '16:20', prix: 44 },
+      { id: 'm2c', iata: 'IB', nom: 'Iberia',   dep: '20:10', arr: '20:55', prix: 61 }
+    ]}
+  ];
+  (function () {
+    var s = null;
+    try { s = JSON.parse(QS.get('slices') || 'null'); } catch (e) {}
+    if (s && s.length) {
+      // tronçons de la recherche : les offres de démo servent les 2 premiers ; au-delà, AUCUNE offre
+      // n'est inventée — le tronçon s'affiche « aucune offre pour l'instant » et bloque la confirmation
+      SLICES = s.map(function (sl, i) { return { origin: sl.origin || '', destination: sl.destination || '', departure_date: sl.departure_date || '', vols: SLICES[i] ? SLICES[i].vols : [] }; });
+    } else {
+      if (DEP_LBL) SLICES[0].origin = DEP_LBL;
+      if (DEST_LBL) SLICES[SLICES.length - 1].destination = DEST_LBL;
+      if (DATES) SLICES[0].departure_date = DATES;
+    }
+  })();
+  var choix = {};   // index tronçon -> vol choisi
+  function ville(lbl) { return String(lbl || '').replace(/\s*\([A-Z]{3}\)\s*/, '').trim(); }
+
+  function volCard(i, v) {
+    var sel = choix[i] && choix[i].id === v.id;
+    var mini = Math.min.apply(null, SLICES[i].vols.map(function (x) { return x.prix; }));
+    return '<button type="button" class="vol tap" aria-pressed="' + !!sel + '" onclick="choisir(' + i + ',\'' + v.id + '\')">' +
+      '<div class="top">' +
+        ((D && D.logoCompagnie) ? D.logoCompagnie(v.iata, 26) : '') +
+        '<div class="heures">' + v.dep + ' <small>→</small> ' + v.arr + ' <small>· ' + esc(v.nom) + ' · direct · ' + dureeVol(v.dep, v.arr) + '</small></div>' +
+        (v.prix === mini ? '<span style="flex:none;border-radius:999px;background:linear-gradient(115deg,#C2410C,#F26F21);padding:3px 8px;font-size:9px;font-weight:800;color:#fff">Le moins cher</span>' : '') +
+        '<span class="px">' + v.prix + ' €' + (VOY > 1 ? '<small> /pers</small>' : '') + '</span>' +
+      '</div></button>';
+  }
+  function tousChoisis() { return SLICES.every(function (_, i) { return !!choix[i]; }); }
+  function totalEur() { return SLICES.reduce(function (t, _, i) { return t + (choix[i] ? choix[i].prix : 0); }, 0) * VOY; }
+  function render() {
+    document.getElementById('troncons').innerHTML = SLICES.map(function (sl, i) {
+      return '<section class="tron">' +
+        '<div class="tron-t"><span class="num">' + (i + 1) + '</span><div><b>' + esc(ville(sl.origin) || '—') + ' → ' + esc(ville(sl.destination) || '—') + '</b><br><small>' + esc(sl.departure_date || 'date à préciser') + ' · tout compris · payable par bon d’achat</small></div></div>' +
+        (sl.vols.length ? sl.vols.map(function (v) { return volCard(i, v); }).join('')
+          : '<div style="border-radius:14px;background:var(--color-bg);padding:14px;font-size:12.5px;color:var(--color-muted)">Aucune offre pour ce tronçon pour l\'instant — la recherche multi-tronçons n\'est pas encore branchée à la compagnie.</div>') +
+      '</section>';
+    }).join('');
+    var tous = tousChoisis(), total = totalEur();
+    var lbl = document.getElementById('total-lbl'), sub = document.getElementById('total-sub');
+    document.getElementById('total').textContent = tous ? total + ' €' : (total ? total + ' € — incomplet' : '—');
+    // (18/09, soir) LE MONTANT EST UN, et son titre ne dépend plus d'un canal : « À régler », point.
+    if (lbl) lbl.textContent = 'Total — tous les tronçons' + (VOY > 1 ? ' · ' + VOY + ' voyageurs' : '') + (tous ? ' · à régler' : '');
+    if (sub) { sub.hidden = !tous; sub.textContent = reglerTxt(); }
+    var cta = document.getElementById('cta');
+    cta.style.opacity = tous ? '1' : '.5';
+    cta.textContent = tous ? 'Confirmer — ' + total + ' € · choisir comment payer' : 'Choisis un vol par tronçon';
+    var st = document.getElementById('sous-titre'); if (st) st.textContent = SLICES.length + ' tronçon' + (SLICES.length > 1 ? 's' : '') + ' · un vol par tronçon · un seul dossier · un seul paiement, par bon d’achat';
+  }
+  function choisir(i, id) {
+    choix[i] = SLICES[i].vols.find(function (v) { return v.id === id; });
+    render();
+  }
+
+  // ── Voyageur : titulaire du compte par défaut (D.voyageurParDefaut), carnet (D.voyageursCarnet), formulaire LU ──
+  function openSheet() { document.getElementById('scrim').classList.add('on'); }
+  function closeSheet() { document.getElementById('scrim').classList.remove('on'); }
+  function pickSaved(g, f) {
+    document.getElementById('f-given').value = g;
+    document.getElementById('f-family').value = f;
+    document.getElementById('sh-initial').textContent = g.charAt(0).toUpperCase();
+    var fiche = ((D && D.voyageursCarnet) ? D.voyageursCarnet() : []).filter(function (v) { return v.prenom === g && v.nom === f; })[0];
+    remplirFiche(fiche || {});
+  }
+  function remplirFiche(v) {
+    var set = function (id, val) { var e = document.getElementById(id); if (e) e.value = val || ''; };
+    set('f-civ', v.civ === 'mr' ? 'M.' : v.civ === 'ms' ? 'Mme' : '');
+    set('f-genre', v.genre === 'm' ? 'Masculin' : v.genre === 'f' ? 'Féminin' : '');
+    set('f-email', v.email); set('f-tel', v.tel || v.telComplet);
+    var n = String(v.naissance || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    set('n-jour', n ? String(+n[1]) : ''); set('n-mois', n ? String(+n[2]) : ''); set('n-annee', n ? n[3] : '');
+  }
+  function lireVoyageur() {
+    var v = function (id) { var e = document.getElementById(id); return e ? String(e.value || '').trim() : ''; };
+    var j = v('n-jour'), m = v('n-mois'), a = v('n-annee');
+    return { civ: v('f-civ'), genre: v('f-genre'), prenom: v('f-given'), nom: v('f-family'),
+      naissance: (j && m && a) ? (('0' + j).slice(-2) + '/' + ('0' + m).slice(-2) + '/' + a) : '', email: v('f-email'), tel: v('f-tel') };
+  }
+  (function () {
+    var z = document.getElementById('carnet-chips');
+    if (!z || !D || !D.voyageursCarnet) return;
+    z.innerHTML = D.voyageursCarnet().map(function (v) {
+      var label = esc((v.prenom || '') + ' ' + (v.nom || '')) + (v.titulaire ? ' <span style="font-weight:700;color:var(--color-primary-dark)">· toi</span>' : '');
+      return '<button type="button" class="tap" data-pr="' + esc(v.prenom || '') + '" data-nm="' + esc(v.nom || '') + '" style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:var(--color-surface);padding:8px 12px;font-size:12.5px;font-weight:600;color:var(--color-ink);box-shadow:var(--shadow-card)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px;color:var(--color-primary)"><use href="#i-user"/></svg> ' + label + '</button>';
+    }).join('');
+    z.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-pr]'); if (!b) return;
+      pickSaved(b.getAttribute('data-pr'), b.getAttribute('data-nm'));
+    });
+  })();
+  function saveTravelers() {
+    var eg = document.getElementById('f-given'), ef = document.getElementById('f-family');
+    var g = eg.value.trim(), f = ef.value.trim();
+    eg.style.borderColor = g ? '' : 'var(--color-amber-text)';
+    ef.style.borderColor = f ? '' : 'var(--color-amber-text)';
+    if (!g || !f) return;   // le billet part à la compagnie au nom EXACT : prénom ET nom obligatoires
+    document.getElementById('r-name').textContent = (g + ' ' + f).trim();
+    document.getElementById('r-initial').textContent = g.charAt(0).toUpperCase();
+    closeSheet();
+  }
+  function voyageurComplet() {
+    var n = document.getElementById('r-name').textContent.trim();
+    return n !== '' && n !== 'À compléter' && n.split(/\s+/).length >= 2;
+  }
+  (function () {
+    var V = (D && D.voyageurParDefaut) ? D.voyageurParDefaut() : {};
+    if (V.nomComplet) {
+      document.getElementById('r-name').textContent = V.nomComplet;
+      document.getElementById('r-initial').textContent = V.initiales;
+      document.getElementById('f-given').value = V.prenom || '';
+      document.getElementById('f-family').value = V.nom || '';
+      var t0 = ((D && D.voyageursCarnet) ? D.voyageursCarnet() : [])[0] || {};
+      remplirFiche(Object.assign({}, t0, { email: V.email || t0.email, tel: V.telComplet || t0.tel }));
+    }
+    document.getElementById('r-sub').textContent = VOY + ' voyageur' + (VOY > 1 ? 's' : '') + (V.tel ? ' · ' + V.tel : '');
+    document.querySelectorAll('.pec-bloque').forEach(function (e) { e.textContent = bloqueTxt(); });
+  })();
+
+  // ── Confirmer : même chaîne que les tunnels 01/02/03 ──
+  function confirmer() {
+    if (!tousChoisis()) return;
+    if (!voyageurComplet()) {
+      var carte = document.getElementById('r-name').closest('.pec-card');
+      if (carte) { carte.style.outline = '2px solid var(--color-amber-text)'; setTimeout(function () { carte.style.outline = ''; }, 2200); }
+      openSheet(); return;
+    }
+    // COMPTE VÉRIFIÉ OBLIGATOIRE (fondatrice 30/08) : SMS + e-mail validés avant de partir payer
+    if (window.PEC_VERIF && !PEC_VERIF.complet()) { PEC_VERIF.exiger(function () { confirmer(); }); return; }
+    var total = totalEur(), cents = Math.round(total * 100);
+    try {
+      var vols = SLICES.map(function (sl, i) { var v = choix[i]; return { sens: 'Tronçon ' + (i + 1) + ' · ' + ville(sl.origin) + ' → ' + ville(sl.destination), compagnie: v.nom, date: sl.departure_date, heures: v.dep + ' → ' + v.arr }; });
+      var cies = []; vols.forEach(function (v) { if (cies.indexOf(v.compagnie) === -1) cies.push(v.compagnie); });
+      D.consentir && D.consentir('cgv-commande', 'Confirmation de commande — CGV, conditions de transport et conditions du tarif acceptées');
+      D.commandeEnCoursSet({
+        totalCents: cents, type: 'FLY',
+        trajet: SLICES.map(function (sl) { return ville(sl.origin); }).concat([ville(SLICES[SLICES.length - 1].destination)]).join(' → ') + ' · villes multiples',
+        dates: SLICES.map(function (sl) { return sl.departure_date; }).filter(Boolean).join(' · ') || null,
+        voyageurs: VOY,
+        voyageur: lireVoyageur(),
+        // critères mémorisés pour « Relancer » (03-mes-codes : récap réactualisé) — fondatrice 30/08
+        recherche: { t: '04-vol-multi', dep: SLICES[0].origin, dest: SLICES[SLICES.length - 1].destination, dates: DATES || null, voy: VOY,
+          slices: SLICES.map(function (sl) { return { origin: sl.origin, destination: sl.destination, departure_date: sl.departure_date }; }) },
+        compagnie: cies.join(' + '), heb: null,
+        bagages: '1 cabine incl. par vol', pack: null,
+        // le DÉTAIL DU PRIX tel qu'affiché — l'ordre de paiement le réaffiche à l'identique
+        detailPrix: SLICES.map(function (sl, i) { return ['Tronçon ' + (i + 1) + ' · ' + ville(sl.origin) + ' → ' + ville(sl.destination) + ' · ' + choix[i].nom + (VOY > 1 ? ' (×' + VOY + ')' : ''), eur(choix[i].prix * 100 * VOY)]; }),
+        vols: vols
+      });
+    } catch (e) {}
+    location.href = '../fly/01-ou-payer.html?m=' + cents;
+  }
+
+  render();
+  // REPRISE (fondatrice 30/08) : « Relancer » depuis une réservation annulée/expirée — le vol le moins
+  // cher de chaque tronçon est présélectionné au tarif du moment, le bandeau le dit, on vérifie et on confirme.
+  (function () {
+    if (!QS.get('reprise')) return;
+    var bn = document.getElementById('reprise-banner'); if (bn) bn.hidden = false;
+    SLICES.forEach(function (sl, i) {
+      var mini = sl.vols.slice().sort(function (a, b) { return a.prix - b.prix; })[0];
+      if (mini) choix[i] = mini;
+    });
+    render();
+  })();
+</script>
+</body>
+</html>

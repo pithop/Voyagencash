@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash MES BONS — Mes bons de marque</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-p-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-p-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script><!-- le coffre : clientIdentiteVerifiee le consulte pour dire si l'identité est vérifiée -->
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script><!-- (23/09, nuit — APP·551) le journal : ranger et UTILISER un bon de marque se tracent avec le compte du porteur — sans le bus, l'app agissait en silence -->
+<script src="../assets/payencash-bons.js"></script>
+<!-- MES BONS — LA LISTE (fondatrice 23/09 : « app ultra simple pour conserver et stocker ses bons d'achat / cartes
+     cadeaux » ; puis, l'après-midi : « ce sont LES BONS DES MARQUES — attention au juridique : il gère LEURS bons,
+     utilisables UNIQUEMENT chez la marque émettrice ; PayEnCash est secondaire, elle a vendu le bon à travers son
+     réseau »).
+     POURQUOI cet écran : le porteur d'un bon de marque (acheté au comptoir d'un commerce du réseau PayEnCash, ou reçu
+     en cadeau) n'a que son ticket pour retrouver son code, ce qu'il en reste et jusqu'à quand il vaut. Ici il RANGE
+     le code, et l'app RELIT l'état du bon chez la marque à chaque ouverture — jamais une copie. C'est aussi depuis
+     cette app, et depuis elle seule, que le bon s'UTILISE chez sa marque (page 05 — l'app est obligatoire : chaque
+     usage porte le compte du porteur).
+     CE QUE L'ÉCRAN N'EST PAS, et il le dit en bas de page : pas un compte de paiement, aucune valeur détenue, aucun
+     fonds. « Ce qu'il te reste sur tes bons » est une ADDITION de ce qu'il reste sur chaque bon actif — pas le solde
+     d'un compte, il n'y en a pas. Un Bon d'achat PayEnCash (Mode, Fly) ne se range pas ici : la saisie le dit.
+     `?o=<slug>` : quelqu'un arrive du lien partagé par une marque (« Je n'ai pas l'app ») — une carte en tête dit ce
+     que la marque lui propose et mène à la page du bon proposé ; la garde garde ce paramètre au retour de connexion.
+     Zéro chiffre écrit ici : montants, restes, validités viennent de PEC_DATA via PEC_BONS ; les documents à accepter
+     (CGU de l'app + politique de confidentialité, versionnés) bloquent le premier rangement tant qu'ils ne sont pas
+     acceptés — une acceptation = un document, une version, un horodatage, sous la clé du porteur. -->
+<style>
+  .mb-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:2px 0 0}
+  .mb-hdr-ico{flex:none;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:999px;background:var(--color-surface);border:1px solid var(--color-sep);color:var(--color-ink);text-decoration:none}
+  .mb-hdr-ico .pec-ico{font-size:17px}
+  .mb-offre{padding:14px 16px;border:1.5px solid var(--color-mint)}
+  .mb-offre .l{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--color-primary-dark)}
+  .mb-offre b{display:block;margin-top:3px;font-size:15px;color:var(--color-ink)}
+  .mb-offre p{margin:5px 0 0;font-size:11.5px;line-height:1.55;color:var(--color-muted)}
+  .mb-total{padding:14px 16px}
+  .mb-total .l{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--color-muted)}
+  .mb-total .v{margin-top:4px;font-size:30px;font-weight:800;letter-spacing:-0.02em;color:var(--color-ink);font-variant-numeric:tabular-nums}
+  .mb-total .s{margin-top:2px;font-size:11.5px;line-height:1.5;color:var(--color-muted)}
+  .mb-saisie{display:flex;gap:8px;align-items:stretch}
+  .mb-saisie .pec-input{flex:1;min-width:0;font-family:var(--font-mono);font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+  .mb-saisie .pec-cta{width:auto;flex:none;padding:0 18px}
+  .mb-msg{margin-top:9px;border-radius:12px;padding:9px 11px;font-size:11.5px;line-height:1.5;font-weight:700}
+  .mb-msg.ko{background:var(--color-danger-well);color:var(--color-danger)}
+  .mb-msg.ok{background:var(--color-mint);color:var(--color-primary-dark)}
+  .mb-aide{margin:9px 0 0;font-size:10.5px;line-height:1.55;color:var(--color-muted-2)}
+  .mb-bloque{padding:14px 16px;background:var(--color-amber-well)}
+  .mb-bloque .ic{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:10px;background:var(--color-surface);color:var(--color-amber-text)}
+  .mb-bloque .ic .pec-ico{font-size:15px}
+  .mb-bloque b{font-size:13.5px;color:var(--color-amber-text)}
+  .mb-bloque ul{margin:8px 0 0;padding-left:18px;font-size:11.5px;line-height:1.55;color:var(--color-amber-text)}
+  .mb-bloque li{margin:3px 0}
+  .mb-bon{padding:13px 14px}
+  .mb-bon-h{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+  .mb-bon-em{display:flex;align-items:center;gap:9px;min-width:0}
+  .mb-bon-em .ic{flex:none;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:11px;background:var(--color-mint);color:var(--color-primary-dark)}
+  .mb-bon-em .ic .pec-ico{font-size:16px}
+  .mb-bon-em .t{min-width:0}
+  .mb-bon-em .t b{display:block;font-size:13.5px;color:var(--color-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mb-bon-em .t small{display:block;margin-top:1px;font-size:10.5px;color:var(--color-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mb-bon .pec-pill{font-size:9.5px;padding:3px 8px;margin-top:2px}
+  .mb-reste{display:flex;align-items:baseline;gap:7px;margin-top:10px;padding-top:10px;border-top:1px solid var(--color-sep)}
+  .mb-reste .l{font-size:11px;color:var(--color-muted)}
+  .mb-reste .v{margin-left:auto;font-size:19px;font-weight:800;color:var(--color-ink);font-variant-numeric:tabular-nums}
+  .mb-reste .m{font-size:11px;color:var(--color-muted-2)}
+  .mb-meta{margin-top:5px;font-size:10.5px;line-height:1.5;color:var(--color-muted)}
+  .mb-meta .mono{font-family:var(--font-mono);color:var(--color-ink)}
+  .mb-act{display:flex;gap:8px;margin-top:10px}
+  .mb-act a,.mb-act button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;border:1px solid var(--color-sep);border-radius:11px;background:var(--color-surface);padding:6px 10px;font:inherit;font-size:12px;font-weight:800;color:var(--color-ink);text-decoration:none;cursor:pointer}
+  .mb-act a{color:var(--color-primary-dark)}
+  .mb-act button[data-retirer]{color:var(--color-danger);border-color:var(--color-danger-well)}
+  .mb-act button[data-retirer][data-confirm]{background:var(--color-danger);color:#fff;border-color:var(--color-danger)}
+  .mb-rappel{margin:0;font-size:10.5px;line-height:1.55;color:var(--color-muted-2)}
+  .mb-rappel b{color:var(--color-muted)}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:14px 18px 8px">
+
+    <!-- LA MARQUE (socle : payencash-data marqueAppliquer) — le P générique, le nom de l'app, et le slogan lu dans le
+         référentiel (data-slogan) : rien n'est écrit ici. -->
+    <header class="mb-hdr">
+      <span data-pec-marque="pro" data-nom="Mes bons" data-slogan></span>
+      <a href="04-compte.html" class="tap mb-hdr-ico" aria-label="Mon compte"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg></a>
+    </header>
+
+    <!-- UN BON PROPOSÉ PAR UNE MARQUE (?o=<slug>) — celui qui arrive du lien partagé sans avoir l'app : on lui dit ce
+         que la marque lui propose, et où ça continue (page 05). Lu dans les données (techLien), jamais dans l'adresse. -->
+    <div class="pec-card mb-offre" id="mb-offre" hidden>
+      <div class="l">Bon proposé par une marque</div>
+      <b id="mb-offre-titre">—</b>
+      <p id="mb-offre-txt">—</p>
+      <a class="pec-cta pec-cta--tight tap" id="mb-offre-go" href="05-offre.html" style="display:flex;margin-top:10px">Voir ce bon proposé</a>
+    </div>
+
+    <!-- CE QU'IL TE RESTE SUR TES BONS — une addition (PEC_BONS.total), jamais le solde d'un compte : il n'y en a pas.
+         Sans bon rangé, la carte s'efface : un « 0 € » au-dessus d'une liste vide redit ce que l'état vide dit déjà. -->
+    <div class="pec-card mb-total" id="mb-total-carte" hidden>
+      <div class="l">Ce qu’il te reste sur tes bons</div>
+      <div class="v" id="mb-total">0 €</div>
+      <div class="s" id="mb-total-sub">—</div>
+    </div>
+
+    <!-- CE QUI MANQUE AVANT DE RANGER (PEC_BONS.peutRanger) : un document à consulter puis à reconnaître « lu et
+         accepté », une identité à vérifier quand un palier est dépassé. Le champ d'ajout s'efface, le bandeau dit
+         quoi faire et où — on ne range rien avant. -->
+    <div class="pec-card mb-bloque" id="mb-bloque" hidden>
+      <div style="display:flex;align-items:center;gap:9px"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-lock"/></svg></span><b>Avant de ranger un bon</b></div>
+      <ul id="mb-bloque-liste"></ul>
+      <a class="pec-cta pec-cta--tight tap" href="04-compte.html" style="display:flex;margin-top:10px">Ouvrir mon compte</a>
+    </div>
+
+    <!-- AJOUTER UN BON — le code est CONTRÔLÉ chez les marques du réseau (PEC_BONS.ajouter → resoudre) : un code
+         inconnu est refusé et l'écran dit pourquoi (autre famille, forme, inconnu, pas encore vendu, annulé, déjà
+         rangé, palier franchi) -->
+    <form class="pec-card" id="mb-form" novalidate style="padding:14px 16px">
+      <label class="pec-input-label" for="mb-code">Ajouter un bon de marque</label>
+      <div class="mb-saisie">
+        <input class="pec-input" id="mb-code" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="17" placeholder="Le code du ticket" aria-label="Le code imprimé sur le ticket du bon">
+        <button type="submit" id="mb-ajouter" class="pec-cta pec-cta--tight tap">Ranger</button>
+      </div>
+      <div class="mb-msg ko" id="mb-err" role="alert" hidden></div>
+      <div class="mb-msg ok" id="mb-ok" role="status" hidden></div>
+      <p class="mb-aide">On contrôle le code : il doit avoir été émis par une marque du réseau. On ne range que le code — ce qu’il reste sur le bon se relit chez la marque à chaque ouverture, jamais recopié.</p>
+    </form>
+
+    <!-- LA LISTE — chaque carte est RELUE chez la marque à chaque peinture -->
+    <p class="pec-section-label" id="mb-liste-titre" style="margin:2px 0 -6px">Mes bons</p>
+    <div id="mb-liste" style="display:flex;flex-direction:column;gap:10px"></div>
+
+    <div id="mb-vide" class="pec-vide" hidden>
+      <span class="pec-vide-ico"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-tag"/></svg></span>
+      <p class="pec-vide-t">Aucun bon rangé pour l’instant</p>
+      <p class="pec-vide-s" id="mb-vide-s">—</p>
+      <div class="pec-vide-actions"><a class="pec-cta pec-cta--tight tap" href="03-rechercher.html">Trouver une marque ou un commerce</a></div>
+    </div>
+
+    <!-- LE RAPPEL D'USAGE, dit une fois (PEC_BONS.RAPPEL) + ce que l'app n'est pas -->
+    <p class="mb-rappel"><b>À savoir.</b> <span id="mb-rappel">—</span> Cette app range des codes : elle ne détient aucune valeur, n’ouvre aucun compte de paiement et ne fait circuler aucun fonds.</p>
+
+    <div style="height:10px"></div>
+  </div><!-- /pec-body -->
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" aria-current="page" href="01-mes-bons.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-ticket"/></svg>Mes bons</a>
+    <a class="pec-tab" href="03-rechercher.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="04-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+  (function () {
+    var D = window.PEC_DATA, B = window.PEC_BONS; if (!D || !B) return;
+    if (window.PEC_HORS_SESSION) return;   // la garde a remplacé la page par son invitation : rien à peindre ici
+    function $(id) { return document.getElementById(id); }
+    function esc(v) { return D.esc(v); }
+    function message(el, txt) { el.hidden = !txt; el.textContent = txt || ''; }
+    function pluriel(n, mot) { return n + ' ' + mot + (n > 1 ? 's' : ''); }
+    var derniereEmpreinte = null;
+    var SLUG = new URLSearchParams(location.search).get('o') || '';
+
+    /* ⓪ UN BON PROPOSÉ PAR UNE MARQUE (?o=) — lu dans les données ; un slug inconnu ne peint rien, il n'invente pas
+       une offre. Ce qui manque encore se dit tel quel (entamé), et une proposition qui n'a plus cours aussi. */
+    function rendreOffre() {
+      var z = $('mb-offre');
+      var x = (SLUG && D.techLien) ? D.techLien(SLUG) : null;
+      z.hidden = !x; if (!x) return;
+      var ouvert = x.etat === 'open' || x.etat === 'partial';
+      $('mb-offre-titre').textContent = x.marchand + ' te propose un bon d’achat de ' + D.eur(x.montant);
+      $('mb-offre-txt').textContent = ouvert
+        ? 'Utilisable uniquement chez ' + x.marchand + (x.site ? ' (' + x.site.replace(/^https?:\/\//, '') + ')' : '') + '. ' + (x.pris > 0 ? 'Il manque encore ' + D.eur(x.restant) + '. ' : '') + 'Tu as déjà un de ses bons ? Utilise-le depuis ici. Sinon, tu vois où l’acheter.'
+        : 'Ce bon proposé est ' + D.techLienEtatLbl(x.etat).toLowerCase() + ' : il n’attend plus rien.';
+      $('mb-offre-go').href = '05-offre.html?o=' + encodeURIComponent(x.slug);
+    }
+
+    /* ① CE QUI MANQUE AVANT DE RANGER — peutRanger() : documents (consultés puis acceptés) et, au-delà d'un palier,
+       l'identité vérifiée. Tant que ça manque, le champ d'ajout s'efface et le bandeau dit quoi faire. */
+    function rendreBloque() {
+      var pr = B.peutRanger();
+      $('mb-bloque').hidden = pr.ok; $('mb-form').hidden = !pr.ok;
+      if (pr.ok) return;
+      $('mb-bloque-liste').innerHTML = pr.manque.map(function (m) { return '<li>' + esc(m.libelle) + '</li>'; }).join('');
+    }
+
+    /* ② LE TOTAL — PEC_BONS.total : l'addition de ce qu'il reste sur les bons actifs */
+    function rendreTotal() {
+      var t = B.total();
+      $('mb-total-carte').hidden = !t.nb;
+      $('mb-total').textContent = D.eur(t.reste);
+      var autres = t.nb - t.utilisables;
+      $('mb-total-sub').textContent = (t.utilisables ? 'sur ' + pluriel(t.utilisables, 'bon') + ' actif' + (t.utilisables > 1 ? 's' : '') : 'aucun bon actif')
+        + (autres ? ' · ' + pluriel(autres, 'autre') + ' rangé' + (autres > 1 ? 's' : '') + ' (utilisé, expiré ou annulé)' : '') + '.';
+    }
+
+    /* ③ UNE CARTE PAR BON — la marque émettrice, où il s'utilise, l'état, ce qu'il reste, la validité, où il a été
+       acheté. Le code est MASQUÉ dans la liste (le code vaut titre : il s'affiche en entier sur le détail, à la
+       demande, pas sur une liste qu'on fait défiler en public). */
+    function carte(r) {
+      var ou = r.introuvable ? '' : 'Utilisable uniquement sur ' + r.siteLbl;
+      var reste = r.solde == null ? '—' : D.eur(r.solde);
+      var meta = [];
+      if (r.expireLe) meta.push((r.etat === 'expire' ? 'Expiré le ' : 'Valable jusqu’au ') + B.dateFr(r.expireLe));
+      if (r.enseigne) meta.push('acheté chez ' + r.enseigne + ' (réseau PayEnCash)');
+      if (r.detail && r.etat !== 'expire') meta.push(r.detail);
+      var code = D.bonMasque ? D.bonMasque(r.code) : r.code;
+      return '<article class="pec-card mb-bon" data-code="' + esc(r.code) + '">' +
+        '<div class="mb-bon-h"><div class="mb-bon-em"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-tag"/></svg></span>' +
+          '<span class="t"><b>' + esc(r.emetteur) + '</b><small>' + esc(ou || 'code non retrouvé dans les données') + '</small></span></div>' +
+          '<span class="pec-pill ' + esc(r.pill) + '">' + esc(r.etatLbl) + '</span></div>' +
+        '<div class="mb-reste"><span class="l">Ce qu’il te reste sur ce bon</span><b class="v">' + esc(reste) + '</b>' + (r.montant != null ? '<span class="m">sur ' + esc(D.eur(r.montant)) + '</span>' : '') + '</div>' +
+        '<div class="mb-meta">' + esc(meta.join(' · ')) + (meta.length ? ' · ' : '') + 'code <span class="mono">' + esc(code) + '</span></div>' +
+        '<div class="mb-act"><a class="tap" href="02-bon.html?code=' + encodeURIComponent(r.code) + '"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:14px"><use href="#i-scan"/></svg>Voir le code</a>' +
+          '<button type="button" class="tap" data-retirer="' + esc(r.code) + '">Retirer</button></div>' +
+      '</article>';
+    }
+    function rendreListe() {
+      var l = B.liste();
+      $('mb-vide').hidden = !!l.length;
+      $('mb-liste-titre').hidden = !l.length;   // pas de titre de section au-dessus d'un vide
+      // l'état vide dit QUOI FAIRE (le rappel du bas dit ce qu'est un bon) — sauf quand le champ est effacé par le
+      // bandeau : il dit alors par où commencer
+      $('mb-vide-s').textContent = $('mb-form').hidden
+        ? 'Commence par ce que demande le bandeau ci-dessus ; ensuite, le code du ticket de ton bon de marque se saisit ici.'
+        : 'Saisis ci-dessus le code imprimé sur le ticket de ton bon de marque — acheté au comptoir d’un commerce du réseau, ou reçu en cadeau — pour le retrouver ici.';
+      $('mb-liste-titre').textContent = 'Mes bons · ' + l.length;
+      // on ne redessine que si quelque chose a changé : un redessin perd la confirmation de retrait en cours
+      var emp = l.map(function (r) { return r.code + '|' + r.etat + '|' + r.solde; }).join(';');
+      if (emp === derniereEmpreinte && $('mb-liste').children.length === l.length) return;
+      derniereEmpreinte = emp;
+      $('mb-liste').innerHTML = l.map(carte).join('');
+    }
+    function rendre() { rendreOffre(); rendreBloque(); rendreTotal(); rendreListe(); $('mb-rappel').textContent = B.RAPPEL; }
+
+    /* LA SAISIE prend la forme de son réseau (bonSaisieFormater via PEC_BONS.formater) pendant qu'on tape */
+    $('mb-code').addEventListener('input', function () { this.value = B.formater(this.value); message($('mb-err'), ''); message($('mb-ok'), ''); });
+    function ranger(code) {
+      var r = B.ajouter(code);
+      if (!r.ok) {
+        message($('mb-ok'), ''); message($('mb-err'), r.motif);
+        if (r.champ === 'code') $('mb-code').focus();   // le champ fautif reprend la main
+        // un palier franchi par CE bon, ou un document devenu à relire : le bandeau prend le relais du champ
+        if (r.manque) { rendreBloque(); if (!$('mb-bloque').hidden) { $('mb-bloque').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }
+        return false;
+      }
+      message($('mb-err'), '');
+      message($('mb-ok'), '✓ Bon rangé — ' + r.bon.emetteur + (r.bon.solde != null ? ' · il te reste ' + D.eur(r.bon.solde) : '') + (r.bon.etat !== 'actif' ? ' (' + r.bon.etatLbl.toLowerCase() + ')' : '') + '.');
+      $('mb-code').value = '';
+      rendre();
+      return true;
+    }
+    $('mb-form').addEventListener('submit', function (e) { e.preventDefault(); ranger($('mb-code').value); });
+
+    /* RETIRER — deux touches (la seconde confirme) : pas de fenêtre système, et pas de retrait sur un geste malheureux.
+       Retirer un code ne change rien au bon lui-même : il reste utilisable avec son ticket. */
+    $('mb-liste').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-retirer]'); if (!b) return;
+      if (!b.hasAttribute('data-confirm')) {
+        b.setAttribute('data-confirm', '1'); b.textContent = 'Retirer — sûr ?';
+        setTimeout(function () { if (b.isConnected) { b.removeAttribute('data-confirm'); b.textContent = 'Retirer'; } }, 4000);
+        return;
+      }
+      var r = B.retirer(b.getAttribute('data-retirer'));
+      if (!r.ok) { message($('mb-ok'), ''); message($('mb-err'), r.motif); return; }
+      message($('mb-err'), ''); message($('mb-ok'), 'Code retiré de ta liste — le bon, lui, reste tel quel : tu peux le ranger à nouveau avec son ticket.');
+      derniereEmpreinte = null; rendre();
+    });
+
+    rendre();
+    // (écran non sourd) un usage chez la marque, une annulation, un rangement depuis un autre onglet : la liste se repeint
+    window.addEventListener('pec-bus', rendre);
+    window.addEventListener('storage', rendre);
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,2061 @@
+/* =============================================================================
+   PayEnCash — Kit UI v2 (charte stricte) — prototypes de documentation
+   -----------------------------------------------------------------------------
+   Source de vérité VISUELLE : l'app réelle `payencash/frontend/src/styles/theme.css`
+   + `DESIGN_SYSTEM.md` (à la racine de la documentation). Les valeurs ci-dessous en
+   sont RECOPIÉES À L'IDENTIQUE. En cas de divergence, l'app fait foi — ce fichier
+   doit être re-synchronisé (candidat à un contrôle automatisé, cf. règle §3).
+
+   RÔLE : feuille de style UNIQUE partagée par tous les protos `tunnel/` + `pages/`.
+   On ne redéclare JAMAIS les tokens dans un proto (anti-dérive §3/§4). Une correction
+   de charte = un seul endroit.
+
+   PÉRIMÈTRE MODÈLE (20/09) : paiement sans carte — le Bon d'achat PayEnCash, et lui seul. Aucune
+   référence buraliste / Paysafecash / Payrexx / point relais dans ce kit.
+   ============================================================================= */
+
+/* Polices AUTO-HÉBERGÉES (21/08) : plus aucun appel à Google Fonts — le rendu ne
+   dépend plus du réseau. Source : ui/assets/vendor/fonts.css (+ fonts/*.woff2). */
+@import url('vendor/fonts.css');
+
+/* ===== Tokens (miroir de theme.css) ===== */
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --color-bg: #f4f7f5;
+  --color-surface: #ffffff;
+  --color-card: #f7faf8;
+  --color-ink: #0f2a24;
+  --color-mint: #e6f4ec;
+  --color-sep: #f1f4f2;
+  --color-segment: #eff3f1;
+  --color-handle: #dce3df;
+  --color-statusbar: #f4faf6;
+  --bg-page: #e7ebe9; /* scène hors-frame (desktop) */
+
+  /* Verts */
+  --color-primary: #10a06a;
+  --color-primary-dark: #0c7f54;
+  --color-bright: #3fd99b;
+  --color-mint-soft: #7fd4b8;
+  --color-euro: #5e8f7e;
+  --color-mint-ink: #5c8a78;
+
+  /* Gris */
+  --color-muted: #5c6b64;
+  --color-muted-2: #8c988f;
+  --color-disabled: #a4ada7;
+  --color-dot: #c2cbc5;
+  --color-leg-dot: #d4dad6;
+  --color-leg-line: #e1e7e3;
+
+  /* Or — étoiles de notation (1-5★) + étoiles hôtel */
+  --color-star: #e0a93b;
+  /* Cuivre — escale vol UNIQUEMENT */
+  --color-stopover: #c98a3a;
+
+  /* Urgence (ambre) — fenêtre d'encaissement / alerte UNIQUEMENT */
+  --color-amber: #e8883c;
+  --color-amber-well: #fbefe2;
+  --color-amber-bg: var(--color-amber-well);   /* (08/09) alias lu par plusieurs écrans (« var(--color-amber-bg, #…) ») : déclaré ici, plus de repli en dur */
+  --color-amber-text: #b5781f;
+
+  /* Suppression (rouge) — UNIQUEMENT */
+  --color-danger: #c2483f;
+  --color-danger-well: #fbecec;
+  /* (08/09 — fondatrice) le CŒUR d'un favori actif est rouge : sinon « on ne comprend pas ». Jeton dédié, distinct de la suppression. */
+  --color-coeur: #e23d5a;
+  --color-coeur-well: #fde8ec;
+
+  /* Rayons */
+  --radius-field: 14px;
+  --radius-card: 20px;
+  --radius-sheet: 28px;
+  --radius-device: 46px;
+
+  /* Ombres douces (profondeur SANS bordure) */
+  --shadow-card: 0 6px 18px -12px rgba(15, 42, 36, 0.22), 0 1px 3px rgba(15, 42, 36, 0.04);
+  --shadow-elevated: 0 8px 22px -12px rgba(15, 42, 36, 0.24), 0 1px 3px rgba(15, 42, 36, 0.05);
+  --shadow-boarding: 0 10px 26px -14px rgba(15, 42, 36, 0.3), 0 1px 3px rgba(15, 42, 36, 0.05);
+  --shadow-cta: 0 12px 24px -8px rgba(16, 160, 106, 0.55);
+  --shadow-cta-tight: 0 8px 16px -8px rgba(16, 160, 106, 0.5);
+  --shadow-float: 0 6px 18px -10px rgba(15, 42, 36, 0.3), 0 1px 3px rgba(15, 42, 36, 0.06);
+  --shadow-float-btn: 0 6px 16px -8px rgba(15, 42, 36, 0.3), 0 1px 3px rgba(15, 42, 36, 0.06);
+  --shadow-secondary: 0 2px 6px rgba(15, 42, 36, 0.08);
+  --shadow-segment: 0 2px 8px rgba(15, 42, 36, 0.18);
+  --shadow-sticky: 0 -6px 18px -12px rgba(15, 42, 36, 0.22);
+  --shadow-sheet: 0 -12px 32px -14px rgba(15, 42, 36, 0.3);
+  --shadow-frame: 0 26px 60px -28px rgba(31, 68, 56, 0.35);
+  --shadow-step-ring: 0 0 0 3px rgba(31, 68, 56, 0.15);
+  /* Carte sélectionnée : anneau vert 2px + halo (theme.css) — sélection hôtel/vol. */
+  --shadow-selected: 0 0 0 2px var(--color-primary), 0 10px 24px -14px rgba(16, 160, 106, 0.45);
+  /* Poignée du slider budget (accueil) — noir 28 %. */
+  --shadow-slider-knob: 0 2px 7px rgba(0, 0, 0, 0.28);
+
+  /* Typo */
+  --font-sans: 'Hanken Grotesk', -apple-system, system-ui, 'Helvetica Neue', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  --frame-max: 430px;
+}
+
+/* ===== Reset léger (aligné app : pas de reset universel agressif) ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  background: var(--bg-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-sans);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+p {
+  margin: 0;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+img,
+svg {
+  display: block;
+}
+/* L'attribut [hidden] doit l'emporter sur les classes qui posent un display (ex. .pec-cta). */
+[hidden] {
+  display: none !important;
+}
+
+/* Cible tactile générique + micro-feedback (comme la classe .tap de l'app). */
+.tap {
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+.tap:active {
+  transform: scale(0.97);
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Icône Lucide inline : hérite de la couleur (currentColor) et de la taille (1em) du contexte. */
+.pec-ico {
+  width: 1em;
+  height: 1em;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+/* =============================================================================
+   DEVICE / FRAME  (fidèle à PhoneFrame.tsx : crème centré, max 430px ;
+   ≥900px = carte arrondie 24px + ombre portée + status bar iOS simulée)
+   ============================================================================= */
+.pec-scene {
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--bg-page);
+}
+/* (fondatrice 06/09 « il y a un décalage entre le menu et le reste, il y a un vide, et le menu
+   du bas doit rester même si je coulisse vers le bas ») LE CADRE N'AVAIT PAS DE HAUTEUR : il
+   grandissait avec son contenu, c'est donc la PAGE qui défilait, et la barre d'onglets — en
+   position:sticky dans un conteneur sans hauteur — n'avait rien à quoi s'accrocher. Elle
+   flottait au milieu, du contenu passait dessous, et il restait un vide en dessous d'elle.
+   Le téléphone a maintenant une hauteur réelle, son contenu défile À L'INTÉRIEUR, et la barre
+   reste posée en bas. */
+.pec-device {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--frame-max);
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+/* La zone de contenu (quelle que soit sa classe) est CELLE qui défile — pas la page.
+   `.pec-scroll` est là pour les écrans dont la zone porte un id plutôt qu'une classe
+   connue (ex. l'accueil Mode) : sans elle, un conteneur en flex:1 sans overflow se
+   retrouvait tronqué dès que le cadre a eu une hauteur, et la page ne défilait plus. */
+.pec-device > .pec-body,
+.pec-device > .pec-scroll,
+.pec-device > .pec-main {
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.pec-device > :not(.pec-statusbar):not(.pec-tabbar) {
+  min-height: 0;
+}
+.pec-statusbar {
+  display: none;
+}
+@media (min-width: 900px) {
+  .pec-scene {
+    /* « safe » : un écran plus haut que la fenêtre s'aligne en haut au lieu
+       d'être centré avec le haut coupé (bug « on ne voit que le bas »). */
+    align-items: center;
+    align-items: safe center;
+  }
+  .pec-device {
+    /* sur grand écran, un vrai gabarit de téléphone : hauteur définie → le contenu défile
+       dedans et la barre d'onglets reste collée en bas du cadre. */
+    height: min(880px, calc(100vh - 48px));
+    max-height: none;
+    max-width: 560px;
+    margin: 24px 0;
+    overflow: hidden;
+    border-radius: 24px;
+    box-shadow: var(--shadow-frame);
+  }
+  /* Écrans PLEIN-CARTE : tout leur contenu est en
+     position:absolute (.fullmap inset:0), donc rien ne donne de hauteur au flux —
+     avec min-height:0 le téléphone s'effondrait à ~110px (statusbar + tabbar).
+     On leur rend une hauteur de téléphone explicite. */
+  .pec-device:has(> .fullmap) {
+    height: min(880px, calc(100vh - 48px));
+  }
+  .pec-statusbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 50px;
+    flex-shrink: 0;
+    padding: 0 30px 0 34px;
+    background: var(--color-statusbar);
+    color: var(--color-ink);
+  }
+  .pec-statusbar .pec-sb-time {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+  }
+  .pec-statusbar .pec-sb-icons {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 16px;
+  }
+}
+
+/* Corps scrollable de l'écran + barre d'action collée en bas. */
+.pec-body {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+/* Sans ça, dans un device à hauteur fixe, les blocs à hauteur intrinsèque (carte,
+   bandeau sombre, flashcode) sont écrasés au lieu de faire défiler le body. */
+.pec-body > * {
+  flex-shrink: 0;
+}
+/* Body qui défile à l'intérieur d'un device `height:100dvh;overflow:hidden`. */
+.pec-body--scroll {
+  min-height: 0;
+  overflow-y: auto;
+}
+.pec-sticky {
+  position: sticky;
+  bottom: 0;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+  backdrop-filter: blur(20px) saturate(1.8);
+  box-shadow: var(--shadow-sticky);
+}
+
+/* =============================================================================
+   HEADERS
+   ============================================================================= */
+/* Header poussé (back rond + titre + sous-titre + slot droit) — TunnelHeader.tsx */
+.pec-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: max(20px, env(safe-area-inset-top)) 16px 12px;
+  background: var(--color-surface);
+}
+
+.pec-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-size: 18px;
+}
+/* Bouton d'action rond dans l'en-tête (cloche de notifications, etc.).
+   Même gabarit que .pec-back, mais aligné à droite et porteur d'une pastille
+   de non-lues. Distinct de .pec-back pour que « revenir » et « ouvrir » ne
+   partagent pas une classe dont le nom ment sur l'intention. */
+.pec-header-action {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--color-bg);
+  color: var(--color-ink);
+}
+.pec-header-action .pec-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+.pec-header-title {
+  min-width: 0;
+  flex: 1;
+}
+.pec-header-title .t {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--color-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pec-header-title .s {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-muted-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pec-header-title .s b {
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+/* Header racine (grand titre directement sur le fond app) */
+.pec-root-header {
+  padding: max(20px, env(safe-area-inset-top)) 16px 4px;
+}
+.pec-root-header h1 {
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  color: var(--color-ink);
+}
+
+/* =============================================================================
+   TYPO D'ÉCRAN
+   ============================================================================= */
+/* Libellé capitales (statut/section) — pastille + texte. Tons via modificateurs. */
+.pec-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.pec-eyebrow .dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--color-dot);
+}
+
+
+.pec-eyebrow--live {
+  color: var(--color-primary-dark);
+}
+.pec-eyebrow--live .dot {
+  background: var(--color-primary);
+  animation: pecPulseLoc 1.6s infinite;
+}
+.pec-eyebrow--done {
+  color: var(--color-primary-dark);
+}
+.pec-eyebrow--done .dot {
+  background: var(--color-primary);
+  animation: none;
+}
+.pec-eyebrow--off {
+  color: var(--color-muted-2);
+}
+
+
+/* =============================================================================
+   CARTES & SÉPARATEURS
+   ============================================================================= */
+.pec-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+}
+.pec-card--elevated {
+  box-shadow: var(--shadow-elevated);
+  overflow: hidden;
+  padding: 0;
+}
+.pec-card--flat {
+  background: var(--color-card);
+  box-shadow: none;
+}
+.pec-sep {
+  height: 1px;
+  background: var(--color-sep);
+  border: 0;
+  margin: 0;
+}
+
+/* Bandeau montant sombre — DarkBanner.tsx (fond encre, montant vif). */
+.pec-dark-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--color-ink);
+  padding: 14px 16px;
+}
+.pec-dark-banner .lbl {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+}
+.pec-dark-banner .sub {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pec-dark-banner .amt {
+  margin-top: 4px;
+  line-height: 1;
+}
+.pec-dark-banner .amt .n {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--color-bright);
+}
+.pec-dark-banner .amt .e {
+  margin-left: 4px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-bright);
+}
+.pec-dark-banner--md .amt .n {
+  font-size: 26px;
+}
+.pec-dark-banner--md .amt .e {
+  font-size: 15px;
+}
+.pec-dark-banner--md .lbl {
+  font-size: 12.5px;
+}
+
+/* =============================================================================
+   PILLS D'ÉTAT  (OrderStatusBadge.tsx)
+   ============================================================================= */
+.pec-pill {
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  /* Une pastille de statut qui passe sur deux lignes se deforme et casse
+     l'alignement d'une rangee de tableau (releve sur « RIB manquant »). */
+  white-space: nowrap;
+}
+.pec-pill--wait {
+  background: var(--color-amber-well);
+  color: var(--color-amber-text);
+}
+/* (23/09, soir) « en cours chez un tiers » (prélèvement remis, agent en route) : la classe était citée par le data-layer
+   sans exister — la pastille sortait sans couleur. Bleu doux : ni alerte, ni fait. */
+.pec-pill--info {
+  background: #E4EEF6;
+  color: #1C3F5A;
+}
+.pec-pill--live {
+  background: var(--color-mint);
+  color: var(--color-primary-dark);
+}
+.pec-pill--done {
+  background: var(--color-mint);
+  color: var(--color-primary-dark);
+}
+.pec-pill--off {
+  background: var(--color-segment);
+  color: var(--color-muted-2);
+}
+
+/* =============================================================================
+   BOUTONS
+   ============================================================================= */
+.pec-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  height: 52px;
+  border-radius: var(--radius-field);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: var(--shadow-cta);
+}
+.pec-cta--tight {
+  height: 48px;
+  font-size: 13.5px;
+  box-shadow: var(--shadow-cta-tight);
+}
+/* (19/09, soir — passe écran par écran) DEUX OUBLIS QUI SE VOYAIENT À L'ŒIL : aucune marge intérieure, et une
+   hauteur FIGÉE. Sur un libellé qui tient sur une ligne, personne ne le remarquait ; dès qu'il passe à deux
+   (« Nos politiques — commander, retourner, être remboursé » sur mode/18), l'icône se collait au bord du bouton
+   comme si elle en était sortie, et le texte débordait des 48 px. `min-height` garde la même taille à une ligne
+   et laisse le bouton grandir à deux. */
+.pec-btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 48px;
+  padding: 10px 16px;
+  border-radius: var(--radius-field);
+  /* Surface + ombre plutôt que --color-bg : posé directement sur le fond de page,
+     un bouton en --color-bg est invisible (cas « Se déconnecter », « Signaler un
+     problème »). L'ombre le détache aussi bien sur une carte blanche. */
+  background: var(--color-surface);
+  box-shadow: var(--shadow-secondary);
+  color: var(--color-ink);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.pec-btn-square {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: var(--radius-field);
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-size: 18px;
+}
+
+/* =============================================================================
+   BLOC RÉASSURANCE  (icône + texte doux sur carte)
+   ============================================================================= */
+.pec-reassure {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  background: var(--color-surface);
+  border-radius: var(--radius-field);
+  box-shadow: var(--shadow-card);
+  padding: 13px 14px;
+}
+.pec-reassure .pec-ico {
+  font-size: 17px;
+  margin-top: 1px;
+  color: var(--color-primary);
+}
+.pec-reassure p {
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+/* =============================================================================
+   SEGMENTED CONTROL  (piste + boutons ; actif = encre/blanc + ombre)
+   ============================================================================= */
+.pec-segmented {
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+  border-radius: 13px;
+  background: var(--color-segment);
+}
+.pec-segmented button {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink);
+  background: transparent;
+  transition: color 0.15s, background 0.15s;
+}
+.pec-segmented button[aria-selected='true'] {
+  background: var(--color-ink);
+  color: #fff;
+  box-shadow: var(--shadow-segment);
+}
+
+/* =============================================================================
+   EN-TÊTE DE SECTION + LIGNE DE CANAL  (fondatrice 06/09 : « le design est
+   éparpillé et pas ensemble »)
+   Ces deux motifs ne vivaient que dans l'assistance Fly — d'où une page Mode
+   au langage différent pour dire la même chose. Ils sont désormais partagés :
+   `.seclbl` titre une section (libellé + précision à droite), `.canal` est la
+   ligne d'un moyen de contact ou d'une action (pastille + texte + action).
+   ============================================================================= */
+.seclbl {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 18px 0 8px;
+}
+.seclbl .t {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.seclbl .s { font-size: 10px; font-weight: 600; color: var(--color-muted-2); }
+.canal {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 13px 0;
+  width: 100%;
+  background: none;
+  text-align: left;
+}
+.canal + .canal, .pli + .canal { border-top: 1px solid var(--color-sep); }
+.canal .tuile {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+}
+.canal .txt { min-width: 0; flex: 1; }
+.canal .txt b { display: block; font-size: 13px; color: var(--color-ink); }
+.canal .txt span { display: block; font-size: 10.5px; color: var(--color-muted); margin-top: 1px; }
+.canal .chev {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--color-muted);
+  border-bottom: 2px solid var(--color-muted);
+  transform: rotate(45deg);
+  transition: transform 0.15s;
+  margin-right: 3px;
+}
+.canal[aria-expanded='true'] .chev { transform: rotate(-135deg); }
+.pli { padding: 0 0 13px; }
+
+/* =============================================================================
+   ÉTAT VIDE  (fondatrice 06/09 : « regarde toutes les pages, le design est
+   éparpillé et pas ensemble »)
+   Chaque écran réinventait le sien : icône tantôt centrée tantôt collée à
+   gauche, bouton principal pleine largeur à côté d'un secondaire ratatiné qui
+   passait à la ligne, marges différentes d'une page à l'autre. Un seul
+   composant désormais — même icône dans sa pastille, même titre, même
+   respiration, et DEUX BOUTONS DE MÊME LARGEUR empilés.
+   Usage : .pec-vide > .pec-vide-ico + h3/strong + p + .pec-vide-actions
+   ============================================================================= */
+.pec-vide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 34px 20px 30px;
+  max-width: 340px;
+  margin: 0 auto;
+}
+.pec-vide-ico {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  background: var(--color-segment);
+  color: var(--color-muted-2);
+  margin-bottom: 14px;
+}
+.pec-vide-ico .pec-ico { font-size: 24px; }
+.pec-vide-t {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--color-ink);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.pec-vide-s {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--color-muted);
+}
+.pec-vide-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  width: 100%;
+  max-width: 260px;
+  margin-top: 18px;
+}
+.pec-vide-actions > * {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+/* =============================================================================
+   TIMELINE DE SUIVI DE COMMANDE  (DESIGN_SYSTEM §"Suivi de commande")
+   pastilles 22px : done vert+check / active ambre pulse / failed gris+tiret /
+   pending gris+numéro ; connecteurs verts (done) sinon #EDF1EE.
+   ============================================================================= */
+.pec-track {
+  display: flex;
+  flex-direction: column;
+}
+.pec-track-step {
+  display: flex;
+  gap: 12px;
+}
+.pec-track-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+.pec-track-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  background: var(--color-segment);
+  color: var(--color-muted-2);
+}
+.pec-track-line {
+  width: 2px;
+  flex: 1;
+  min-height: 18px;
+  background: #edf1ee;
+  margin: 2px 0;
+}
+.pec-track-step--done .pec-track-dot {
+  background: var(--color-primary);
+  color: #fff;
+}
+.pec-track-step--done .pec-track-line {
+  background: var(--color-primary);
+}
+.pec-track-step--active .pec-track-dot {
+  background: var(--color-amber);
+  color: #fff;
+  animation: pecPulseDot 1.6s infinite;
+}
+.pec-track-step--failed .pec-track-dot {
+  background: var(--color-segment);
+  color: var(--color-muted-2);
+}
+.pec-track-body {
+  padding-bottom: 16px;
+}
+.pec-track-body .t {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+.pec-track-body .s {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+.pec-track-step--pending .pec-track-body .t {
+  color: var(--color-muted-2);
+  font-weight: 600;
+}
+
+/* =============================================================================
+   STEPPER HORIZONTAL DE SUIVI  (style Uber Eats)
+   4 segments qui se remplissent en vert au fil de l'avancement ; le segment
+   courant a un remplissage animé. Libellés courts dessous.
+   ============================================================================= */
+.pec-stepper {
+  display: flex;
+  gap: 6px;
+}
+.pec-stepper-seg {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  /* --color-segment est trop proche du fond de page : les étapes restantes
+     disparaissaient et on ne lisait que la portion verte. */
+  background: var(--color-handle);
+  overflow: hidden;
+}
+.pec-stepper-seg--done {
+  background: var(--color-primary);
+}
+.pec-stepper-seg--active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--color-primary);
+  transform-origin: left center;
+  animation: pecStep 1.8s ease-in-out infinite;
+}
+.pec-stepper-labels {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.pec-stepper-labels span {
+  flex: 1;
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--color-muted-2);
+}
+.pec-stepper-labels span.on {
+  color: var(--color-primary-dark);
+  font-weight: 800;
+}
+
+/* (18/09, soir) LA CARTE LIVE ET LA FICHE DU COURSIER sont parties avec l'agent de caisse mobile : le conteneur
+   `.pec-mapbox`, les marqueurs `.pec-mk` / `.pec-mk-courier` / `.pec-mk-home`, la pastille d'ETA `.pec-eta`, le
+   bouton `.pec-map-recenter` et la fiche `.pec-courier*` (photo, note, véhicule). Aucune page ne les portait plus,
+   et leur seul consommateur — `payencash-tracking.js` — est retiré le même jour. Les cartes qui RESTENT (où
+   acheter un bon d'achat) ont leur propre montage et gardent `.pec-map-canvas`. */
+
+/* =============================================================================
+   NOTATION 1-5 ★  (affichage + saisie ; or réservé aux étoiles)
+   ============================================================================= */
+.pec-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.pec-stars .pec-ico {
+  font-size: 16px;
+  color: var(--color-dot);
+}
+.pec-stars .pec-ico.on {
+  color: var(--color-star);
+  fill: var(--color-star);
+}
+.pec-stars--input .pec-ico {
+  font-size: 34px;
+}
+
+
+/* =============================================================================
+   TILES ICÔNE  (petite pastille d'icône dans une carte)
+   ============================================================================= */
+.pec-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--color-segment);
+  color: var(--color-primary);
+  font-size: 18px;
+}
+.pec-tile--mint {
+  background: var(--color-mint);
+  color: var(--color-primary-dark);
+}
+
+/* =============================================================================
+   CODE (barcode interne + code de sécurité) — carte code de la commande
+   ============================================================================= */
+.pec-code-slab {
+  position: relative;
+  border-radius: 13px;
+  background: var(--color-card);
+  padding: 16px;
+  text-align: center;
+}
+/* Flashcode = VRAI QR (ui/assets/payencash-qr.js) encodant la réf de la commande.
+   Un scan photo la ressort. La zone de silence blanche (marge du SVG) est
+   indispensable à la lecture — ne pas la rogner. */
+.pec-flashcode {
+  display: flex;
+  justify-content: center;
+}
+.pec-flashcode svg {
+  width: 150px;
+  height: 150px;
+  display: block;
+  border-radius: 8px;
+  background: #fff;
+}
+.pec-code-num {
+  margin-top: 11px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--color-ink);
+}
+.pec-code-caption {
+  margin-top: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--color-muted-2);
+}
+/* (18/09, soir) `.pec-seccode` — le code à 4 chiffres que le client montrait à l'agent — est parti avec l'agent de
+   caisse mobile. Le flashcode du bon d'achat, lui, reste (`.pec-flashcode`). */
+/* Tampon d'état (payé/expiré/annulé) en surimpression du code. */
+.pec-stamp {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.pec-stamp span {
+  transform: rotate(-6deg);
+  border-radius: 9px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+}
+
+.pec-stamp--off span {
+  background: var(--color-segment);
+  color: var(--color-muted-2);
+}
+
+/* Bloc urgence (fenêtre d'encaissement) — ambre, jamais ailleurs. */
+.pec-urgency {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 13px;
+  background: var(--color-amber-well);
+  padding: 13px 14px;
+}
+.pec-urgency .pec-ico {
+  font-size: 18px;
+  color: var(--color-amber);
+}
+.pec-urgency .t {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-amber-text);
+}
+.pec-urgency .n {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-amber-text);
+}
+
+/* =============================================================================
+   BARRE D'ONGLETS  (BottomNav.tsx) — 4 items, actif vert, inactif gris désactivé.
+   Onglet "Buralistes" SUPPRIMÉ → "Suivi" (icône navigation).
+   ============================================================================= */
+/* TABBAR v3 — DOCK FLOTTANT (refonte fondatrice 21/08 : « le menu du bas fait
+   vieillot »). Standard des grandes apps : barre détachée à coins très arrondis,
+   ombre portée, l'onglet ACTIF est une pastille ENCRE pleine avec son libellé —
+   les inactifs sont des icônes sobres. Même dock pour MODE, FLY et toutes les apps. */
+.pec-tabbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;                   /* toujours au-dessus du contenu qui défile (ex. bouton swap z:1) ; sous les overlays/bottom-sheets (z:80) */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin: 0 14px;
+  padding: 8px;
+  margin-bottom: max(10px, env(safe-area-inset-bottom));
+  border-radius: 26px;
+  background: color-mix(in srgb, var(--color-ink) 4%, var(--color-surface));
+  box-shadow: 0 2px 6px rgba(15, 42, 36, 0.08), 0 18px 44px rgba(15, 42, 36, 0.22);
+  border: 1px solid color-mix(in srgb, var(--color-ink) 7%, transparent);
+}
+/* (fondatrice 06/09 « le menu, comment il est, c'est moche, pas harmonieux ») L'onglet actif
+   prenait flex:1.9 : il doublait de largeur et écrasait les quatre autres, qui se retrouvaient
+   à des tailles inégales selon la longueur de SON libellé. Les cellules sont désormais TOUTES
+   de la même largeur, le libellé est visible partout (icône au-dessus, comme toute barre
+   d'onglets qu'on connaît), et l'état actif se marque par la pastille sombre — dans sa cellule,
+   sans voler la place des voisines. */
+.pec-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 7px 3px;
+  border-radius: 17px;
+  font-size: 9.5px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-muted);
+  transition: background 0.18s ease, color 0.18s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pec-tab .pec-ico {
+  font-size: 19px;
+  flex: none;
+}
+.pec-tab[aria-current='page'] {
+  background: var(--color-ink);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(15, 42, 36, 0.22);
+}
+.pec-tab[aria-current='page'] .pec-ico {
+  color: var(--color-bright);
+}
+
+/* =============================================================================
+   HERO BUDGET-FIRST  (panneau sombre + slider) — BudgetSearchForm / theme.css
+   ============================================================================= */
+.pec-budget-panel {
+  /* Fondatrice 22/08 : dégradé qui finit sur le vert de marque (pas flashy :
+     le primaire n'entre qu'en bas de course) — version validée, restaurée. */
+  background: linear-gradient(155deg, #0d3227 0%, #0e5e40 62%, #10a06a 135%);
+  color: #fff;
+}
+
+
+
+
+/* Chip de section marketing (SectionTag) */
+
+
+
+/* Titre de section marketing (h2 26/800) */
+
+
+/* Fond héros + remplissage slider + blobs décoratifs + cartes « Idées » (miroir globals.css/theme.css) */
+.bg-hero {
+  background: linear-gradient(180deg, #f4faf6 0%, #e9f6ef 40%, #ffffff 100%);
+}
+.budget-fill {
+  background: linear-gradient(90deg, #2bb37c, #3fd99b);
+}
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(8px);
+}
+.blob-primary {
+  background: radial-gradient(circle, rgba(16, 160, 106, 0.16), transparent 70%);
+}
+.blob-primary-soft {
+  background: radial-gradient(circle, rgba(16, 160, 106, 0.1), transparent 70%);
+}
+.blob-bright {
+  background: radial-gradient(circle, rgba(63, 217, 155, 0.18), transparent 70%);
+}
+.blob-bright-strong {
+  background: radial-gradient(circle, rgba(63, 217, 155, 0.22), transparent 70%);
+}
+
+/* Visuel hôtel (StayCard) — dégradé charte teal→encre + voile bas pour la lisibilité des pills. */
+.stay-photo { background: linear-gradient(155deg, #2c7e9e, #0f2a24); }
+.stay-photo-scrim { background: linear-gradient(180deg, transparent 50%, rgba(15, 42, 36, 0.35) 100%); }
+/* Remplissage de la jauge budget des cartes (FlightCard/StayCard). */
+.budget-bar-fill { background: linear-gradient(90deg, var(--color-primary), var(--color-bright)); }
+
+
+
+
+
+
+
+
+/* =============================================================================
+   PAGES INFO / MARKETING  (InfoHero + cartes + accordéon + CTA) — app/(info)/*
+   NB : ces pages utilisent volontairement une hairline `1px solid var(--color-sep)`
+   (seule bordure admise, cf. DESIGN_SYSTEM) pour délimiter les cartes de prose.
+   ============================================================================= */
+.pec-info-hero {
+  background: var(--color-ink);
+  color: var(--color-bg);
+  padding: 24px 20px 28px;
+}
+.pec-info-hero .eyebrow {
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted-2);
+}
+.pec-info-hero h1 {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+.pec-info-hero .sub {
+  margin-top: 10px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--color-mint);
+}
+.pec-info-body {
+  padding: 24px 20px;
+}
+/* Profondeur par l'ombre, jamais par le contour (charte v2). Cette carte portait un
+   `border: 1px solid` — elle se posait donc sur le fond au lieu de s'en détacher, et
+   jurait à côté des `.pec-card` voisines, traitées à l'ombre. */
+.pec-info-card {
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+}
+.pec-h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+.pec-info-cta {
+  border-radius: 16px;
+  background: var(--color-ink);
+  color: var(--color-bg);
+  padding: 24px 20px;
+  text-align: center;
+}
+.pec-info-cta .t {
+  font-size: 17px;
+  font-weight: 700;
+}
+.pec-info-cta .s {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--color-mint);
+}
+.pec-info-cta a {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+  background: var(--color-primary);
+  color: var(--color-bg);
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+/* Accordéon (FAQ / comment ça marche) — un panneau ouvert à la fois via .open */
+.pec-accordion-item {
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+.pec-accordion-item > button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.pec-accordion-item > button .chev {
+  flex-shrink: 0;
+  color: var(--color-primary);
+  transition: transform 0.2s;
+}
+.pec-accordion-item.open > button .chev {
+  transform: rotate(180deg);
+}
+/* Le filet qui sépare la question de sa réponse est légitime, mais il passe par une ombre
+   interne et non par `border-top` — même procédé que `.pec-row`, et il ne décale pas la
+   boîte d'un pixel à l'ouverture. */
+.pec-accordion-item .ans {
+  display: none;
+  box-shadow: inset 0 1px 0 var(--color-sep);
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-muted);
+}
+.pec-accordion-item.open .ans {
+  display: block;
+}
+
+/* =============================================================================
+   TUNNEL — STEPPER + ÉCRANS  (miroir de TunnelStepper.tsx / tunnel-steps.ts)
+   Bloc sombre pleine largeur : fenêtre glissante de 3 cases + bandeau contextuel
+   du même fond (aucune couture). Courante = blanc + icône vert vif ; faite =
+   primary/25 ; à venir = white/6.
+   ============================================================================= */
+.pec-tstepper {
+  flex-shrink: 0;
+  background: var(--color-ink);
+}
+.pec-tstepper-row {
+  display: flex;
+}
+.pec-tstep {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 6px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.06);
+}
+.pec-tstep .pec-ico {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.4);
+}
+.pec-tstep .lbl {
+  max-width: 100%;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pec-tstep .sub {
+  max-width: 100%;
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1.15;
+  color: rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pec-tstep--done {
+  background: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  color: rgba(255, 255, 255, 0.85);
+}
+.pec-tstep--done .pec-ico {
+  color: color-mix(in srgb, var(--color-bright) 80%, transparent);
+}
+.pec-tstep--done .sub {
+  color: rgba(255, 255, 255, 0.65);
+}
+.pec-tstep--current {
+  background: transparent;
+  color: #fff;
+}
+.pec-tstep--current .pec-ico {
+  color: var(--color-bright);
+}
+.pec-tstep--current .lbl {
+  font-weight: 800;
+}
+.pec-tstep--current .sub {
+  color: rgba(255, 255, 255, 0.65);
+}
+/* Bandeau contextuel (budget / total) — même fond encre. */
+.pec-tbanner {
+  padding: 10px 16px 12px;
+}
+.pec-tbanner .t {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #fff;
+}
+.pec-tbanner .t b {
+  color: var(--color-bright);
+}
+.pec-tbanner .s {
+  margin-top: 2px;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Pastille de filtre (FilterPill) : actif encre/blanc + icône vive, inactif fond séparateur. */
+.pec-filter {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  background: var(--color-sep);
+  color: var(--color-ink);
+}
+.pec-filter[aria-pressed='true'] {
+  background: var(--color-ink);
+  color: #fff;
+}
+.pec-filter[aria-pressed='true'] .pec-ico {
+  color: var(--color-bright);
+}
+
+/* Ligne horaire d'un trajet (FlightTimeline) */
+.pec-leg {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pec-leg-side {
+  max-width: 84px;
+  flex-shrink: 0;
+  text-align: center;
+}
+.pec-leg-side .h {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-ink);
+}
+.pec-leg-side .c {
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+.pec-leg-side .n {
+  font-size: 9.5px;
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--color-muted-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pec-leg-mid {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.pec-leg-mid .d {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-muted-2);
+}
+.pec-leg-line-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 3px;
+}
+.pec-leg-dot {
+  height: 5px;
+  width: 5px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--color-leg-dot);
+}
+.pec-leg-line {
+  flex: 1;
+  height: 1.5px;
+  background: var(--color-leg-line);
+}
+.pec-leg-mid .s {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+/* Bandeau menthe des cartes (à remettre en espèces) */
+/* Bandeau « montant » neutre — même DOM que .pec-mint-banner, seule la classe change.
+   Sert le cas « aucune somme n'a été collectée » : un zéro en menthe le ferait passer
+   pour un encaissement réussi, un zéro en ambre pour une alerte. Ce n'est ni l'un ni
+   l'autre — il ne s'est rien passé, et l'écran doit le dire sans dramatiser. */
+.pec-neutral-banner {
+  margin-top: 14px;
+  border-radius: 13px;
+  background: var(--color-segment);
+  padding: 11px 13px;
+}
+.pec-neutral-banner .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pec-neutral-banner .lbl {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-muted);
+}
+.pec-neutral-banner .sub {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--color-muted-2);
+}
+.pec-neutral-banner .amt {
+  display: flex;
+  flex-shrink: 0;
+  align-items: baseline;
+  gap: 2px;
+  color: var(--color-muted-2);
+}
+.pec-neutral-banner .amt .n {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+}
+.pec-neutral-banner .amt .e {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.pec-mint-banner {
+  margin-top: 14px;
+  border-radius: 13px;
+  background: var(--color-mint);
+  padding: 11px 13px;
+}
+.pec-mint-banner .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pec-mint-banner .lbl {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-primary-dark);
+}
+.pec-mint-banner .sub {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--color-mint-ink);
+}
+.pec-mint-banner .amt {
+  display: flex;
+  flex-shrink: 0;
+  align-items: baseline;
+  gap: 2px;
+  color: var(--color-primary-dark);
+}
+.pec-mint-banner .amt .n {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+}
+.pec-mint-banner .amt .e {
+  font-size: 15px;
+  font-weight: 700;
+}
+/* Bloc bagages dans le bandeau menthe (carte choisie) */
+.pec-bag {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-primary) 15%, transparent);
+  padding-top: 10px;
+}
+
+/* Barre budget (BudgetBar) */
+.pec-budget-bar {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-segment);
+}
+
+
+/* Libellé de section du récap (SectionLabel / SectionHead) */
+.pec-section-label {
+  margin-bottom: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--color-muted-2);
+}
+.pec-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 9px;
+}
+.pec-section-head a,
+.pec-section-head button {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* Sélecteur de créneau (DelaySelector) : 4 pastilles, active = encre/blanc + sous-libellé vif. */
+
+
+
+
+
+
+
+
+/* Total sombre en pied de la carte « Détail du prix » */
+.pec-total-dark {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-ink);
+  padding: 15px 16px;
+}
+.pec-total-dark .t {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+}
+.pec-total-dark .s {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+}
+.pec-total-dark .amt {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  color: var(--color-bright);
+}
+.pec-total-dark .amt .n {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+.pec-total-dark .amt .e {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* =============================================================================
+   KEYFRAMES  (DESIGN_SYSTEM §"Keyframes utilisées")
+   ============================================================================= */
+@keyframes pecPulseDot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(216, 136, 60, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(216, 136, 60, 0);
+  }
+}
+@keyframes pecPulseLoc {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 160, 106, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(16, 160, 106, 0);
+  }
+}
+/* ══ (20/09, soir — décision fondatrice : « ça doit être TOUJOURS LA MÊME ANIMATION ») L'OUVERTURE D'UNE
+   MODALE ════════════════════════════════════════════════════════════════════════════════════════════
+   Aucune n'en avait : elles apparaissaient d'un coup, et rien ne disait d'où elles venaient. `pecPop`
+   existait depuis des semaines — une bascule rebondie — et n'était appelée NULLE PART : du décor mort.
+   Elle est remplacée par la seule animation d'ouverture du produit : le fond se voile, la feuille monte
+   de douze pixels. Les écrans l'appliquent par `.scrim` / `.popup`, et le widget que le commerçant colle
+   chez lui la REPRODUIT dans sa propre feuille de style — il vit dans la page de quelqu'un d'autre et ne
+   peut hériter de rien, mais il ne doit pas s'ouvrir autrement que nos écrans. */
+/* LA RÉVÉLATION D'UN VOLET — le pendant de `pecModale` pour ce qui s'ouvre DANS la page (le chemin de
+   paiement qu'on vient de choisir). Même courbe, même durée, amplitude moitié moindre : ce n'est pas une
+   fenêtre qui arrive par-dessus, c'est un contenu qui prend sa place. */
+@keyframes pecVolet {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes pecVolet {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+}
+@keyframes pecVoile {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pecModale {
+  from { opacity: 0; transform: translateY(12px) scale(.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* on ne supprime pas l'apparition, on retire le mouvement : le fondu reste lisible pour tout le monde */
+  @keyframes pecModale {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+}
+/* Remplissage animé du segment courant du stepper (style Uber Eats). */
+@keyframes pecStep {
+  0% {
+    transform: scaleX(0.08);
+  }
+  50% {
+    transform: scaleX(0.85);
+  }
+  100% {
+    transform: scaleX(0.08);
+  }
+}
+
+/* =============================================================================
+   CHAMPS DE SAISIE  (connexion, formulaire de contact)
+   Profondeur par OMBRE, jamais de bordure. Focus = anneau vert (--shadow-selected).
+   NE PAS confondre avec `.pec-field` de l'accueil, qui est une rangee-bouton.
+   ============================================================================= */
+.pec-input-label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+.pec-input {
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: var(--radius-field);
+  /* Creusé dans la surface, jamais posé dessus : sur une carte blanche, un champ
+     blanc à ombre douce est invisible. Même parti pris que .pec-field (accueil). */
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+}
+.pec-input::placeholder {
+  color: var(--color-disabled);
+  font-weight: 500;
+}
+.pec-input:focus {
+  outline: none;
+  box-shadow: var(--shadow-selected);
+}
+
+/* ===== Interrupteur ===== */
+.pec-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 56px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-segment);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.pec-switch::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-secondary);
+  transition: transform 0.2s ease;
+}
+.pec-switch[aria-checked="true"] {
+  background: var(--color-primary);
+}
+.pec-switch[aria-checked="true"]::after {
+  transform: translateX(24px);
+}
+
+/* ===== Rangée de liste groupée (écran Compte) =====
+   Cartes blanches, séparateur INTERNE entre rangées — seule ligne admise par la charte
+   dans une carte. Le rouge est réservé à la rangée de suppression, et à elle seule. */
+.pec-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: none;
+  border: 0;
+  text-align: left;
+  font-family: var(--font-sans);
+}
+.pec-row + .pec-row {
+  box-shadow: inset 0 1px 0 var(--color-sep);
+}
+.pec-row-text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+.pec-row-text .t {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+.pec-row-text .s {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-muted-2);
+}
+.pec-row-value {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+.pec-row-go {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--color-disabled);
+}
+.pec-row--danger .t {
+  color: var(--color-danger);
+}
+.pec-tile--danger {
+  background: var(--color-danger-well);
+  color: var(--color-danger);
+}
+
+/* ===== Mouvement réduit =====
+   Quatre animations de la charte tournent en boucle infinie : le halo ambre de l'étape
+   courante (pecPulseDot), le halo vert de la position client (pecPulseLoc) et la barre
+   d'étape (pecStep). Sur un écran de suivi, elles ne s'arrêtent jamais — c'est précisément
+   le cas que `prefers-reduced-motion` vise. On coupe l'animation sans coucher l'information :
+   les pastilles gardent leur couleur, donc l'étape courante reste identifiable sans le halo. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =============================================================================
+   FOND DE CARTE STYLISÉ — .pec-map-canvas
+   Les fonds de carte réels viennent d'un serveur de tuiles externe : hors ligne
+   (ou CDN bloqué) le plan restait un rectangle BLANC. Ce fond dessine un plan
+   de ville abstrait 100 % CSS (grille de rues, deux avenues, un parc, une
+   rivière) — la vraie carte se peint par-dessus quand elle charge.
+   ============================================================================= */
+.pec-map-canvas {
+  background-color: #E7EFEA;
+  background-image:
+    /* parc */
+    radial-gradient(circle at 74% 22%, rgba(16, 160, 106, 0.16), transparent 26%),
+    radial-gradient(circle at 16% 68%, rgba(63, 217, 155, 0.14), transparent 22%),
+    /* rivière */
+    linear-gradient(104deg, transparent 63%, rgba(151, 203, 220, 0.55) 63.5%, rgba(151, 203, 220, 0.55) 67%, transparent 67.5%),
+    /* avenues */
+    linear-gradient(115deg, transparent 46.8%, #FDFEFD 47.2%, #FDFEFD 49.2%, transparent 49.6%),
+    linear-gradient(24deg, transparent 30.8%, #FDFEFD 31.2%, #FDFEFD 32.8%, transparent 33.2%),
+    /* grille de rues */
+    repeating-linear-gradient(0deg, transparent 0 30px, rgba(255, 255, 255, 0.85) 30px 32px),
+    repeating-linear-gradient(90deg, transparent 0 34px, rgba(255, 255, 255, 0.85) 34px 36px);
+}
+
+/* ===== (19/09, soir — passe écran par écran) LA ZONE QU'ON TOUCHE VRAIMENT =====================================
+   Un lien-action autonome (« Guide des tailles », « Modifier », « Revenir à ma commande »…) fait la hauteur de son
+   texte : 16 à 18 px. Au doigt, on le rate, et on clique à côté. Cette classe agrandit la zone SENSIBLE par un
+   calque invisible qui déborde au-dessus et au-dessous : rien ne bouge à l'écran, le texte reste exactement où il
+   était, et la cible passe à 32 px. On la pose contrôle par contrôle — l'appliquer à tous les `.tap` d'un coup
+   obligerait à les rendre `position:relative`, ce qui déplacerait les pastilles posées en absolu sur certains. */
+.pec-tap-confort { position: relative; }
+.pec-tap-confort::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 32px;
+  transform: translateY(-50%);
+}
+
+/* ── LA MARQUE DE L'ESPACE PAYENCASH SOLUTION (20/09 — fondatrice : « pourquoi il n'y a pas le
+      logo »). Les six écrans de la seconde ligne n'affichaient qu'un intitulé en capitales : la
+      marque, écrite partout ailleurs pay<b>En</b>Cash + le nom de l'app, n'y était pas. Elle est
+      posée par le socle (PEC_TECH.entete) et stylée ici, une fois pour les six. ── */
+/* (21/09, fondatrice : « pour PayEnCash Techno, faut aligner — regarde, visualise ») LA MARQUE TOMBE SUR LA
+   COLONNE DU TEXTE. Elle était posée à 22 px du bord quand tout ce qui suit commence à 36 px — la gouttière
+   du corps (16 px) plus celle du contenu (20 px) : titres, cartes, texte des bandeaux. Quatorze pixels de
+   décalage, sur les sept écrans, juste au-dessus du titre : ça se voyait avant de se lire. */
+.pec-tech-entete {
+  display: block;
+  padding: 10px 36px 2px;
+}
+/* ══ (21/09, fondatrice : « voici les logos ») L'ICÔNE D'APPLICATION — la version NOIRE, sur un fond sombre ══════
+   Elle ne vit plus que sur la photo de bienvenue de Fly (payencash-fly-180.png). Partout ailleurs la marque est le
+   SYMBOLE transparent et le nom écrit (.pec-marque) ; les onglets prennent la version blanche (-blanc-64/-180).
+   Les icônes noires de Commerce et de Coursier, le Fly 64 et les trois logos complets (<app>.webp) sont partis
+   avec leur dernier usage (21/09). L'icône garde SON fond noir et ses angles d'icône de téléphone (22 %). */
+.pec-appicone {
+  display: block;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 22%;
+  background: #000;
+  box-shadow: 0 2px 8px rgba(15, 42, 36, 0.18);
+}
+.pec-appicone--lg {
+  width: 52px;
+  height: 52px;
+}
+/* (21/09, fondatrice : « je veux le logo P, et garder "payEnCash Mode", "Technologie"… dans le style de départ »)
+   LE SYMBOLE DE LA MARQUE — le P et son pictogramme, sans le nom — posé devant le nom ÉCRIT (pay<En>Cash + l'app en
+   capitales). payencash-<app>-symbole.webp : fond rendu TRANSPARENT au découpage (blanc → alpha pour les six marques
+   de la planche ; le P au sac de Solution (ex-Technologie), détouré de son fond noir). Il se pose sur un fond clair, dégradé
+   compris — `multiply` échouait dès qu'un parent isolait le rendu. La version horizontale d'image (bandeau), qui
+   écrivait le nom dans la police du dessin, est partie : le nom s'écrit comme partout ailleurs. */
+.pec-symbole {
+  display: block;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+/* ══ (21/09, fondatrice : « le ticket avec flashcode … intégré dans la section [À régler] — on voit un flashcode, et
+   plus de taille ») LE FLASHCODE DANS LA CARTE DU MONTANT — Mode, Fly, la page d'une boutique ══════════════════════
+   Le ticket à tendre au partenaire ou à l'agent vit avec le montant qu'il porte, entre le « À régler » et la bande
+   du prix bloqué : plus en bas de page, sous les chemins. Le fond du flashcode est BLANC dans les deux thèmes — un
+   lecteur ne déchiffre pas un QR sur fond sombre. Le bloc est posé par PEC_DATA.ordreVenteBlocHTML. */
+.pec-ordre {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 12px 15px 13px;
+  border-top: 1px solid var(--color-sep);
+}
+.pec-ordre[hidden] {
+  display: none;
+}
+.pec-ordre-qr {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 112px;
+  height: 112px;
+  padding: 6px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 0 1px var(--color-sep);
+}
+.pec-ordre-qr svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.pec-ordre-qr span {
+  font-size: 10px;
+  line-height: 1.4;
+  text-align: center;
+  color: #5d7570;
+}
+.pec-ordre-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.pec-ordre-txt b {
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--color-ink);
+}
+.pec-ordre-txt span {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--color-muted);
+}
+.pec-ordre-txt .entite {
+  color: var(--color-ink);
+}
+.pec-ordre-txt .entite b {
+  font-size: 11.5px;
+}
+.pec-ordre-txt .ref {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--color-primary-dark);
+}
+/* (21/09) LE BANDEAU D'UNE CARTE QUI N'A PAS PU S'AFFICHER — posé par PEC_GEO.carte, le seul montage de carte :
+   il était recopié en ligne dans trois écrans. Il dit pourquoi, et rassure sur ce qui reste juste. */
+.carte-hs {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  max-width: 240px;
+  border-radius: 12px;
+  background: var(--color-card);
+  box-shadow: 0 8px 22px rgba(15, 42, 36, 0.18);
+  padding: 9px 13px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+  color: var(--color-muted);
+}
+.carte-hs b {
+  color: var(--color-ink);
+}
+/* ══ (21/09) LA MARQUE D'UNE APP — posée par PEC_DATA.marqueHTML / [data-pec-marque] ══════════════════════════════
+   Le symbole, le nom ÉCRIT (pay<em>En</em>Cash d'un seul tenant — la boîte est en ligne pour le texte : en flex, chaque
+   morceau devenait une case et l'écart s'intercalait, « pay En Cash »), l'app en petites capitales, le slogan dessous.
+   Elle était propre à Solution (.pec-tech-marque) : toutes les apps la partagent. */
+.pec-marque {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  text-decoration: none;
+  color: var(--color-ink);
+  /* posée dans un surtitre en capitales (.k, .eyebrow) : le nom garde son écriture */
+  text-transform: none;
+  letter-spacing: normal;
+}
+.pec-marque-txt {
+  display: block;
+  min-width: 0;
+}
+.pec-marque b {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.pec-marque b em {
+  font-style: normal;
+  color: var(--color-primary);
+}
+.pec-marque .sfx {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.pec-marque small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-muted);
+}
+/* sur un fond sombre (en-têtes des espaces pros, cartes foncées) */
+.pec-marque--sombre { color: #fff; }
+.pec-marque--sombre b em { color: var(--color-bright); }
+.pec-marque--sombre .sfx,
+.pec-marque--sombre small { color: rgba(255, 255, 255, 0.74); }
+/* en surtitre, au-dessus d'un titre de page */
+.pec-marque--mini { gap: 6px; }
+.pec-marque--mini .pec-symbole { width: 22px; height: 22px; }
+.pec-marque--mini b { font-size: 13px; }
+.pec-marque--mini .sfx { font-size: 9px; }
+/* en tête d'écran d'entrée */
+.pec-marque--grand { gap: 11px; }
+.pec-marque--grand .pec-symbole { width: 46px; height: 46px; }
+.pec-marque--grand b { font-size: 21px; }
+.pec-marque--grand .sfx { font-size: 11px; }
+.pec-marque--grand small { font-size: 12px; margin-top: 5px; }
+/* LE NOM GARDE SON ÉCRITURE dans un libellé passé en capitales (« MES BONS D'ACHAT PayEnCash ») */
+.pec-nom {
+  text-transform: none;
+  letter-spacing: normal;
+}

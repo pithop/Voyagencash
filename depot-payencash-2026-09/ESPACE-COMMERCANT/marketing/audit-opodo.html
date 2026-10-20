@@ -1,0 +1,65 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Audit Opodo · benchmark FLY</title>
+<style>
+:root{--ajek:#10A06A;--ajek-d:#0C7F54;--ink:#1a1f1c;--muted:#5b675f;--line:#d9e5dd;--bg:#f4f7f5;--card:#fff;--gold:#E39A2E}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:26px 22px 60px}
+.head{background:linear-gradient(115deg,#0F2A24,#0C7F54);color:#fff;border-radius:16px;padding:20px 24px;margin-bottom:18px}
+.head h1{margin:0;font-size:22px}.head p{margin:6px 0 0;font-size:13px;opacity:.9}
+h2{font-size:17px;color:var(--ajek-d);margin:26px 0 10px}
+table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;font-size:13px}
+th{background:#0C7F54;color:#fff;text-align:left;padding:9px 12px;font-size:12px}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:10px 0;font-size:13.5px}
+.ok{border-left:4px solid var(--ajek)}.warn{border-left:4px solid var(--gold)}
+.pill{display:inline-block;border-radius:999px;background:#E6F4EC;color:var(--ajek-d);font-weight:700;font-size:11.5px;padding:3px 10px}
+b.k{color:var(--ajek-d)}
+</style></head><body>
+<!-- (18/09, soir) L'ARGUMENT CENTRAL DE CET AUDIT EST JUSTE, SA FORMULATION NE L'ÉTAIT PLUS.
+     Face au renouvellement automatique d'Opodo, notre réponse était « un abonnement payé en
+     espèces ne peut pas se renouveler dans ton dos ». Le raisonnement ne repose pas sur les
+     espèces : il repose sur le fait que nous n'avons AUCUN moyen de paiement enregistré chez
+     nous — ni carte, ni mandat, ni IBAN. C'est cela qui rend le prélèvement matériellement
+     impossible, et c'est cela qu'il faut dire, d'autant qu'il n'y a plus d'encaissement en
+     espèces nulle part chez nous depuis la suppression de l'agent de caisse mobile.
+     (18/09, soir) LES REMBOURSEMENTS NE PEUVENT PLUS PASSER PAR UN AGENT : personne ne se
+     déplace. Un remboursement re-crédite le Bon d’achat PayEnCash, ou part en virement.
+     Les relevés Opodo (22/08) ne sont pas touchés : ce sont des constats datés. -->
+<div class="wrap">
+<div class="head"><h1>🔎 Audit Opodo — benchmark FLY (relevé du 22 août 2026, opodo.fr)</h1>
+<p>Visite réelle du site : ce qui apparaît à chaque clic, leur communication, leur abonnement Prime — et la réponse PayEnCash. Méthode : même grille que l'audit Zara×Vinted (MODE).</p></div>
+
+<h2>1 · Ce qui apparaît à chaque clic (relevé réel)</h2>
+<table>
+<tr><th>Clic / écran</th><th>Ce qu'on voit</th><th>Pertinence — et ce qu'on en fait</th></tr>
+<tr><td><b>Arrivée sur le site</b></td><td>Mur de cookies : « nos propres cookies tiers et ceux de nos <b>58 partenaires</b> » (publicité personnalisée, géolocalisation précise, empreinte d'appareil).</td><td class="ok">Contre-argument frontal PayEnCash : <b class="k">zéro profilage publicitaire, aucun fonds chez nous</b>. À dire sur la vitrine.</td></tr>
+<tr><td><b>Home</b></td><td>TOUS les prix affichés sont des « <b>Prix Prime</b> » : barré + pourcentage (« 227 € → 154 € », −32 %…). « Qu'est-ce que Prime ? » est dans la navigation principale. « Meilleur prix garanti <b>ou on vous rembourse le double</b> de la différence ». « Économisez jusqu'à des centaines d'euros par an ».</td><td class="ok">Leur com est un MOTEUR : l'abonnement est le produit n°1, le voyage le prétexte. On adopte le principe (bloc Prime en accueil), sans le côté trompeur (chez eux le prix affiché n'est PAS celui qu'un non-membre paiera).</td></tr>
+<tr><td><b>Recherche de vols</b></td><td>Sélecteur voyageurs par défaut « 1 voyageur » ; <b>constat fondatrice : la présentation revient à UN billet alors que 2 sont demandés</b> — le prix mis en avant ne dit pas toujours pour combien de personnes.</td><td class="warn">FAILLE à ne jamais reproduire. <span class="pill">Règle PayEnCash</span> le prix affiché est <b class="k">TOUJOURS le total, pour TOUS les voyageurs</b> (déjà le cas : tunnels ×N pax, promo ×N — verrouillé au banc).</td></tr>
+<tr><td><b>Page Prime</b></td><td>« Le plus grand programme d'abonnement de voyage au monde » · <b>8 millions de membres</b> · <b>Prime 8,99 €/mois</b> · Prime Plus 10,99 €/mois (annuel payé mensuellement) · réductions pour 4 proches · +100 €/mois de codes exclusifs · ventes membres & Prime Days · <b>bloquer un prix pour 1 €</b> · annuler 2 vols sans motif · SAV VIP · remboursement 48 h · tableau « Recherche réelle » Paris-Lisbonne : −115 € au total.</td><td class="ok">Le tableau d'économies « recherche réelle » est très efficace — on reprend le principe (comparatif DATÉ, le nôtre est encadré juridiquement). Le blocage de prix payant (1 €) : chez nous le prix bloqué 1 h est GRATUIT — à dire.</td></tr>
+<tr><td><b>Souscription Prime</b></td><td>« Essai gratuit de 15 jours. Après l'essai, votre abonnement est <b>automatiquement renouvelé en abonnement annuel</b>, à moins que… »</td><td class="warn"><b>LEUR POINT NOIR N°1</b> (récurrent dans les plaintes consommateurs : prélèvements subis après l'essai). Notre réponse : <b class="k">un abonnement payé avec un bon d’achat ne PEUT PAS se renouveler dans ton dos</b> — nous n'avons ni numéro de carte, ni mandat, ni IBAN à prélever ; il expire si tu ne reviens pas le payer. C'est LE slogan Prime PayEnCash.</td></tr>
+<tr><td><b>Appli</b></td><td>Mesure du bagage à main par scan du téléphone · suivi de n'importe quel vol en direct.</td><td>Bonnes idées de com produit — à noter pour la roadmap app (post-pilote).</td></tr>
+</table>
+
+<h2>2 · La réponse : PayEnCash Prime</h2>
+<div class="card ok"><b>Simulation RÉELLE relevée (fondatrice, 22/08) — Marseille → Santorin, 2 adultes, 3-6 sept. (Aegean + Lufthansa)</b> :
+<table style="margin-top:8px"><tr><th>Ligne Opodo</th><th>Montant</th><th>Lecture</th></tr>
+<tr><td>Prix standard (2 passagers)</td><td><b>1 133,63 €</b> (566,82 €/passager)</td><td>l'écran pousse le « par passager » — la fondatrice a demandé 2 billets, la mise en avant n'affiche qu'un billet : notre règle = TOUJOURS le total</td></tr>
+<tr><td>Tarif de base · Taxes et frais</td><td>694,00 € · 373,28 €</td><td>le vrai coût compagnie</td></tr>
+<tr><td><b>« Nos frais de service »</b></td><td><b class="k">66,35 €</b></td><td>LA marge Opodo (≈ 5,9 % du panier)</td></tr>
+<tr><td>Réduction Prime disponible</td><td>−106,72 €</td><td><b>« comprend le cadeau de bienvenue des nouveaux membres »</b> — la carte cadeau est FONDUE dans la réduction pour pousser l'abonnement</td></tr>
+<tr><td>Prix Prime</td><td>1 026,91 € (513,46 €/passager)</td><td>l'écart Prime/standard EST l'argument de vente</td></tr>
+<tr><td>Popup « Besoin de temps ? »</td><td>« Bloquez-le pour 1 € et prenez 3 jours »</td><td>le blocage de prix est PAYANT — chez nous il est GRATUIT (1 h, 2 h en Prime)</td></tr></table>
+<p style="margin:10px 0 0"><b>RÈGLE TARIFAIRE (fondatrice) : toujours 0,02 € SOUS Opodo.</b> Abonnement <b class="k">8,97 €/mois</b> (eux : 8,99). Et sur les vols : notre grille max(3 €, 15 %) donnerait 170 € de commission sur ce panier — imbattable. Donc <b class="k">commission voyage = min(max(3 €, 15 %), frais de service Opodo relevés − 0,02 €)</b> → ici <b class="k">66,33 €</b>. Le relevé est daté et conservé (capture horodatée) — amendement de la grille à l'Étape 2 (financier).</p></div>
+<div class="card ok"><b>Les 6 avantages Prime PayEnCash</b> (PEC_DATA.prime — affichés à l'accueil FLY et en tête des Promos) :
+prix membres toujours sous Opodo · <b>20 € offerts en Bon d’achat PayEnCash de bienvenue</b> (FLY et MODE — leur pratique de bienvenue, à notre sauce) · <b>payé avec un bon d’achat : aucun fonds chez nous, donc aucun prélèvement, jamais</b> · prix bloqué <b>2 h</b> (gratuit — Opodo fait payer 1 € pour bloquer) · promos J−45 en avant-première + ventes membres · 1 annulation/an sans motif + SAV prioritaire.</div>
+<div class="card warn"><b>⚖️ Cadrage juridique (au registre, avocat)</b> : la publicité comparative (art. L122-1 s. C. consom.) exige une comparaison <b>objective, vérifiable, non trompeuse</b> : même vol, mêmes dates, relevé daté et conservé (capture horodatée), jamais de dénigrement. Les CGV Prime (durée, non-renouvellement par nature, remboursement prorata) sont à rédiger. Le modèle économique de l'abonnement (revenu récurrent) est à intégrer à l'Étape 2 (financier).</div>
+
+<h2>3 · Les packs Basique / Flex / Super Flex — oui, on peut le faire (vérifié côté Duffel)</h2>
+<div class="card"><b>Ce qu'Opodo vend</b> (relevé fondatrice, vol Santorin ×2) : <b>Basique 513,46 €</b> (selon tarif compagnie) · <b>Flex 573,60 €</b> (changement date/heure, frais 35 € déduits) · <b>Super Flex 662,87 €</b> (+ billet remboursable + modification passager). C'est un habillage commercial de conditions tarifaires qui existent chez les compagnies.</div>
+<div class="card ok"><b>Pourquoi c'est faisable chez nous</b> : l'API Duffel expose sur CHAQUE offre les conditions du tarif — <code>conditions.change_before_departure</code> et <code>conditions.refund_before_departure</code> (autorisé oui/non + pénalité chiffrée) — et les opérations <b>Order Changes</b> (changement de date/passager) et <b>Order Cancellations</b> (annulation/remboursement) pour les exécuter. Nos packs = sélectionner le tarif dont les conditions couvrent la promesse : <b>Basique</b> = tarif le moins cher tel quel · <b>Flex +12 €</b> = tarif changeable (ou marge de service couvrant la pénalité) · <b>Super Flex +29 €</b> = tarif remboursable + modification passager. Remboursement Super Flex : <b>re-crédité sur le Bon d’achat PayEnCash, ou viré</b> — plus personne ne rembourse en main propre (18/09). Écran : récap tunnel 4a (PEC_DATA.packs), la ligne « Pack » apparaît dans le détail du prix et le total suit.</div>
+<div class="card warn"><b>Garde-fou</b> : ne JAMAIS vendre « Flex » sur une offre dont le tarif Duffel ne permet pas le changement sans pénalité supérieure à notre supplément — le moteur devra filtrer les offres éligibles par pack (règle service billetterie, partie 6). Prix des suppléments à calibrer par l'Étape 2 sur les pénalités réelles observées.</div>
+
+<h2>3 · Ce qu'on ne copie pas</h2>
+<div class="card">Le prix « Prime » affiché par défaut à des non-membres (trompeur) · le renouvellement automatique après essai · le mur de 58 partenaires publicitaires · le blocage de prix payant. PayEnCash reste : prix affiché = prix payé par tout le monde, le Prime en MOINS ensuite — jamais l'inverse.</div>
+
+<p style="font-size:11px;color:var(--muted);margin-top:22px">Relevé opodo.fr du 22/08/2026 (home + page Prime). Chiffres à re-relever avant toute publication comparative. Doc lié : partie-1 (marketing) · fly/06 (promos membres) · registre (cadrage avocat).</p>
+</div></body></html>

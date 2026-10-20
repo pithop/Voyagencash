@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Comment ça marche</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<!-- Page info « Comment ça marche » — alignée stratégie : budget -> vol -> COMMENT payer, prix bloqué
+     1 h, cagnotte + concours, anonymat. Héros clair à accent vert.
+     (17/09 — pivot) L'étape 3 n'est plus « où » mais « comment » : le point d'encaissement chez un
+     commerçant n'existe plus, et un remboursement ne se fait jamais en espèces (LCB-FT).
+     (18/09, soir — l'agent de caisse mobile est abandonné) LE TROISIÈME MOYEN A DISPARU : « à domicile ou sur
+     ton lieu de travail », ses frais de déplacement, le suivi en direct, le code de sécurité validé à la porte,
+     le sac de pièces compté au mini-monnayeur, le rendu de monnaie et le complément carte obligatoire au-delà du
+     plafond légal des espèces. Il en reste DEUX, à égalité : le Bon d’achat PayEnCash (réseau partenaire sous contrat)
+     (20/09 : il n'y a plus que lui). Les libellés et les aides sont DÉRIVÉS (D.moyensPaiement), les
+     plafonds de bonsRef — la page écoute.
+     (18/09, soir — pivot de positionnement) LA PROMESSE N'EST PLUS « payer en espèces », c'est « PAYER avec un bon d’achat ». Comment le client règle son code chez son
+     commerçant ne nous regarde pas : cette page ne le dit plus. -->
+<style>
+  .h1{font-size:23px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;color:var(--color-ink);margin:14px 0 6px}
+  .h1 em{font-style:normal;color:var(--color-primary)}
+  .lead{font-size:14.5px;font-weight:500;line-height:1.5;color:var(--color-muted);margin:0 0 4px}
+  .stepcard .tip{margin-top:12px;display:flex;align-items:flex-start;gap:8px;border-radius:12px;background:var(--color-mint);padding:10px 12px;font-size:12px;line-height:1.5;color:var(--color-mint-ink)}
+  .stepcard .tip .pec-ico{margin-top:1px;flex-shrink:0;color:var(--color-primary)}
+  .stepcard .num{color:var(--color-primary)}
+  .stepcard .chip{display:flex;height:36px;width:36px;flex-shrink:0;align-items:center;justify-content:center;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)}
+  .way{display:flex;align-items:flex-start;gap:10px;margin-top:10px;border-radius:12px;background:var(--color-card);box-shadow:var(--shadow-card);padding:11px 12px}
+  .way .pec-ico{flex-shrink:0;margin-top:1px;font-size:17px;color:var(--color-primary)}
+  .way p{font-size:12.5px;line-height:1.5;color:var(--color-muted)}
+  .way b{color:var(--color-ink)}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;background:var(--color-surface)">
+
+    <div style="padding:18px 20px 0">
+      <a href="01-accueil.html" class="tap" aria-label="Retour" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-chevron-left"/></svg>
+      </a>
+      <h1 class="h1">3 étapes,<br><em>c'est tout.</em></h1>
+      <p class="lead">Réserver un voyage et le payer <b style="color:var(--color-ink)">avec un bon d’achat</b> n'a jamais été aussi simple.</p>
+    </div>
+
+    <div class="pec-info-body">
+      <ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px">
+
+        <li class="pec-info-card stepcard">
+          <div style="margin-bottom:8px;display:flex;align-items:center;gap:12px">
+            <span class="chip"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-banknote"/></svg></span>
+            <span style="font-size:15px;font-weight:700;color:var(--color-ink)"><span class="num">1.</span> Tu glisses ton budget</span>
+          </div>
+          <p style="font-size:13px;line-height:1.6;color:var(--color-muted)">Tu as 80 € en poche ? 200 € ? Tu glisses le curseur sur ton budget total. PayEnCash te montre uniquement ce qui rentre dedans. Vol seul, vol + hôtel ou hébergement seul, le nombre de voyageurs, tes dates : tout part de ton cash, pas d'un prix affiché.</p>
+          <p class="tip"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-bulb"/></svg> Avec un hôtel, on calcule automatiquement ce qu'il te reste pour la nuit une fois le vol choisi.</p>
+        </li>
+
+        <li class="pec-info-card stepcard">
+          <div style="margin-bottom:8px;display:flex;align-items:center;gap:12px">
+            <span class="chip"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-plane"/></svg></span>
+            <span style="font-size:15px;font-weight:700;color:var(--color-ink)"><span class="num">2.</span> Tu choisis ton vol</span>
+          </div>
+          <p style="font-size:13px;line-height:1.6;color:var(--color-muted)">Tu vois la liste des vols dans ton budget, du matin au soir. Tu sélectionnes le tien ; en aller-retour, tu choisis le retour juste après. Le récapitulatif affiche le montant exact à régler, tout compris. Tu confirmes : PayEnCash génère ton <strong>code de paiement</strong>.</p>
+          <p class="tip"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-bulb"/></svg> Un bon d’achat, à chaque étape.</p>
+        </li>
+
+        <li class="pec-info-card stepcard">
+          <div style="margin-bottom:8px;display:flex;align-items:center;gap:12px">
+            <span class="chip"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-map-pin"/></svg></span>
+            <span style="font-size:15px;font-weight:700;color:var(--color-ink)"><span class="num">3.</span> Tu choisis comment payer</span>
+          </div>
+          <p style="font-size:13px;line-height:1.6;color:var(--color-muted)">Ton prix est <strong>bloqué <span data-pb>1 h</span></strong> — le temps de payer tranquillement, de la façon qui t'arrange :</p>
+          <!-- (18/09, soir — l'agent de caisse mobile est abandonné) TROIS « way » ÉCRITES À LA MAIN, dont une
+               pour l'agent qui se déplaçait. La liste se DÉRIVE désormais de D.moyensPaiement() : un libellé, une
+               aide et un plafond par moyen, tous du référentiel. Elle ne peut plus mentir sur ce qu'on propose. -->
+          <div id="moyens-ways"></div>
+          <p style="margin-top:10px;font-size:13px;line-height:1.6;color:var(--color-muted)">Dès le règlement validé, la compagnie émet ton billet : PNR et e-billet arrivent par SMS et email — la confirmation d'hôtel aussi. Tout se suit dans « Réservations ».</p>
+          <p class="tip"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-coin"/></svg> Dans les deux cas, c'est un <b>code prépayé</b> que tu achètes chez un commerçant, au montant que tu demandes. <b>Un bon d’achat suffit</b> ici — il n'y a pas de champ pour ça.</p>
+        </li>
+      </ol>
+
+      <!-- Cagnotte & concours — discret, dans la charte -->
+      <div class="pec-card" style="margin-top:16px;display:flex;align-items:flex-start;gap:11px">
+        <svg class="pec-ico" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px;font-size:18px;color:var(--color-primary)"><use href="#i-star"/></svg>
+        <p style="font-size:12.5px;line-height:1.55;color:var(--color-muted)">Chaque euro encaissé alimente ta cagnotte (<span data-info="fidelite">1 € encaissé = 1 pt</span>) : des remises, ou des tickets pour le <a href="../fly/03-jeu-concours.html" style="color:var(--color-primary-dark);font-weight:700">tirage du mois — un voyage à gagner</a>.</p>
+      </div>
+
+      <h2 class="pec-h2" style="margin:32px 0 12px">Questions rapides</h2>
+      <div class="pec-accordion" style="display:flex;flex-direction:column;gap:8px">
+        <div class="pec-accordion-item"><button type="button">Et si je change d'avis avant de payer ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Rien n'est dû tant que tu n'as pas payé. Ton prix reste bloqué <span data-pb>1 h</span> ; passé ce délai, il est simplement recalculé si tu veux reprendre.</p></div>
+        <div class="pec-accordion-item"><button type="button">Quelqu'un vient chez moi ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Non, jamais. Personne ne se déplace : tu achètes ton code <b>chez un commerçant</b>, comme une recharge, puis tu le saisis depuis ton téléphone.</p></div>
+        <div class="pec-accordion-item"><button type="button">Faut-il une carte bancaire ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans"><b>Non, aucune.</b> Ni carte, ni RIB, ni compte en banque : il n'existe aucun champ de paiement dans l'app. Chez ton commerçant, tu règles ton code <b>comme tu veux</b> — cela ne nous concerne pas et nous n'en savons rien.</p></div>
+        <div class="pec-accordion-item"><button type="button">Puis-je annuler ma réservation ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Tant que tu n'as pas payé, il suffit de ne rien régler — tu ne dois rien. Si tu as déjà payé, le remboursement se fait <b>par le chemin d'où l'argent est venu</b> (un règlement par Bon d’achat PayEnCash est re-crédité sur le bon d’achat, sinon en avoir ou par virement sur un RIB à ton nom), et selon les conditions de la compagnie et de l'hôtel.</p></div>
+        <div class="pec-accordion-item"><button type="button">Quand reçois-je mon billet ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Dès que le règlement est confirmé — code du bon d’achat accepté, ou notification du prestataire —, la compagnie émet ton billet : PNR et e-billet arrivent par SMS et email, et tout se suit dans « Réservations ».</p></div>
+        <div class="pec-accordion-item"><button type="button">Il y a un montant maximum ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Ceux du moyen que tu choisis, et l'app te le dit avant de confirmer. Un Bon d’achat PayEnCash vaut jusqu'à <span data-bon="plafondBon">—</span> ; au-delà, ton commerçant t'en crée plusieurs, dans la limite de <span data-bon="plafondClientJour">—</span> par client et par jour (vigilance LCB-FT). Au-delà, une vérification d’identité ouvre la suite — ton bon reste intact.</p></div>
+        <div class="pec-accordion-item"><button type="button">Puis-je réserver pour quelqu'un d'autre ?<svg class="pec-ico chev" viewBox="0 0 24 24"><use href="#i-chevron-down"/></svg></button><p class="ans">Oui. Tu renseignes les informations du voyageur (nom, prénom, date de naissance) lors de la réservation. Le billet sera à son nom.</p></div>
+      </div>
+
+      <div class="pec-info-cta" style="margin-top:28px">
+        <p class="t">Prêt à voyager ?</p>
+        <p class="s">Glisse ton budget et trouve ton vol en 2 minutes.</p>
+        <a href="01-accueil.html" class="tap">Trouver mon voyage <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-arrow-right"/></svg></a>
+      </div>
+
+      <div id="fermeture-slot"></div>
+    </div>
+
+    <nav class="pec-tabbar" aria-label="Navigation principale">
+      <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+      <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+      <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+      <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+      <a class="pec-tab" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+    </nav>
+  </div>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('');})();</script>
+<!-- remplissage commun (07/09) : PEC_DATA.formulairesAppliquer, au chargement -->
+<script>
+  /* (18/09 — Bon d’achat PayEnCash) l'aide du bon d’achat (MOYENS_PAIEMENT) et ses règles (bonsRef : plafonds, validité) sont VIVES.
+     (18/09, soir — l'agent de caisse mobile est abandonné) LA LISTE DES MOYENS SE CONSTRUIT ICI, au lieu d'être
+     écrite trois fois dans la page : chaque moyen du pays du client donne sa ligne, son aide et — pour le Bon d’achat —
+     son plafond et sa validité. Le jour où un moyen part ou arrive, cette étape 3 le dit sans être rouverte. */
+  (function () {
+    var D = window.PEC_DATA; if (!D || !D.bonsRef) return;
+    function ligneMoyen(m, R) {
+      var ico = m.type === 'bon' ? 'ticket' : 'smartphone';
+      var aide = m.aide ? D.esc(m.aide) : '';
+      var plus = '', ou = '';
+      if (m.type === 'bon') {
+        plus = ' Jusqu\'à <b>' + D.esc(D.eur(R.plafondBon)) + '</b> par bon d’achat, valable <b>' + R.validiteMois + '</b> mois — <b>le solde reste sur le bon d’achat</b>.';
+        ou = ' <a href="25-ou-acheter-un-bon.html" style="color:var(--color-primary-dark);font-weight:700">Où l\'acheter</a>.';
+      } else {
+        plus = ' Reçu dès la confirmation du prestataire.';
+        ou = ' <a href="25-ou-acheter-un-bon.html" style="color:var(--color-primary-dark);font-weight:700">Où l\'acheter</a>.';
+      }
+      return '<div class="way"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-' + ico + '"/></svg>' +
+        '<p><b>' + D.esc(D.libelleMoyen(m.k)) + '</b> — ' + aide + plus + ou + '</p></div>';
+    }
+    function peindre() {
+      var R = D.bonsRef();
+      var box = document.getElementById('moyens-ways');
+      if (box && D.moyensPaiement) box.innerHTML = D.moyensPaiement().map(function (m) { return ligneMoyen(m, R); }).join('');
+      var vals = { plafondBon: D.eur(R.plafondBon), plafondClientJour: D.eur(R.plafondClientJour), minimum: D.eur(R.minimum), validiteMois: String(R.validiteMois) };
+      [].forEach.call(document.querySelectorAll('[data-bon]'), function (e) { var v = vals[e.getAttribute('data-bon')]; if (v != null) e.textContent = v; });
+    }
+    peindre();
+    window.addEventListener('pec-bus', peindre);
+    window.addEventListener('storage', function (e) { if (!e.key || /^pec-param|^pec_bus_/.test(e.key)) peindre(); });
+  })();
+</script>
+</div>
+</div>
+
+<script>
+  document.querySelectorAll('.pec-accordion-item > button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var item = b.parentElement;
+      var wasOpen = item.classList.contains('open');
+      item.parentElement.querySelectorAll('.pec-accordion-item').forEach(function (i) { i.classList.remove('open'); });
+      if (!wasOpen) item.classList.add('open');
+    });
+  });
+</script>
+</body>
+</html>

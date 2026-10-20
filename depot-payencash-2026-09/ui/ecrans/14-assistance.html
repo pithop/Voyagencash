@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Assistance</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-notif.js"></script>
+<script src="../assets/payencash-satisfaction.js"></script><!-- (08/09) « note ton échange » — la carte partagée Fly / Mode -->
+<!-- ASSISTANCE v9 — HIÉRARCHIE FONDATRICE (25/08), à la lettre :
+     ① header IDENTIQUE aux autres pages (logo payEnCash ASSISTANCE)
+     ② haut de page : l'OBJECTIF de la page + KPIs (délai d'attente estimé, étoiles, clients)
+     ③ CONTACT : être rappelé (compteur transparent) + horaires d'ouverture + chat + WhatsApp
+     ④ TABS : Demandes EN COURS / Demandes CLÔTURÉES (+ déposer une réclamation)
+     ⑤ QUESTIONS FRÉQUENTES (recherche + dépliants)
+     ⑥ CONTACTS UTILES (récap numéros, email, médiateur, réseaux).
+     NB métier (17/09 — pivot) : il n'y a plus de lieu où aller payer. La section « Payer près de chez
+     toi » (liste des points d'encaissement) a été RETIRÉE avec le réseau.
+     (18/09, soir — l'agent de caisse mobile est abandonné, puis pivot « avec un bon d’achat ») ONT DISPARU
+     D'ICI : la question « Comment se passe ma première commande à domicile ? » (appel de sécurisation, envoi
+     de l'agent, suivi en direct, code de sécurité à son arrivée) et son lien vers un écran supprimé, la
+     question sur le plafond légal des espèces et le complément carte obligatoire, la suggestion de chat
+     « Espèces, pièces & carte », et la phrase du chat qui promettait un agent venant scanner le flashcode.
+     Ce qui les remplace : deux codes prépayés achetés chez un commerçant — les adresses vivent sur
+     25-ou-acheter-un-bon — et la promesse qu'un bon d’achat suffit. -->
+<style>
+  .aq{border-bottom:1px solid var(--color-sep)}
+  .aq:last-of-type{border-bottom:none}
+  .aq summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 2px;font-size:12.5px;font-weight:700;color:var(--color-ink)}
+  .aq summary::-webkit-details-marker{display:none}
+  .aq summary::after{content:'';flex:none;margin-left:auto;width:8px;height:8px;border-right:2px solid var(--color-muted);border-bottom:2px solid var(--color-muted);transform:rotate(45deg);transition:transform .15s}
+  .aq[open] summary::after{transform:rotate(-135deg)}
+  .aq .rep{padding:0 2px 12px;font-size:12px;line-height:1.65;color:var(--color-muted)}
+  .aq .rep b{color:var(--color-ink)}
+  .aq .rep a{color:var(--color-primary-dark);font-weight:800;text-decoration:none}
+  .chat-msg{max-width:85%;border-radius:16px;padding:9px 12px;font-size:12.5px;line-height:1.55;margin-bottom:7px}
+  .chat-hote{background:var(--color-card);color:var(--color-ink);border-bottom-left-radius:5px;margin-right:auto;box-shadow:var(--shadow-card)}
+  .chat-moi{background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));color:#fff;border-bottom-right-radius:5px;margin-left:auto}
+  .chat-sugg{border-radius:999px;border:1.5px solid var(--color-primary);background:var(--color-card);color:var(--color-primary-dark);font-size:11.5px;font-weight:700;padding:7px 12px;cursor:pointer}
+  .canal{display:flex;align-items:center;gap:11px;padding:13px 0;width:100%;background:none;text-align:left}
+  .canal + .canal, .pli + .canal{border-top:1px solid var(--color-sep)}
+  .canal .tuile{flex:none;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:12px}
+  .canal .txt{min-width:0;flex:1}
+  .canal .txt b{display:block;font-size:13px;color:var(--color-ink)}
+  .canal .txt span{display:block;font-size:10.5px;color:var(--color-muted);margin-top:1px}
+  .canal .chev{flex:none;width:8px;height:8px;border-right:2px solid var(--color-muted);border-bottom:2px solid var(--color-muted);transform:rotate(45deg);transition:transform .15s;margin-right:3px}
+  .canal[aria-expanded="true"] .chev{transform:rotate(-135deg)}
+  .pli{padding:0 0 13px}
+  .rtab{flex:1;border-radius:11px;padding:9px 6px;font-size:12px;font-weight:700;background:transparent;color:var(--color-ink)}
+  .rtab[aria-selected="true"]{background:var(--color-ink);color:#fff}
+  .fld{width:100%;border:1.5px solid var(--color-sep);border-radius:12px;background:var(--color-bg);padding:11px 12px;font:inherit;font-size:12.5px;color:var(--color-ink);outline:none}
+  select.fld{appearance:none;-webkit-appearance:none}
+  .seclbl{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:18px 0 8px}
+  .seclbl .t{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--color-muted)}
+  .seclbl .s{font-size:10px;font-weight:600;color:var(--color-muted-2)}
+  .ville{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px}
+  .ville .pt{width:11px;height:11px;border-radius:50%;background:var(--color-primary);box-shadow:0 0 0 4px rgba(16,160,106,.22)}
+  .ville .pt.off{width:8px;height:8px;background:#C2CBC5;box-shadow:none}
+  .ville .nm{font-size:8px;font-weight:800;color:var(--color-ink);background:rgba(255,255,255,.85);border-radius:5px;padding:1px 5px;white-space:nowrap}
+  .ville .nm i{font-style:normal;color:var(--color-primary-dark)}
+  @keyframes villePulse{0%,100%{box-shadow:0 0 0 4px rgba(16,160,106,.22)}50%{box-shadow:0 0 0 8px rgba(16,160,106,.12)}}
+  .ville .pt.on{animation:villePulse 2.2s ease-in-out infinite}
+  .ville--up{flex-direction:column-reverse}
+  /* Ticket : une LIGNE compacte, se déplie pour voir plus (historique, actions) */
+  .tik{border-bottom:1px solid var(--color-sep)}
+  .tik:last-of-type{border-bottom:none}
+  .tik summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:11px 0}
+  .tik summary::-webkit-details-marker{display:none}
+  .tik summary .ic{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px}
+  .tik summary .tt{min-width:0;flex:1}
+  .tik summary .tt b{display:block;font-size:12.5px;color:var(--color-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tik summary .tt span{display:block;font-size:10px;color:var(--color-muted);margin-top:1px}
+  .tik summary::after{content:'';flex:none;width:7px;height:7px;border-right:2px solid var(--color-muted);border-bottom:2px solid var(--color-muted);transform:rotate(45deg);transition:transform .15s;margin-right:2px}
+  .tik[open] summary::after{transform:rotate(-135deg)}
+  .tik .corps{padding:0 0 12px;font-size:11px;line-height:1.6;color:var(--color-muted)}
+  .tik .corps b{color:var(--color-ink)}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:0 0 8px">
+
+    <!-- ① HEADER — le même haut que les autres pages -->
+    <header style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 20px 10px">
+      <!-- (21/09) la marque de Fly, dont l'assistance fait partie : le P à l'avion, le nom écrit, puis le rôle de l'écran -->
+      <span data-pec-marque="fly" data-nom="Assistance"></span>
+    </header>
+
+    <div style="padding:0 18px">
+
+      <!-- ② HAUT DE PAGE — l'objectif, clair sur fond de page, et les KPIs en UNE ligne sobre -->
+      <div style="padding:4px 2px 0">
+        <h1 style="font-size:22px;font-weight:800;line-height:1.15;letter-spacing:-0.02em;color:var(--color-ink)">Une question, un souci —<br><span style="color:var(--color-primary)">on s'en occupe.</span></h1>
+        <p style="font-size:12px;font-weight:600;color:var(--color-muted);margin-top:6px"><span style="display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:var(--color-mint);padding:3px 9px;font-size:9.5px;font-weight:800;color:var(--color-primary-dark);vertical-align:1px"><span style="width:6px;height:6px;border-radius:999px;background:var(--color-primary)"></span>En ligne</span> Un humain te répond, en français — jamais un robot seul.</p>
+      </div>
+      <div class="pec-card" style="display:flex;align-items:stretch;padding:12px 6px;margin-top:11px">
+        <!-- audit 28/08 : « ~4 min », « 4,8/5 » et « 4 300+ clients servis » étaient
+             INVENTÉS (aucune source, app pré-lancement) — seuls des faits VRAIS
+             restent : rappel gratuit, horaires, nombre de moyens de régler (PEC_DATA.moyensPaiement — 17/09, pivot — jamais un chiffre en dur). -->
+        <div style="flex:1.15;text-align:center;padding:0 8px">
+          <div style="font-size:17px;font-weight:800;color:var(--color-primary-dark)">Gratuit</div>
+          <div style="font-size:9px;font-weight:700;color:var(--color-muted);margin-top:1px">le rappel comme l'appel<br><span data-tel>0 805 626 626</span> · numéro vert</div>
+        </div>
+        <div style="flex:none;width:1px;background:var(--color-sep)"></div>
+        <div style="flex:1;text-align:center;padding:0 8px">
+          <div style="font-size:17px;font-weight:800;color:var(--color-primary-dark)">7 j/7</div>
+          <div style="font-size:9px;font-weight:700;color:var(--color-muted);margin-top:1px"><span data-horaires>8 h–20 h en semaine · 8 h–22 h le week-end</span><br>des humains, pas des robots</div>
+        </div>
+        <div style="flex:none;width:1px;background:var(--color-sep)"></div>
+        <div style="flex:1;text-align:center;padding:0 8px">
+          <div style="font-size:17px;font-weight:800;color:var(--color-primary-dark)"><span class="js-nbmoyens">—</span></div>
+          <div style="font-size:9px;font-weight:700;color:var(--color-muted);margin-top:1px">moyens de payer<br>avec un bon d’achat</div>
+        </div>
+      </div>
+
+      <!-- ③ CONTACT — être rappelé + horaires d'ouverture (chat & WhatsApp compris) -->
+      <div class="seclbl"><span class="t">Contact</span><span class="s">réponse en minutes, pas en jours</span></div>
+      <div class="pec-card" style="padding:2px 15px">
+
+        <div class="canal" style="flex-wrap:wrap">
+          <span class="tuile" style="background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));color:#fff"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-headset"/></svg></span>
+          <span class="txt"><b>Être rappelé(e) — gratuit</b><span>Numéro du compte : <b id="rappel-tel-aff" style="display:inline;font-size:10.5px;color:var(--color-ink);font-variant-numeric:tabular-nums">—</b></span></span>
+          <button type="button" id="rappel-btn" class="tap" onclick="demanderRappel()" style="flex:none;border-radius:999px;background:var(--color-primary);color:#fff;font-size:11.5px;font-weight:800;padding:9px 14px;box-shadow:var(--shadow-cta)">Être rappelé — gratuit</button>
+          <div style="flex-basis:100%;min-width:0">
+            <div id="rappel-ok" hidden style="margin-top:8px;border-radius:12px;background:var(--color-mint);padding:11px 13px;font-size:12px;line-height:1.55;color:var(--color-mint-ink)"></div>
+            <div id="rappel-suivi" hidden style="margin-top:8px;border-radius:12px;background:var(--color-bg);padding:11px 13px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                <span id="rappel-statut" style="font-size:11.5px;font-weight:700;color:var(--color-amber-text)">Transmise à la hotline — en attente de prise en charge…</span>
+                <span id="rappel-cd" style="flex:none;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--color-primary-dark)">—:—</span>
+              </div>
+              <p style="font-size:10px;line-height:1.5;color:var(--color-muted);margin-top:6px">On fait tout pour être les plus rapides — et on est <b style="color:var(--color-ink)">transparents sur les délais</b> : ce compteur est calculé sur le temps d'appel réellement passé par nos hôtes. Dès qu'un(e) hôte prend ta demande sur son tableau de bord, le temps écoulé est horodaté.</p>
+            </div>
+          </div>
+        </div>
+
+        <a href="tel:0805626626" id="tel-lien" class="canal tap" style="text-decoration:none">
+          <span class="tuile" style="background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-phone"/></svg></span>
+          <span class="txt"><b>Appeler — gratuit</b><span>Ouvert <span data-horaires>8 h–20 h en semaine · 8 h–22 h le week-end</span></span></span>
+          <span data-tel style="flex:none;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--color-primary-dark);white-space:nowrap">0 805 626 626</span>
+        </a>
+
+        <button type="button" data-sav-open class="canal tap">
+          <span class="tuile" style="background:var(--color-amber-well);color:var(--color-amber-text)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-ticket"/></svg></span>
+          <span class="txt"><b>Un problème de réservation ?</b><span>Ta réf de ticket → réponse immédiate · information ou réclamation, on fait le tri — un humain si besoin</span></span>
+          <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:14px;color:var(--color-muted)"><use href="#i-chevron-right"/></svg>
+        </button>
+
+      </div>
+
+      <!-- ③b DISCUTER — le chat a SA section (fondatrice 27/08 : séparé du reste) -->
+      <div class="seclbl"><span class="t">Discuter</span><span class="s">réponse immédiate · réponses guidées · un humain prend le relais</span></div>
+      <div class="pec-card" style="padding:2px 15px">
+        <button type="button" class="canal tap" aria-expanded="false" onclick="plier('chat-bloc', this)">
+          <span class="tuile" style="background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));color:#fff;font-size:14px;font-weight:800">P</span>
+          <span class="txt"><b>Discuter — réponse immédiate</b><span>Pec — l'assistant PayEnCash · un(e) hôte reprend la main</span></span>
+          <span style="flex:none;display:inline-flex;align-items:center;gap:4px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:9px;font-weight:800;padding:4px 9px"><span style="width:5px;height:5px;border-radius:999px;background:var(--color-primary)"></span>réponses guidées · un humain prend le relais</span>
+          <span class="chev"></span>
+        </button>
+        <div id="chat-bloc" class="pli" style="display:none">
+          <div style="border-radius:14px;background:var(--color-bg);padding:11px 12px">
+            <div id="chat-fil">
+              <div class="chat-msg chat-hote">Bonjour 👋 Je suis Pec. Pose ta question — et si tu as une <b>réf de ticket</b> (CMD-, PEC-, REC-, CNV-), donne-la-moi : je retrouve ton dossier direct. <span data-superviseure>Naïma</span> reprend la main dès que c'est nécessaire.</div>
+            </div>
+            <div id="chat-suggs" style="display:flex;flex-wrap:wrap;gap:7px;margin-top:9px">
+              <button type="button" class="chat-sugg tap" onclick="chatQ(this,'code')">Où est mon code de paiement ?</button>
+              <button type="button" class="chat-sugg tap" onclick="chatQ(this,'annul')">Annuler ma réservation</button>
+              <button type="button" class="chat-sugg tap" onclick="chatQ(this,'prix')">Mon prix bloqué expire bientôt</button>
+              <button type="button" class="chat-sugg tap" onclick="chatLibre(this,'Où est mon billet et comment m\'enregistrer ?')">Mon billet &amp; l'enregistrement</button>
+              <button type="button" class="chat-sugg tap" onclick="chatLibre(this,'Où acheter mon code, et faut-il une carte bancaire ?')">Où acheter mon code</button>
+              <button type="button" class="chat-sugg tap" onclick="chatLibre(this,'Comment ajouter un bagage en soute ?')">Bagages</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <input id="chat-in" type="text" placeholder="Ta question — ou une réf (CMD-…, REC-…)" class="fld" style="min-width:0;flex:1;background:var(--color-card)">
+              <button type="button" class="tap" onclick="chatEnvoi()" aria-label="Envoyer" style="flex:none;display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:var(--color-primary);color:#fff"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-arrow-right"/></svg></button>
+            </div>
+            <div id="chat-vide" role="alert" style="display:none;font-size:11px;font-weight:700;color:var(--color-danger,#B3261E);margin-top:6px">Écris ta question d’abord — ou une référence (CMD-…, REC-…).</div>
+          </div>
+        </div>
+
+        <button type="button" class="canal tap" id="wa-btn">
+          <span class="tuile" style="background:#25D366;color:#fff">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L4 20l1.2-4.5A8.5 8.5 0 1 1 21 11.5Z"/><path d="M9.3 9.2c.6 2.2 2.2 3.8 4.5 4.4l1-1.2 2 1.1c-.6 1.4-2 1.9-3.4 1.4-2.8-1-5-3.1-5.8-6-.4-1.4.2-2.7 1.6-3.2l1 2-.9 1.5Z" fill="#fff" stroke="none"/></svg>
+          </span>
+          <span class="txt"><b>Continuer sur WhatsApp</b><span id="wa-sous">Photos faciles · l'historique reste chez toi</span></span>
+          <svg class="pec-ico" viewBox="0 0 24 24" style="flex:none;font-size:14px;color:var(--color-muted)"><use href="#i-chevron-right"/></svg>
+        </button>
+
+      </div>
+
+      <!-- ④ MES DEMANDES — les demandes RÉELLES du bus + l'historique, chaque étape
+           horodatée. Les « deux portes » et leurs formulaires ont été retirés : la
+           rangée « Un problème de réservation ? » (Contact) fait le tri info/réclamation. -->
+      <div class="seclbl" id="rec-section"><span class="t">Échanges &amp; suivi</span><span class="s">tout est là — daté, heure par heure</span></div>
+
+      <!-- (08/09 — boucle hotline) NOTE TON ÉCHANGE : les questionnaires envoyés par SMS à la fin d'un appel
+           ou d'une demande close attendent ici leur réponse (PEC_SAT, partagé avec Mode). -->
+      <div id="sat-cartes" style="display:none"></div>
+
+      <!-- MES TICKETS — la liste compacte, chaque ticket SE DÉPLIE pour voir plus -->
+      <div style="display:flex;gap:3px;padding:4px;border-radius:13px;background:var(--color-segment);margin-bottom:10px" role="tablist" id="rec-tabs">
+        <button type="button" class="rtab tap" role="tab" aria-selected="true" onclick="recTab(this,'pan-cours')">Tickets en cours <span id="tab-cours-n">·</span></button>
+        <button type="button" class="rtab tap" role="tab" aria-selected="false" onclick="recTab(this,'pan-clot')">Clôturés <span id="tab-clot-n">·</span></button>
+      </div>
+      <div id="pan-cours">
+        <div class="pec-card" style="padding:2px 15px;margin-bottom:9px"><!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+<input class="pec-search" type="search" data-fsearch="#conv-liste > *" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+<div class="meta" data-fvide="#conv-liste > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+<div id="conv-liste" data-fpage="15"></div><!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+<input class="pec-search" type="search" data-fsearch="#rec-liste > *" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+<div class="meta" data-fvide="#rec-liste > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+<div id="rec-liste" data-fpage="15"></div></div>
+      </div>
+      <div id="pan-clot" style="display:none">
+        <div class="pec-card" style="padding:2px 15px;margin-bottom:9px"><!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+<input class="pec-search" type="search" data-fsearch="#conv-liste-clot > *" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+<div class="meta" data-fvide="#conv-liste-clot > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+<div id="conv-liste-clot" data-fpage="15"></div><!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+<input class="pec-search" type="search" data-fsearch="#rec-liste-clot > *" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+<div class="meta" data-fvide="#rec-liste-clot > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+<div id="rec-liste-clot" data-fpage="15"></div></div>
+      </div>
+      <div class="pec-reassure" style="margin:10px 0 0">
+        <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-shield"/></svg>
+        <p id="rec-escalade">—</p>
+      </div>
+
+      <!-- ⑤ QUESTIONS FRÉQUENTES -->
+      <div class="seclbl" id="faq-section"><span class="t">Questions fréquentes</span><a href="06-faq.html" class="tap s pec-tap-confort" style="text-decoration:none;color:var(--color-primary-dark);font-weight:800">Toutes →</a></div>
+      <input id="faq-q" type="search" placeholder="Cherche : billet, code, annulation, remboursement…" oninput="faqFiltre(this.value)" class="fld" style="margin:0 0 9px;background:var(--color-card)">
+      <div id="faq-panel">
+        <div class="pec-card" style="padding:2px 15px">
+          <div id="faq-liste">
+            <details class="aq" data-mots="code paiement flashcode bon achat"><summary>Où est mon code de paiement ?</summary><div class="rep">Dans <a href="03-mes-codes.html">Réservations → Réservations en cours</a>, et dans <a href="09-notifications.html">tes notifications</a>. C'est la référence de ta commande : tu n'as rien à montrer à personne. Ce que tu saisis pour régler, c'est le code du <b>Bon d’achat PayEnCash</b> que tu as acheté chez un commerçant.</div></details>
+            <details class="aq" data-mots="billet consulter telecharger pnr enregistrement compagnie e-billet"><summary>Où consulter mon billet d'avion ?</summary><div class="rep">Dès l'encaissement : <b>PNR + e-billet par SMS et email</b>. Dans l'app : <a href="03-mes-codes.html">Réservations → Confirmées → Mon billet</a>. C'est la compagnie qui gère ton enregistrement (le lien est dans le message).</div></details>
+            <details class="aq" data-mots="prix bloque expire revalider heure"><summary>Mon prix bloqué expire — que faire ?</summary><div class="rep">Garanti <b><span data-prixbloque>1 h</span></b>, gratuitement. S'il expire : bouton <b>« revalider le prix »</b> — rien n'est perdu, le tarif du moment s'applique.</div></details>
+            <details class="aq" data-mots="annuler annulation rembourse flex remboursement changer"><summary>Comment annuler ou changer ma réservation ?</summary><div class="rep">Ton tarif est écrit <b>noir sur blanc avant l'achat</b> (packs Flex / Super Flex). Va dans <a href="../fly/10-reservation-detail.html">ta réservation → Annulation</a> — un remboursement repart <b>par le chemin d'où l'argent est venu</b> : re-crédit de ton bon d’achat, avoir, ou virement sur un RIB à ton nom.</div></details>
+            <details class="aq" data-mots="carte bancaire rib compte donnee bancaire plafond bon"><summary>Faut-il une carte bancaire ou un RIB ?</summary><div class="rep"><b>Non, un bon d’achat suffit.</b> Il n'y a pas de champ pour ça dans l'app, et aucun paiement ne bascule sur une carte, à aucun montant. Ce qui plafonne, c'est ton <b>Bon d’achat PayEnCash</b> — <span data-bon="plafondBon">—</span> par bon d’achat, <span data-bon="plafondClientJour">—</span> par jour — et le ticket anonyme, au-delà duquel un compte vérifié est demandé.</div></details>
+            <details class="aq" data-mots="ou acheter bon commercant partenaire reseau code"><summary>Où acheter mon code ?</summary><div class="rep">Chez un commerçant près de chez toi : <a href="25-ou-acheter-un-bon.html">le réseau des Bons d’achat PayEnCash</a> (des commerces sous contrat avec nous) — ou auprès d'un distributeur mobile qui vient jusqu'à toi. Tu repars avec un code, tu le saisis dans l'app, c'est réglé — <b>garde le ticket</b>, le code vaut titre.</div></details>
+                        
+            <div id="faq-vide" style="display:none;text-align:center;padding:14px;font-size:12px;color:var(--color-muted)">Rien trouvé — pose ta question dans le chat de la section Contact, un(e) hôte te répond.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑥ CONTACTS UTILES -->
+      <div class="seclbl"><span class="t">Contacts utiles</span></div>
+      <div class="pec-card" style="padding:2px 15px;margin-bottom:16px">
+                <div class="canal" style="cursor:default">
+          <span class="tuile" style="background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-mail"/></svg></span>
+          <span class="txt"><b>Par écrit</b><span>assistance@payencash.fr — <span data-info="assistanceDelai">réponse sous 2 h ouvrées</span>, réf de ticket par retour</span></span>
+        </div>
+        <div class="canal" style="cursor:default">
+          <span class="txt" style="padding-left:2px"><span style="margin-top:0">Suivez-nous — <b style="display:inline;font-size:11px;color:var(--color-ink)">@payencash</b> · assistance 7 j/7 · <span data-horaires>8 h–20 h en semaine · 8 h–22 h le week-end</span></span></span>
+          <span id="social-row"></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" aria-current="page" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<div id="rappel-modal" style="position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;background:rgba(15,42,36,.5);backdrop-filter:blur(3px)">
+  <div style="width:86%;max-width:320px;background:var(--color-surface);border-radius:20px;padding:20px 18px;box-shadow:0 24px 60px rgba(15,42,36,.35)">
+    <div style="font-size:15px;font-weight:800;color:var(--color-ink)">Confirmer le rappel ?</div>
+    <p style="font-size:11.5px;line-height:1.5;color:var(--color-muted);margin-top:5px">Un(e) hôte t'appelle en quelques minutes au numéro ci-dessous — vérifie-le, ou change-le.</p>
+    <input id="rappel-num" type="tel" inputmode="tel" placeholder="06 12 34 56 78" class="fld" style="margin-top:10px">
+    <button type="button" class="pec-cta pec-cta--tight tap" onclick="confirmerRappel(document.getElementById('rappel-num').value)" style="display:block;width:100%;text-align:center;margin-top:10px">Confirmer le rappel — un(e) hôte m'appelle</button>
+    <button type="button" class="tap" onclick="document.getElementById('rappel-modal').style.display='none'" style="display:block;width:100%;padding:9px;margin-top:4px;font-size:12.5px;font-weight:700;color:var(--color-muted)">Annuler</button>
+  </div>
+</div>
+<script>
+  // ── DIVULGATION PROGRESSIVE : les blocs lourds se déplient sous leur rangée
+  function plier(id, btn) {
+    var e = document.getElementById(id);
+    var ouvre = e.style.display === 'none';
+    e.style.display = ouvre ? 'block' : 'none';
+    if (btn) btn.setAttribute('aria-expanded', ouvre);
+  }
+  function plierVoir(id) {
+    var e = document.getElementById(id);
+    if (e.style.display === 'none') plier(id, e.previousElementSibling);
+  }
+  // ── RAPPEL GRATUIT + COMPTE À REBOURS transparent
+  // Numéro = celui du COMPTE (profil hydraté par le client connecté) — jamais un numéro écrit ici.
+  function telCompte() {
+    var P = (window.PEC_DATA && PEC_DATA.profil) || {}, t = String(P.telComplet || '').replace(/\D/g, '');
+    return t.length === 10 ? t.replace(/(\d\d)(?=\d)/g, '$1 ') : '';
+  }
+  // DÉLAI ANNONCÉ = ce que la page promet : « calculé sur le temps d'appel réellement passé par nos hôtes » →
+  // moyenne RÉELLE (demande → appel passé) des rappels déjà traités au bus ; sans historique, l'engagement de
+  // réponse du data-layer (PEC_DATA.assistance.escalade.hote). Plus rien tiré de l'horloge.
+  function delaiRappel() {
+    var faits = (window.PEC_BUS && PEC_BUS.appels) ? PEC_BUS.appels().filter(function (a) { return a.statut === 'fait' && a.faitAt && a.at; }) : [];
+    if (faits.length) return Math.max(1, Math.round(faits.reduce(function (s, a) { return s + (a.faitAt - a.at); }, 0) / faits.length / 60000));
+    var sla = ((window.PEC_DATA && PEC_DATA.assistance && PEC_DATA.assistance.escalade) || {}).hote || '';
+    var mh = /(\d+)\s*h/.exec(sla), mm = /(\d+)\s*min/.exec(sla);
+    return mh ? +mh[1] * 60 : (mm ? +mm[1] : null);
+  }
+  function demanderRappel() {
+    // TOUJOURS une confirmation (fondatrice 27/08) : un clic accidentel = un
+    // appel hotline — le rappel ne part qu'au bouton « Confirmer ».
+    var t = telCompte(); if (t) document.getElementById('rappel-num').value = t;
+    document.getElementById('rappel-modal').style.display = 'flex';
+  }
+  var rappelIv = null, rappelId = null;
+  function confirmerRappel(num) {
+    num = (num || '').trim();
+    if (!num) { document.getElementById('rappel-num').style.borderColor = 'var(--color-amber-text)'; return; }
+    document.getElementById('rappel-modal').style.display = 'none';
+    var min = delaiRappel();
+    var ok = document.getElementById('rappel-ok');
+    ok.hidden = false;
+    ok.innerHTML = '✓ <b style="color:var(--color-primary-dark)">C\'est noté.</b> Un(e) hôte t\'appelle au <b style="color:var(--color-ink)">' + num + '</b>' + (min ? ' dans <b style="color:var(--color-primary-dark)">~' + min + ' min</b>' : '') + '. <button type="button" class="tap" style="font-weight:700;color:var(--color-primary);text-decoration:underline;background:none;padding:0" onclick="document.getElementById(\'rappel-modal\').style.display=\'flex\'">Changer de numéro</button>';
+    document.getElementById('rappel-btn').style.display = 'none';
+    // LA DEMANDE PART VRAIMENT EN HOTLINE (audit 27/08) : l'app hotline la voit en direct
+    var apl = null;
+    if (window.PEC_BUS && PEC_BUS.demanderAppel) apl = PEC_BUS.demanderAppel({ type: 'rappel', canal: 'rappel', client: (window.PEC_DATA.profil || {}).nomComplet, tel: num });
+    rappelId = apl ? apl.id : null;
+    // Le suivi : la demande PART EN HOTLINE — compteur live + prise en charge HORODATÉE lue au bus
+    var suivi = document.getElementById('rappel-suivi'); suivi.hidden = false;
+    var reste = (min || 0) * 60;
+    var cd = document.getElementById('rappel-cd'), st = document.getElementById('rappel-statut');
+    function mmss(s) { return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+    cd.textContent = mmss(reste);
+    st.style.color = 'var(--color-amber-text)';
+    st.innerHTML = 'Transmise à la hotline' + (apl && apl.assigne ? ' — assignée à <b>' + apl.assigne + '</b> (planning), en attente de prise en charge…' : ' — en attente de prise en charge…');
+    if (rappelIv) clearInterval(rappelIv);
+    rappelIv = setInterval(function () {
+      reste = Math.max(0, reste - 1);
+      cd.textContent = mmss(reste);
+      if (reste === 0) clearInterval(rappelIv);
+    }, 1000);
+    majRappelStatut();
+  }
+  // la PRISE EN CHARGE n'est jamais simulée : elle arrive du bus quand la hotline clique « Appel passé »
+  function majRappelStatut() {
+    if (!rappelId || !window.PEC_BUS) return;
+    var a = PEC_BUS.appels().filter(function (x) { return x.id === rappelId; })[0]; if (!a) return;
+    var st = document.getElementById('rappel-statut');
+    if (a.statut === 'fait') {
+      if (rappelIv) clearInterval(rappelIv);
+      st.innerHTML = '✓ <b style="color:var(--color-primary-dark)">Appel passé' + (a.assigne ? ' par ' + a.assigne : '') + '</b> — ' + quandFmt(a.faitAt) + ' (horodaté au journal).';
+      st.style.color = 'var(--color-mint-ink)';
+    }
+  }
+  window.addEventListener('pec-bus', majRappelStatut);
+  window.addEventListener('storage', majRappelStatut);
+
+  // ── LE CHAT — Pec, la mini-IA : réponse immédiate, l'hôte reprend la main.
+  // La RÉF DU TICKET est la clé de coopération : donnée dans le fil, elle retrouve
+  // le dossier (conversation CNV-, réclamation REC-, commande CMD-/PEC-) — même
+  // logique que les tables support_conversations/reclamations côté hotline/manager.
+  var CHAT_REP = (function () {
+    var D0 = window.PEC_DATA || {}, PB = D0.prixBloque || {}, esc = (D0.assistance && D0.assistance.escalade) || {};
+    var packs = (D0.packs || []).map(function (p) { return p.nom; }).join(' / ');
+    var duree = PB.dureeMin ? (PB.dureeMin % 60 === 0 ? (PB.dureeMin / 60) + ' h' : PB.dureeMin + ' min') : '';
+    return {
+      code: "Ton code est dans <b>Réservations</b> — et dans <b>tes notifications</b>. C'est la référence de ta commande : tu n'as rien à montrer à personne. Pour régler, tu saisis le code du <b>Bon d’achat PayEnCash</b> que tu as acheté chez un commerçant 😊",
+      annul: "Pour une annulation, le plus rapide : donne-moi la <b>réf de ta réservation</b> (CMD-… ou PEC-…, elle est dans Réservations). Ce que tu récupères dépend du <b>pack choisi au récap</b>" + (packs ? " (" + packs + ")" : "") + " — les règles exactes sont dans <a href=\"17-politiques.html\" style=\"font-weight:800;color:var(--color-primary-dark)\">Nos politiques</a> ; remboursement <b>par le chemin d'où l'argent est venu</b> : re-crédit de ton bon d’achat, avoir, ou virement.",
+      prix: "Ton prix est bloqué " + (duree ? "<b>" + duree + "</b> " : "") + "après confirmation, gratuitement. " + (PB.explication || "") + " Si tu ne peux pas passer à temps : bouton <b>« revalider le prix »</b> sur ton ticket dès l'expiration — rien n'est perdu.",
+      libre: "Bien reçu ! Je transmets à un(e) hôte — " + (esc.hote || "réponse dès que possible") + ". Astuce : avec une <b>réf de ticket</b> (CMD-, PEC-, REC-, CNV-), je retrouve ton dossier immédiatement. Si c'est urgent, le rappel gratuit juste au-dessus est encore plus rapide 📞"
+    };
+  })();
+  function chatPousse(texte, moi) {
+    var d = document.createElement('div');
+    d.className = 'chat-msg ' + (moi ? 'chat-moi' : 'chat-hote');
+    d.innerHTML = texte;
+    document.getElementById('chat-fil').appendChild(d);
+  }
+  function chatLibre(btn, q) {
+    plierVoir('chat-bloc'); btn.remove();
+    document.getElementById('chat-in').value = q; chatEnvoi();
+  }
+  function chatQ(btn, cle) { plierVoir('chat-bloc'); chatPousse(btn.textContent, true); btn.remove(); setTimeout(function () { chatPousse(CHAT_REP[cle] || CHAT_REP.libre, false); }, 500); }
+  function repTicket(t) {
+    if (t.type === 'reclamation') {
+      var rc = t.obj, niveau = rc.statut === 'niveau_manager' ? 'chez le <b>manager</b>' : 'chez un(e) <b>hôte</b>';
+      return 'Ticket <b>' + rc.id + '</b> retrouvé ✓ — réclamation « ' + rc.motif + ' » sur ' + rc.ref + ', actuellement ' + niveau + ' (' + rc.sla + '). Le suivi complet est dans <b>Mes demandes → En cours</b> juste en dessous.';
+    }
+    if (t.type === 'conversation') {
+      var cv = t.obj;
+      return 'Ticket <b>' + cv.id + '</b> retrouvé ✓ — conversation « ' + cv.sujet + ' » (' + cv.ref + ') suivie par <b>' + cv.hote + '</b>. Je lui rouvre le fil : il/elle te répond ici.';
+    }
+    return 'Commande <b>' + t.ref + '</b> retrouvée ✓ — dis-moi ce que tu veux faire : <b>annuler</b>, <b>changer</b>, retrouver ton <b>code de paiement</b> ou ton <b>billet</b>. Un(e) hôte valide toute annulation avec toi.';
+  }
+  function chatEnvoi() {
+    var i = document.getElementById('chat-in');
+    var v = (i.value || '').trim();
+    // (09/09 — lot 1 socle) un refus se VOIT : « Envoyer » à vide restait muet (contrôle sans effet à l'audit-clics)
+    var vide = document.getElementById('chat-vide');
+    if (!v) { i.focus(); i.setAttribute('aria-invalid', 'true'); if (vide) vide.style.display = 'block'; return; }
+    i.removeAttribute('aria-invalid'); if (vide) vide.style.display = 'none';
+    chatPousse(v.replace(/</g, '&lt;'), true); i.value = '';
+    var t = window.PEC_DATA.chercherTicket(v);
+    // la BASE DE CONNAISSANCES d'abord (réponses publiques du site) — l'humain à un clic
+    var btnHumain = ' <button type="button" data-chat-humain class="tap" style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;background:var(--color-primary);color:#fff;font-size:10.5px;font-weight:800;padding:5px 10px;margin-top:4px">👤 Passer à un humain</button>';
+    var kb = !t && window.PEC_DATA.chatCherche ? PEC_DATA.chatCherche(v) : null;
+    setTimeout(function () {
+      if (t) { chatPousse(repTicket(t), false); return; }
+      if (kb) {
+        chatPousse(kb.rep +
+          (kb.lien ? ' <a href="' + kb.lien[0] + '" class="tap" style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:10.5px;font-weight:800;padding:5px 10px;margin-top:4px;text-decoration:none">' + kb.lien[1] + ' →</a>' : '') +
+          ' <span style="display:block;font-size:10px;color:var(--color-muted);margin-top:5px">Pas ce que tu cherchais ?' + btnHumain + '</span>', false);
+        return;
+      }
+      chatPousse(CHAT_REP.libre + btnHumain, false);
+    }, 600);
+    derniereQuestion = v;
+  }
+  // ESCALADE HUMAINE DU CHAT (audit 27/08) : la conversation part chez la hotline
+  // (CNV-…), fil transmis — l'hôte en poste reprend LE MÊME fil.
+  var derniereQuestion = '';
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-chat-humain]'); if (!b) return;
+    b.remove();
+    if (window.PEC_BUS && PEC_BUS.ouvrirDemande) {
+      var fil = [].map.call(document.querySelectorAll('#chat-fil .chat-moi, #chat-fil .chat-hote'), function (n) { return { qui: n.className.indexOf('moi') > -1 ? 'moi' : 'hote', texte: n.textContent }; });
+      var d = PEC_BUS.ouvrirDemande({ type: 'conversation', ref: null, client: (window.PEC_DATA.profil || {}).nomComplet, sujet: derniereQuestion || 'Conversation depuis le chat', canal: 'chat', statut: 'en_cours', echanges: fil });
+      if (!d) { chatPousse('Ta demande n\'a PAS pu être enregistrée (stockage de cet appareil plein) — libère de la place et recommence, ou appelle-nous.', false); return; }
+      chatPousse('C\'est transmis ✓ — <b>' + (d.assigne || 'un(e) hôte') + '</b> reprend ce fil (réf <b>' + d.id + '</b>). Réponse ici même, ou rappel si tu préfères.', false);
+    } else {
+      chatPousse('Appelle le <b>' + window.PEC_DATA.serviceClient.tel + '</b> — gratuit, une vraie personne répond.', false);
+    }
+  }, true);
+  document.getElementById('chat-in').addEventListener('keydown', function (e) { if (e.key === 'Enter') chatEnvoi(); });
+
+  // ── Questions fréquentes filtrables (état vide nommé)
+  function faqFiltre(q) {
+    var n = q.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''), vus = 0;
+    document.querySelectorAll('#faq-liste .aq').forEach(function (d) {
+      var t = (d.textContent + ' ' + (d.getAttribute('data-mots') || '')).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+      var ok = !n || t.indexOf(n) !== -1;
+      d.style.display = ok ? '' : 'none'; if (ok) vus++;
+    });
+    document.getElementById('faq-vide').style.display = vus ? 'none' : 'block';
+  }
+
+  // ── MES DEMANDES : tabs EN COURS / CLÔTURÉES — conversations ET réclamations
+  function recTab(btn, id) {
+    document.querySelectorAll('#rec-tabs [role=tab]').forEach(function (b) { b.setAttribute('aria-selected', 'false'); });
+    btn.setAttribute('aria-selected', 'true');
+    document.getElementById('pan-cours').style.display = id === 'pan-cours' ? 'block' : 'none';
+    document.getElementById('pan-clot').style.display = id === 'pan-clot' ? 'block' : 'none';
+  }
+  // ── LES TICKETS : une ligne compacte, on DÉPLIE pour voir plus (fondatrice 25/08)
+  function tikRec(rc) {
+    var clot = rc.statut === 'resolue';
+    var pill = clot ? '<span class="pec-pill pec-pill--done" style="flex:none;font-size:9px">Clôturée</span>'
+      : '<span class="pec-pill" style="flex:none;font-size:9px;background:var(--color-amber-well);color:var(--color-amber-text)">' + (rc.statut === 'niveau_manager' ? 'Chez le manager' : 'Chez un(e) hôte') + '</span>';
+    return '<details class="tik" data-type="reclamation"><summary>' +
+      '<span class="ic" style="background:var(--color-amber-well);color:var(--color-amber-text)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-shield"/></svg></span>' +
+      '<span class="tt"><b>' + rc.id + ' · ' + rc.motif + '</b><span>Réclamation · ' + rc.ref + ' · ouverte le ' + rc.ouverte + '</span></span>' + pill + '</summary>' +
+      '<div class="corps"><b>' + rc.sla + '</b>' +
+      rc.historique.map(function (h) { return '<div style="display:flex;gap:8px;padding:3px 0"><span style="flex:none;width:7px;height:7px;border-radius:999px;background:var(--color-primary);margin-top:5px"></span><span><b>' + h[0] + '</b> — ' + h[1] + '</span></div>'; }).join('') +
+      '</div></details>';
+  }
+  function tikConv(c) {
+    var ok = c.statut === 'resolue';
+    return '<details class="tik" data-type="conversation"><summary>' +
+      '<span class="ic" style="background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-ticket"/></svg></span>' +
+      '<span class="tt"><b>' + c.sujet + '</b><span>Conversation · ' + c.ref + ' · ' + c.hote + ' · ' + c.quand + '</span></span>' +
+      '<span class="pec-pill' + (ok ? ' pec-pill--done' : '') + '" style="flex:none;font-size:9px">' + (ok ? 'Résolue' : 'En cours') + '</span></summary>' +
+      '<div class="corps"><i>« ' + c.dernier + ' »</i><br><button type="button" class="tap" data-rouvrir="' + c.id + '" data-ref="' + (c.ref || '') + '" data-sujet="' + (c.sujet || '') + '" style="margin-top:7px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:10.5px;font-weight:800;padding:6px 12px">Rouvrir la conversation</button></div></details>';
+  }
+  function quandFmt(ts) {
+    if (!ts) return '';
+    var d2 = new Date(ts), auj = new Date();
+    var meme = d2.toDateString() === auj.toDateString();
+    return (meme ? "aujourd'hui" : d2.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })) +
+      ' · ' + d2.getHours() + ':' + String(d2.getMinutes()).padStart(2, '0');
+  }
+  // Les demandes RÉELLES (modale SAV, escalade du chat) — le même ticket que la hotline
+  function tikVive(d) {
+    var clos = (d.statut || '').indexOf('clot') === 0;
+    // (04/09 — la boucle revient au client) : la DÉCISION du manager est DITE, pas juste « clôturée »
+    // (08/09 — audit hotline) le libellé vient de la LISTE PARTAGÉE des statuts (PEC_DATA.statutDemande.client) :
+    // le même mot pour le client, la hotline et le manager — plus de dictionnaire local qui dérive.
+    var decLbl = PEC_DATA.statutDemande(d).client;
+    var typeLbl = d.type === 'reclamation' ? 'Réclamation' : d.type === 'conversation' ? 'Conversation' : 'Demande d\'information';
+    return '<details class="tik" data-type="' + (d.type || 'information') + '" data-id="' + d.id + '"><summary>' +
+      '<span class="ic" style="background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-' + (d.type === 'reclamation' ? 'shield' : 'info') + '"/></svg></span>' +
+      '<span class="tt"><b>' + d.id + ' · ' + d.sujet + '</b><span>' + typeLbl + (d.ref ? ' · ' + d.ref : '') + ' · ouverte ' + quandFmt(d.at) + ' · ' + (d.assigne ? 'suivie par ' + d.assigne : 'transmise') + '</span></span>' +
+      '<span class="pec-pill' + (clos ? ' pec-pill--done' : '') + '" style="flex:none;font-size:9px">' + decLbl + '</span></summary>' +
+      // (08/09) QUI PARLE : moi = « Toi », l'hôte a un PRÉNOM (celui qui a répondu, e2.par), le reste = l'assistant
+      '<div class="corps">' + (d.echanges || []).map(function (e2) {
+        var pre = String(e2.par || '').split(/[ .@]/)[0];
+        var qui = e2.qui === 'moi' ? 'Toi' : e2.qui === 'hote' ? (pre ? pre.charAt(0).toUpperCase() + pre.slice(1) : 'Conseiller') : 'Assistant';
+        return '<div style="margin:3px 0"><b>' + qui + ' :</b> ' + e2.texte + (e2.at ? ' <span style="color:var(--color-muted)">· ' + quandFmt(e2.at) + '</span>' : '') + '</div>';
+      }).join('') +
+      // (08/09 — audit hotline) le CLIENT RÉPOND dans son fil tant que la demande est ouverte (PEC_BUS.repondreDemande, qui 'moi') — la hotline le lit en direct
+      (!clos && d.statut !== 'cloturee' ? '<form class="rep-fil" data-rep="' + d.id + '" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"><input class="pec-input" type="text" maxlength="400" placeholder="Répondre au conseiller…" aria-label="Répondre" style="flex:1;min-width:0;height:34px;font-size:12.5px"><button class="pec-btn pec-btn--sm tap" type="submit" style="flex:none">Envoyer</button><span class="rep-vide" role="alert" style="display:none;flex-basis:100%;font-size:11px;font-weight:700;color:var(--color-danger,#B3261E)">Écris ta réponse d’abord.</span></form>' : '') +
+      (clos && d.statut === 'clot_rembourse' ? '<div style="margin-top:5px;font-weight:700;color:var(--color-primary-dark)">Remboursée en avoir — crédité sur ton compte, valable FLY et MODE.</div>' : '') +
+      (clos && d.statut === 'clot_repondu' ? '<div style="margin-top:5px;font-weight:700;color:var(--color-primary-dark)">Réponse motivée envoyée — coordonnées du Médiateur jointes si tu veux aller plus loin.</div>' : '') +
+      '<div style="margin-top:5px;color:var(--color-muted)">' + (clos ? decLbl + ' ' + quandFmt(d.cloAt) + ' · ' : '') + 'Transmise à la hotline ' + quandFmt(d.at) + ' — assignation automatique selon le planning' + slaHoteTxt() + '.</div></div></details>';
+  }
+  // (08/09) LES DÉLAIS VIENNENT DU RÉFÉRENTIEL (PEC_DATA.ref.hotline) — aucune durée écrite dans cette page
+  function refHot() { return ((window.PEC_DATA && PEC_DATA.ref) || {}).hotline || {}; }
+  function slaHoteTxt() { var h = refHot().slaHoteH; return h ? ', réponse d\'un(e) hôte sous ' + h + ' h ouvrées' : ''; }
+  function sousMin(dueAt) {
+    if (!dueAt) return '';
+    var m = Math.round((dueAt - Date.now()) / 60000);
+    if (m > 0) return m >= 60 ? 'sous ' + Math.round(m / 60) + ' h' : 'sous ' + m + ' min';
+    return 'échéance atteinte — on te rappelle au plus vite';
+  }
+  // Les APPELS (rappel demandé, bienvenue, retour J+1, appel entrant) — le fil aussi
+  function tikAppel(a) {
+    // (08/09 — audit hotline) L'ISSUE DE L'APPEL EST DITE : fait · sans réponse (on réessaie) · à rappeler · à venir —
+    // avant, tout ce qui n'était pas « fait » s'affichait « À venir », même après trois tentatives sans réponse.
+    var fait = a.statut === 'fait';
+    var lbl = a.type === 'bienvenue' ? 'Appel de bienvenue'
+            : a.type === 'retour_j1' ? 'Appel retour après ton voyage'
+            : a.type === 'entrant' ? 'Ton appel au service client' : 'Rappel demandé';
+    var pill = fait ? 'Appel passé ✓'
+             : a.statut === 'sans_reponse' ? 'Sans réponse'
+             : a.statut === 'rappeler' ? 'À rappeler' : 'À venir';
+    var echeance = sousMin(a.dueAt) || a.quand || '';
+    var corps = fait
+      ? 'Appel passé ' + quandFmt(a.faitAt) + (a.faitPar ? ' par ' + a.faitPar : '') + ' — noté au journal (event_log).'
+        + (a.compteRendu ? '<div style="margin-top:4px">« ' + a.compteRendu + ' »</div>' : '')
+      : a.statut === 'sans_reponse'
+        ? 'On a essayé de te joindre (' + (a.tentatives || 1) + ' tentative' + ((a.tentatives || 1) > 1 ? 's' : '') + ') — on réessaie.'
+      : a.statut === 'rappeler'
+        ? 'À rappeler — un(e) hôte reprend contact au numéro de ton compte.'
+      /* (18/09, soir — l'agent de caisse mobile est abandonné) LE CAS 'securisation' DISAIT « l'agent ne part
+         qu'APRÈS cet appel » : personne ne part plus, et le bus ne crée plus d'appel de ce type (il naissait de
+         la prise de course d'un agent). Une phrase de moins, et un cas de moins à expliquer. */
+      : 'Demandé ' + quandFmt(a.at) + ' — un(e) hôte t\'appelle au numéro de ton compte.'
+        + (echeance ? ' Prévu ' + echeance + '.' : '');
+    return '<details class="tik" data-type="appel"><summary>' +
+      '<span class="ic" style="background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:15px"><use href="#i-phone"/></svg></span>' +
+      '<span class="tt"><b>' + a.id + ' · ' + lbl + '</b><span>' + (a.canal || 'appel') + (a.ref ? ' · ' + a.ref : '') + ' · demandé ' + quandFmt(a.at) + ' · ' + (a.assigne ? 'assigné à ' + a.assigne : 'transmis') + '</span></span>' +
+      '<span class="pec-pill' + (fait ? ' pec-pill--done' : '') + '" style="flex:none;font-size:9px">' + pill + '</span></summary>' +
+      '<div class="corps">' + corps + '</div></details>';
+  }
+  // (08/09) l'envoi d'une réponse client : un seul écouteur délégué (les fiches sont repeintes)
+  document.addEventListener('submit', function (e) {
+    var f = e.target.closest && e.target.closest('form.rep-fil'); if (!f) return;
+    e.preventDefault();
+    var inp = f.querySelector('input'), txt = (inp.value || '').trim(), vide = f.querySelector('.rep-vide');
+    // (09/09 — lot 1 socle) le refus se VOIT : « Envoyer » une réponse vide restait muet (contrôle sans effet à l'audit-clics)
+    if (!txt) { if (vide) vide.style.display = 'block'; inp.focus(); return; }
+    if (vide) vide.style.display = 'none';
+    if (!window.PEC_BUS || !PEC_BUS.repondreDemande) { inp.setCustomValidity('Envoi impossible hors connexion'); inp.reportValidity(); setTimeout(function () { inp.setCustomValidity(''); }, 2000); return; }
+    var nom = (window.PEC_DATA && PEC_DATA.clientCourant && PEC_DATA.clientCourant() && PEC_DATA.clientCourant().nomComplet) || ((window.PEC_DATA || {}).profil || {}).nomComplet || 'client';
+    var r = PEC_BUS.repondreDemande(f.getAttribute('data-rep'), txt, nom, 'moi');
+    if (r && r.ok) { inp.value = ''; renderDemandes(); var det = document.querySelector('details.tik[data-id="' + f.getAttribute('data-rep') + '"]'); if (det) det.open = true; }
+    else if (inp) { inp.setCustomValidity(r && r.motif || 'Envoi impossible'); inp.reportValidity(); setTimeout(function () { inp.setCustomValidity(''); }, 2000); }
+  });
+  function renderDemandes() {
+    var A = window.PEC_DATA && window.PEC_DATA.assistance; if (!A) return;
+    // les demandes RÉELLES d'abord (bus — modale, chat), puis l'historique d'exemple
+    // (09/09 — lot 1 socle) MES demandes et MES appels : l'écran listait ceux de tout le monde (sujets, réponses, comptes rendus)
+    var mien = function (x) { return (window.PEC_DATA && PEC_DATA.estAMoi) ? PEC_DATA.estAMoi(x) : true; };
+    var vives = window.PEC_BUS ? PEC_BUS.demandesSav().filter(mien) : [];
+    var appels = window.PEC_BUS ? PEC_BUS.appels().filter(mien) : [];
+    var aplCours = appels.filter(function (a) { return a.statut !== 'fait'; });
+    var aplFaits = appels.filter(function (a) { return a.statut === 'fait'; });
+    var vCours = vives.filter(function (d) { return (d.statut || '').indexOf('clot') !== 0; });
+    var vClot = vives.filter(function (d) { return (d.statut || '').indexOf('clot') === 0; });
+    var recs = A.reclamations;
+    var recCours = recs.filter(function (r) { return r.statut !== 'resolue'; });
+    var recClot = recs.filter(function (r) { return r.statut === 'resolue'; });
+    var convCours = A.conversations.filter(function (c) { return c.statut !== 'resolue'; });
+    var convClot = A.conversations.filter(function (c) { return c.statut === 'resolue'; });
+    // PAGINATION (fondatrice 27/08) : 5 tickets visibles, le reste derrière « Voir plus »
+    var PAGE_TIK = 5;
+    function pagine(html) {
+      var tous = html.match(/<details[\s\S]*?<\/details>/g) || [];
+      if (tous.length <= PAGE_TIK) return html;
+      return tous.slice(0, PAGE_TIK).join('') +
+        '<details style="padding:6px 0"><summary class="tap" style="list-style:none;cursor:pointer;text-align:center;font-size:11.5px;font-weight:800;color:var(--color-primary-dark);padding:8px;border-radius:11px;background:var(--color-mint)">Voir les ' + (tous.length - PAGE_TIK) + ' autres tickets</summary>' + tous.slice(PAGE_TIK).join('') + '</details>';
+    }
+    document.getElementById('conv-liste').innerHTML = pagine(vCours.map(tikVive).join('') + aplCours.map(tikAppel).join('') + convCours.map(tikConv).join(''));
+    document.getElementById('conv-liste-clot').innerHTML = pagine(vClot.map(tikVive).join('') + aplFaits.map(tikAppel).join('') + convClot.map(tikConv).join('')) ||
+      '<div style="padding:11px 0;font-size:11.5px;color:var(--color-muted)">Rien de clôturé pour l\'instant.</div>';
+    document.getElementById('rec-liste').innerHTML = recCours.map(tikRec).join('');
+    document.getElementById('rec-liste-clot').innerHTML = recClot.map(tikRec).join('');
+    document.getElementById('tab-cours-n').textContent = vCours.length + aplCours.length + convCours.length + recCours.length;
+    document.getElementById('tab-clot-n').textContent = vClot.length + aplFaits.length + convClot.length + recClot.length;
+  }
+  window.addEventListener('storage', renderDemandes);
+  window.addEventListener('pec-bus', renderDemandes);   // l'onglet COURANT voit ce qu'il vient de créer (28/08)
+  // (08/09 — boucle hotline) « Note ton échange » en tête de Mes demandes : la réponse du client fait foi
+  // (note basse → réclamation ouverte automatiquement), la carte le dit. Module partagé avec Mode.
+  if (window.PEC_SAT) PEC_SAT.carte('sat-cartes', {
+    client: function () { var D4 = window.PEC_DATA; return (D4.clientCourant && D4.clientCourant()) || { nomComplet: (D4.profil || {}).nomComplet }; },
+    onDone: renderDemandes
+  });
+  // ROUVRIR une conversation d'historique = une NOUVELLE conversation au bus (même réf, même sujet) — l'hôte en poste la reçoit
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-rouvrir]'); if (!b || !window.PEC_BUS || !PEC_BUS.ouvrirDemande) return;
+    var d = PEC_BUS.ouvrirDemande({ type: 'conversation', ref: b.getAttribute('data-ref') || null, client: (window.PEC_DATA.profil || {}).nomComplet, sujet: b.getAttribute('data-sujet') || 'Conversation rouverte', canal: 'app', statut: 'en_cours', echanges: [{ qui: 'moi', texte: 'Je rouvre la conversation ' + b.getAttribute('data-rouvrir') + '.' }] });
+    if (!d) { b.textContent = '✕ Non rouverte — stockage plein'; return; }
+    b.textContent = '✓ Rouverte — ' + d.id + (d.assigne ? ' · ' + d.assigne + ' reprend le fil' : ''); b.disabled = true;
+    renderDemandes();
+  });
+
+  // ── Conversations + escalade (données partagées client ↔ hotline ↔ manager)
+  (function () {
+    var A = window.PEC_DATA && window.PEC_DATA.assistance; if (!A) return;
+    renderDemandes();
+    var e = A.escalade;
+    document.getElementById('rec-escalade').innerHTML = 'La règle : un(e) hôte répond <b>' + e.hote + '</b> · non résolu → le <b>manager</b> reprend (' + e.manager + ') · désaccord persistant ? Le <b>' + e.mediateur.nom + '</b> — ' + e.mediateur.delai + ' (' + e.mediateur.site + ').';
+
+    var sr = document.getElementById('social-row');
+    if (sr) sr.innerHTML = window.PEC_DATA.socialHTML();
+    // COORDONNÉES & DÉLAIS sourcés (audit 03/09) : numéro + horaires = PEC_DATA.serviceClient, superviseure = hotline.equipe,
+    // prix bloqué = PEC_DATA.prixBloque.dureeMin, numéro du compte = profil hydraté. Aucun de ces textes n'est écrit ici.
+    var D3 = window.PEC_DATA, SCL = D3.serviceClient || {};
+    if (SCL.tel) { [].forEach.call(document.querySelectorAll('[data-tel]'), function (e) { e.textContent = SCL.tel; }); var tl = document.getElementById('tel-lien'); if (tl) tl.href = 'tel:' + String(SCL.tel).replace(/\s/g, ''); }
+    if (SCL.horaires) [].forEach.call(document.querySelectorAll('[data-horaires]'), function (e) { e.textContent = SCL.horaires; });
+    var eq = ((D3.assistance || {}).hotline || {}).equipe || [], sup = eq.filter(function (x) { return /superviseu/.test(x.role || ''); })[0] || eq[0];
+    if (sup) [].forEach.call(document.querySelectorAll('[data-superviseure]'), function (e) { e.textContent = sup.nom; });
+    var PB = D3.prixBloque || {}; if (PB.dureeMin) [].forEach.call(document.querySelectorAll('[data-prixbloque]'), function (e) { e.textContent = PB.dureeMin % 60 === 0 ? (PB.dureeMin / 60) + ' h' : PB.dureeMin + ' min'; });
+    /* (18/09, soir) LES PLAFONDS DE LA FAQ VIENNENT DU BON D’ACHAT, PAS D'UN CHIFFRE ÉCRIT. La réponse « faut-il une carte
+       bancaire » cite ce qui plafonne vraiment : le bon d’achat, et lui seul — valeurs vives (le manager les ajuste). */
+    if (D3.bonsRef) {
+      var peindreBon = function () {
+        var RB = D3.bonsRef(), valsB = { plafondBon: D3.eur(RB.plafondBon), plafondClientJour: D3.eur(RB.plafondClientJour), plafondClientMois: D3.eur(RB.plafondClientMois), minimum: D3.eur(RB.minimum), validiteMois: RB.validiteMois + ' mois' };
+        [].forEach.call(document.querySelectorAll('[data-bon]'), function (e) { var v = valsB[e.getAttribute('data-bon')]; if (v != null) e.textContent = v; });
+      };
+      peindreBon();
+      window.addEventListener('pec-bus', peindreBon);
+      window.addEventListener('storage', function (e) { if (!e.key || /^pec/.test(e.key)) peindreBon(); });
+    }
+    var ta = document.getElementById('rappel-tel-aff'); if (ta) ta.textContent = (D3.profil && D3.profil.tel) || 'à renseigner dans Compte';
+    // WhatsApp : aucun numéro WhatsApp dans le data-layer → état honnête (pas de « ✓ ouvert » simulé), le chat prend le relais
+    var wa = document.getElementById('wa-btn');
+    if (wa) wa.addEventListener('click', function () {
+      var s = document.getElementById('wa-sous'); if (s) s.textContent = 'Canal WhatsApp pas encore ouvert dans cette version — le chat ci-dessus et le rappel gratuit te répondent.';
+      plierVoir('chat-bloc');
+    });
+  })();
+</script>
+<script>
+// (17/09 — pivot) Le KPI comptait les points d'encaissement d'un réseau qui n'existe plus. Ce qui reste
+// vrai et utile : le nombre de MOYENS de régler proposés dans le pays du client (moyensPaiement).
+(function () {
+  var D = window.PEC_DATA; if (!D || !D.moyensPaiement) return;
+  var n = D.moyensPaiement().length;
+  [].forEach.call(document.querySelectorAll('.js-nbmoyens'), function (e) { e.textContent = n; });
+})();
+</script>
+</body>
+</html>

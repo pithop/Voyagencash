@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash — Doc 1 : Flux métier complet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+  /* Sans ceci, un navigateur en mode sombre rend champs, listes et ascenseurs
+     en sombre sur notre fond creme. La doc est concue en clair, on le declare. */
+  color-scheme: light;
+    --vert: #1F4438;
+    --cuivre: #D8722B;
+    --creme: #F7F5F0;
+    --encre: #1A1A1A;
+    --gris: #6B6966;
+    --gris-clair: #E4E0D6;
+    --blanc: #FFFFFF;
+    --rouge: #C0392B;
+    --bleu: #1A5276;
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    color: var(--encre);
+    background: var(--creme);
+    line-height: 1.7;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== SIDEBAR NAV ===== */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 240px;
+    height: 100vh;
+    background: var(--vert);
+    color: var(--creme);
+    overflow-y: auto;
+    padding: 24px 0;
+    z-index: 100;
+  }
+  .sidebar-logo {
+    padding: 0 20px 20px;
+    border-bottom: 0.5px solid rgba(244,241,234,0.15);
+    margin-bottom: 16px;
+  }
+  .sidebar-logo .brand {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .sidebar-logo .brand .accent { color: var(--cuivre); }
+  .sidebar-logo .doc-num {
+    font-size: 11px;
+    color: rgba(244,241,234,0.5);
+    margin-top: 4px;
+  }
+  .sidebar nav a {
+    display: block;
+    padding: 8px 20px;
+    font-size: 13px;
+    color: rgba(244,241,234,0.7);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .sidebar nav a:hover,
+  .sidebar nav a.active {
+    color: var(--creme);
+    border-left-color: var(--cuivre);
+    background: rgba(244,241,234,0.06);
+  }
+  .sidebar nav .section-head {
+    padding: 16px 20px 6px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(244,241,234,0.35);
+    font-weight: 600;
+  }
+  .doc-nav {
+    margin-top: auto;
+    padding: 16px 20px 0;
+    border-top: 0.5px solid rgba(244,241,234,0.15);
+    margin-top: 24px;
+  }
+  .doc-nav p { font-size: 11px; color: rgba(244,241,234,0.4); margin-bottom: 8px; }
+  .doc-nav a {
+    display: block;
+    font-size: 12px;
+    color: rgba(244,241,234,0.6);
+    text-decoration: none;
+    padding: 4px 0;
+  }
+  .doc-nav a:hover { color: var(--cuivre); }
+
+  /* ===== MAIN CONTENT ===== */
+  .main {
+    margin-left: 240px;
+    max-width: 860px;
+    padding: 48px 56px;
+  }
+
+  /* ===== HEADER ===== */
+  .doc-header {
+    border-bottom: 1px solid var(--gris-clair);
+    padding-bottom: 24px;
+    margin-bottom: 40px;
+  }
+  .doc-header .doc-tag {
+    display: inline-block;
+    background: var(--cuivre);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+    letter-spacing: 0.04em;
+  }
+  .doc-header h1 {
+    font-family: 'Archivo', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+  .doc-header .meta {
+    display: flex;
+    gap: 20px;
+    font-size: 13px;
+    color: var(--gris);
+    flex-wrap: wrap;
+  }
+  .doc-header .meta span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ===== SECTIONS ===== */
+  .section {
+    margin-bottom: 48px;
+    scroll-margin-top: 24px;
+  }
+  h2 {
+    font-family: 'Archivo', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--gris-clair);
+    color: var(--vert);
+  }
+  h3 {
+    font-family: 'Archivo', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 24px 0 10px;
+    color: var(--encre);
+  }
+  p { margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ===== ÉTAPES ===== */
+  .step-list { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: flex;
+    gap: 0;
+    position: relative;
+  }
+  .step-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 48px;
+    flex-shrink: 0;
+  }
+  .step-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 13px;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .step-line {
+    width: 1.5px;
+    flex: 1;
+    min-height: 20px;
+  }
+  .step:last-child .step-line { display: none; }
+  .step-content {
+    padding: 0 0 28px 12px;
+    flex: 1;
+  }
+  .step-content .step-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 6px;
+    padding-top: 4px;
+  }
+  .step-content .step-desc {
+    font-size: 14px;
+    color: #4a4742;
+    margin-bottom: 0;
+  }
+  .step-content .step-detail {
+    margin-top: 10px;
+  }
+
+  /* Couleurs par phase */
+  .phase-choix .step-num { background: #E1F5EE; color: #0F6E56; }
+  .phase-choix .step-line { background: #9FE1CB; }
+  .phase-voyageurs .step-num { background: #EEEDFE; color: #3C3489; }
+  .phase-voyageurs .step-line { background: #CECBF6; }
+  .phase-code .step-num { background: #FAEEDA; color: #633806; }
+  .phase-code .step-line { background: #FAC775; }
+  .phase-cash .step-num { background: #FAECE7; color: #712B13; }
+  .phase-cash .step-line { background: #F5C4B3; }
+  .phase-resa .step-num { background: #EAF3DE; color: #27500A; }
+  .phase-resa .step-line { background: #C0DD97; }
+
+  /* ===== PHASE LABELS ===== */
+  .phase-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 16px;
+  }
+  .phase-label.teal { background: #E1F5EE; color: #0F6E56; }
+  .phase-label.purple { background: #EEEDFE; color: #3C3489; }
+  .phase-label.amber { background: #FAEEDA; color: #633806; }
+  .phase-label.coral { background: #FAECE7; color: #712B13; }
+  .phase-label.green { background: #EAF3DE; color: #27500A; }
+
+  /* ===== CALLOUT BOXES ===== */
+  .callout {
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin: 16px 0;
+    font-size: 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: rgba(31,68,56,0.06); border-left: 3px solid var(--vert); }
+  .callout.warning { background: rgba(216,114,43,0.08); border-left: 3px solid var(--cuivre); }
+  .callout.danger { background: rgba(192,57,43,0.07); border-left: 3px solid var(--rouge); }
+  .callout.tip { background: #EAF3DE; border-left: 3px solid #27500A; }
+  .callout strong { display: block; font-weight: 600; margin-bottom: 4px; color: var(--encre); }
+
+  /* ===== TABLE ===== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: 16px 0;
+  }
+  th {
+    background: var(--vert);
+    color: var(--creme);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 0.5px solid var(--gris-clair);
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: rgba(244,241,234,0.5); }
+  tr:last-child td { border-bottom: none; }
+
+  /* ===== CODE ===== */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: rgba(31,68,56,0.07);
+    color: var(--vert);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  pre {
+    background: #1A1A2E;
+    color: #E8E6E3;
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+  pre .comment { color: #6B7A8D; }
+  pre .key { color: #82AAFF; }
+  pre .str { color: #C3E88D; }
+  pre .num { color: #F78C6C; }
+  pre .kw { color: #C792EA; }
+
+  /* ===== ACTEURS ===== */
+  .actors {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .actor {
+    background: var(--blanc);
+    border: 0.5px solid var(--gris-clair);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+  .actor .actor-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  .actor h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .actor p { font-size: 12px; color: var(--gris); margin: 0; }
+
+  /* ===== ERROR CASES ===== */
+  .error-table th { background: #7B241C; }
+  .error-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .error-tag.critical { background: #FAECE7; color: #712B13; }
+  .error-tag.medium { background: #FAEEDA; color: #633806; }
+  .error-tag.low { background: #EAF3DE; color: #27500A; }
+
+  /* ===== PRINT ===== */
+  @media print {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 24px; }
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 24px 20px; }
+    .actors { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div style="background:#E6F4EC;border:2px dashed #0C7F54;border-radius:10px;padding:12px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#0F2A24"><b>⚠️ Pivot du 18/09/2026 (soir) — remplace le bandeau du 17/09.</b> Ce document décrit le modèle « espèces à domicile par l'agent » d'août. <b>Ce modèle n'existe plus</b> : l'<b>agent de caisse mobile est supprimé</b>, et avec lui les courses, les tournées, les zones, le planning, la flotte, le fond de caisse, le rendu de monnaie, les dépôts en automate Cash Services et le découpage « 1 000 € d'espèces + complément carte ». Il reste <b>deux moyens de paiement</b>, tous deux achetés au comptoir d'un commerce : le <b>Bon d’achat PayEnCash</b> (bon d'achat prépayé émis par AJEK, vendu par un réseau de commerçants sous contrat — art. L521-3 CMF ; tables <code>gift_cards</code> · <code>gift_card_movements</code>) <i>(20/09 : le rail d'un prestataire en ligne est supprimé — le débit du bon est le seul valideur ; <code>psp_transactions</code> · <code>payment_tenders</code>, dont <code>method</code> vaut désormais <code>bon</code>, et lui seul — plus jamais <code>cash</code> ni <code>card</code>). Côté commerçant, le <b>reversement mensuel est abandonné</b> : sa carte bancaire enregistrée est <b>prélevée à chaque vente</b> du montant moins sa commission (1,10 % HT + TVA), via <b>Stripe</b> ; <b>un refus de la banque = aucun bon d’achat émis</b> (<code>partner_cards</code> · <code>partner_charges</code>). <b>Tout ce qui est écrit ici sur l'agent, la collecte, le dépôt, le dispatch ou un « point d'encaissement » est caduc</b> ; ce qui porte sur le catalogue, le prix, les fournisseurs et la commande reste vrai. Référence à jour : <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html" style="color:#0C7F54;font-weight:700">Étape 4</a> et <code>CLAUDE.md</code>.</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">PayEn<span class="accent">Cash</span></div>
+    <div class="doc-num">Documentation technique · v2.0 (encaissement à domicile)</div>
+  </div>
+  <nav>
+    <div class="section-head">Document 1</div>
+    <a href="#intro">Introduction</a>
+    <a href="#acteurs">Acteurs du système</a>
+    <a href="#flux-global">Flux global</a>
+    <a href="#phase-1">Phase 1 — Choix & tarification</a>
+    <a href="#phase-2">Phase 2 — Données voyageurs</a>
+    <a href="#phase-3">Phase 3 — Code &amp; dispatch agent</a>
+    <a href="#phase-4">Phase 4 — Collecte du cash (agent)</a>
+    <a href="#phase-5">Phase 5 — Réservation réelle</a>
+    <a href="#retour-cash">Retour du cash</a>
+    <a href="#cas-erreur">Cas d'erreur</a>
+    <a href="#statuts">Statuts de commande</a>
+  </nav>
+  <div class="doc-nav">
+    <p>Documents suivants</p>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">→ Doc 2 : Schéma base de données</a>
+    <a href="03-api-specs.html">→ Doc 3 : Spécifications API</a>
+    <a href="04-pricing.html">→ Doc 4 : Logique de pricing</a>
+    <a href="05-architecture.html">→ Doc 5 : Architecture technique</a>
+    <a href="06-segment-maghreb.html">→ Doc 6 : Segment Maghreb</a>
+    <a href="07-annulations-remboursements.html">→ Doc 7 : Annulations &amp; remboursements</a>
+    <a href="08-mecanisme-financier.html">→ Doc 8 : Mécanisme financier</a>
+    <a href="09-espace-manager.html">→ Doc 9 : Espace Manager</a>
+    <a href="10-compte-utilisateur.html">→ Doc 10 : Compte utilisateur</a>
+    <a href="11-ui-v2.html">→ Doc 11 : UI v2 (écrans)</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">📖 Glossaire central des champs</a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+<div class="bandeau-socle" style="background:#FDF1E7;border:1px solid #E39A2E;border-left:5px solid #E39A2E;border-radius:10px;padding:13px 17px;margin:0 0 28px;font-size:13.5px;line-height:1.65;color:#7a5410">⚠️ <b>Document socle (juillet 2026)</b> — conservé comme référence technique. Les décisions <b>À JOUR</b> vivent dans le fil rouge (10 étapes)&nbsp;: <a href="../ESPACE-COMMERCANT/documents/diagramme-principal.html" style="color:#0c7f54;font-weight:700">diagramme principal</a>. En cas d'écart, le fil rouge fait foi (ex.&nbsp;: carte bleue en complément, Mondial Relay, F13, codes promo fournisseurs).</div>
+
+
+  <div class="doc-header">
+    <span class="doc-tag">Document 1 / 11</span>
+    <h1>Flux métier complet</h1>
+    <div class="meta">
+      <span>Projet PayEnCash</span>
+      <span>Version 1.0</span>
+      <span>Juin 2026</span>
+    </div>
+  </div>
+
+  <!-- INTRO -->
+  <section class="section" id="intro">
+    <h2>Introduction</h2>
+    <p>PayEnCash est une plateforme permettant à des utilisateurs sans carte bancaire de réserver des billets d'avion et des hébergements en ligne, puis de régler leur commande <strong>en espèces, à domicile</strong> : un <strong>agent PayEnCash</strong> vient récupérer le montant exact auprès du client.</p>
+    <p>Ce document décrit l'intégralité du flux métier de la plateforme — de la sélection d'une offre par le client jusqu'à la confirmation de sa réservation. Il sert de référence principale pour le développement et doit être lu avant toute autre documentation technique.</p>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div>
+        <strong>Principe fondamental</strong>
+        Le code-barres est généré <strong>par PayEnCash</strong> (aucun prestataire de paiement tiers) au moment où le client demande la collecte. Un agent est alors attribué automatiquement (dispatch par zone/distance). Le paiement fournisseur n'est déclenché qu'une fois le cash <strong>physiquement collecté et validé par l'agent</strong> (code de sécurité + photo).
+      </div>
+    </div>
+
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div>
+        <strong>Point de vigilance principal</strong>
+        Entre l'affichage du prix Duffel/Hotelbeds (Phase 1) et l'achat réel (Phase 5), les prix peuvent varier. Une marge de sécurité dynamique est appliquée selon la <strong>fenêtre de collecte</strong> estimée pour couvrir ce risque.
+      </div>
+    </div>
+  </section>
+
+  <!-- ACTEURS -->
+  <section class="section" id="acteurs">
+    <h2>Acteurs du système</h2>
+    <p>Six acteurs interviennent dans le flux PayEnCash :</p>
+
+    <div class="actors">
+      <div class="actor">
+        <div class="actor-icon" style="background:#E1F5EE; color:#0F6E56;">👤</div>
+        <h4>Le client</h4>
+        <p>Utilisateur sans CB qui choisit son voyage sur l'app/site PayEnCash et paie en espèces.</p>
+      </div>
+      <div class="actor">
+        <div class="actor-icon" style="background:#EEEDFE; color:#3C3489;">🛵</div>
+        <h4>L'agent</h4>
+        <p>Employé PayEnCash. Se déplace au domicile du client, collecte les espèces, valide le code de sécurité + photo. Noté 1-5★ après la tournée.</p>
+      </div>
+      <div class="actor">
+        <div class="actor-icon" style="background:#FAEEDA; color:#633806;">⚙️</div>
+        <h4>PayEnCash</h4>
+        <p>La plateforme. Orchestre le flux, génère le code, gère les commandes, déclenche les achats fournisseurs.</p>
+      </div>
+      <div class="actor">
+        <div class="actor-icon" style="background:#FAECE7; color:#712B13;">🗺️</div>
+        <h4>Dispatch / Manager</h4>
+        <p>Attribue automatiquement un agent selon la zone, la distance (prioritaire) et la notation, sous les limites configurées dans l'espace manager.</p>
+      </div>
+      <div class="actor">
+        <div class="actor-icon" style="background:#EAF3DE; color:#27500A;">✈️</div>
+        <h4>Duffel</h4>
+        <p>API de réservation de vols. Débite le solde Duffel (temps réel) et émet les billets d'avion.</p>
+      </div>
+      <div class="actor">
+        <div class="actor-icon" style="background:#E6F1FB; color:#0C447C;">🏨</div>
+        <h4>Hotelbeds APItude</h4>
+        <p>API de réservation d'hébergements. Confirme le séjour et est réglé immédiatement à la validation de l'encaissement (post-payé, pas de solde prépayé — voir Doc 8).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLUX GLOBAL -->
+  <section class="section" id="flux-global">
+    <h2>Flux global</h2>
+    <p>Le flux se déroule en 5 phases distinctes. Chaque phase correspond à un état de la commande en base de données.</p>
+
+<svg viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:900px;display:block;margin:16px 0 20px;" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-label="Flux métier complet : cinq phases de la commande, puis le circuit de retour du cash">
+<rect width="900" height="500" rx="10" fill="#F7F5F0"/>
+<defs><marker id="fg-arrow" markerWidth="8" markerHeight="8" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#6B6966"/></marker></defs>
+<text x="450" y="26" font-size="13" font-weight="700" fill="#1F4438" text-anchor="middle">Flux métier complet — les 5 phases de la commande, puis le retour du cash</text>
+<text x="22" y="52" font-size="10" font-weight="700" fill="#6B6966" letter-spacing="0.6">1 · PARCOURS DE LA COMMANDE</text>
+<rect x="22" y="60" width="164" height="118" rx="8" fill="#FFFFFF"/>
+<path d="M30 60 h148 a8 8 0 0 1 8 8 v18 h-164 v-18 a8 8 0 0 1 8 -8 z" fill="#2E6650"/>
+<text x="33" y="77" font-size="10.5" font-weight="700" fill="#F7F5F0">Phase 1 · Choix &amp; tarification</text>
+<text x="33" y="100" font-size="9.5" fill="#6B6966">Le client part de son budget,</text>
+<text x="33" y="113" font-size="9.5" fill="#6B6966">compare vols et hébergements.</text>
+<text x="33" y="126" font-size="9.5" fill="#6B6966">Prix réel obtenu auprès des</text>
+<text x="33" y="139" font-size="9.5" fill="#6B6966">fournisseurs.</text>
+<rect x="33" y="151" width="52" height="18" rx="9" fill="#2E6650"/>
+<text x="59" y="164" font-size="8.5" font-weight="700" text-anchor="middle" fill="#FFFFFF">DRAFT</text>
+<line x1="187" y1="119" x2="193" y2="119" stroke="#6B6966" stroke-width="1.4" marker-end="url(#fg-arrow)"/>
+<rect x="195" y="60" width="164" height="118" rx="8" fill="#FFFFFF"/>
+<path d="M203 60 h148 a8 8 0 0 1 8 8 v18 h-164 v-18 a8 8 0 0 1 8 -8 z" fill="#2E6650"/>
+<text x="206" y="77" font-size="10.5" font-weight="700" fill="#F7F5F0">Phase 2 · Données voyageurs</text>
+<text x="206" y="100" font-size="9.5" fill="#6B6966">Identité des voyageurs, choix</text>
+<text x="206" y="113" font-size="9.5" fill="#6B6966">de l'hébergement, adresse de</text>
+<text x="206" y="126" font-size="9.5" fill="#6B6966">collecte. Commande figée.</text>
+<rect x="206" y="151" width="52" height="18" rx="9" fill="#2E6650"/>
+<text x="232" y="164" font-size="8.5" font-weight="700" text-anchor="middle" fill="#FFFFFF">DRAFT</text>
+<line x1="360" y1="119" x2="366" y2="119" stroke="#6B6966" stroke-width="1.4" marker-end="url(#fg-arrow)"/>
+<rect x="368" y="60" width="164" height="118" rx="8" fill="#FFFFFF"/>
+<path d="M376 60 h148 a8 8 0 0 1 8 8 v18 h-164 v-18 a8 8 0 0 1 8 -8 z" fill="#D8722B"/>
+<text x="379" y="77" font-size="10.5" font-weight="700" fill="#F7F5F0">Phase 3 · Code &amp; dispatch</text>
+<text x="379" y="100" font-size="9.5" fill="#6B6966">Code interne + code de</text>
+<text x="379" y="113" font-size="9.5" fill="#6B6966">sécurité générés. Un agent</text>
+<text x="379" y="126" font-size="9.5" fill="#6B6966">est dispatché automatiquement</text>
+<text x="379" y="139" font-size="9.5" fill="#6B6966">(la distance prime).</text>
+<rect x="379" y="151" width="131" height="18" rx="9" fill="#D8722B"/>
+<text x="444" y="164" font-size="8.5" font-weight="700" text-anchor="middle" fill="#FFFFFF">AWAITING_COURIER</text>
+<line x1="533" y1="119" x2="539" y2="119" stroke="#6B6966" stroke-width="1.4" marker-end="url(#fg-arrow)"/>
+<rect x="541" y="60" width="164" height="118" rx="8" fill="#FFFFFF"/>
+<path d="M549 60 h148 a8 8 0 0 1 8 8 v18 h-164 v-18 a8 8 0 0 1 8 -8 z" fill="#D8722B"/>
+<text x="552" y="77" font-size="10.5" font-weight="700" fill="#F7F5F0">Phase 4 · Collecte du cash</text>
+<text x="552" y="100" font-size="9.5" fill="#6B6966">Scan du code-barres, puis</text>
+<text x="552" y="113" font-size="9.5" fill="#6B6966">code de sécurité dicté par le</text>
+<text x="552" y="126" font-size="9.5" fill="#6B6966">client, puis photo de preuve.</text>
+<rect x="552" y="151" width="167" height="18" rx="9" fill="#D8722B"/>
+<text x="635" y="164" font-size="8.5" font-weight="700" text-anchor="middle" fill="#FFFFFF">CASH_COLLECTED → PAID</text>
+<line x1="706" y1="119" x2="712" y2="119" stroke="#6B6966" stroke-width="1.4" marker-end="url(#fg-arrow)"/>
+<rect x="714" y="60" width="164" height="118" rx="8" fill="#FFFFFF"/>
+<path d="M722 60 h148 a8 8 0 0 1 8 8 v18 h-164 v-18 a8 8 0 0 1 8 -8 z" fill="#1F4438"/>
+<text x="725" y="77" font-size="10.5" font-weight="700" fill="#F7F5F0">Phase 5 · Réservation réelle</text>
+<text x="725" y="100" font-size="9.5" fill="#6B6966">Duffel puis Hotelbeds, dans</text>
+<text x="725" y="113" font-size="9.5" fill="#6B6966">cet ordre. Billet et voucher</text>
+<text x="725" y="126" font-size="9.5" fill="#6B6966">envoyés au client.</text>
+<rect x="725" y="151" width="80" height="18" rx="9" fill="#1F4438"/>
+<text x="765" y="164" font-size="8.5" font-weight="700" text-anchor="middle" fill="#FFFFFF">CONFIRMED</text>
+<text x="22" y="212" font-size="10" font-weight="700" fill="#6B6966" letter-spacing="0.6">2 · RETOUR DU CASH — de la main de l'agent au compte de l'agent</text>
+<rect x="22" y="220" width="164" height="118" rx="8" fill="#FFFFFF"/>
+<path d="M30 220 h148 a8 8 0 0 1 8 8 v18 h-164 v-18 a8 8 0 0 1 8 -8 z" fill="#2E6650"/>
+<text x="33" y="237" font-size="10.5" font-weight="700" fill="#F7F5F0">Étape 1 · Encaissement</text>
+<text x="33" y="260" font-size="9.5" fill="#6B6966">L'agent détient les</text>
+<text x="33" y="273" font-size="9.5" fill="#6B6966">espèces. Son encours le</text>
+<text x="33" y="286" font-size="9.5" fill="#6B6966">bloque : pas de nouvelle</text>
+<text x="33" y="299" font-size="9.5" fill="#6B6966">tournée.</text>
+<rect x="33" y="311" width="80" height="18" rx="9" fill="#2E6650"/>
+<text x="73" y="324" font-size="8.5" font-weight="700" text-anchor="middle" fill="#FFFFFF">collected</text>
+<line x1="187" y1="279" x2="193" y2="279" stroke="#6B6966" stroke-width="1.4" marker-end="url(#fg-arrow)"/>
+<rect x="195" y="220" width="164" height="118" rx="8" fill="#FFFFFF"/>
+<path d="M203 220 h148 a8 8 0 0 1 8 8 v18 h-164 v-18 a8 8 0 0 1 8 -8 z" fill="#2E6650"/>
+<text x="206" y="237" font-size="10.5" font-weight="700" fill="#F7F5F0">Étape 2 · Dépôt en automate</text>
+<text x="206" y="260" font-size="9.5" fill="#6B6966">Automate Cash Services, avec sa</text>
+<text x="206" y="273" font-size="9.5" fill="#6B6966">carte de dépôt nominative Cash</text>
+<text x="206" y="286" font-size="9.5" fill="#6B6966">Services. Il déclare le reçu.</text>
+<rect x="206" y="311" width="73" height="18" rx="9" fill="#2E6650"/>
+<text x="242" y="324" font-size="8.5" font-weight="700" text-anchor="middle" fill="#FFFFFF">declared</text>
+<line x1="360" y1="279" x2="366" y2="279" stroke="#6B6966" stroke-width="1.4" marker-end="url(#fg-arrow)"/>
+<rect x="368" y="220" width="164" height="118" rx="8" fill="#FFFFFF"/>
+<path d="M376 220 h148 a8 8 0 0 1 8 8 v18 h-164 v-18 a8 8 0 0 1 8 -8 z" fill="#D8722B"/>
+<text x="379" y="237" font-size="10.5" font-weight="700" fill="#F7F5F0">Étape 3 · Rapport Cash Services</text>
+<text x="379" y="260" font-size="9.5" fill="#6B6966">Rapport quotidien Cash Services :</text>
+<text x="379" y="273" font-size="9.5" fill="#6B6966">transactions récupérées,</text>
+<text x="379" y="286" font-size="9.5" fill="#6B6966">rapprochées via la carte.</text>
+<rect x="379" y="311" width="88" height="18" rx="9" fill="#D8722B"/>
+<text x="423" y="324" font-size="8.5" font-weight="700" text-anchor="middle" fill="#FFFFFF">reconciled</text>
+<line x1="533" y1="279" x2="539" y2="279" stroke="#6B6966" stroke-width="1.4" marker-end="url(#fg-arrow)"/>
+<rect x="541" y="220" width="164" height="118" rx="8" fill="#FFFFFF"/>
+<path d="M549 220 h148 a8 8 0 0 1 8 8 v18 h-164 v-18 a8 8 0 0 1 8 -8 z" fill="#1F4438"/>
+<text x="552" y="237" font-size="10.5" font-weight="700" fill="#F7F5F0">Étape 4 · Virement Qonto</text>
+<text x="552" y="260" font-size="9.5" fill="#6B6966">Les fonds rapprochés partent</text>
+<text x="552" y="273" font-size="9.5" fill="#6B6966">vers Qonto. La synchronisation</text>
+<text x="552" y="286" font-size="9.5" fill="#6B6966">confirme leur arrivée.</text>
+<rect x="552" y="311" width="73" height="18" rx="9" fill="#1F4438"/>
+<text x="588" y="324" font-size="8.5" font-weight="700" text-anchor="middle" fill="#FFFFFF">on_account</text>
+<line x1="706" y1="279" x2="712" y2="279" stroke="#6B6966" stroke-width="1.4" marker-end="url(#fg-arrow)"/>
+<rect x="714" y="220" width="164" height="118" rx="8" fill="#FFFFFF"/>
+<path d="M722 220 h148 a8 8 0 0 1 8 8 v18 h-164 v-18 a8 8 0 0 1 8 -8 z" fill="#1F4438"/>
+<text x="725" y="237" font-size="10.5" font-weight="700" fill="#F7F5F0">Étape 5 · Ventilation des paies</text>
+<text x="725" y="260" font-size="9.5" fill="#6B6966">Virements aux agents depuis</text>
+<text x="725" y="273" font-size="9.5" fill="#6B6966">Qonto, à la fréquence réglée</text>
+<text x="725" y="286" font-size="9.5" fill="#6B6966">dans l'espace manager.</text>
+<rect x="725" y="311" width="73" height="18" rx="9" fill="#1F4438"/>
+<text x="761" y="324" font-size="8.5" font-weight="700" text-anchor="middle" fill="#FFFFFF">paid_out</text>
+<text x="22" y="356" font-size="9.5" fill="#D8722B">⚠ « declared » est une déclaration de l'agent, pas une preuve bancaire. Seul « on_account » autorise à payer.</text>
+<text x="22" y="386" font-size="10" font-weight="700" fill="#6B6966" letter-spacing="0.6">3 · ÉTATS TERMINAUX</text>
+<rect x="22" y="394" width="210" height="54" rx="8" fill="#FFFFFF"/>
+<rect x="22" y="394" width="4" height="54" rx="2" fill="#C0392B"/>
+<text x="35" y="414" font-size="10.5" font-weight="700" fill="#C0392B">EXPIRED</text>
+<text x="35" y="432" font-size="9" fill="#6B6966">Fenêtre de collecte dépassée, ou panier abando</text>
+<rect x="242" y="394" width="210" height="54" rx="8" fill="#FFFFFF"/>
+<rect x="242" y="394" width="4" height="54" rx="2" fill="#C0392B"/>
+<text x="255" y="414" font-size="10.5" font-weight="700" fill="#C0392B">COLLECTION_FAILED</text>
+<text x="255" y="432" font-size="9" fill="#6B6966">Client absent, code refusé, montant incomplet</text>
+<rect x="462" y="394" width="210" height="54" rx="8" fill="#FFFFFF"/>
+<rect x="462" y="394" width="4" height="54" rx="2" fill="#C0392B"/>
+<text x="475" y="414" font-size="10.5" font-weight="700" fill="#C0392B">FAILED</text>
+<text x="475" y="432" font-size="9" fill="#6B6966">Échec fournisseur après encaissement → rembour</text>
+<rect x="682" y="394" width="210" height="54" rx="8" fill="#FFFFFF"/>
+<rect x="682" y="394" width="4" height="54" rx="2" fill="#C0392B"/>
+<text x="695" y="414" font-size="10.5" font-weight="700" fill="#C0392B">REFUNDED</text>
+<text x="695" y="432" font-size="9" fill="#6B6966">Espèces rendues au client par une tournée de re</text>
+<text x="22" y="474" font-size="9" fill="#6B6966">Chaque phase correspond à un statut de commande en base. Le retour du cash est un circuit distinct, porté par l'agent puis par la trésorerie (Doc 8).</text>
+</svg>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Phase</th>
+          <th>Nom</th>
+          <th>Acteur principal</th>
+          <th>Statut commande</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="phase-label teal" style="margin:0;">Phase 1</span></td>
+          <td>Choix et tarification</td>
+          <td>Client + PayEnCash</td>
+          <td><code>DRAFT</code></td>
+        </tr>
+        <tr>
+          <td><span class="phase-label purple" style="margin:0;">Phase 2</span></td>
+          <td>Saisie des données voyageurs</td>
+          <td>Client</td>
+          <td><code>DRAFT</code></td>
+        </tr>
+        <tr>
+          <td><span class="phase-label amber" style="margin:0;">Phase 3</span></td>
+          <td>Génération du code + dispatch agent</td>
+          <td>Client + Dispatch</td>
+          <td><code>AWAITING_COURIER</code> → <code>OUT_FOR_COLLECTION</code></td>
+        </tr>
+        <tr>
+          <td><span class="phase-label coral" style="margin:0;">Phase 4</span></td>
+          <td>Collecte du cash à domicile + validation code/photo</td>
+          <td>Agent</td>
+          <td><code>CASH_COLLECTED</code> → <code>PAID</code></td>
+        </tr>
+        <tr>
+          <td><span class="phase-label green" style="margin:0;">Phase 5</span></td>
+          <td>Réservation réelle + confirmation</td>
+          <td>PayEnCash + Duffel + Hotelbeds</td>
+          <td><code>CONFIRMED</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- PHASE 1 -->
+  <section class="section" id="phase-1">
+    <h2>Phase 1 — Choix et tarification</h2>
+    <span class="phase-label teal">Statut : DRAFT</span>
+
+    <!-- Diagramme de séquence API du comparateur -->
+    <svg viewBox="0 0 780 310" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:780px;display:block;margin:16px 0 20px;" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11">
+      <rect width="780" height="310" rx="10" fill="#F7F5F0"/>
+      <text x="390" y="24" font-size="13" font-weight="700" fill="#1F4438" text-anchor="middle">Séquence API — Phase 1 : comparateur vols puis hébergements</text>
+
+      <!-- Colonnes acteurs -->
+      <rect x="10" y="36" width="100" height="28" rx="5" fill="#1F4438"/>
+      <text x="60" y="54" fill="#F7F5F0" font-weight="600" text-anchor="middle">App client</text>
+
+      <rect x="150" y="36" width="100" height="28" rx="5" fill="#2E6650"/>
+      <text x="200" y="54" fill="#F7F5F0" font-weight="600" text-anchor="middle">PayEnCash API</text>
+
+      <rect x="295" y="36" width="100" height="28" rx="5" fill="#D8722B"/>
+      <text x="345" y="54" fill="#FFFFFF" font-weight="600" text-anchor="middle">Duffel</text>
+
+      <rect x="440" y="36" width="100" height="28" rx="5" fill="#D8722B"/>
+      <text x="490" y="54" fill="#FFFFFF" font-weight="600" text-anchor="middle">Hotelbeds</text>
+
+      <rect x="585" y="36" width="130" height="28" rx="5" fill="#6B6966"/>
+      <text x="650" y="54" fill="#FFFFFF" font-weight="600" text-anchor="middle">Base de données</text>
+
+      <!-- Lignes verticales -->
+      <line x1="60" y1="64" x2="60" y2="300" stroke="#C4C0B6" stroke-width="1" stroke-dasharray="4,3"/>
+      <line x1="200" y1="64" x2="200" y2="300" stroke="#C4C0B6" stroke-width="1" stroke-dasharray="4,3"/>
+      <line x1="345" y1="64" x2="345" y2="300" stroke="#C4C0B6" stroke-width="1" stroke-dasharray="4,3"/>
+      <line x1="490" y1="64" x2="490" y2="300" stroke="#C4C0B6" stroke-width="1" stroke-dasharray="4,3"/>
+      <line x1="650" y1="64" x2="650" y2="300" stroke="#C4C0B6" stroke-width="1" stroke-dasharray="4,3"/>
+
+      <!-- Étape 1 : slider budget -->
+      <line x1="60" y1="84" x2="190" y2="84" stroke="#1F4438" stroke-width="1.5" marker-end="url(#arr1)"/>
+      <text x="125" y="79" text-anchor="middle" fill="#1F4438" font-weight="600">Budget + destination</text>
+
+      <!-- Étape 2 : POST /air/offer_requests -->
+      <line x1="200" y1="106" x2="335" y2="106" stroke="#D8722B" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <text x="268" y="101" text-anchor="middle" fill="#D8722B" font-weight="600">POST /air/offer_requests</text>
+
+      <!-- Étape 3 : retour offer_request_id -->
+      <line x1="335" y1="124" x2="210" y2="124" stroke="#D8722B" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arr3)"/>
+      <text x="268" y="119" text-anchor="middle" fill="#D8722B">← offer_request_id</text>
+
+      <!-- Étape 4 : GET /air/offers -->
+      <line x1="200" y1="148" x2="335" y2="148" stroke="#D8722B" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <text x="268" y="143" text-anchor="middle" fill="#D8722B" font-weight="600">GET /air/offers?sort=total_amount</text>
+
+      <!-- Étape 5 : calcul marge + within_budget -->
+      <line x1="200" y1="168" x2="640" y2="168" stroke="#6B6966" stroke-width="1.5" marker-end="url(#arr4)"/>
+      <text x="420" y="163" text-anchor="middle" fill="#6B6966">INSERT flight_search_results (N offres + marge calculée)</text>
+
+      <!-- Étape 6 : affichage comparateur -->
+      <line x1="200" y1="190" x2="70" y2="190" stroke="#1F4438" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arr5)"/>
+      <text x="125" y="185" text-anchor="middle" fill="#1F4438">← liste comparée (prix TTC)</text>
+
+      <!-- Étape 7 : client choisit un vol -->
+      <line x1="60" y1="210" x2="190" y2="210" stroke="#1F4438" stroke-width="1.5" marker-end="url(#arr1)"/>
+      <text x="125" y="205" text-anchor="middle" fill="#1F4438" font-weight="600">Sélection vol</text>
+
+      <!-- Étape 8 : INSERT flight_offers -->
+      <line x1="200" y1="228" x2="640" y2="228" stroke="#6B6966" stroke-width="1.5" marker-end="url(#arr4)"/>
+      <text x="420" y="223" text-anchor="middle" fill="#6B6966">INSERT flight_offers + search_result_id FK</text>
+
+      <!-- Étape 9 : POST /hotel-api/1.0/hotels -->
+      <line x1="200" y1="252" x2="480" y2="252" stroke="#D8722B" stroke-width="1.5" marker-end="url(#arr6)"/>
+      <text x="340" y="247" text-anchor="middle" fill="#D8722B" font-weight="600">POST /hotel-api/1.0/hotels (budget restant)</text>
+
+      <!-- Étape 10 : INSERT stay_search_results + affichage -->
+      <line x1="200" y1="275" x2="640" y2="275" stroke="#6B6966" stroke-width="1.5" marker-end="url(#arr4)"/>
+      <text x="420" y="270" text-anchor="middle" fill="#6B6966">INSERT stay_search_results → affichage comparateur hébergements</text>
+
+      <!-- Markers flèches -->
+      <defs>
+        <marker id="arr1" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#1F4438"/></marker>
+        <marker id="arr2" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#D8722B"/></marker>
+        <marker id="arr3" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#D8722B"/></marker>
+        <marker id="arr4" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#6B6966"/></marker>
+        <marker id="arr5" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#1F4438"/></marker>
+        <marker id="arr6" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#D8722B"/></marker>
+      </defs>
+    </svg>
+
+    <div class="step-list">
+
+      <div class="step phase-choix">
+        <div class="step-left">
+          <div class="step-num">1</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Saisie du budget cash et du nombre de voyageurs</div>
+          <div class="step-desc">Le client ouvre l'app PayEnCash et utilise le slider de budget (15€ à 200€). Ce budget est sa contrainte principale. <strong>À cette même étape</strong>, le client sélectionne le nombre de voyageurs (adultes + enfants) via un stepper simple — cette information est indispensable pour que l'API Duffel retourne des offres au bon prix dès la première recherche, et pour que Hotelbeds filtre les chambres disponibles pour la bonne occupancy.</div>
+          <div class="step-detail">
+            <table>
+              <tr><th>Paramètre</th><th>Détail</th><th>Stockage BDD</th></tr>
+              <tr><td><strong>Type de vol</strong></td><td>Sélecteur : <strong>Aller simple</strong> (défaut) ou <strong>Aller-retour</strong>. Détermine si Duffel reçoit 1 ou 2 slices dans l'offer_request.</td><td><code>orders.trip_type</code> ('one_way' | 'round_trip')</td></tr>
+              <tr><td><strong>Aéroport de départ</strong></td><td>Pré-rempli depuis <code>users.preferred_origin_iata</code> ou géolocalisation. <strong>Modifiable par le client</strong> via un sélecteur d'aéroport (recherche par ville ou code IATA). Aéroports v1 : MRS, LYS, CDG, ORY, NCE, TLS, BOD, NTE.</td><td><code>orders.origin_iata</code></td></tr>
+              <tr><td><strong>Date de départ</strong></td><td>Calendrier — date du vol aller. Format YYYY-MM-DD envoyé à Duffel <code>slices[0].departure_date</code>.</td><td><code>orders.departure_date</code></td></tr>
+              <tr><td><strong>Date de retour</strong></td><td>Calendrier — visible uniquement si trip_type = round_trip. Envoyée dans <code>slices[1].departure_date</code>. Doit être postérieure à la date de départ.</td><td><code>orders.return_date</code> (NULL si aller simple)</td></tr>
+              <tr><td>Budget cash</td><td>Slider 15 € à 200 € — pas de 5 €. Le budget couvre le prix total TTC (vol + éventuel hébergement + marges PayEnCash + frais de service + TVA).</td><td><code>orders.budget_declared_cents</code></td></tr>
+              <tr><td><strong>Nb adultes</strong></td><td>Stepper 1-6 — impacte le prix Duffel (1 billet par adulte) et Hotelbeds occupancies.</td><td><code>orders.nb_adults</code></td></tr>
+              <tr><td><strong>Nb enfants</strong></td><td>Stepper 0-4 — âges exacts saisis en Phase 2.</td><td><code>orders.nb_children</code></td></tr>
+              <tr><td>Classe de cabine</td><td>Economy par défaut (v1). Extensible : premium_economy, business, first. Envoyée dans <code>cabin_class</code> du payload Duffel.</td><td><code>orders.cabin_class</code></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="step phase-choix">
+        <div class="step-left">
+          <div class="step-num">2</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Appel API Duffel — recherche de vols</div>
+          <div class="step-desc">PayEnCash interroge l'API Duffel avec la ville de départ, les dates (week-end en cours ou prochain), le nombre de passagers (<code>orders.nb_adults</code> + <code>orders.nb_children</code> depuis l'étape 1), et le budget max. Les résultats sont filtrés et triés par prix croissant. À ce stade, c'est le prix le plus bas par destination qui est affiché — le comparatif détaillé n'est chargé qu'après le clic sur une destination (étape 4).</div>
+          <div class="step-detail">
+            <pre><span class="comment">// Requête Duffel — recherche offres</span>
+<span class="comment">// Le nombre de slices dépend de orders.trip_type :</span>
+<span class="comment">//   one_way   → 1 slice (aller simple)</span>
+<span class="comment">//   round_trip → 2 slices (aller + retour, origin/destination inversés)</span>
+
+<span class="kw">POST</span> /air/offer_requests
+{
+  <span class="key">"slices"</span>: [
+    {                                         <span class="comment">// Slice 1 : ALLER (toujours présent)</span>
+      <span class="key">"origin"</span>: <span class="str">"MRS"</span>,              <span class="comment">// ← orders.origin_iata (choisi par le client)</span>
+      <span class="key">"destination"</span>: <span class="str">"BCN"</span>,         <span class="comment">// ← orders.destination_iata</span>
+      <span class="key">"departure_date"</span>: <span class="str">"2026-06-20"</span> <span class="comment">// ← orders.departure_date</span>
+    },
+    {                                         <span class="comment">// Slice 2 : RETOUR (uniquement si round_trip)</span>
+      <span class="key">"origin"</span>: <span class="str">"BCN"</span>,              <span class="comment">// ← orders.destination_iata (inversé)</span>
+      <span class="key">"destination"</span>: <span class="str">"MRS"</span>,         <span class="comment">// ← orders.origin_iata (inversé)</span>
+      <span class="key">"departure_date"</span>: <span class="str">"2026-06-25"</span> <span class="comment">// ← orders.return_date</span>
+    }
+  ],
+  <span class="key">"passengers"</span>: [
+    { <span class="key">"type"</span>: <span class="str">"adult"</span> },            <span class="comment">// ×orders.nb_adults</span>
+    { <span class="key">"type"</span>: <span class="str">"adult"</span> },
+    { <span class="key">"age"</span>: <span class="num">9</span> }                     <span class="comment">// ×orders.nb_children (âge calculé depuis born_on)</span>
+  ],
+  <span class="key">"cabin_class"</span>: <span class="str">"economy"</span>          <span class="comment">// ← orders.cabin_class</span>
+}
+<span class="comment">// → Réponse Duffel : offer_request_id "orq_0000A"</span>
+<span class="comment">//   + passengers[].id "pas_0000A", "pas_0000B", "pas_0000C"</span>
+<span class="comment">//   + offers[] contenant chacune 1 ou 2 slices avec segments détaillés</span>
+<span class="comment">// → offer_request_id → flight_offers.duffel_offer_request_id (Doc 2)</span>
+<span class="comment">// → passenger IDs → order_travelers.duffel_passenger_id_offer (Doc 2)</span>
+<span class="comment">// → IMPORTANT : pour un aller-retour, le offer_price_cents Duffel inclut</span>
+<span class="comment">//   ALLER + RETOUR dans le total_amount — c'est un prix combiné, pas séparé.</span></pre>
+          </div>
+          <div class="callout danger">
+            <span class="callout-icon">🔴</span>
+            <div><strong>Offres à EXCLURE du comparateur (filtrage obligatoire)</strong>
+              <ul style="margin-top:6px;padding-left:16px;">
+                <li><strong>Duffel</strong> : <code>requires_instant_payment = true</code> → paiement immédiat exigé, incompatible avec la fenêtre de collecte agent (le paiement fournisseur n'a lieu qu'après encaissement)</li>
+                <li><strong>Duffel</strong> : <code>price_guarantee_expires_at &lt; now + fenêtre de collecte</code> → prix non garanti le temps que l'agent collecte les espèces</li>
+                <li><strong>Hotelbeds</strong> : <code>payment_type = 'AT_HOTEL'</code> → client devrait payer à l'hôtel, incompatible avec le paiement cash collecté par l'agent</li>
+                <li><strong>Hotelbeds</strong> : <code>rate_type = 'RECHECK'</code> → appeler CheckRate avant de confirmer le prix (pas un filtre, mais une étape obligatoire)</li>
+              </ul>
+              Sans ces filtres, le client remet à l'agent un montant qui ne correspond plus au prix réel → perte financière pour PayEnCash.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step phase-choix">
+        <div class="step-left">
+          <div class="step-num">3</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Affichage des destinations avec marge incluse</div>
+          <div class="step-desc">Le prix affiché au client est le prix Duffel + la marge PayEnCash (fixe) + la marge de sécurité (variable selon le délai estimé, appliquée à l'étape suivante). À ce stade, seule la marge fixe est incluse dans le prix affiché. Le "reste de poche" = budget saisi − prix affiché.</div>
+          <div class="callout tip">
+            <span class="callout-icon">💡</span>
+            <div>Le prix Duffel est retourné en temps réel et n'est pas garanti. Il peut changer entre l'affichage et l'achat réel. La marge de sécurité (Phase 3) couvre ce risque.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step phase-choix">
+        <div class="step-left">
+          <div class="step-num">4</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Sélection de la destination, puis comparateur de vols</div>
+          <div class="step-desc">Le client clique sur une destination. PayEnCash appelle <code>GET /air/offers</code> (Doc 3) avec tri par prix croissant et filtre <code>max_connections</code>, et affiche une liste comparée de vols (compagnie, horaires, escales, prix) — pas une offre unique pré-sélectionnée. Le client choisit activement un vol parmi cette liste, comme sur un comparateur classique. La liste complète présentée est conservée dans <code>flight_search_results</code> (Doc 2), le vol retenu devenant la ligne <code>flight_offers</code>.</div>
+          <div class="callout info">
+            <span class="callout-icon">💡</span>
+            <div><strong>Le slider budget filtre la liste, il ne choisit plus à la place du client</strong> Chaque candidat affiché porte un indicateur <code>within_budget</code> (Doc 2) calculé en intégrant la marge PayEnCash — les offres dépassant le budget déclaré peuvent être grisées ou masquées selon le choix d'interface retenu, mais le slider n'élimine plus la comparaison : il la pré-filtre.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step phase-choix">
+        <div class="step-left">
+          <div class="step-num">5</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Comparateur d'hébergements (budget restant)</div>
+          <div class="step-desc">Une fois le vol choisi, PayEnCash appelle Hotelbeds (Doc 3), qui retourne nativement une liste de plusieurs hôtels et tarifs pour les dates correspondantes — sans appel supplémentaire à orchestrer côté PayEnCash. Le client compare ces options (nom, catégorie, prix, remboursable ou non) et en choisit une, ou opte pour "sans hébergement". Le budget restant après le vol sélectionné sert de référence pour l'indicateur <code>within_budget</code> de chaque hébergement comparé.</div>
+          <div class="step-detail">
+            <table>
+              <tr><th>Choix</th><th>API appelée</th><th>Action</th></tr>
+              <tr><td>Vol seul</td><td>Duffel</td><td>Comparateur de vols uniquement, pas d'appel Hotelbeds</td></tr>
+              <tr><td>Vol + hébergement</td><td>Duffel puis Hotelbeds</td><td>Comparateur de vols, puis comparateur d'hébergements une fois le vol choisi (appel séquentiel, pas parallèle, car le budget restant dépend du vol retenu)</td></tr>
+              <tr><td>Sans hébergement</td><td>Duffel uniquement</td><td>Hotelbeds non appelé</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="step phase-choix">
+        <div class="step-left">
+          <div class="step-num">6</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Création de la commande DRAFT en base</div>
+          <div class="step-desc">Une commande est créée en base de données avec le statut <code>DRAFT</code>. Elle contient l'identifiant de l'offre Duffel retenue (<code>flight_offers</code>), l'identifiant de l'hébergement Hotelbeds retenu le cas échéant (<code>stay_offers</code>), les montants calculés, et un <code>expires_at</code> de 30 minutes (au-delà duquel le DRAFT est nettoyé — les lignes <code>flight_search_results</code>/<code>stay_search_results</code> associées sont purgées avec lui, voir Doc 2).</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PHASE 2 -->
+  <section class="section" id="phase-2">
+    <h2>Phase 2 — Données voyageurs</h2>
+    <span class="phase-label purple">Statut : DRAFT</span>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div>
+        <strong>Pourquoi à cette étape ?</strong>
+        Duffel exige les informations nominatives (nom, prénom, date de naissance) pour créer un ordre de réservation réel. Ces données doivent être collectées avant le paiement, car elles sont transmises à Duffel dès la validation de la collecte par l'agent (Phase 5). Elles ne peuvent pas être demandées après.
+      </div>
+    </div>
+
+    <div class="step-list">
+
+      <div class="step phase-voyageurs">
+        <div class="step-left">
+          <div class="step-num">7</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Saisie du nombre de voyageurs</div>
+          <div class="step-desc">Le client ajuste le stepper (1 à 6 voyageurs). Le prix du billet est multiplié automatiquement par le nombre de voyageurs. L'hébergement reste fixe (prix pour le séjour, indépendant du nombre de voyageurs dans un dortoir).</div>
+        </div>
+      </div>
+
+      <div class="step phase-voyageurs">
+        <div class="step-left">
+          <div class="step-num">8</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Formulaire par voyageur</div>
+          <div class="step-desc">Pour chaque voyageur, un formulaire est généré dynamiquement avec les champs requis par Duffel v2. Ces données sont <strong>envoyées immédiatement au backend et persistées chiffrées dans <code>order_travelers</code></strong> (statut DRAFT) — jamais stockées en localStorage côté client.</div>
+          <div class="step-detail">
+            <table>
+              <tr><th>Champ Duffel</th><th>Obligatoire</th><th>Colonne BDD</th><th>Note</th></tr>
+              <tr><td><code>given_name</code> — Prénom</td><td>✅ Requis</td><td><code>given_name_enc</code></td><td>Conforme au document d'identité</td></tr>
+              <tr><td><code>family_name</code> — Nom</td><td>✅ Requis</td><td><code>family_name_enc</code></td><td>Conforme au document d'identité</td></tr>
+              <tr><td><code>born_on</code> — Date de naissance</td><td>✅ Requis</td><td><code>born_on_enc</code></td><td>Format YYYY-MM-DD</td></tr>
+              <tr><td><code>gender</code> — Genre</td><td>✅ Requis</td><td><code>gender</code></td><td>'m' ou 'f' uniquement (énumération Duffel)</td></tr>
+              <tr><td><code>title</code> — Civilité</td><td>✅ Requis</td><td><code>title</code></td><td>'mr', 'ms', 'mrs', 'miss', 'dr'</td></tr>
+              <tr><td><code>email</code> — Email</td><td>✅ Requis</td><td><code>email_enc</code></td><td>Email du passager lui-même (pas forcément celui du compte)</td></tr>
+              <tr><td><code>phone_number</code> — Téléphone</td><td>✅ Requis</td><td><code>phone_enc</code></td><td>Format E.164 (+33...)</td></tr>
+              <tr><td>Document identité (passeport...)</td><td>⚡ Conditionnel</td><td><code>id_doc_*</code></td><td>Requis uniquement si <code>supported_passenger_identity_document_types</code> non vide sur l'offre Duffel</td></tr>
+            </table>
+          </div>
+          <div class="callout danger">
+            <span class="callout-icon">🔴</span>
+            <div><strong>Ces 7 champs sont tous obligatoires côté Duffel</strong> — un seul manquant entraîne un rejet de POST /air/orders en Phase 5. Les données sont chiffrées AES-256 en base dès la saisie (Doc 5). Le localStorage ne doit jamais contenir de données nominatives.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step phase-voyageurs">
+        <div class="step-left">
+          <div class="step-num">9</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Mise à jour de la commande DRAFT</div>
+          <div class="step-desc">La commande DRAFT en base est mise à jour avec le nombre de voyageurs et le total recalculé. Les données nominatives sont <strong>déjà persistées chiffrées en base</strong> depuis l'étape précédente — ne pas attendre Phase 3 pour les envoyer.</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PHASE 3 -->
+  <section class="section" id="phase-3">
+    <h2>Phase 3 — Génération du code et dispatch agent</h2>
+    <span class="phase-label amber">Statut : AWAITING_COURIER → OUT_FOR_COLLECTION</span>
+
+    <div class="step-list">
+
+      <div class="step phase-code">
+        <div class="step-left">
+          <div class="step-num">10</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Récapitulatif, prix final et fenêtre de collecte</div>
+          <div class="step-desc">L'écran 3 affiche le récapitulatif complet (trajet, voyageurs, hébergement) avec le <strong>prix total final</strong> calculé et figé. Ce montant (<code>orders.total_price_cents</code>) est la somme du prix brut fournisseur + marge fixe PayEnCash + marge de sécurité (selon la fenêtre de collecte) + <strong>frais de service d'encaissement</strong> (paramétrable dans l'espace manager). C'est exactement le montant que le client <strong>remettra en espèces à l'agent</strong>.</div>
+          <div class="step-detail">
+            <table>
+              <tr><th>Composante</th><th>Formule</th><th>Exemple (vol 15€ + hôtel 22€)</th></tr>
+              <tr><td><code>base_price_cents</code></td><td>Prix Duffel + Prix Hotelbeds bruts</td><td>1500 + 2200 = 3700 cts</td></tr>
+              <tr><td><code>margin_fixed_cents</code></td><td>flight_only: max(3€, 15%) · stay_only: 10% · package: 8%</td><td>3700 × 8% = 296 cts (package)</td></tr>
+              <tr><td><code>margin_safety_cents</code></td><td>Selon la fenêtre de collecte estimée (tableau ci-dessous)</td><td>fenêtre ~1h, 1 adulte = 100 cts</td></tr>
+              <tr><td><code>service_fee_cents</code></td><td><strong>Frais de service d'encaissement</strong> — revenu PayEnCash, <strong>paramétrable dans le manager</strong> (somme des composantes activées ci-dessous)</td><td>ex. 200 cts (2 €)</td></tr>
+              <tr><td>Sous-total HT</td><td>base + margin_fixed + margin_safety + service_fee</td><td>3700 + 296 + 100 + 200 = 4296 cts (42,96 € HT)</td></tr>
+              <tr><td><code>vat_amount_cents</code></td><td><strong>TVA</strong> — <code>round(HT × vat_rate)</code>, <code>vat_rate</code> <strong>paramétrable dans le manager</strong> (défaut 20%), affichée « dont TVA »</td><td>round(4296 × 20%) = 859 cts (8,59 €)</td></tr>
+              <tr><td><strong><code>total_price_cents</code></strong></td><td><strong>TTC = sous-total HT + TVA</strong> — montant du code, collecté en cash par l'agent</td><td><strong>4296 + 859 = 5155 cts = 51,55 €</strong></td></tr>
+            </table>
+            <table style="margin-top:10px;">
+              <tr><th>Composante des frais de service</th><th>Paramètre manager</th><th>Activable</th></tr>
+              <tr><td>Montant fixe</td><td>Frais fixe par tournée (cts)</td><td>✅ on/off</td></tr>
+              <tr><td>Pourcentage</td><td>% appliqué au montant de la commande</td><td>✅ on/off</td></tr>
+              <tr><td>Prix au kilomètre</td><td>Tarif/km × distance agent↔domicile</td><td>✅ on/off</td></tr>
+              <tr><td>Majoration de nuit</td><td>Supplément (fixe ou %) si collecte dans la plage horaire de nuit paramétrée</td><td>✅ on/off</td></tr>
+              <tr><td colspan="3" style="font-size:12px;color:#6B6966;">Extensible : d'autres composantes (zone premium, jour férié, météo…) peuvent être ajoutées sur le même modèle. Chaque composante est <strong>indépendamment activable/désactivable</strong> dans l'espace manager, avec ses valeurs propres. Le <code>service_fee_cents</code> figé sur la commande est la somme des composantes actives au moment de la génération du code.</td></tr>
+            </table>
+            <table style="margin-top:10px;">
+              <tr><th>Fenêtre de collecte estimée</th><th>Marge sécurité vol</th><th>Marge sécurité hôtel</th></tr>
+              <tr><td>≤ 30 min</td><td>+ 0 €</td><td>+ 0 €</td></tr>
+              <tr><td>~ 1 heure</td><td>+ 1 € × nb_adults</td><td>+ 0 €</td></tr>
+              <tr><td>≥ 2 heures</td><td>+ 2 € × nb_adults</td><td>+ 1 €</td></tr>
+            </table>
+            <div class="callout info" style="margin-top:10px;">
+              <span class="callout-icon">💡</span>
+              <div>La marge de sécurité couvre la variation possible du prix fournisseur entre la commande et l'encaissement — le délai correspond à la <strong>durée estimée avant que l'agent ait collecté le cash</strong> (dispatch + trajet).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step phase-code">
+        <div class="step-left">
+          <div class="step-num">11</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Demande de collecte à domicile</div>
+          <div class="step-desc">Le client confirme son <strong>adresse de collecte</strong> et déclenche la demande (« Faire venir un agent »). Le frontend envoie au backend : les données voyageurs (Phase 2), l'adresse/coordonnées de collecte, et l'identifiant de commande. C'est le point de bascule du flux — rien de ce qui précède n'engage financièrement quiconque.</div>
+        </div>
+      </div>
+
+      <div class="step phase-code">
+        <div class="step-left">
+          <div class="step-num">12</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Génération du code interne + dispatch automatique</div>
+          <div class="step-desc">Le backend génère <strong>en interne</strong> un code-barres/code unique (montant TTC = <code>orders.total_price_cents</code>, TVA incluse) et un <strong>code de sécurité</strong> distinct, puis lance le <strong>dispatch automatique</strong> d'un agent. Aucun appel à un prestataire de paiement. La commande passe en <code>AWAITING_COURIER</code>.</div>
+          <div class="step-detail">
+            <table>
+              <tr><th>Critère de dispatch</th><th>Règle</th></tr>
+              <tr><td><strong>Zone</strong></td><td>Zone d'encaissement (rayon) couvrant l'adresse de collecte.</td></tr>
+              <tr><td><strong>Distance</strong></td><td><strong>Critère prioritaire</strong> — l'agent disponible le plus proche est privilégié.</td></tr>
+              <tr><td><strong>Notation</strong></td><td>Critère secondaire — départage à distance comparable / si plusieurs agents.</td></tr>
+              <tr><td><strong>Limites max (manager)</strong></td><td>Rayon maximal · nombre de tournées simultanées (tournée multi-encaissements) · montant cash max par agent.</td></tr>
+            </table>
+            <div class="callout info">
+              <span class="callout-icon">💡</span>
+              <div>Si aucun agent n'est disponible dans la zone / les limites, la commande reste en <code>AWAITING_COURIER</code> et le dispatch est réévalué (retry) — voir Cas d'erreur.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step phase-code">
+        <div class="step-left">
+          <div class="step-num">13</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Attribution de l'agent &amp; suivi live</div>
+          <div class="step-desc">Un agent accepte la tournée → <code>COURIER_ASSIGNED</code>, puis <code>OUT_FOR_COLLECTION</code> quand il est en route. Le client suit une <strong>carte live style Uber</strong> : position de l'agent en temps réel + ETA. La tournée (<code>deliveries</code>) est persistée avec son statut, sa position et le <strong>code de sécurité haché</strong> ; les données voyageurs restent chiffrées en base.</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PHASE 4 -->
+  <section class="section" id="phase-4">
+    <h2>Phase 4 — Collecte du cash par l'agent</h2>
+    <span class="phase-label coral">Statut : CASH_COLLECTED → PAID</span>
+
+    <div class="step-list">
+
+      <div class="step phase-cash">
+        <div class="step-left">
+          <div class="step-num">14</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Collecte des espèces au domicile</div>
+          <div class="step-desc">L'agent arrive au domicile du client. Le client lui remet le montant exact en espèces (celui figé sur le code / <code>orders.total_price_cents</code>). L'agent compte le cash. C'est AJEK SASU (via son agent salarié) qui gère la collecte — plus aucun intermédiaire tiers.</div>
+        </div>
+      </div>
+
+      <div class="step phase-cash">
+        <div class="step-left">
+          <div class="step-num">15</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Validation de l'encaissement (scan + code sécurité + photo)</div>
+          <div class="step-desc">La validation se fait en <strong>deux vérifications distinctes</strong>, dans cet ordre. D'abord l'agent <strong>scanne le code-barres</strong> affiché sur l'écran de suivi du client : cela <em>identifie</em> la commande et garantit qu'il est devant la bonne tournée. Ensuite il saisit le <strong>code de sécurité</strong> que le client lui dicte — code révélé au client seulement à l'arrivée : cela <em>authentifie</em> la remise. Enfin il prend une <strong>photo de preuve</strong>. Cet ensemble, envoyé depuis l'espace agent authentifiée, est le <strong>déclencheur unique</strong> de toute la suite du flux (il n'y a plus de webhook tiers).</div>
+          <div class="step-detail">
+            <pre><span class="comment">// Validation d'encaissement (espace agent → API PayEnCash)</span>
+<span class="kw">POST</span> /deliveries/{id}/collect
+{
+  <span class="key">"scanned_code"</span>: <span class="str">"PEC-Z6DNX8HV"</span>,   <span class="comment">// code-barres scanné sur l'écran du client</span>
+  <span class="key">"security_code"</span>: <span class="str">"482913"</span>,      <span class="comment">// dicté par le client, comparé au hash</span>
+  <span class="key">"proof_photo"</span>: <span class="str">"&lt;upload&gt;"</span>,       <span class="comment">// photo de preuve (multipart)</span>
+  <span class="key">"collected_amount_cents"</span>: <span class="num">5155</span>   <span class="comment">// TTC, doit correspondre à orders.total_price_cents (dont TVA)</span>
+}</pre>
+            <div class="callout danger">
+              <span class="callout-icon">🔴</span>
+              <div><strong>Sécurité critique</strong> La validation doit être authentifiée (agent), le code scanné rattaché à cet encaissement, le code de sécurité vérifié contre son hash et le montant contrôlé, avant tout achat Duffel/Hotelbeds. Une collecte non validée (mauvaise commande, code faux, photo manquante) ne déclenche jamais de paiement fournisseur.</div>
+            </div>
+            <div class="callout warning">
+              <span class="callout-icon">🟠</span>
+              <div><strong>Le scan ne remplace pas le code de sécurité</strong> Le code-barres est visible par quiconque regarde l'écran du client : il identifie la commande, il ne prouve pas l'accord du client. Supprimer le code de sécurité au motif qu'« on scanne déjà » reviendrait à permettre un encaissement sans que le client ait rien validé. Les deux contrôles sont exigés.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step phase-cash">
+        <div class="step-left">
+          <div class="step-num">16</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Mise à jour → CASH_COLLECTED puis PAID</div>
+          <div class="step-desc">Le backend vérifie l'identité de l'agent, le code de sécurité et le montant collecté, puis passe la tournée en <code>CASH_COLLECTED</code> et la commande en <code>PAID</code> (<code>paid_at</code> enregistré). Contrairement à l'ancien modèle, aucun frais de prestataire de paiement n'est déduit. L'agent est <strong>salarié d'AJEK SASU</strong> : sa rémunération est un <strong>salaire fixe</strong>, coût d'exploitation hors marge par commande — <strong>aucune rémunération à la tournée, aucune facture agent</strong>. Le montant collecté contient l'argent du fournisseur et celui de l'État, il ne sert jamais de base de rémunération. Voir Doc 8/9.</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PHASE 5 -->
+  <section class="section" id="phase-5">
+    <h2>Phase 5 — Réservation réelle et confirmation</h2>
+    <span class="phase-label green">Statut : CONFIRMED</span>
+
+    <div class="step-list">
+
+      <div class="step phase-resa">
+        <div class="step-left">
+          <div class="step-num">17</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Déclenchement des achats fournisseurs</div>
+          <div class="step-desc">Immédiatement après le passage <code>PAID</code> (déclenché par la validation de la collecte agent — code sécurité + photo, voir Phase 4), le backend déclenche les achats fournisseurs. <strong>L'ordre est toujours séquentiel : Duffel d'abord, Hotelbeds ensuite</strong> — jamais en parallèle. Duffel est débité sur son solde temps réel ; Hotelbeds est confirmé <strong>et réglé immédiatement</strong> (post-payé, pas de solde prépayé — voir Doc 8).</div>
+          <div class="callout danger">
+            <span class="callout-icon">🔴</span>
+            <div><strong>MÉCANISME DE RE-FETCH OBLIGATOIRE — L'offre Duffel a expiré</strong><br/>
+            L'offre Duffel expire en ~30 minutes (<code>offer_expires_at</code>), mais la collecte peut prendre un certain temps (dispatch + trajet de l'agent). Au moment de la Phase 5, l'offre originale est souvent expirée. Le flux doit donc :<br/><br/>
+            <strong>Étape 5.0 — Vérifier la validité de l'offre</strong><br/>
+            <code>IF offer_expires_at > NOW()</code> → l'offre est encore valide → utiliser le <code>duffel_offer_id</code> original directement.<br/>
+            <code>IF offer_expires_at <= NOW()</code> → l'offre a expiré → lancer le <strong>re-fetch</strong> :<br/><br/>
+            <strong>Étape 5.1 — Re-recherche Duffel</strong><br/>
+            <code>POST /air/offer_requests</code> avec les MÊMES paramètres (slices, passengers, cabin_class) que la recherche originale stockée dans <code>orders</code> + <code>flight_offers.duffel_offer_request_id</code>.<br/><br/>
+            <strong>Étape 5.2 — Retrouver le vol correspondant</strong><br/>
+            Parmi les nouvelles offres, trouver celle qui correspond au vol original : même <code>carrier_iata</code> + même <code>marketing_flight_number</code> + même créneau horaire (±30 min). Si aucun vol identique n'est trouvé → vol indisponible → mise en attente de résolution puis, si irrésoluble, <strong>remboursement du client par retour cash agent</strong>.<br/><br/>
+            <strong>Étape 5.3 — Comparer le nouveau prix</strong><br/>
+            Calculer <code>budget_restant = total_price_cents_encaissé - vat_amount_cents - service_fee_cents - margin_fixed_cents - margin_safety_cents</code><br/>
+            (= <code>base_price_cents</code>, le montant maximum qu'on peut payer aux fournisseurs — la TVA et les frais de service ne financent pas l'achat)<br/>
+            <code>IF new_offer_price <= budget_restant</code> → OK, continuer avec le NOUVEAU offer_id.<br/>
+            <code>IF new_offer_price > budget_restant</code> → le prix a trop augmenté.<br/>
+            Dans ce cas : si la <strong>marge de sécurité absorbe</strong> la différence (augmentation ≤ <code>margin_safety_cents</code>), procéder en réduisant la marge PayEnCash. Sinon → <strong>remboursement total par retour cash agent</strong> + notification client "prix indisponible".<br/><br/>
+            <strong>Étape 5.4 — Stocker le nouveau prix</strong><br/>
+            Mettre à jour <code>flight_offers.duffel_offer_id</code> avec le NOUVEL offer_id, <code>flight_offers.offer_price_cents</code> avec le nouveau prix, et calculer <code>flight_offers.final_price_cents = nouveau prix</code> + <code>price_delta_cents = nouveau - ancien</code>.</div>
+          </div>
+          <div class="step-desc">Si Duffel échoue, Hotelbeds n'est jamais appelé. Si Duffel réussit mais Hotelbeds échoue, voir cas d'erreur ci-dessous.</div>
+          <div class="step-detail">
+            <table>
+              <tr><th>Ordre</th><th>Appel</th><th>API</th><th>Règlement</th><th>Résultat attendu</th></tr>
+              <tr><td>1er</td><td>Réservation vol</td><td>Duffel <code>POST /orders</code></td><td>Débit solde Duffel (temps réel)</td><td>PNR + billet électronique — <strong>si échoue : STOP, mise en attente de résolution → retour cash agent si irrésoluble</strong></td></tr>
+              <tr><td>2e (si hébergement)</td><td>Réservation hébergement</td><td>Hotelbeds <code>POST /hotel-api/1.0/bookings</code></td><td>Confirmation + règlement immédiat (post-payé)</td><td>Numéro de confirmation séjour — <strong>si échoue : vol conservé, remboursement de la part hébergement par retour cash agent</strong></td></tr>
+            </table>
+          </div>
+          <div class="callout danger">
+            <span class="callout-icon">🔴</span>
+            <div><strong>Conditions strictes avant tout appel fournisseur</strong> (1) <code>orders.status = 'PAID'</code> vérifié en transaction DB avec <code>FOR UPDATE</code> — protection contre la race condition entre le CRON d'expiration/annulation et la validation agent. (2) Idempotence vérifiée sur l'<strong>événement de collecte</strong> (<code>deliveries.id</code>) — une même validation de collecte ne doit jamais déclencher deux achats fournisseurs. (3) Solde Duffel vérifié avant appel — alerter si insuffisant plutôt que laisser échouer silencieusement (Hotelbeds étant post-payé, pas de solde à vérifier).</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step phase-resa">
+        <div class="step-left">
+          <div class="step-num">18</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Gestion des réponses fournisseurs</div>
+          <div class="step-desc">Les deux appels sont gérés indépendamment. Si l'un échoue, le flux de gestion d'erreur correspondant est déclenché (voir section Cas d'erreur). Si les deux réussissent, la commande passe à <code>CONFIRMED</code>.</div>
+        </div>
+      </div>
+
+      <div class="step phase-resa">
+        <div class="step-left">
+          <div class="step-num">19</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Envoi de la confirmation au client</div>
+          <div class="step-desc">Le client reçoit un SMS et un email de confirmation contenant : le PNR (référence billet d'avion), le numéro de confirmation hébergement, le récapitulatif complet, et les instructions pratiques (heure de départ, adresse de l'hébergement).</div>
+        </div>
+      </div>
+
+      <div class="step phase-resa">
+        <div class="step-left">
+          <div class="step-num">20</div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Affichage de la confirmation dans l'app</div>
+          <div class="step-desc">L'écran final de l'app affiche la confirmation avec l'aperçu de la ville de destination (bascule jour/nuit), le PNR, les informations de l'hébergement, et une invitation à <strong>noter l'agent (1-5★)</strong> de la collecte qui vient d'avoir lieu.</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- RETOUR DU CASH -->
+  <section class="section" id="retour-cash">
+    <h2>Retour du cash — après la commande</h2>
+    <span class="phase-label teal">Hors cycle de vie de la commande</span>
+    <p>Les cinq phases ci-dessus décrivent la <strong>commande</strong>, et elles s'arrêtent à <code>CONFIRMED</code> : le client a son billet. Mais l'argent, lui, est encore dans la sacoche de l'agent. Le circuit qui le ramène jusqu'au compte de l'entreprise est <strong>un flux distinct</strong>, avec son propre rythme (quotidien, pas transactionnel) et ses propres états.</p>
+    <p>Le confondre avec le cycle de vie de la commande est l'erreur à éviter : une commande peut être <code>CONFIRMED</code> depuis trois jours alors que le cash correspondant n'est toujours pas revenu en banque.</p>
+
+    <h3>Une tournée = encaisser, puis déposer</h3>
+    <p>Encaisser n'est que la moitié du travail de l'agent. Dès que son encours d'espèces dépasse le <strong>seuil de dépôt de 400 €</strong>, il est <strong>retiré du dispatch</strong> : aucune nouvelle tournée ne lui est proposée jusqu'au dépôt. Deux verrous, appliqués côté serveur et pas seulement affichés :</p>
+    <ul style="padding-left:18px;font-size:14px;line-height:1.9;">
+      <li><code>couriers.active_delivery_id</code> non NULL &rArr; aucune proposition. <strong>Une seule tournée à la fois.</strong></li>
+      <li><code>couriers.cash_on_hand_cents &gt; 40000</code> (encours &gt; <strong>400 €</strong>) &rArr; dépôt immédiat exigé : aucune proposition tant que l'encours dépasse le seuil, jusqu'à déclaration du dépôt.</li>
+    </ul>
+    <p>La seule façon d'enchaîner plusieurs collectes est une <strong>tournée groupée</strong> composée par le dispatch : arrêts groupés, acceptés en bloc, un seul dépôt à la fin. L'agent ne compose jamais son groupe lui-même — sinon il porterait un encours de cash arbitraire, au-delà du plafond de 400 €.</p>
+    <p style="font-size:13px;color:#6B6966;"><strong>(18/09/2026, soir)</strong> Tout ce qui précède — le double poste de l'agent, le seuil de dépôt de 400 €, le pointage, la check-list de prise de poste, le fond de caisse de 100 €, l'affectation automatique, la tournée groupée et la flotte — est <strong>caduc</strong> : l'agent de caisse mobile est supprimé. La note qui détaillait cette logistique a été supprimée du dépôt avec le poste. Ce qui la remplace est décrit dans <a href="../NOUVELLES-FONCTIONNALITES-2026-08.md">NOUVELLES-FONCTIONNALITES-2026-08.md</a> (tableau d'état en tête) et, pour la règle vivante, dans <code>CLAUDE.md</code>.</p>
+
+    <h3>Les cinq états de l'argent</h3>
+    <table>
+      <thead><tr><th>État</th><th>Ce que ça veut dire</th><th>Qui le déclenche</th><th>Utilisable pour payer ?</th></tr></thead>
+      <tbody>
+        <tr><td><code>collected</code></td><td>Encaissé au domicile, en possession de l'agent</td><td>Validation de collecte (Phase 4)</td><td>Non</td></tr>
+        <tr><td><code>declared</code></td><td>Déposé en automate Cash Services <strong>selon l'agent</strong>, reçu photographié</td><td>L'agent, depuis son app</td><td>Non</td></tr>
+        <tr><td><code>reconciled</code></td><td>Retrouvé dans le rapport quotidien Cash Services</td><td>Import du rapport Cash Services (quotidien)</td><td>Non — en attente de virement</td></tr>
+        <tr><td><code>on_account</code></td><td>Présent sur le compte bancaire (Qonto), confirmé par synchronisation</td><td>Synchronisation Qonto</td><td><strong>Oui</strong></td></tr>
+        <tr><td><code>paid_out</code></td><td>Ventilé sur le compte de l'agent</td><td>Run de ventilation des paies</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong><code>declared</code> n'est pas une preuve</strong> C'est une déclaration de l'agent, appuyée par une photo de reçu. La photo sert au litige, pas à la comptabilité. Seul le rapprochement sur le rapport Cash Services prouve que les fonds sont arrivés, et seul <code>on_account</code> autorise à payer quoi que ce soit. Aplatir ces états reviendrait à verser des salaires sur de l'argent qu'on n'a peut-être pas reçu.</div>
+    </div>
+
+    <h3>Le dispositif, concrètement</h3>
+    <div class="flow-diagram">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content"><strong>Dépôt en automate — Cash Services</strong>
+        <span>L'agent localise l'automate le plus proche (recherche géolocalisée Cash Services), dépose les espèces avec sa <strong>carte de dépôt nominative Cash Services</strong>, récupère le reçu, et le déclare dans l'app (montant, n° de transaction, photo). Il est débloqué immédiatement : l'immobiliser jusqu'au lendemain n'aurait pas de sens.</span></div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content"><strong>Import du rapport quotidien Cash Services</strong>
+        <span>Un job quotidien récupère le rapport de transactions Cash Services et rapproche chaque ligne via la <strong>référence de carte nominative</strong> — le rapport ne porte aucune identité. Import idempotent : la clé est la référence de transaction Cash Services, jamais la date.</span></div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content"><strong>Imputation aux commandes</strong>
+        <span>Le montant rapproché est imputé aux encaissements de l'agent dans l'ordre chronologique. Chaque commande sait alors si son cash est effectivement revenu.</span></div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-content"><strong>Virement vers Qonto, puis ventilation</strong>
+        <span>Les fonds rapprochés sont virés sur le compte opérationnel Qonto ; la synchronisation confirme leur arrivée. C'est de là que partent les paies des agents, à la fréquence réglée dans l'espace manager.</span></div>
+      </div>
+    </div>
+
+    <h3>Écarts de rapprochement</h3>
+    <p>Un écart n'est <strong>jamais</strong> résolu automatiquement : il remonte au manager, qui tranche. En cas de désaccord entre le reçu et le rapport, <strong>le rapport bancaire fait foi</strong>.</p>
+    <table>
+      <thead><tr><th>Écart</th><th>Lecture</th></tr></thead>
+      <tbody>
+        <tr><td>Dépôt déclaré, aucune ligne bancaire</td><td>Erreur d'automate, carte d'un collègue, ou déclaration erronée</td></tr>
+        <tr><td>Ligne bancaire sans dépôt déclaré</td><td>Dépôt effectué sans être déclaré dans l'app</td></tr>
+        <tr><td>Montants différents</td><td>L'écart est tracé sur l'agent et arbitré par le manager</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:13px;color:#6B6966;">Détail du dispositif financier : <a href="08-mecanisme-financier.html">Doc 8</a>. Vue trésorerie et réglages : <a href="09-espace-manager.html">Doc 9</a>. Contrats d'interface (dépôt Cash Services, virement Qonto) : <a href="03-api-specs.html#deposits">Doc 3</a>.</p>
+  </section>
+
+  <!-- CAS D'ERREUR -->
+  <section class="section" id="cas-erreur">
+    <h2>Cas d'erreur et gestion</h2>
+
+    <div class="callout warning">
+      <span class="callout-icon">🟠</span>
+      <div><strong>DÉCISION REQUISE — remboursement par « retour cash agent »</strong> Le mécanisme de remboursement en espèces via une tournée de retour de l'agent (invoqué ci-dessous et dans les statuts <code>FAILED</code> / <code>REFUNDED</code> / <code>CANCELLED</code>) est <strong>sous décision</strong> : il n'est pas arrêté. Ses modalités (traçabilité du cash rendu, rapprochement, ou remboursement alternatif par virement) restent à trancher avant mise en œuvre.</div>
+    </div>
+
+    <table class="error-table">
+      <thead>
+        <tr>
+          <th>Cas</th>
+          <th>Phase</th>
+          <th>Criticité</th>
+          <th>Comportement attendu</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Prix Duffel augmenté entre affichage et achat</td>
+          <td>Phase 5</td>
+          <td><span class="error-tag medium">Moyen</span></td>
+          <td>Si delta ≤ marge de sécurité : PayEnCash absorbe. Si delta > marge : achat au nouveau prix, écart noté en base pour calibrage futur.</td>
+        </tr>
+        <tr>
+          <td>Aucun agent disponible dans la zone / les limites</td>
+          <td>Phase 3</td>
+          <td><span class="error-tag medium">Moyen</span></td>
+          <td>Commande maintenue en <code>AWAITING_COURIER</code>, dispatch réévalué (retry). Après un délai configurable sans attribution : notification client + annulation possible sans frais (aucun cash collecté).</td>
+        </tr>
+        <tr>
+          <td>Code de sécurité erroné / photo manquante à la collecte</td>
+          <td>Phase 4</td>
+          <td><span class="error-tag critical">Critique</span></td>
+          <td>Validation rejetée : aucun passage à <code>PAID</code>, aucun achat fournisseur. L'agent ressaisit le bon d’achat code avec le client ou signale un incident. Anti-rejeu sur l'action de collecte.</td>
+        </tr>
+        <tr>
+          <td>Client absent / refuse de payer à l'arrivée de l'agent</td>
+          <td>Phase 4</td>
+          <td><span class="error-tag medium">Moyen</span></td>
+          <td>L'agent marque la tournée « non aboutie ». Commande → <code>COLLECTION_FAILED</code> puis <code>EXPIRED</code> (aucun cash encaissé, aucun engagement fournisseur).</td>
+        </tr>
+        <tr>
+          <td><strong>Échec fournisseur APRÈS collecte du cash</strong> (Duffel et/ou Hotelbeds)</td>
+          <td>Phase 5</td>
+          <td><span class="error-tag critical">Critique</span></td>
+          <td>Le cash est déjà encaissé. Commande <strong>mise en attente de résolution</strong> : on retente l'appel fournisseur (re-fetch, alternative). Si résolu → poursuite normale. Si irrésoluble → <strong>remboursement du client par retour cash agent</strong> (cas partiel vol+hôtel : rembourser la part concernée). Règle absolue : tout problème non réglable → remboursement client garanti.</td>
+        </tr>
+        <tr>
+          <td>Vol Duffel plus disponible au moment de l'achat</td>
+          <td>Phase 5</td>
+          <td><span class="error-tag critical">Critique</span></td>
+          <td>Mise en attente de résolution (re-fetch). Si aucun vol équivalent : commande <code>FAILED</code> → remboursement intégral par <strong>retour cash agent</strong>. SMS + email au client.</td>
+        </tr>
+        <tr>
+          <td>Hébergement Hotelbeds plus disponible</td>
+          <td>Phase 5</td>
+          <td><span class="error-tag medium">Moyen</span></td>
+          <td>Vol confirmé normalement. Hébergement : tentative sur alternatives Hotelbeds proches. Si aucune : remboursement de la part hébergement par retour cash agent.</td>
+        </tr>
+        <tr>
+          <td><strong>rateKey Hotelbeds expiré</strong> (entre sélection et Phase 5)</td>
+          <td>Phase 5</td>
+          <td><span class="error-tag critical">Critique</span></td>
+          <td>Le <code>rateKey</code> stocké dans <code>stay_offers.hotelbeds_rate_key</code> est volatile. Si la réservation retourne une erreur de rateKey invalide : (1) nouvelle recherche Hotelbeds même hôtel/mêmes dates, (2) si prix ≤ total encaissé, confirmer au nouveau rateKey, (3) sinon : vol confirmé conservé, remboursement de la part hébergement par retour cash agent. Ne jamais annuler le vol pour un problème rateKey hôtel.</td>
+        </tr>
+        <tr>
+          <td><strong>Race condition CRON / validation agent</strong></td>
+          <td>Phase 4</td>
+          <td><span class="error-tag critical">Critique</span></td>
+          <td>Si la validation agent arrive au même instant que le CRON d'expiration/annulation, protection atomique obligatoire : <code>UPDATE orders SET status='PAID' WHERE id=? AND status IN ('OUT_FOR_COLLECTION','AWAITING_COURIER')</code> — si 0 ligne modifiée, la validation est ignorée (commande déjà expirée/traitée).</td>
+        </tr>
+        <tr>
+          <td>Duffel Balance insuffisant</td>
+          <td>Phase 5</td>
+          <td><span class="error-tag critical">Critique</span></td>
+          <td>Commande en attente de résolution. Alerte immédiate à l'équipe pour rechargement du solde Duffel. Si non résolu dans le délai : remboursement par retour cash agent.</td>
+        </tr>
+        <tr>
+          <td><strong>Job BullMQ Phase 5 échoue après 3 tentatives</strong></td>
+          <td>Phase 5</td>
+          <td><span class="error-tag critical">Critique</span></td>
+          <td>Après 3 tentatives (backoff 2s/4s/8s), le job passe en dead-letter. Déclencher : (1) alerte email/SMS à l'équipe, (2) <code>orders.status → 'FAILED'</code>, (3) remboursement par retour cash agent. Ne jamais laisser une commande PAID bloquée sans résolution dans l'heure.</td>
+        </tr>
+        <tr>
+          <td>Client abandonne avant la collecte (DRAFT expiré)</td>
+          <td>Phase 1-2</td>
+          <td><span class="error-tag low">Faible</span></td>
+          <td>CRON nettoie les DRAFT > 30 minutes. Aucun impact financier.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- STATUTS -->
+  <section class="section" id="statuts">
+    <h2>Cycle de vie des statuts de commande</h2>
+
+    <table>
+      <thead>
+        <tr><th>Statut</th><th>Description</th><th>Suivant possible</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>DRAFT</code></td>
+          <td>Commande créée, pas encore de code généré</td>
+          <td><code>AWAITING_COURIER</code>, <code>EXPIRED</code></td>
+        </tr>
+        <tr>
+          <td><code>AWAITING_COURIER</code></td>
+          <td>Code-barres généré, dispatch en cours (recherche d'un agent)</td>
+          <td><code>COURIER_ASSIGNED</code>, <code>EXPIRED</code>, <code>CANCELLED</code> (annulation client — aucune espèce collectée, rien à rembourser, Doc 7)</td>
+        </tr>
+        <tr>
+          <td><code>COURIER_ASSIGNED</code></td>
+          <td>Un agent a accepté la tournée</td>
+          <td><code>OUT_FOR_COLLECTION</code>, <code>COLLECTION_FAILED</code>, <code>CANCELLED</code> (annulation client — le dispatch est annulé et le code invalidé, Doc 7)</td>
+        </tr>
+        <tr>
+          <td><code>OUT_FOR_COLLECTION</code></td>
+          <td>Agent en route vers le domicile (carte live + ETA)</td>
+          <td><code>CASH_COLLECTED</code>, <code>COLLECTION_FAILED</code></td>
+        </tr>
+        <tr>
+          <td><code>CASH_COLLECTED</code></td>
+          <td>Espèces collectées, code de sécurité + photo validés par l'agent</td>
+          <td><code>PAID</code></td>
+        </tr>
+        <tr>
+          <td><code>PAID</code></td>
+          <td>Collecte validée — déclenche l'achat fournisseur (Duffel + Hotelbeds)</td>
+          <td><code>CONFIRMED</code>, <code>FAILED</code>, <code>REFUNDED</code> (annulation client <strong>avant</strong> que la file d'attente n'ait lancé les appels fournisseurs : le traitement en attente est annulé et le cash rendu par tournée de retour, Doc 7)</td>
+        </tr>
+        <tr>
+          <td><code>CONFIRMED</code></td>
+          <td>Vol et hébergement réservés, billet émis</td>
+          <td><code>CANCELLED</code> (refund)</td>
+        </tr>
+        <tr>
+          <td><code>FAILED</code></td>
+          <td>Échec de réservation fournisseur après collecte — mis en attente de résolution (retry)</td>
+          <td><code>CONFIRMED</code> (résolu) ou <code>REFUNDED</code></td>
+        </tr>
+        <tr>
+          <td><code>COLLECTION_FAILED</code></td>
+          <td>Collecte non aboutie (client absent, code invalide, agent indisponible)</td>
+          <td><code>AWAITING_COURIER</code> (nouveau dispatch) ou <code>EXPIRED</code></td>
+        </tr>
+        <tr>
+          <td><code>EXPIRED</code></td>
+          <td>Collecte non réalisée dans la fenêtre, ou DRAFT abandonné</td>
+          <td>— (état final)</td>
+        </tr>
+        <tr>
+          <td><code>REFUNDED</code></td>
+          <td>Remboursement <strong>effectué</strong> — les espèces ont été remises en main propre au client par l'agent</td>
+          <td>— (état final)</td>
+        </tr>
+        <tr>
+          <td><code>CANCELLED</code></td>
+          <td>Annulation post-confirmation à la demande du client. Le remboursement intégral est dû (D2) : une tournée de retour est dispatchée</td>
+          <td><code>REFUNDED</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Le remboursement en cours n'est pas un statut de commande — il se lit sur l'encaissement</strong> Entre la décision de rembourser (<code>FAILED</code> irrésoluble, <code>CANCELLED</code>, ou annulation en <code>PAID</code>) et le passage en <code>REFUNDED</code>, il s'écoule le temps d'une tournée : un agent doit être trouvé, se déplacer, et remettre les espèces. <strong>La commande ne change pas d'état pendant ce trajet</strong> — l'avancement se lit sur <code>deliveries.status</code> de la tournée de retour (<code>is_return = true</code>) : <code>return_pending</code> → <code>assigned</code> → <code>en_route</code> → <code>returned</code>. C'est seulement à <code>returned</code>, une fois le cash effectivement remis, que la commande bascule en <code>REFUNDED</code>.
+      <br><br>Conséquence pour l'interface : un écran qui n'afficherait que <code>orders.status</code> montrerait « échec » ou « annulée » à un client dont l'argent est déjà en route. Le suivi d'un remboursement doit lire l'encaissement de retour, exactement comme le suivi d'une collecte lit l'encaissement aller. Conséquence pour la supervision : l'alerte « commandes <code>FAILED</code> non remboursées après 1h » (Doc 5) doit se baser sur l'absence de tournée de retour <em>dispatchée</em>, pas sur l'absence de <code>REFUNDED</code> — sinon elle se déclenche sur tous les remboursements normaux en cours.</div>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div>
+        <strong>Document suivant</strong>
+        Le Doc 2 — Schéma base de données détaille la structure exacte des tables, les colonnes, les index et les relations correspondant à ces statuts et à l'ensemble du flux décrit ici.
+      </div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

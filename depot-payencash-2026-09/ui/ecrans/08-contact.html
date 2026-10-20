@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash — Contact</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<!-- Page info « Contact » — calquée sur app/(info)/contact/page.tsx + ContactForm.tsx.
+     (18/09, soir — l'agent de caisse mobile est abandonné) DEUX ENTRÉES ONT CHANGÉ : le motif « Encaissement »
+     (qui visait la remise d'espèces à un agent) devient « Mon paiement », et le raccourci « Suivre mon agent —
+     un souci pendant l'encaissement à domicile » devient « Où acheter mon code ». Rien ne menait plus nulle
+     part : personne ne se déplace, il n'y a plus d'encaissement à suivre. -->
+<style>
+  /* Charte : profondeur par ombre, jamais de bordure — sélection = anneau vert. */
+  .pec-motif {
+    display: flex; flex: 1; flex-direction: column; align-items: center; gap: 4px;
+    border-radius: 12px; background: var(--color-surface); box-shadow: var(--shadow-card);
+    padding: 10px 6px; font-size: 11px; font-weight: 500; color: var(--color-muted);
+    transition: background 0.15s, box-shadow 0.15s, color 0.15s;
+  }
+  .pec-motif[aria-pressed="true"] {
+    background: var(--color-mint);
+    box-shadow: var(--shadow-selected);
+    color: var(--color-primary-dark);
+  }
+</style>
+<style>
+  .h1{font-size:23px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;color:var(--color-ink);margin:14px 0 6px}
+  .h1 em{font-style:normal;color:var(--color-primary)}
+  .lead{font-size:14.5px;font-weight:500;line-height:1.5;color:var(--color-muted);margin:0 0 4px}
+</style>
+</head>
+<body data-formulaire><!-- (08/09) formulaire à brouillon local : motif et message ne doivent pas être effacés par un repeint sur le bus ; la demande part au bus à l'envoi -->
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;background:var(--color-surface)">
+
+<div style="padding:18px 20px 0">
+  <a href="01-accueil.html" class="tap" aria-label="Retour" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)">
+    <svg class="pec-ico" viewBox="0 0 24 24" style="font-size:18px"><use href="#i-chevron-left"/></svg>
+  </a>
+  <h1 class="h1">On est là<br><em>pour toi.</em></h1>
+  <p class="lead" id="ct-lead">Une vraie personne te répond — appel gratuit.</p>
+</div>
+
+    <div class="pec-info-body">
+
+      <!-- Formulaire -->
+      <form id="contact-form" style="display:flex;flex-direction:column;gap:14px">
+        <fieldset style="border:none;padding:0;margin:0">
+          <legend class="pec-input-label" style="margin-bottom:8px">Motif</legend>
+          <div style="display:flex;gap:8px">
+            <button type="button" class="pec-motif tap" aria-pressed="true" data-motif="Question" onclick="setMotif(this)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-info"/></svg>Question</button>
+            <button type="button" class="pec-motif tap" aria-pressed="false" data-motif="Réservation" onclick="setMotif(this)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-plane"/></svg>Réservation</button>
+            <button type="button" class="pec-motif tap" aria-pressed="false" data-motif="Mon code" onclick="setMotif(this)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-ticket"/></svg>Mon code</button>
+            <button type="button" class="pec-motif tap" aria-pressed="false" data-motif="Mon paiement" onclick="setMotif(this)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-banknote"/></svg>Mon paiement</button>
+          </div>
+        </fieldset>
+
+        <label style="display:flex;flex-direction:column;gap:6px">
+          <span class="pec-input-label">Téléphone</span>
+          <input type="tel" inputmode="tel" id="ct-tel" placeholder="06 12 34 56 78" class="pec-input">
+        </label>
+        <label style="display:flex;flex-direction:column;gap:6px">
+          <span class="pec-input-label">Numéro de commande (si applicable)</span>
+          <input type="text" id="ct-ref" placeholder="PEC-…" class="pec-input">
+        </label>
+        <label style="display:flex;flex-direction:column;gap:6px">
+          <span class="pec-input-label">Ton message</span>
+          <textarea rows="4" id="ct-msg" placeholder="Comment on peut t'aider ?" class="pec-input" style="resize:none"></textarea>
+        </label>
+        <label style="display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;color:var(--color-ink)">
+          <input type="checkbox" id="ct-rappel" style="width:18px;height:18px;accent-color:var(--color-primary)"> Rappelle-moi à ce numéro
+        </label>
+        <p id="ct-err" hidden style="margin:-6px 0 0;font-size:11.5px;font-weight:700;color:var(--color-amber-text)"></p>
+
+        <button type="submit" class="pec-cta tap" style="height:auto;padding:12px 16px;font-size:14px;font-weight:600;box-shadow:none;background:var(--color-primary)">
+          Envoyer le message <svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-arrow-right"/></svg>
+        </button>
+        <p style="text-align:center;font-size:11px;color:var(--color-muted)" id="ct-delai">—</p>
+      </form>
+
+      <!-- Confirmation (après envoi) -->
+      <div id="contact-confirm" hidden class="pec-info-card" style="text-align:center;padding:32px 20px">
+        <span style="margin:0 auto 12px;display:flex;height:48px;width:48px;align-items:center;justify-content:center;border-radius:999px;background:var(--color-mint);color:var(--color-primary)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:24px"><use href="#i-check"/></svg></span>
+        <p style="font-size:18px;font-weight:700;color:var(--color-ink)" id="ct-ok-titre">Demande enregistrée</p>
+        <p style="margin-top:6px;font-size:13px;line-height:1.55;color:var(--color-muted)" id="ct-ok-txt">—</p>
+      </div>
+
+      <h2 class="pec-h2" style="margin:32px 0 12px">Autres canaux</h2>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <a href="mailto:support@payencash.fr" class="pec-info-card tap" style="display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <span style="display:flex;height:36px;width:36px;flex-shrink:0;align-items:center;justify-content:center;border-radius:11px;background:color-mix(in srgb,var(--color-primary) 10%,transparent);color:var(--color-primary)"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-mail"/></svg></span>
+          <span style="min-width:0"><span style="display:block;font-size:13px;font-weight:600;color:var(--color-ink)">support@payencash.fr</span><span style="display:block;font-size:12px;color:var(--color-muted)">Litiges et réclamations formelles</span></span>
+        </a>
+        <a href="#" id="ct-tel-row" class="pec-info-card tap" style="display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <span style="display:flex;height:36px;width:36px;flex-shrink:0;align-items:center;justify-content:center;border-radius:11px;background:color-mix(in srgb,var(--color-primary) 10%,transparent);color:var(--color-primary)"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-phone"/></svg></span>
+          <span style="min-width:0"><span style="display:block;font-size:13px;font-weight:600;color:var(--color-ink)" id="ct-tel-num">—</span><span style="display:block;font-size:12px;color:var(--color-muted)" id="ct-tel-h">Appel gratuit</span></span>
+        </a>
+        <a href="25-ou-acheter-un-bon.html" class="pec-info-card tap" style="display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <span style="display:flex;height:36px;width:36px;flex-shrink:0;align-items:center;justify-content:center;border-radius:11px;background:color-mix(in srgb,var(--color-primary) 10%,transparent);color:var(--color-primary)"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-store"/></svg></span>
+          <span style="min-width:0"><span style="display:block;font-size:13px;font-weight:600;color:var(--color-ink)">Où acheter mon code</span><span style="display:block;font-size:12px;color:var(--color-muted)">Les commerces qui vendent un Bon d’achat PayEnCash près de toi</span></span>
+        </a>
+        <div class="pec-info-card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px">
+          <span style="min-width:0"><span style="display:block;font-size:13px;font-weight:600;color:var(--color-ink)" id="ct-societe">—</span><span style="display:block;font-size:12px;color:var(--color-muted)" id="ct-siege">—</span></span>
+          <span id="ct-social" style="flex:none"></span>
+        </div>
+        <a href="06-faq.html" class="pec-info-card tap" style="display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <span style="display:flex;height:36px;width:36px;flex-shrink:0;align-items:center;justify-content:center;border-radius:11px;background:color-mix(in srgb,var(--color-primary) 10%,transparent);color:var(--color-primary)"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-info"/></svg></span>
+          <span style="min-width:0"><span style="display:block;font-size:13px;font-weight:600;color:var(--color-ink)">Questions fréquentes</span><span style="display:block;font-size:12px;color:var(--color-muted)">La réponse est peut-être déjà là</span></span>
+        </a>
+      </div>
+    </div>
+
+    <nav class="pec-tabbar" aria-label="Navigation principale">
+      <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+      <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+      <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+      <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+      <a class="pec-tab" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+    </nav>
+  </div>
+</div>
+</div>
+
+<script>
+  function setMotif(btn) {
+    document.querySelectorAll('.pec-motif').forEach(function (m) { m.setAttribute('aria-pressed', 'false'); });
+    btn.setAttribute('aria-pressed', 'true');
+  }
+  // (03/09) ZÉRO SIMULATION : le formulaire LIT ses champs et ÉCRIT au bus (ouvrirDemande → hotline, demanderAppel → rappel).
+  // Délais, horaires, numéro, société, réseaux = référentiels (assistance.escalade, serviceClient, ref.societe, ref.reseaux).
+  (function () {
+    var D = window.PEC_DATA;
+    if (D) {
+      var I = D.infosPubliques ? D.infosPubliques() : {}, S = D.serviceClient || {};
+      var lead = document.getElementById('ct-lead');
+      if (lead && S.tel) lead.textContent = (I.assistanceDelai || 'Une vraie personne te répond') + ' · ' + S.tel + (S.gratuit ? ' (appel gratuit)' : '') + ' · ' + (S.horaires || '');
+      var dl = document.getElementById('ct-delai'); if (dl) dl.textContent = (I.assistanceDelai || '—') + (S.horaires ? ' · ' + S.horaires : '');
+      var row = document.getElementById('ct-tel-row'); if (row && S.tel) { row.href = 'tel:' + String(S.tel).replace(/\s/g, ''); document.getElementById('ct-tel-num').textContent = S.tel; document.getElementById('ct-tel-h').textContent = (S.gratuit ? 'Appel gratuit · ' : '') + (S.horaires || ''); }
+      var So = D.ref && D.ref.societe; if (So) { document.getElementById('ct-societe').textContent = So.nom + (So.forme ? ' (' + So.forme + ')' : '') + ' — éditeur de PayEnCash'; document.getElementById('ct-siege').textContent = So.siege || ''; }
+      var soc = document.getElementById('ct-social'); if (soc && D.socialHTML) soc.innerHTML = D.socialHTML();
+      // le numéro du COMPTE connecté pré-remplit le champ (f) — modifiable
+      var tel = document.getElementById('ct-tel'); if (tel && D.profil && D.profil.telComplet) tel.value = String(D.profil.telComplet).replace(/(\d{2})(?=\d)/g, '$1 ');
+    }
+    document.getElementById('contact-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var motif = (document.querySelector('.pec-motif[aria-pressed="true"]') || {}).getAttribute ? document.querySelector('.pec-motif[aria-pressed="true"]').getAttribute('data-motif') : 'Question';
+      var tel = document.getElementById('ct-tel').value.trim(), ref = document.getElementById('ct-ref').value.trim().toUpperCase(), msg = document.getElementById('ct-msg').value.trim(), rappel = document.getElementById('ct-rappel').checked;
+      var err = document.getElementById('ct-err');
+      if (!msg && !rappel) { err.hidden = false; err.textContent = 'Écris ton message (ou coche « Rappelle-moi »).'; return; }
+      if (rappel && !tel) { err.hidden = false; err.textContent = 'Pour être rappelé·e, indique ton numéro.'; return; }
+      err.hidden = true;
+      if (!window.PEC_BUS || !PEC_BUS.ouvrirDemande) { err.hidden = false; err.textContent = 'Bus indisponible — réessaie.'; return; }
+      var t = (D && D.chercherTicket) ? D.chercherTicket(ref) : null, refOk = t ? t.ref : (ref || undefined);
+      var out = [];
+      if (msg) {
+        var dem = PEC_BUS.ouvrirDemande({ type: motif === 'Question' ? 'information' : 'conversation', ref: refOk, sujet: motif + (refOk ? ' · ' + refOk : ''), texte: msg, tel: tel || undefined, canal: 'formulaire' });
+        if (!dem) { out.push('<b>' + "Ta demande n\'a PAS pu être enregistrée (stockage de cet appareil plein) — libère de la place et recommence, ou appelle-nous." + '</b>'); }
+        else out.push('Demande <b>' + dem.id + '</b> enregistrée — ' + (dem.assigne ? dem.assigne + ' s\'en occupe' : 'un·e hôte s\'en occupe') + (dem.due && dem.due !== '—' ? ' (' + dem.due + ')' : '') + '.');
+      }
+      if (rappel) {
+        var apl = PEC_BUS.demanderAppel({ type: 'rappel', ref: refOk, canal: 'formulaire', tel: tel, motif: motif });
+        out.push('Rappel <b>' + apl.id + '</b> demandé au ' + tel + ' — ' + (apl.assigne ? apl.assigne + ', hôte en poste, te rappelle' : 'l\'hôte en poste te rappelle') + ' (' + apl.quand + ').');
+      }
+      if (ref && !t) out.push('<span style="color:var(--color-amber-text)">Réf « ' + ref.replace(/</g, '&lt;') + ' » non reconnue — transmise telle quelle.</span>');
+      var I2 = (D && D.infosPubliques) ? D.infosPubliques() : {};
+      if (I2.assistanceDelai) out.push(I2.assistanceDelai + '.');
+      document.getElementById('ct-ok-txt').innerHTML = out.join('<br>');
+      this.hidden = true;
+      document.getElementById('contact-confirm').hidden = false;
+    });
+  })();
+</script>
+</body>
+</html>

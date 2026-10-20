@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PayEnCash FLY — Promos &amp; astuces</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<!-- PROMOS & ASTUCES (fondatrice 22/08, page du COMPTE) : listes de réservations
+     à 3 mois ACTUALISÉES CHAQUE JOUR par mode de voyage + codes promo + astuces.
+     Données : PEC_DATA.promoAstuces + promos (J−45) + promosModes. -->
+<style>
+  .caps{letter-spacing:.13em;text-transform:uppercase}
+  .astuce{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--color-sep);font-size:12.5px;line-height:1.55;color:var(--color-muted)}
+  .astuce:last-child{border-bottom:none}
+  .astuce .n{flex:none;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark);font-size:11px;font-weight:800}
+  .kode{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px dashed var(--color-primary);border-radius:13px;padding:10px 13px;margin-top:8px}
+  .kode b{font-size:14px;letter-spacing:.08em;color:var(--color-primary-dark)}
+  .kode .d{font-size:11px;color:var(--color-muted);line-height:1.4}
+  .offre{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--color-sep);text-decoration:none}
+  .offre:last-child{border-bottom:none}
+  .offre .t{font-size:13px;font-weight:700;color:var(--color-ink)}
+  .offre .s{font-size:10.5px;color:var(--color-muted);margin-top:1px}
+  .offre .px{flex:none;text-align:right;font-size:14px;font-weight:800;color:var(--color-primary-dark)}
+  .offre .px s{display:block;font-size:10px;font-weight:600;color:var(--color-muted-2)}
+</style>
+</head>
+<body>
+<div class="pec-scene">
+<div class="pec-device" style="background:var(--color-bg)">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:0 16px 12px">
+
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 2px 4px">
+      <a href="06-promos.html" class="tap" aria-label="Retour aux promos" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-chevron-left"/></svg></a>
+      <div style="min-width:0">
+        <div style="font-size:17px;font-weight:800;letter-spacing:-0.01em;color:var(--color-ink)">Promos &amp; astuces</div>
+        <div id="pa-maj" style="font-size:11px;font-weight:700;color:var(--color-primary-dark)">—</div>
+      </div>
+    </div>
+
+    <!-- Réservables MAINTENANT, à 3 mois — par mode -->
+    <div style="margin-top:12px">
+      <div class="caps" style="font-size:10px;font-weight:800;color:var(--color-muted);margin-bottom:6px">À réserver maintenant — départs sous 3 mois</div>
+      <div id="pa-modes"></div>
+    </div>
+
+    <!-- Codes promo du moment -->
+    <div style="margin-top:14px">
+      <div class="caps" style="font-size:10px;font-weight:800;color:var(--color-muted);margin-bottom:6px">Codes promo du moment</div>
+      <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+      <input class="pec-search" type="search" data-fsearch="#pa-codes > *" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+      <div class="meta" data-fvide="#pa-codes > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+      <div class="pec-card" style="padding:4px 15px 13px" id="pa-codes" data-fpage="15"></div>
+    </div>
+
+    <!-- Les astuces -->
+    <div style="margin-top:14px">
+      <div class="caps" style="font-size:10px;font-weight:800;color:var(--color-muted);margin-bottom:6px">Les astuces qui paient</div>
+      <div class="pec-card" style="padding:5px 15px" id="pa-astuces"></div>
+    </div>
+
+    <div style="height:14px"></div>
+  <div id="fermeture-slot"></div>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('../ecrans/');})();</script>
+</div>
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" aria-current="page" href="06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="../ecrans/03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="../ecrans/01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="../ecrans/14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" href="../ecrans/10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+  (function () {
+    var D = window.PEC_DATA, PA = D.promoAstuces;
+    /* (11/09) « Actualisé chaque jour — dernière mise à jour aujourd'hui à 7 h » : les deux moitiés étaient
+       fausses. Rien n'actualise à 7 h, et l'heure était une chaîne écrite au référentiel. La liste change quand
+       une offre est publiée : c'est cette date-là qu'on montre, et seulement si elle existe. */
+    var majAt = D.promosMajAt ? D.promosMajAt() : null;
+    document.getElementById('pa-maj').textContent = majAt
+      ? 'Offres à ' + (D.promosRegleJmoins || 45) + ' jours minimum du départ — dernière publication le ' + new Date(majAt).toLocaleDateString('fr-FR') + '.'
+      : 'Offres à ' + (D.promosRegleJmoins || 45) + ' jours minimum du départ — elles changent quand le catalogue change.';
+    // par mode : les offres (J−45) dont le départ est sous 3 mois (semaines <= 12, cohérent J−45)
+    document.getElementById('pa-modes').innerHTML = D.promosModes.map(function (m) {
+      var offres = D.promos.filter(function (p) { return p.mode === m.id && p.semaines <= PA.horizonMois * 4; });
+      if (!offres.length) return '';
+      return '<div class="pec-card" style="padding:11px 15px;margin-bottom:9px">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px"><b style="font-size:13.5px;color:var(--color-ink)">' + m.nom + '</b><a class="tap pec-tap-confort" href="06-promos.html#' + m.id + '" style="font-size:11px;font-weight:700;color:var(--color-primary);text-decoration:none">Tout le mode →</a></div>' +
+        offres.map(function (p) {
+          var active = D.promoActive ? D.promoActive(p) : true;
+          var corps = '<span style="min-width:0"><span class="t">' + p.titre + '</span><span class="s" style="display:block">départ dans ' + p.semaines + ' semaines · ' + (active ? ((D.promoPlaces && D.promoPlaces(p) && D.promoPlaces(p).capacite != null) ? D.promoPlaces(p).libelle : (p.mention || 'places disponibles')) : 'expirée — départ à moins de 45 jours') + '</span></span><span class="px">' + p.prix + ' €<s>' + p.normal + ' € en normal</s></span>';
+          return active
+            ? '<a class="offre tap" href="07-promo-recap.html?o=' + p.id + '">' + corps + '</a>'
+            : '<span class="offre" style="opacity:.55">' + corps + '</span>';
+        }).join('') + '</div>';
+    }).join('');
+    /* (10/09 — lot 8, constat C33) LES CODES SONT CEUX QUI SONT ENCORE VALABLES. « RENTREE10 · fin 31 août »
+       était écrit au référentiel et présenté « du moment » des semaines après son échéance. Ils viennent de la
+       table (créés par le manager), et un code échu ne s'affiche plus. */
+    var codes = D.codesPromoFlyActifs ? D.codesPromoFlyActifs() : (PA.codes || []);
+    document.getElementById('pa-codes').innerHTML = codes.length
+      ? codes.map(function (c) {
+          return '<div class="kode"><span style="min-width:0"><b>' + c.code + '</b><span class="d" style="display:block">' + c.desc + ' · jusqu\'au ' + c.fin + '</span></span><button type="button" class="pec-pill tap" data-copier="' + c.code + '" style="flex:none">Copier</button></div>';
+        }).join('')
+      : '<div class="meta" style="padding:10px 0;font-size:11.5px;line-height:1.5">Aucun code en cours. Les bons plans du moment restent les offres ci-dessus — et la règle des 45 jours, qui fait la vraie différence.</div>';
+    document.getElementById('pa-codes').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-copier]'); if (!b) return;
+      var code = b.getAttribute('data-copier');
+      function ok() { b.textContent = '✓ Copié'; b.classList.add('pec-pill--done'); }
+      function ko() { b.textContent = 'Copie impossible — note ' + code; }
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(ok, ko);
+      else {
+        try { var ta = document.createElement('textarea'); ta.value = code; document.body.appendChild(ta); ta.select(); var r = document.execCommand('copy'); document.body.removeChild(ta); r ? ok() : ko(); } catch (err) { ko(); }
+      }
+    });
+    document.getElementById('pa-astuces').innerHTML = PA.astuces.map(function (a, i) {
+      return '<div class="astuce"><span class="n">' + (i + 1) + '</span><span>' + a + '</span></div>';
+    }).join('');
+  })();
+</script>
+</body>
+</html>

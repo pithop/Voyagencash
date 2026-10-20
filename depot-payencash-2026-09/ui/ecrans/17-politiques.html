@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PayEnCash — Nos politiques</title>
+<link rel="icon" type="image/png" sizes="64x64" href="../assets/logos/payencash-fly-blanc-64.png">
+<link rel="apple-touch-icon" href="../assets/logos/payencash-fly-blanc-180.png">
+<link rel="stylesheet" href="../assets/payencash-v2.css">
+<script src="../assets/payencash-icons.js"></script>
+<script src="../assets/payencash-data.js"></script>
+<script src="../assets/payencash-docs.js"></script>
+<script src="../assets/payencash-garde.js"></script>
+<script src="../assets/payencash-bus.js"></script>
+<script src="../assets/payencash-filters.js"></script>
+<!-- POLITIQUES COMMERCIALES (fondatrice 27/08) — sous-page du COMPTE : réserver,
+     annuler, être remboursé — les règles VRAIES, dites avant l'achat. Les packs
+     viennent de PEC_DATA.packs (source unique, mêmes ⓘ que les récaps) ; la
+     grille de restitution = F10 (spec-annulations). Données publiques seulement.
+     (17/09 — pivot) Plus de point ni de borne : on paie avec un bon d’achat (moyens DÉRIVÉS, .js-moyens) ; un
+     remboursement ne se fait JAMAIS en espèces (LCB-FT).
+     (18/09, soir — l'agent de caisse mobile est abandonné, puis pivot de positionnement) SONT PARTIS DE CES
+     POLITIQUES : le comptage des espèces par l'agent comme preuve du règlement, le plafond légal du paiement
+     d'une dette en espèces et son complément carte obligatoire, et le remboursement « en avoir ou par
+     virement » présenté comme la voie d'un règlement à l'agent. La promesse n'est plus « payer en espèces »
+     mais « UN BON D’ACHAT SUFFIT » : deux codes prépayés achetés chez un commerçant, et un
+     remboursement qui repart par le chemin d'où l'argent est venu — re-crédit du bon d’achat compris. -->
+<style>
+  .po-card{background:var(--color-surface);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:13px 15px;margin-bottom:12px}
+  .po-t{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .po-t .ic{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:11px;background:var(--color-mint);color:var(--color-primary-dark)}
+  .po-t b{font-size:13.5px;color:var(--color-ink)}
+  .po-li{display:flex;gap:8px;font-size:11.5px;line-height:1.6;color:var(--color-muted);margin-top:6px}
+  .po-li b{color:var(--color-ink)}
+  .po-li .p{flex:none;color:var(--color-primary-dark);font-weight:800}
+</style>
+</head>
+<body>
+
+<div class="pec-scene">
+<div class="pec-device">
+
+  <div class="pec-statusbar">
+    <span class="pec-sb-time">9:41</span>
+    <span class="pec-sb-icons"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-signal"/></svg></span>
+  </div>
+
+  <div class="pec-body pec-body--scroll" style="padding:0 16px 12px">
+
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 2px 4px">
+      <a href="10-compte.html" class="tap" aria-label="Retour au compte" style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;background:var(--color-mint);color:var(--color-primary-dark)"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:17px"><use href="#i-chevron-left"/></svg></a>
+      <div style="min-width:0">
+        <div style="font-size:17px;font-weight:800;letter-spacing:-0.02em;color:var(--color-ink)">Nos politiques</div>
+        <div style="font-size:10.5px;font-weight:600;color:var(--color-muted)">Réserver, annuler, être remboursé — tout est dit AVANT l'achat.</div>
+      </div>
+    </div>
+
+    <!-- ① RÉSERVER -->
+    <div class="po-card" style="margin-top:8px">
+      <div class="po-t"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-clock"/></svg></span><b>Réserver — le prix bloqué</b></div>
+      <div class="po-li"><span class="p">·</span><span>Ton prix est <b>bloqué <span data-prixbloque>1 h</span></b> après confirmation, gratuitement — le temps de payer. <b>Rien n'est encaissé</b> tant que tu n'as pas réglé : c'est le code accepté — celui de ton bon d’achat, ou la confirmation du prestataire pour un ticket — qui fait foi.</span></div>
+      <div class="po-li"><span class="p">·</span><span>S'il expire : bouton <b>« revalider le prix »</b> — rien n'est perdu, le tarif du moment s'applique.</span></div>
+      <div class="po-li"><span class="p">·</span><span>Dès le règlement validé, <b>la compagnie émet ton billet</b> : PNR et e-billet par <b>SMS et email</b> — un billet ne se télécharge jamais. L'hôtel te confirme par un <b>code de confirmation</b> à donner à la réception.</span></div>
+      <div class="po-li"><span class="p">·</span><span>Tu règles <b>avec un bon d’achat</b>, acheté au choix : <b class="js-moyens">—</b>. Ce sont des <b>codes prépayés</b> achetés chez un commerçant : <b>un bon d’achat suffit</b>, et chacun porte ses propres plafonds, affichés avant que tu valides.</span></div>
+    </div>
+
+    <!-- ② ANNULER — les packs (source unique PEC_DATA.packs, mêmes ⓘ que les récaps) -->
+    <div class="po-card">
+      <div class="po-t"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-shield"/></svg></span><b>Annuler — ton niveau se choisit AVANT de payer</b></div>
+      <p style="font-size:11px;line-height:1.55;color:var(--color-muted);margin-bottom:4px">Au récap, tu choisis ton pack — sa promesse est <b style="color:var(--color-ink)">couverte par le tarif acheté chez la compagnie</b>, jamais une promesse en l'air :</p>
+      <!-- (07/09 — audit navigation : toute liste se cherche, se trie et se pagine) -->
+      <input class="pec-search" type="search" data-fsearch="#po-packs > *" placeholder="Rechercher dans cette liste…" aria-label="Rechercher dans cette liste" style="margin:0 0 10px;max-width:420px">
+      <div class="meta" data-fvide="#po-packs > *" data-fvide-txt="Rien ne correspond à « %q »." style="display:none;padding:0 0 8px"></div>
+      <div id="po-packs" data-fpage="15"></div>
+      <div class="po-li" style="margin-top:8px"><span class="p">·</span><span><b>Hôtel</b> : la fenêtre d'annulation gratuite est <b>celle du tarif</b>, affichée sur la fiche avant l'achat — après la fenêtre, la retenue du tarif s'applique.</span></div>
+      <div class="po-li"><span class="p">·</span><span><b>Promos</b> : dates fixes, stock limité — conditions affichées sur l'offre, « non remboursable » écrit noir sur blanc quand c'est le cas.</span></div>
+    </div>
+
+    <!-- ②b MODIFIER — deux mondes (vol : échange par la compagnie · hôtel : annuler-rebooker) -->
+    <div class="po-card">
+      <div class="po-t"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-refresh"/></svg></span><b>Modifier — vol et hôtel, deux mécaniques</b></div>
+      <div class="po-li"><span class="p">✈</span><span><b>Vol — les dates</b> : selon ton tarif, la compagnie propose ses vols de remplacement avec le <b>prix exact du changement</b> (pénalité éventuelle + différence de prix) — tu valides, ou tu gardes ton vol.</span></div>
+      <div class="po-li"><span class="p">✈</span><span><b>Vol — le nom</b> : un billet est <b>nominatif, jamais transférable</b>. Seule une <b>correction de faute de frappe</b> peut être demandée à la compagnie, selon ses règles (prise en charge avec le pack Super Flex).</span></div>
+      <div class="po-li"><span class="p">🛏</span><span><b>Hôtel</b> : pas de modification directe — on <b>annule dans ta fenêtre gratuite et on re-réserve</b> aux nouvelles dates, au prix du moment ; hors fenêtre, la retenue du tarif s'applique. Le nom : demande transmise à l'établissement.</span></div>
+      <div class="po-li"><span class="p">🎁</span><span><b>Changer de voyageur</b> : un billet est <b>nominatif</b> et une réservation d'hôtel suit les conditions de l'établissement — le changement de nom, quand il est possible, relève du <b>prestataire</b> concerné. Préviens-nous au plus tôt : on fait la démarche pour toi (pack Super Flex : prise en charge), sans pouvoir garantir ce que le prestataire n'autorise pas.</span></div>
+      <div class="po-li"><span class="p">·</span><span><b>Avant le paiement</b> : tout se modifie <b>librement dans l'app</b> — rien n'est engagé tant que tu n'as pas payé.</span></div>
+    </div>
+
+    <!-- ③ ÊTRE REMBOURSÉ — la grille F10 -->
+    <div class="po-card">
+      <div class="po-t"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-refresh"/></svg></span><b>Être remboursé — ce que tu récupères, cas par cas</b></div>
+      <div class="po-li"><span class="p">✓</span><span><b>La compagnie ou l'hôtel annule</b> → <b>tout</b>, nos frais de service compris.</span></div>
+      <div class="po-li"><span class="p">✓</span><span><b>Tarif remboursable</b> (Super Flex, fenêtre hôtel) → le billet/séjour <b>et nos frais de service</b> — seul le prix du pack reste acquis.</span></div>
+      <div class="po-li"><span class="p">✓</span><span><b>Tarif partiellement remboursable</b> → <b>exactement ce que le fournisseur rend</b> (souvent les taxes) — le montant exact t'est confirmé par SMS et email <b>avant toute annulation ferme</b>.</span></div>
+      <div class="po-li"><span class="p">✓</span><span><b>Non remboursable / hors délai</b> → rien — et c'était écrit avant l'achat.</span></div>
+      <div style="border-radius:11px;background:var(--color-mint);padding:9px 11px;margin-top:9px;font-size:11px;line-height:1.55;color:var(--color-mint-ink)"><b style="color:var(--color-primary-dark)">Zéro frais d'annulation PayEnCash, dans tous les cas.</b> Le remboursement <b style="color:var(--color-ink)">repart par le chemin d'où l'argent est venu</b> (traçabilité LCB-FT) — <b style="color:var(--color-ink)">re-crédit de ton Bon d’achat PayEnCash</b> pour un règlement par bon d’achat, ou un <b style="color:var(--color-ink)">avoir</b> sur ton compte PayEnCash ; un <b style="color:var(--color-ink)">avoir compagnie</b> éventuel est à ton nom et t'est transmis tel quel.</div>
+    </div>
+
+    <!-- ④ LA COMPAGNIE MODIFIE / RETARDE -->
+    <div class="po-card">
+      <div class="po-t"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-plane"/></svg></span><b>Vol retardé ou annulé par la compagnie</b></div>
+      <div class="po-li"><span class="p">·</span><span>Tu es protégé par le <b>règlement européen des droits des passagers</b> : réacheminement ou remboursement — on s'en occupe avec toi, rien à avancer.</span></div>
+    </div>
+
+    <!-- ⑤ UN DÉSACCORD ? -->
+    <div class="po-card">
+      <div class="po-t"><span class="ic"><svg class="pec-ico" viewBox="0 0 24 24" style="font-size:16px"><use href="#i-headset"/></svg></span><b>Un désaccord ? Le chemin est écrit</b></div>
+      <div class="po-li"><span class="p">1</span><span>Un(e) hôte te répond <b><span id="po-hote">sous 2 h ouvrées</span></b> (<span id="po-tel">—</span>, gratuit).</span></div>
+      <div class="po-li"><span class="p">2</span><span>Non résolu → <b>le manager reprend</b>, <span id="po-manager">résolution sous 48 h — sinon geste commercial proposé</span>.</span></div>
+      <div class="po-li"><span class="p">3</span><span>Désaccord persistant → le <b id="po-med-nom">Médiateur du Tourisme et du Voyage</b> (<span id="po-med-site">mtv.travel</span>) — <span id="po-med-delai">saisine gratuite</span> (art. L612-1).</span></div>
+    </div>
+
+    <a class="pec-btn-secondary tap" href="03-mes-codes.html" style="display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:4px"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-ticket"/></svg> Mes réservations — agir sur une commande</a>
+
+  <div id="fermeture-slot"></div>
+<script>(function(){var z=document.getElementById('fermeture-slot');if(z&&window.PEC_DATA&&PEC_DATA.fermetureHTML)z.innerHTML=PEC_DATA.fermetureHTML('');})();</script>
+    <div style="height:10px"></div>
+  </div>
+
+  <nav class="pec-tabbar" aria-label="Navigation principale">
+    <a class="pec-tab" href="../fly/06-promos.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-promo"/></svg>Moins cher</a>
+    <a class="pec-tab" href="03-mes-codes.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-booking"/></svg>Réservations</a>
+    <a class="pec-tab" href="01-accueil.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-search"/></svg>Rechercher</a>
+    <a class="pec-tab" href="14-assistance.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-headset"/></svg>Assistance</a>
+    <a class="pec-tab" aria-current="page" href="10-compte.html"><svg class="pec-ico" viewBox="0 0 24 24"><use href="#i-user"/></svg>Compte</a>
+  </nav>
+
+</div>
+</div>
+<script>
+  // Les packs — LA MÊME source que les récaps (PEC_DATA.packs, ⓘ compris) :
+  // une politique commerciale n'existe qu'à UN endroit, jamais recopiée.
+  (function () {
+    var D = window.PEC_DATA; if (!D) return;
+    document.getElementById('po-packs').innerHTML = D.packs.map(function (p) {
+      return '<details style="border-radius:12px;background:var(--color-bg);padding:9px 12px;margin-top:6px"><summary class="tap pec-tap-confort" style="list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:12px;color:var(--color-ink)">' + p.nom + '</b><span style="flex:none;font-size:11.5px;font-weight:800;color:var(--color-primary-dark)">' + (p.plus ? '+ ' + p.plus + ',00 €' : 'Inclus') + '</span></summary>' +
+        '<span style="display:block;font-size:10.5px;line-height:1.6;color:var(--color-muted);margin-top:6px">' + (p.info || '') + '</span></details>';
+    }).join('');
+    // (17/09 — pivot) les moyens de régler : dérivés du pays du client, jamais écrits dans la page
+    /* (18/09, soir) LES MOYENS SE RELISENT AU BUS : cette page est opposable, elle ne doit jamais nommer un
+       moyen que le référentiel ne propose plus (un moyen retiré en Configuration se voit ici sans recharger). */
+    if (D.moyensPaiementLabel) {
+      var peindreMoyens = function () { var lm = D.moyensPaiementLabel(); if (lm) [].forEach.call(document.querySelectorAll('.js-moyens'), function (n) { n.textContent = lm; }); };
+      peindreMoyens();
+      window.addEventListener('pec-bus', peindreMoyens);
+      window.addEventListener('storage', function (e) { if (!e.key || /^pec/.test(e.key)) peindreMoyens(); });
+    }
+    var tel = document.getElementById('po-tel');
+    if (tel) tel.innerHTML = '<b>' + D.serviceClient.tel + '</b>';
+    // ESCALADE + PRIX BLOQUÉ sourcés (audit 03/09) : assistance.escalade et prixBloque.dureeMin — la page ne porte plus le chiffre
+    var e = (D.assistance || {}).escalade || {}, set = function (id, t) { var n = document.getElementById(id); if (n && t) n.textContent = t; };
+    set('po-hote', String(e.hote || '').replace(/^réponse\s+/i, ''));
+    set('po-manager', e.manager);
+    if (e.mediateur) { set('po-med-nom', e.mediateur.nom); set('po-med-site', e.mediateur.site); set('po-med-delai', e.mediateur.delai); }
+    var PB = D.prixBloque || {}; if (PB.dureeMin) set('po-prixbloque', PB.dureeMin % 60 === 0 ? (PB.dureeMin / 60) + ' h' : PB.dureeMin + ' min');
+    [].forEach.call(document.querySelectorAll('[data-prixbloque]'), function (n) { if (PB.dureeMin) n.textContent = PB.dureeMin % 60 === 0 ? (PB.dureeMin / 60) + ' h' : PB.dureeMin + ' min'; });
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Benchmark Opodo × Booking — et l'état des lieux PayEnCash</title>
+<style>
+  :root{--ink:#0F2A24;--pri:#10A06A;--prid:#0C7F54;--bg:#F4F7F5;--mut:#5B6E66;--sep:#E3EAE6;--mint:#E3F4EC;--amber:#8a6d1f;--amberbg:#FBF3E0;--opodo:#F26F21;--booking:#003B95}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;padding:34px 18px 60px}
+  main{max-width:920px;margin:0 auto}
+  h1{font-size:26px;letter-spacing:-0.02em;margin-bottom:4px}
+  .sub{color:var(--mut);font-size:13.5px;margin-bottom:22px}
+  h2{font-size:17px;margin:28px 0 10px;color:var(--prid)}
+  h2 .tag{display:inline-block;border-radius:6px;color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;vertical-align:2px;margin-left:8px}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(15,42,36,.06);font-size:12.5px}
+  th{background:var(--mint);color:var(--prid);text-align:left;padding:10px 13px;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+  td{padding:10px 13px;border-top:1px solid var(--sep);color:var(--mut);vertical-align:top}
+  td b{color:var(--ink)}
+  .ok{background:#fff;border-left:4px solid var(--pri);border-radius:12px;padding:13px 16px;font-size:13px;color:var(--mut);margin:10px 0}
+  .regle{background:var(--amberbg);border-left:4px solid #d9a52b;border-radius:12px;padding:13px 16px;font-size:13px;color:var(--amber);margin:14px 0}
+  p{font-size:13px;color:var(--mut);margin-bottom:8px}
+  .deja{color:var(--prid);font-weight:800}
+</style>
+</head>
+<body>
+<main>
+<h1>Opodo × Booking — ce qu'ils font de mieux, et où on en est</h1>
+<p class="sub">Audit du 23 août (cycle Opodo observé écran par écran sur iPhone + mécaniques Booking décortiquées). Trois lectures : <b>conception</b> (le produit), <b>marketing &amp; business</b> (comment ils vendent), <b>design</b> (comment ça se ressent). Puis l'état des lieux PayEnCash — honnête — et la liste de ce qu'on prend, adapté à NOTRE marque.</p>
+
+<h2>1 · Opodo <span class="tag" style="background:var(--opodo)">observé en réel</span></h2>
+<table>
+<tr><th>Force</th><th>Comment ils le font</th><th>Chez nous ?</th></tr>
+<tr><td><b>L'onboarding qui vend avant de demander</b></td><td>Écran « fusée » : 3 bénéfices cochés AVANT toute création de compte ; écran de pré-permission maison avant chaque popup iOS (notifications, tracking) — la demande système ne tombe jamais à froid.</td><td><span class="deja">✓ PRIS (23/08)</span> — onboarding 5 écrans + pré-permission notifications argumentée (code de paiement, expiration, file d'attente).</td></tr>
+<tr><td><b>Prime : l'abonnement au centre du business</b></td><td>10,99 €/mois : remises visibles partout (« Prix Prime par nuit »), bannière permanente « Qu'est-ce que Prime ? », avantages concrets (annulation 2 vols sans motif, salon VIP), prix barrés −44/−68 %.</td><!-- (18/09, soir) « payé en espèces » décrivait le geste du client au comptoir : on ne le qualifie plus
+     nulle part. Notre différence tient à ce qu'on ne demande qu’un bon d’achat, pas à des billets. -->
+<td><span class="deja">✓ Mieux</span> — Prime 8,97 €/mois réglée avec un bon d’achat, sans reconduction par nature, prix publics barrés (décision 23/08), et « toujours 0,02 € de moins qu'Opodo ».</td></tr>
+<tr><td><b>Prix d'ancrage systématique</b></td><td>Chaque carte : prix public barré + badge −%. Le cerveau lit l'économie avant le prix.</td><td><span class="deja">✓ PRIS</span> — promos (« N € économisés »), Prime (barrés), comparatif du jour.</td></tr>
+<tr><td><b>Tab bar par service + badge d'offre</b></td><td>Vols / Hôtels / Trains / Vol+Hôtel / Voitures, avec un badge « Remise sur » posé sur le service en promo.</td><td>Partiel — notre segmented Vol / Vol+Hôtel / Hôtel joue ce rôle ; pas de badge d'offre dessus (piste §4).</td></tr>
+<tr><td><b>App-only deals &amp; push</b></td><td>Des offres réservées à l'app → la raison de garder l'app installée et les notifs actives.</td><td>À prendre (piste §4) — nos promos J−45 peuvent avoir un volet « app d'abord ».</td></tr>
+<tr><td>Leurs travers (à NE PAS copier)</td><td>Popup Prime plein écran « durée limitée » à l'ouverture, cookie wall au refus caché, double écran pro-tracking, urgence artificielle.</td><td><span class="deja">✓ Refusé</span> — consentements honnêtes (cf. popup RGPD fly/05), zéro fausse urgence : nos comptes à rebours sont RÉELS (prix bloqué, tirage).</td></tr>
+</table>
+
+<h2>2 · Booking <span class="tag" style="background:var(--booking)">mécaniques décortiquées</span></h2>
+<table>
+<tr><th>Force</th><th>Comment ils le font</th><th>Chez nous ?</th></tr>
+<tr><td><b>La preuve sociale reine</b></td><td>Des centaines de millions d'avis vérifiés (« a réellement séjourné »), note + libellé (« Superbe 8,9 »), badges « Préféré des voyageurs », photos de clients.</td><td><span class="deja">✓ Le principe</span> — nos avis n'existent QUE payés et prouvés (contrainte en base) ; note+libellé sur la photo. Manquent : badge « préféré » et photos clients (§4).</td></tr>
+<tr><td><b>La rareté VRAIE</b></td><td>« Plus que 2 chambres à ce prix », « réservé 3 fois aujourd'hui » — des chiffres réels, pas du théâtre.</td><td>Partiel — notre « Très demandé — réservé, expire dans 43 min » (MODE) est même plus honnête ; à étendre aux vols/hôtels (§4).</td></tr>
+<tr><td><b>Genius : la fidélité à NIVEAUX</b></td><td>Gratuit, automatique : 5 réservations → niveau 2 → −10-15 % à vie. Simple, lisible, addictif — complémentaire d'un abonnement payant.</td><td>À prendre (§4) — on a la cagnotte de points (×2 Prime) mais pas de niveaux nommés.</td></tr>
+<tr><td><b>L'annulation gratuite comme argument n°1</b></td><td>Filtre dédié, mention verte sur chaque carte, « Réservez maintenant, payez plus tard ».</td><td><span class="deja">✓ Hôtels</span> (badge sur photo + politique datée ligne à ligne) ; à surfacer sur les CARTES VOL (packs Flex) dès la liste (§4).</td></tr>
+<tr><td><b>Le prix total sans surprise</b></td><td>Taxes incluses affichées d'entrée — leur réponse aux régulateurs devenue un argument.</td><td><span class="deja">✓ Mieux</span> — « Tout compris · zéro frais cachés », et le paiement espèces rend l'arnaque impossible : c'est NOTRE terrain.</td></tr>
+<tr><td><b>Pages destination (SEO)</b></td><td>Une page par ville (« Hôtels à Barcelone ») qui capte la recherche Google et nourrit le funnel.</td><td>À prendre (§4) — la table places + place_city_links rend ça mécanique côté données.</td></tr>
+</table>
+
+<h2>3 · L'état des lieux PayEnCash — honnête</h2>
+<div class="ok"><b>Nos forces à nous (qu'AUCUN des deux n'a)</b> : le <b>budget-first</b> (« Combien tu as en cash ? » — personne n'ouvre comme ça) · le <b>paiement en espèces</b> = océan bleu réglé au centime (50 tables validées, zéro survente prouvée) · le <b>prix bloqué pendant qu'on va payer</b> · l'<b>hôte humain</b> (appel gratuit en capsule, sécurisation RGPD 1ʳᵉ commande) · la politique <b>zéro-vente-perdue</b> (file d'attente, fenêtres 15 min, offre partielle) · le <b>comparatif du jour publié</b> — une transparence qu'Opodo ne s'autorisera jamais · le concours mensuel bleu royal · 181 scénarios de banc qui verrouillent tout.</div>
+<div class="ok"><b>Déjà au niveau (pris et adapté)</b> : onboarding + pré-permission · combobox destinations (champs Duffel tels quels) · villes multiples (slices Duffel, comme Ryanair) · prix barrés Prime · cartes gammes et destinations en photos · pastille note/libellé sur les photos d'hôtel · capsule d'appel premium.</div>
+
+<h2>4 · Ce qu'on prend maintenant — priorisé, dans NOTRE esprit</h2>
+<table>
+<tr><th>#</th><th>Amélioration</th><th>Inspiré de</th><th>Pourquoi ça paie</th></tr>
+<tr><td>1</td><td><b>Rareté vraie sur vols &amp; hôtels</b> : « Plus que N places à ce prix » et « réservé N fois cette semaine » branchés sur nos compteurs RÉELS (stock_reservations).</td><td>Booking</td><td>La conversion monte sans mentir — on a déjà l'infra et la règle d'or (jamais de théâtre).</td></tr>
+<tr><td>2</td><td><b>Niveaux de fidélité nommés</b> (gratuits, automatiques) au-dessus de la cagnotte : Voyageur → Habitué (3 commandes) → Ambassadeur (8) — chaque niveau un avantage lisible ; Prime reste le payant au-dessus.</td><td>Booking Genius</td><td>La récurrence — le point faible de tout nouvel entrant — devient un jeu de paliers.</td></tr>
+<tr><td>3</td><td><b>Packs Flex visibles dès la LISTE des vols</b> (mention verte « Annulation possible » sur la carte, pas seulement au récap).</td><td>Booking</td><td>L'argument n°1 du secteur, aujourd'hui caché trop tard dans notre tunnel.</td></tr>
+<tr><td>4</td><td><b>Badge « Préféré des voyageurs »</b> sur l'hôtel le mieux noté de chaque recherche + photos clients dans les avis vérifiés.</td><td>Booking</td><td>Nos avis « payés et prouvés » méritent d'être mis en scène — c'est notre crédibilité.</td></tr>
+<tr><td>5</td><td><b>Offres « app d'abord »</b> : les promos J−45 ouvrent 24 h plus tôt dans l'app (et Prime 48 h — déjà l'avant-première).</td><td>Opodo</td><td>La raison de garder l'app et les notifications actives — nourrit tout le reste.</td></tr>
+<tr><td>6</td><td><b>Badge d'offre sur le segmented</b> (petit point « Remise » sur Vol+Hôtel quand une gamme est en promo).</td><td>Opodo</td><td>Un pixel qui oriente vers le panier le plus rentable.</td></tr>
+<tr><td>7</td><td><b>Pages destination publiques</b> (« Payer son vol Alger en espèces ») générées depuis places × comparatif du jour.</td><td>Booking</td><td>Le SEO diaspora — nos mots-clés (« payer vol en espèces ») sont quasi vierges.</td></tr>
+</table>
+<div class="regle"><b>Règle de marque (inchangée)</b> : on prend leurs MÉCANIQUES, jamais leurs travers — aucune urgence artificielle, aucun consentement piégé, aucun chiffre inventé. Chez PayEnCash, chaque compte à rebours est vrai, chaque avis est payé et prouvé, chaque prix est total.</div>
+
+</main>
+</body>
+</html>

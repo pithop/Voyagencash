@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayEnCash — Doc 9 : Espace Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+  /* Sans ceci, un navigateur en mode sombre rend champs, listes et ascenseurs
+     en sombre sur notre fond creme. La doc est concue en clair, on le declare. */
+  color-scheme: light;
+    --vert: #1F4438; --cuivre: #D8722B; --creme: #F7F5F0; --encre: #1A1A1A;
+    --gris: #6B6966; --gris-clair: #E4E0D6; --blanc: #FFFFFF; --rouge: #C0392B; --radius: 10px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; color: var(--encre); background: var(--creme); line-height: 1.7; font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+  .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: var(--vert); color: var(--creme); overflow-y: auto; padding: 24px 0; z-index: 100; }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 0.5px solid rgba(244,241,234,0.15); margin-bottom: 16px; }
+  .sidebar-logo .brand { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 4px; }
+  .sidebar-logo .brand .accent { color: var(--cuivre); }
+  .sidebar-logo .doc-num { font-size: 11px; color: rgba(244,241,234,0.5); margin-top: 4px; }
+  .sidebar nav a { display: block; padding: 7px 20px; font-size: 12.5px; color: rgba(244,241,234,0.7); text-decoration: none; border-left: 2px solid transparent; }
+  .sidebar nav a:hover { color: var(--creme); border-left-color: var(--cuivre); background: rgba(244,241,234,0.06); }
+  .sidebar nav .section-head { padding: 14px 20px 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(244,241,234,0.35); font-weight: 600; }
+  .doc-nav { margin-top: 24px; padding: 16px 20px 0; border-top: 0.5px solid rgba(244,241,234,0.15); }
+  .doc-nav p { font-size: 11px; color: rgba(244,241,234,0.4); margin-bottom: 8px; }
+  .doc-nav a { display: block; font-size: 12px; color: rgba(244,241,234,0.6); text-decoration: none; padding: 4px 0; }
+  .doc-nav a:hover { color: var(--cuivre); }
+
+  .main { margin-left: 240px; max-width: 920px; padding: 48px 56px; }
+
+  .doc-header { border-bottom: 1px solid var(--gris-clair); padding-bottom: 24px; margin-bottom: 40px; }
+  .doc-header .doc-tag { display: inline-block; background: var(--cuivre); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px; letter-spacing: 0.04em; }
+  .doc-header h1 { font-family: 'Archivo', sans-serif; font-size: 30px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .doc-header .meta { display: flex; gap: 20px; font-size: 13px; color: var(--gris); flex-wrap: wrap; }
+
+  .section { margin-bottom: 48px; scroll-margin-top: 24px; }
+  h2 { font-family: 'Archivo', sans-serif; font-size: 21px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--gris-clair); color: var(--vert); }
+  h3 { font-family: 'Archivo', sans-serif; font-size: 16.5px; font-weight: 600; margin: 26px 0 12px; color: var(--encre); }
+  h4 { font-family: 'Archivo', sans-serif; font-size: 14px; font-weight: 600; margin: 18px 0 8px; color: var(--encre); }
+  p { margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0 20px; }
+  th { background: var(--vert); color: var(--creme); padding: 9px 11px; text-align: left; font-weight: 600; font-size: 11.5px; }
+  td { padding: 8px 11px; border-bottom: 0.5px solid var(--gris-clair); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(244,241,234,0.5); }
+  td code { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+  td .meta { display: block; margin-top: 2px; color: var(--gris); font-size: 12px; }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: rgba(31,68,56,0.07); color: var(--vert); padding: 2px 6px; border-radius: 4px; }
+  pre { background: #1A1A2E; color: #E8E6E3; border-radius: var(--radius); padding: 16px 18px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7; overflow-x: auto; margin: 14px 0; }
+  pre .comment { color: #6B7A8D; }
+  pre .key { color: #82AAFF; }
+  pre .str { color: #C3E88D; }
+  pre .kw { color: #C792EA; }
+
+  .callout { border-radius: var(--radius); padding: 14px 16px; margin: 16px 0; font-size: 13.5px; display: flex; gap: 12px; align-items: flex-start; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: rgba(31,68,56,0.06); border-left: 3px solid var(--vert); }
+  .callout.warning { background: rgba(216,114,43,0.08); border-left: 3px solid var(--cuivre); }
+  .callout.danger { background: rgba(192,57,43,0.07); border-left: 3px solid var(--rouge); }
+  .callout strong { display: block; font-weight: 600; margin-bottom: 4px; color: var(--encre); }
+
+  .checklist { list-style:none; margin: 12px 0; }
+  .checklist li { padding: 6px 0 6px 28px; position:relative; font-size:14px; }
+  .checklist li::before { content:"☐"; position:absolute; left:0; color: var(--vert); font-size:16px; }
+
+  .screen-mock { background: #fff; border: 0.5px solid var(--gris-clair); border-radius: var(--radius); padding: 18px; margin: 14px 0; }
+  .screen-mock .mock-title { font-family: 'Archivo', sans-serif; font-weight: 600; font-size: 13px; color: var(--vert); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .mock-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 0.5px solid var(--gris-clair); font-size: 13px; }
+  .mock-row:last-child { border-bottom: none; }
+  .mock-tag { font-size: 11px; padding: 3px 9px; border-radius: 999px; font-weight: 500; }
+  .mock-tag.green { background: rgba(31,68,56,0.1); color: var(--vert); }
+  .mock-tag.amber { background: rgba(216,114,43,0.12); color: var(--cuivre-fonce, #B85E1E); }
+  .mock-tag.red { background: rgba(192,57,43,0.1); color: var(--rouge); }
+
+  @media print { .sidebar { display: none; } .main { margin-left: 0; padding: 24px; } }
+  @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; padding: 24px 20px; } }
+</style>
+</head>
+<body>
+<div style="background:#E6F4EC;border:2px dashed #0C7F54;border-radius:10px;padding:12px 16px;margin:10px 18px;font:13px -apple-system,sans-serif;color:#0F2A24"><b>⚠️ Pivot du 18/09/2026 (soir) — remplace le bandeau du 17/09.</b> Ce document décrit le modèle « espèces à domicile par l'agent » d'août. <b>Ce modèle n'existe plus</b> : l'<b>agent de caisse mobile est supprimé</b>, et avec lui les courses, les tournées, les zones, le planning, la flotte, le fond de caisse, le rendu de monnaie, les dépôts en automate Cash Services et le découpage « 1 000 € d'espèces + complément carte ». Il reste <b>deux moyens de paiement</b>, tous deux achetés au comptoir d'un commerce : le <b>Bon d’achat PayEnCash</b> (bon d'achat prépayé émis par AJEK, vendu par un réseau de commerçants sous contrat — art. L521-3 CMF ; tables <code>gift_cards</code> · <code>gift_card_movements</code>) <i>(20/09 : le rail d'un prestataire en ligne est supprimé — le débit du bon est le seul valideur ; <code>psp_transactions</code> · <code>payment_tenders</code>, dont <code>method</code> vaut désormais <code>bon</code>, et lui seul — plus jamais <code>cash</code> ni <code>card</code>). Côté commerçant, le <b>reversement mensuel est abandonné</b> : sa carte bancaire enregistrée est <b>prélevée à chaque vente</b> du montant moins sa commission (1,10 % HT + TVA), via <b>Stripe</b> ; <b>un refus de la banque = aucun bon d’achat émis</b> (<code>partner_cards</code> · <code>partner_charges</code>). <b>Tout ce qui est écrit ici sur l'agent, la collecte, le dépôt, le dispatch ou un « point d'encaissement » est caduc</b> ; ce qui porte sur le catalogue, le prix, les fournisseurs et la commande reste vrai. Référence à jour : <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html" style="color:#0C7F54;font-weight:700">Étape 4</a> et <code>CLAUDE.md</code>.</div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">PayEn<span class="accent">Cash</span></div>
+    <div class="doc-num">Documentation technique · v2.0 (encaissement à domicile)</div>
+  </div>
+  <nav>
+    <div class="section-head">Document 9</div>
+    <a href="#intro">Introduction</a>
+    <a href="#acces">Accès et droits</a>
+    <a href="#suivi-reservations">Suivi des réservations en cours</a>
+    <a href="#livreurs">Agents — profils &amp; validation</a>
+    <a href="#zones-dispatch">Zones, limites &amp; dispatch</a>
+    <a href="#supervision-livraisons">Supervision des encaissements</a>
+    <a href="#centre-appels">Centre d'appels clients</a>
+    <a href="#questionnaire">Questionnaire de satisfaction</a>
+    <a href="#suivi-financier">Suivi financier en direct</a>
+    <a href="#commissions">Frais de service &amp; configuration</a>
+    <a href="#kyb-kyc">KYB fournisseurs &amp; KYC client</a>
+    <a href="#schema-impact">Récapitulatif schéma de données</a>
+    <a href="#checklist">Checklist avant développement</a>
+  </nav>
+  <div class="doc-nav">
+    <p>Documents</p>
+    <a href="01-flux-metier.html">← Doc 1 : Flux métier</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">← Doc 2 : Schéma BDD</a>
+    <a href="03-api-specs.html">← Doc 3 : Spécifications API</a>
+    <a href="04-pricing.html">← Doc 4 : Logique de pricing</a>
+    <a href="05-architecture.html">← Doc 5 : Architecture technique</a>
+    <a href="06-segment-maghreb.html">← Doc 6 : Segment Maghreb</a>
+    <a href="07-annulations-remboursements.html">← Doc 7 : Annulations &amp; remboursements</a>
+    <a href="08-mecanisme-financier.html">← Doc 8 : Mécanisme financier</a>
+    <a href="10-compte-utilisateur.html">→ Doc 10 : Compte utilisateur</a>
+    <a href="11-ui-v2.html">→ Doc 11 : UI v2 (écrans)</a>
+    <a href="../ESPACE-COMMERCANT/documents/partie-6-donnees.html">📖 Glossaire central des champs</a>
+  </div>
+</aside>
+
+<main class="main">
+<div class="bandeau-socle" style="background:#FDF1E7;border:1px solid #E39A2E;border-left:5px solid #E39A2E;border-radius:10px;padding:13px 17px;margin:0 0 28px;font-size:13.5px;line-height:1.65;color:#7a5410">⚠️ <b>Document socle (juillet 2026)</b> — conservé comme référence technique. Les décisions <b>À JOUR</b> vivent dans le fil rouge (10 étapes)&nbsp;: <a href="../ESPACE-COMMERCANT/documents/diagramme-principal.html" style="color:#0c7f54;font-weight:700">diagramme principal</a>. En cas d'écart, le fil rouge fait foi (ex.&nbsp;: carte bleue en complément, Mondial Relay, F13, codes promo fournisseurs).</div>
+
+
+  <div class="doc-header">
+    <span class="doc-tag">Document 9 / 11</span>
+    <h1>Espace Manager — pilotage opérationnel et relation client</h1>
+    <div class="meta">
+      <span>Projet PayEnCash</span>
+      <span>Version 1.0</span>
+      <span>Juin 2026</span>
+    </div>
+  </div>
+
+  <section class="section" id="intro">
+    <h2>Introduction</h2>
+    <p>Ce document spécifie l'espace manager d'<strong>AJEK SASU</strong> (« PayEnCash » désigne l'application) : l'interface interne réservée à la fondatrice (et, à terme, à un éventuel employé) pour piloter l'activité au quotidien — distincte de l'app client et de l'espace agent. Il couvre le suivi des réservations avant collecte, la <strong>gestion RH des agents salariés</strong> (recrutement, embauche, habilitation, carte de dépôt nominative, disponibilité, notes), la configuration des <strong>zones et de leurs limites</strong>, la supervision des <strong>encaissements</strong> et du dispatch, un centre d'appels clients (rappels et questionnaire de satisfaction), un suivi financier en direct, la configuration des marges, des frais de service d'encaissement et de la TVA, la supervision de la conformité (<strong>KYB fournisseurs</strong> et <strong>KYC client gradué</strong>), et le <strong>suivi comptable de la TVA collectée</strong> — provision et exports.</p>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>(18/09/2026, soir) Il n'y a plus d'agents</strong> Le poste d'agent de caisse mobile est <strong>supprimé</strong> : l'espace manager ne comporte plus ni recrutement, ni habilitation, ni zone, ni dispatch, ni planning, ni paie de terrain, ni flotte. <strong>Huit écrans ont été retirés</strong> — <code>03-livraisons</code>, <code>05-coursiers</code>, <code>06-zones-dispatch</code>, <code>15-coursier-remuneration</code>, <code>22-flotte</code>, <code>24-planning</code>, <code>32-rapprochement</code>, <code>33-fonds-caisse</code> — et la note RH qui détaillait les gains complémentaires a été supprimée du dépôt (le cadre social qui survit est recueilli au §5 de <code>PLAN-MAITRISE-RISQUES-2026-08.md</code>). <strong>À la place</strong> : l'écran <code>29-partenaires</code> — les commerces qui vendent le <strong>Bon d’achat PayEnCash</strong> : activation d'un point, carte de règlement enregistrée, prélèvements acceptés ou refusés, relevé mensuel servant à l'autofacture de commission. Les écrans d'août qui subsistent (téléphonie/appels, CRM, silos d'appel commercial) restent spécifiés dans <code>NOUVELLES-FONCTIONNALITES-2026-08.md</code>.</div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Principe directeur</strong> L'espace manager ne réinvente aucune donnée : il lit et présente ce qui existe déjà dans le schéma (Doc 2) — commandes, <strong>agents</strong>, <strong>zones d'encaissement</strong>, <strong>encaissements</strong>, notations — complété par les tables de pilotage introduites avec ce document (<code>manager_users</code>, <code>margin_config</code>, <code>delivery_fee_config</code>, <code>customer_calls</code>). Chaque rappel, chaque appel, chaque réponse au questionnaire, chaque validation d'agent est tracé et rattaché à une entité précise, jamais perdu dans un outil externe déconnecté de la base.</div>
+    </div>
+  </section>
+
+  <section class="section" id="acces">
+    <h2>Accès et droits</h2>
+    <p>L'espace manager est une application web distincte de l'app client, avec son propre système d'authentification (<code>manager_users</code>, Doc 2) — jamais accessible via les comptes <code>users</code> des clients.</p>
+    <table>
+      <thead><tr><th>Rôle</th><th>Suivi réservations</th><th>Agents / zones / dispatch</th><th>Centre d'appels</th><th>Finance</th><th>Config (marges / frais / TVA)</th></tr></thead>
+      <tbody>
+        <tr><td><code>owner</code></td><td>Oui</td><td>Oui (recrutement, embauche, habilitation, zones, limites)</td><td>Oui</td><td>Oui</td><td>Oui</td></tr>
+        <tr><td><code>operator</code></td><td>Oui</td><td>Supervision encaissements (lecture)</td><td>Oui</td><td>Lecture seule</td><td>Non</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Solo aujourd'hui</strong> Avec une seule personne, ce tableau de droits n'a pas d'effet visible — mais il évite une refonte du système d'authentification le jour où un premier appelant est recruté sans qu'il ait nécessairement à voir le détail de la trésorerie ou à modifier les taux de marge.</div>
+    </div>
+  </section>
+
+  <section class="section" id="suivi-reservations">
+    <h2>Suivi des réservations en cours</h2>
+    <p>Vue centrale de l'espace manager : la liste des commandes (<code>orders</code>, Doc 2) avec un focus particulier sur celles dont le statut précède la collecte — c'est-à-dire avant que l'agent n'ait encaissé le cash au domicile du client.</p>
+    <div class="screen-mock">
+      <div class="mock-title">Maquette fonctionnelle — liste des réservations</div>
+      <div class="mock-row"><span>CMD-A7F92K · Sofia Martin · Barcelone</span><span class="mock-tag amber">OUT_FOR_COLLECTION · agent à 6 min</span></div>
+      <div class="mock-row"><span>CMD-B3K81L · Karim Idrissi · Casablanca</span><span class="mock-tag green">CONFIRMED</span></div>
+      <div class="mock-row"><span>CMD-C9R44P · Nina Esposito · Bologne</span><span class="mock-tag red">AWAITING_COURIER · aucun agent · fenêtre expire dans 12 min</span></div>
+    </div>
+    <table>
+      <thead><tr><th>Filtre</th><th>Statuts inclus (Doc 2, <code>orders.status</code>)</th><th>Usage</th></tr></thead>
+      <tbody>
+        <tr><td>En cours de collecte</td><td><code>AWAITING_COURIER</code>, <code>COURIER_ASSIGNED</code>, <code>OUT_FOR_COLLECTION</code>, <code>CASH_COLLECTED</code></td><td>Vue prioritaire — les réservations "avant / en cours de collecte" ; triées par <code>collection_deadline_at</code> croissant pour voir les plus urgentes (et repérer celles sans agent) en premier</td></tr>
+        <tr><td>Brouillon</td><td><code>DRAFT</code></td><td>Informatif — pas d'action possible, le client n'a pas encore généré de code</td></tr>
+        <tr><td>Confirmées</td><td><code>CONFIRMED</code></td><td>Historique, recherche par référence ou nom client</td></tr>
+        <tr><td>Incidents</td><td><code>FAILED</code>, <code>COLLECTION_FAILED</code>, <code>EXPIRED</code>, <code>REFUNDED</code>, <code>CANCELLED</code></td><td>Vue d'investigation — recoupée avec <code>deliveries</code>, <code>delivery_tracking_events</code> et <code>audit_log</code> (Doc 2) en cas de réclamation client</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Aucune action manuelle de validation de paiement</strong> Le passage à <code>PAID</code> reste strictement piloté par la <strong>validation de la collecte par l'agent</strong> (code de sécurité + photo, Doc 1, Doc 3) — l'espace manager affiche ce statut, il ne permet pas de le forcer manuellement. Une éventuelle action manuelle de déblocage exceptionnel devrait être journalisée dans <code>audit_log</code> avec <code>action='status_manual_override'</code> (champ déjà prévu au Doc 2) et réservée au rôle <code>owner</code>.</div>
+    </div>
+  </section>
+
+  <section class="section" id="livreurs">
+    <h2>Agents — recrutement RH, embauche &amp; habilitation</h2>
+    <p>Le recrutement d'un agent est un <strong>vrai processus d'embauche RH</strong>, piloté par le manager via la table <code>couriers</code> et les tables dédiées (<code>applications</code>, <code>recruitment_sessions</code>, <code>deposit_cards</code>). Il ne s'agit pas de « valider l'inscription d'un indépendant » : l'agent est <strong>salarié</strong>. Parcours : <strong>candidature</strong> (CV, CNI, aptitudes) → <strong>session de recrutement</strong> — <em>tout candidat, quel que soit son profil, reçoit une invitation à un créneau</em> (individuel ou collectif ; pas de rejet sec avant la session) → <strong>embauche</strong> (contrat de travail avec mission d'encaissement, sans clause de responsabilité pécuniaire) → <strong>habilitation à encaisser</strong> → remise d'une <strong>carte de dépôt nominative Cash Services</strong> (plafond par carte / jour) → mise en ligne. Écrans détaillés dans <code>NOUVELLES-FONCTIONNALITES-2026-08.md</code> (§1).</p>
+    <div class="screen-mock">
+      <div class="mock-title">Maquette fonctionnelle — pipeline de recrutement</div>
+      <div class="mock-row"><span>Yanis B. · candidature (CV + CNI + aptitudes)</span><span class="mock-tag amber">session à planifier</span></div>
+      <div class="mock-row"><span>Amine K. · embauché · habilité · carte CS-2048</span><span class="mock-tag green">actif · 4,8★ · online</span></div>
+      <div class="mock-row"><span>Léa M. · session réalisée</span><span class="mock-tag amber">non retenu · expérience positive</span></div>
+    </div>
+    <table>
+      <thead><tr><th>Action manager</th><th>Effet (Doc 2 / Doc 3 · NOUVELLES-FONCTIONNALITES §1)</th></tr></thead>
+      <tbody>
+        <tr><td>Recevoir une candidature</td><td><code>applications</code> : <code>candidature_reçue</code> — CV, CNI, aptitudes rattachés au dossier</td></tr>
+        <tr><td>Planifier une session de recrutement</td><td><code>recruitment_sessions</code> : chaque candidat reçoit un créneau (<code>session_planifiée → entretien_réalisé</code>)</td></tr>
+        <tr><td>Embaucher</td><td><code>couriers</code> : <code>embauché</code> (<code>hired_at</code>) → habilitation (<code>habilitation_at</code>) → carte de dépôt nominative — réservé au rôle <code>owner</code></td></tr>
+        <tr><td>Consulter un profil</td><td>Disponibilité (<code>courier_status</code>), note moyenne (<code>rating_avg</code>, alimentée par <code>courier_ratings</code>), zone d'attache (<code>home_zone_id</code>), historique de tournées</td></tr>
+        <tr><td>Suspendre / offboarder</td><td>Bascule hors dispatch sans supprimer l'historique ; au départ, <strong>désactivation de la carte de dépôt</strong> (<code>revoked_at</code>) et retrait de l'habilitation</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Un seul statut : salarié — une seule comptabilité</strong> L'agent n'a <strong>aucune comptabilité par tournée</strong> : sa paie est un <strong>coût d'exploitation fixe</strong>, et aucun écran ne lui associe de montant par encaissement. Il n'y a ni statut micro-entrepreneur, ni commission, ni facturation agent, ni auto-facturation, ni régime de TVA agent. La carte de dépôt nominative Cash Services est l'unique instrument financier remis au salarié, désactivée à son départ.</div>
+    </div>
+  </section>
+
+  <section class="section" id="zones-dispatch">
+    <h2>Zones d'encaissement, limites &amp; dispatch</h2>
+    <p>Le manager configure les <strong>zones d'encaissement</strong> (<code>delivery_zones</code>, Doc 2) et leurs <strong>limites maximales</strong>, qui bornent l'algorithme de dispatch (Doc 1, Doc 3 — distance prioritaire sur la note).</p>
+    <table>
+      <thead><tr><th>Paramètre de zone</th><th>Colonne (Doc 2)</th><th>Rôle dans le dispatch</th></tr></thead>
+      <tbody>
+        <tr><td>Centre + rayon</td><td><code>center_lat/lng</code>, <code>radius_km</code></td><td>Définit la couverture géographique (PostGIS)</td></tr>
+        <tr><td>Rayon maximal</td><td><code>max_radius_km</code></td><td>Distance au-delà de laquelle aucune tournée n'est dispatchée dans la zone</td></tr>
+        <tr><td>Tournées simultanées max</td><td><code>max_concurrent_deliveries</code></td><td>Plafonne le nombre de tournées actives par agent</td></tr>
+        <tr><td>Cash max par agent</td><td><code>max_cash_amount_cents</code></td><td>Borne le montant d'espèces qu'un agent peut détenir (conformité, Doc 8)</td></tr>
+      </tbody>
+    </table>
+    <div class="screen-mock">
+      <div class="mock-title">Maquette fonctionnelle — configuration d'une zone</div>
+      <div class="mock-row"><span>Marseille Centre — rayon 5 km</span><span class="mock-tag green">active</span></div>
+      <div class="mock-row"><span>Tournées simultanées max / agent</span><span class="mock-tag green">3</span></div>
+      <div class="mock-row"><span>Cash max / agent</span><span class="mock-tag amber">300,00 €</span></div>
+    </div>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Le dispatch est automatique — l'agent ne refuse pas</strong> Le manager ne choisit pas l'agent tournée par tournée : il paramètre les zones et limites, et l'algorithme (job <code>dispatch-courier</code>, Doc 5) sélectionne l'agent le plus proche éligible. <strong>L'affectation est automatique et l'agent ne peut pas la refuser</strong> (bouton « Bien reçu ») ; seul le manager peut réaffecter ou refuser, et un manquement à l'obligation de dépôt est traité comme faute lourde (NOUVELLES-FONCTIONNALITES §11). Le manager peut <strong>réassigner</strong> manuellement une tournée en cas de besoin (Doc 3, <code>/deliveries/{id}/reassign</code>).</div>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Deux seuils réglables, distincts du plafond de zone</strong> Au-delà des limites de zone ci-dessus, deux paramètres globaux gouvernent le cash (Doc 8) : le <strong>seuil de dépôt obligatoire = 400 €</strong>, <em>paramétrable</em> (l'agent doit déposer au réseau <strong>Cash Services</strong> dès que son encours dépasse ce seuil, contrôle serveur <code>cash_on_hand_cents &gt; 40000</code>) ; et le <strong>plafond de paiement en espèces = 1 000 € par transaction</strong>, <em>paramétrable</em>, avec <strong>anti-fractionnement</strong> (art. L112-6 / D112-3 CMF). Ces deux réglages se pilotent depuis l'écran de configuration.</div>
+    </div>
+  </section>
+
+  <section class="section" id="supervision-livraisons">
+    <h2>Supervision des encaissements</h2>
+    <p>Vue temps réel des encaissements en cours (<code>deliveries</code> + <code>delivery_tracking_events</code>, Doc 2), pour repérer les blocages : aucune attribution, retard, litige cash.</p>
+    <div class="screen-mock">
+      <div class="mock-title">Maquette fonctionnelle — encaissements du jour</div>
+      <div class="mock-row"><span>CMD-A7F92K · Yanis B. · Sofia Martin</span><span class="mock-tag amber">OUT_FOR_COLLECTION · ETA 6 min</span></div>
+      <div class="mock-row"><span>CMD-C9R44P · — · Nina Esposito</span><span class="mock-tag red">AWAITING_COURIER · aucun agent</span></div>
+      <div class="mock-row"><span>CMD-D2X10Q · Amine K. · retour cash</span><span class="mock-tag green">is_return · en route</span></div>
+    </div>
+    <table>
+      <thead><tr><th>Situation à surveiller</th><th>Détection</th><th>Action manager</th></tr></thead>
+      <tbody>
+        <tr><td>Aucun agent disponible</td><td><code>AWAITING_COURIER</code> proche de <code>collection_deadline_at</code></td><td>Élargir la zone / réassigner / relancer le dispatch (sinon <code>COLLECTION_FAILED</code>)</td></tr>
+        <tr><td>Collecte en échec</td><td>Code de sécurité erroné, photo manquante, client absent</td><td>Contacter le client, replanifier ou annuler (aucun remboursement — rien collecté)</td></tr>
+        <tr><td>Litige cash</td><td>Montant collecté ≠ montant dû (Doc 2, contrainte)</td><td>Investigation, rapprochement (Doc 8, conformité cash)</td></tr>
+        <tr><td>Tournée de retour (remboursement)</td><td><code>deliveries.is_return = true</code></td><td>Suivre la remise effective des espèces au client (D2)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="centre-appels">
+    <h2>Centre d'appels clients</h2>
+    <p>Deux types d'appels distincts sont identifiés, chacun avec son propre déclenchement temporel et son propre objectif. Tous reposent sur la table <code>customer_calls</code> (Doc 2), qui sert à la fois de planning (appels à venir) et d'historique (appels passés et leur résultat).</p>
+
+    <h3>Les deux types d'appels</h3>
+    <table>
+      <thead><tr><th>Type (<code>call_type</code>)</th><th>Déclenchement</th><th>Objectif</th></tr></thead>
+      <tbody>
+        <tr><td><code>pre_departure_reminder</code></td><td>1 jour avant <code>flight_offers.departure_at</code> (Doc 2), pour les commandes <code>CONFIRMED</code></td><td>Rappel humain avant le vol — distinct et complémentaire du rappel automatique par email/SMS déjà couvert au Doc 7 (J-7/J-1) ; celui-ci est un appel téléphonique réel</td></tr>
+        <tr><td><code>satisfaction_survey</code></td><td>Manuel — déclenché par le manager après une commande <code>CONFIRMED</code>, pas de règle d'automatisation imposée</td><td>Comprendre les raisons d'usage de l'app, évaluer le caractère intuitif perçu, recueillir des suggestions (voir section dédiée ci-dessous)</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>pre_departure_reminder n'est pas un doublon du Doc 7</strong> Le Doc 7 documente des rappels automatiques par email/SMS (J-7 et J-1) qui renvoient le client vers le site de la compagnie pour son enregistrement — aucune action humaine n'y est requise. Le <code>pre_departure_reminder</code> de ce document est un appel téléphonique passé par une personne, à un moment qui peut coïncider avec le rappel J-1 du Doc 7 sans s'y substituer : l'un est un message automatisé à grande échelle, l'autre une attention personnalisée, cohérente avec l'importance donnée à la relation client.</div>
+    </div>
+
+    <h3>Le planning des appels</h3>
+    <div class="screen-mock">
+      <div class="mock-title">Maquette fonctionnelle — file d'appels du jour</div>
+      <div class="mock-row"><span>09:15 · Sofia Martin · Rappel J-1 avant vol</span><span class="mock-tag red">À appeler</span></div>
+      <div class="mock-row"><span>14:00 · Karim Idrissi · Rappel J-1 avant vol</span><span class="mock-tag amber">Programmé</span></div>
+      <div class="mock-row"><span>16:30 · Nina Esposito · Questionnaire satisfaction</span><span class="mock-tag green">Terminé</span></div>
+    </div>
+    <p>La file est construite par une requête simple sur <code>customer_calls</code>, triée par urgence :</p>
+    <pre><span class="kw">SELECT</span> cc.id, cc.call_type, cc.scheduled_at, cc.status,
+       o.order_ref, ot.given_name_enc, ot.family_name_enc
+<span class="kw">FROM</span> customer_calls cc
+<span class="kw">JOIN</span> orders o <span class="kw">ON</span> o.id = cc.order_id
+<span class="kw">JOIN</span> order_travelers ot <span class="kw">ON</span> ot.order_id = o.id <span class="kw">AND</span> ot.is_primary_contact = <span class="kw">true</span>
+<span class="kw">WHERE</span> cc.status = <span class="str">'scheduled'</span>
+  <span class="kw">AND</span> cc.scheduled_at <span class="kw">BETWEEN</span> now() <span class="kw">AND</span> now() + <span class="kw">INTERVAL</span> <span class="str">'1 day'</span>
+<span class="kw">ORDER BY</span> cc.scheduled_at <span class="kw">ASC</span>;</pre>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Déchiffrement à la demande uniquement</strong> Comme rappelé au Doc 2 pour <code>order_travelers</code>, <code>given_name_enc</code>/<code>family_name_enc</code> sont chiffrés au repos — le déchiffrement ne doit se faire que côté serveur, au moment précis de l'affichage de la file d'appels à un manager authentifié, jamais mis en cache en clair côté client de l'espace manager.</div>
+    </div>
+
+    <h4>Job CRON de génération automatique des appels planifiés</h4>
+    <p>Le type <code>pre_departure_reminder</code> doit être créé automatiquement dans <code>customer_calls</code> par un job planifié (cohérent avec les jobs déjà prévus au Doc 5), pas saisi manuellement par le manager :</p>
+    <ul class="checklist">
+      <li>Job quotidien : pour chaque commande <code>CONFIRMED</code> dont le vol associé part dans 24 à 48 heures et sans <code>pre_departure_reminder</code> déjà créé, insérer une ligne planifiée</li>
+      <li><code>satisfaction_survey</code> reste exclu de cette automatisation — créé manuellement par le manager depuis la fiche commande, pas par job CRON</li>
+    </ul>
+  </section>
+
+  <section class="section" id="questionnaire">
+    <h2>Questionnaire de satisfaction</h2>
+    <p>Trois axes de réponse, stockés en colonnes dédiées sur <code>customer_calls</code> (Doc 2) plutôt qu'en JSONB, pour permettre des agrégations directes côté espace manager.</p>
+    <table>
+      <thead><tr><th>Question posée à l'oral</th><th>Colonne (Doc 2)</th><th>Format de réponse</th></tr></thead>
+      <tbody>
+        <tr><td>Qu'est-ce qui vous a poussé à utiliser PayEnCash ?</td><td><code>survey_usage_reason</code></td><td>Réponse libre, retranscrite par le manager pendant l'appel</td></tr>
+        <tr><td>Sur 5, à quel point l'application vous a-t-elle semblé simple à utiliser ?</td><td><code>survey_app_intuitive_score</code></td><td>Note entière de 1 à 5</td></tr>
+        <tr><td>Qu'est-ce qui pourrait être amélioré ou ajouté ?</td><td><code>survey_suggestions</code></td><td>Réponse libre</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div><strong>Tableau de bord agrégé</strong> L'espace manager doit afficher, au minimum, la moyenne de <code>survey_app_intuitive_score</code> sur une période donnée et la liste brute des réponses libres — utile pour identifier rapidement des motifs récurrents dans les suggestions sans avoir à relire chaque appel individuellement.</div>
+    </div>
+    <pre><span class="kw">SELECT</span> AVG(survey_app_intuitive_score) <span class="kw">AS</span> note_moyenne,
+       COUNT(*) <span class="kw">AS</span> nb_reponses
+<span class="kw">FROM</span> customer_calls
+<span class="kw">WHERE</span> call_type = <span class="str">'satisfaction_survey'</span>
+  <span class="kw">AND</span> status = <span class="str">'completed'</span>
+  <span class="kw">AND</span> completed_at &gt;= now() - <span class="kw">INTERVAL</span> <span class="str">'30 days'</span>;</pre>
+  </section>
+
+  <section class="section" id="suivi-financier">
+    <h2>Trésorerie du cash — du point de dépôt à la paie</h2>
+    <p>Le dispositif : les agents déposent au <strong>réseau Cash Services</strong> avec leur <strong>carte de dépôt nominative</strong> dès que leur encours dépasse le <strong>seuil de 400 €</strong> (paramétrable), un job quotidien récupère le <strong>rapport de transactions Cash Services</strong> pour rapprocher ces dépôts, et les fonds rapprochés puis confirmés sur le compte bancaire (état <code>on_account</code>) financent les salaires (Doc 8).</p>
+    <p>C'est la vue centrale sur l'argent physique. Elle répond à une seule question, à tout instant : <strong>où est le cash qu'on a collecté ?</strong> Quatre poches, dans l'ordre du circuit, et on ne saute jamais une étape (voir Doc 8).</p>
+
+    <div class="screen-mock">
+      <div class="mock-title">Trésorerie du cash</div>
+      <div class="mock-row"><span><strong>1. Collecté, pas encore déposé</strong><br><span style="color:#6B6966;font-size:12px">Encaissements terminés, espèces encore chez les agents</span></span><span><strong>3 480,20 €</strong> <span class="mock-tag amber">14 agents</span></span></div>
+      <div class="mock-row"><span><strong>2. Déposé, en attente de rapprochement</strong><br><span style="color:#6B6966;font-size:12px">Déposé au réseau Cash Services par l'agent, pas encore vu dans le rapport</span></span><span><strong>1 902,55 €</strong> <span class="mock-tag amber">J+1</span></span></div>
+      <div class="mock-row"><span><strong>3. Rapproché, pas encore sur le compte</strong><br><span style="color:#6B6966;font-size:12px">Confirmé par le rapport Cash Services, rattaché aux commandes</span></span><span><strong>7 645,00 €</strong> <span class="mock-tag green">à virer</span></span></div>
+      <div class="mock-row"><span><strong>4. Disponible sur le compte (<code>on_account</code>)</strong><br><span style="color:#6B6966;font-size:12px">Confirmé par synchronisation bancaire — seule poche ventilable</span></span><span><strong>12 310,80 €</strong> <span class="mock-tag green">ventilable</span></span></div>
+      <div class="mock-row"><span style="color:#6B6966">Dernier import Cash Services : aujourd'hui 06:12 · 148 transactions · 2 écarts</span><span><span class="mock-tag red">2 écarts à traiter</span></span></div>
+      <div class="mock-row"><span><strong>Synchroniser avec Qonto</strong><br><span style="color:#6B6966;font-size:12px">Interroge le compte et confirme quels fonds sont réellement arrivés</span></span><span class="mock-tag green">Bouton</span></div>
+    </div>
+
+    <p>Les poches 1 et 2 sont des <strong>créances sur les agents</strong>, pas de la trésorerie : l'argent existe, mais il n'est pas chez nous. La poche 3 est chez la banque. Seule la poche 4 permet de payer.</p>
+
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>La ventilation ne part que de la poche 4</strong> Les paies agents sont virées depuis Qonto, donc uniquement sur des fonds dont l'arrivée a été confirmée par la synchronisation. Un montant « déposé » ou même « rapproché » ne suffit pas : tant qu'il n'est pas sur Qonto, il n'est pas ventilable. C'est ce qui empêche de payer des salaires sur de l'argent supposé.</div>
+    </div>
+
+    <h3>Écarts de rapprochement</h3>
+    <p>Un écart n'est <strong>jamais</strong> résolu automatiquement : il est présenté au manager, qui tranche. Trois familles :</p>
+    <table>
+      <thead><tr><th>Écart</th><th>Ce que ça veut dire</th><th>Action manager</th></tr></thead>
+      <tbody>
+        <tr><td>Dépôt déclaré, aucune ligne bancaire</td><td>L'agent dit avoir déposé, la banque ne le voit pas (erreur d'automate Cash Services, carte d'un collègue, déclaration erronée)</td><td>Vérifier la photo du reçu, contacter l'agent, ouvrir un litige</td></tr>
+        <tr><td>Ligne bancaire sans dépôt déclaré</td><td>Un dépôt a eu lieu sans être déclaré dans l'app</td><td>Rattacher manuellement à l'agent porteur de la carte, rappeler la procédure</td></tr>
+        <tr><td>Montants différents</td><td>Le reçu et le rapport ne concordent pas</td><td>Le <strong>rapport bancaire fait foi</strong> ; l'écart est tracé sur l'agent</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Encours et blocage des agents</h3>
+    <p>Chaque agent porte un encours (<code>couriers.cash_on_hand_cents</code>). Deux conséquences opérationnelles, appliquées <strong>côté serveur</strong> et pas seulement affichées :</p>
+    <ul style="padding-left:18px;font-size:14px;line-height:1.9;">
+      <li>Un agent avec un encours non déposé <strong>ne reçoit plus de tournée</strong>. Il doit déposer pour repartir.</li>
+      <li>Un agent ne prend <strong>qu'une tournée à la fois</strong>. Enchaîner plusieurs collectes n'est possible que via une <strong>tournée groupée</strong> composée par le dispatch, avec un seul dépôt à la fin — jamais par accumulation libre.</li>
+    </ul>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Le plafond de zone borne le risque, la règle « une tournée à la fois » borne l'exposition</strong> Sans elle, un agent pourrait accumuler un encours arbitraire avant son premier dépôt. Le manager voit l'encours par agent et peut forcer un dépôt avant réattribution.</div>
+    </div>
+
+    <h3>Configuration de la ventilation</h3>
+    <table>
+      <thead><tr><th>Réglage</th><th>Effet</th></tr></thead>
+      <tbody>
+        <tr><td>Fréquence de ventilation</td><td>Rythme des virements de paie depuis Qonto (hebdomadaire par défaut). Une ventilation ne part que sur la poche 4.</td></tr>
+        <tr><td>Heure de l'import Cash Services</td><td>Heure du job quotidien de récupération du rapport de transactions Cash Services.</td></tr>
+        <tr><td>Seuil de dépôt obligatoire</td><td>Encours au-delà duquel l'agent doit déposer au réseau Cash Services (400 € par défaut, paramétrable — contrôle serveur <code>&gt; 40000</code>).</td></tr>
+        <tr><td>Plafond d'encours par agent</td><td>Montant au-delà duquel l'agent est bloqué même sans dépôt en attente.</td></tr>
+        <tr><td>Délai d'alerte de dépôt</td><td>Durée après laquelle un encours non déposé alerte le responsable de zone.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Suivi financier en direct</h2>
+    <p>Ce volet s'appuie directement sur les tables déjà introduites au Doc 8 (<code>provider_wallets</code>, <code>wallet_transactions</code>) et sur <code>payments</code>/<code>orders</code> (Doc 2) — l'espace manager ne crée pas de nouvelle source de vérité financière, il les rend lisibles d'un coup d'œil.</p>
+
+    <!-- Diagramme flux financier -->
+    <svg viewBox="0 0 760 290" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:760px;display:block;margin:16px 0 24px;" font-family="Inter, Helvetica, Arial, sans-serif">
+      <rect x="0" y="0" width="760" height="290" rx="10" fill="#F7F5F0"/>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#6B6966"/></marker>
+      </defs>
+      <text x="380" y="28" font-size="13" font-weight="700" fill="#1F4438" text-anchor="middle">Décomposition du cash collecté — ce qui s'affiche dans l'espace manager</text>
+
+      <!-- Prix TTC -->
+      <rect x="280" y="44" width="200" height="56" rx="8" fill="#1F4438"/>
+      <text x="380" y="68" font-size="12" font-weight="600" fill="#F7F5F0" text-anchor="middle">Cash TTC collecté</text>
+      <text x="380" y="88" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">orders.total_price_cents</text>
+
+      <!-- Flèches vers décomposition -->
+      <line x1="330" y1="100" x2="150" y2="150" stroke="#6B6966" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <line x1="380" y1="100" x2="380" y2="150" stroke="#6B6966" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <line x1="430" y1="100" x2="620" y2="150" stroke="#6B6966" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- Base fournisseur -->
+      <rect x="20" y="152" width="230" height="72" rx="8" fill="#2E6650"/>
+      <text x="135" y="176" font-size="12" font-weight="600" fill="#F7F5F0" text-anchor="middle">Prix fournisseur (base)</text>
+      <text x="135" y="196" font-size="10.5" fill="#9FC2B0" text-anchor="middle">reconstitue l'avance Duffel /</text>
+      <text x="135" y="210" font-size="10.5" fill="#9FC2B0" text-anchor="middle">règle la dette Hotelbeds (post-payé)</text>
+
+      <!-- Revenu -->
+      <rect x="265" y="152" width="230" height="72" rx="8" fill="#D8722B"/>
+      <text x="380" y="176" font-size="12" font-weight="600" fill="#FFFFFF" text-anchor="middle">Revenu PayEnCash</text>
+      <text x="380" y="196" font-size="10.5" fill="rgba(255,255,255,0.85)" text-anchor="middle">marges (fixe + sécurité)</text>
+      <text x="380" y="210" font-size="10.5" fill="rgba(255,255,255,0.85)" text-anchor="middle">+ frais de service</text>
+
+      <!-- TVA -->
+      <rect x="510" y="152" width="230" height="72" rx="8" fill="#6B6966"/>
+      <text x="625" y="176" font-size="12" font-weight="600" fill="#FFFFFF" text-anchor="middle">TVA collectée</text>
+      <text x="625" y="196" font-size="10.5" fill="rgba(255,255,255,0.85)" text-anchor="middle">vat_amount_cents — dette État</text>
+      <text x="625" y="210" font-size="10.5" fill="rgba(255,255,255,0.85)" text-anchor="middle">à reverser, pas un revenu</text>
+
+      <!-- Séparation + note -->
+      <line x1="20" y1="246" x2="740" y2="246" stroke="#E4E0D6" stroke-width="1"/>
+      <text x="380" y="266" font-size="11" fill="#6B6966" text-anchor="middle">Bénéfice net = revenu ci-dessus, moins les coûts d'exploitation fixes globaux.</text>
+      <text x="380" y="281" font-size="11" fill="#6B6966" text-anchor="middle">Le salaire des agents est un coût fixe, jamais imputé à la commande.</text>
+    </svg>
+
+    <h3>Encaissements clients — revenu et TVA</h3>
+    <p>Chaque collecte génère un revenu (marges + frais de service) et une TVA collectée à reverser, tous deux inclus dans le cash TTC encaissé. (17/09 ; 20/09 : le rail en ligne est supprimé) Un règlement à l'agent n'a aucun coût de prestataire (espèces en main propre), sauf la commission TPE du complément carte au-delà de 1 000 €. Le <strong>salaire des agents</strong> est une charge d'exploitation fixe, jamais imputée à la commande : aucun coût agent n'est calculé par tournée. L'espace manager doit donc séparer deux choses que le cash encaissé mélange : ce qu'AJEK <strong>garde</strong> (revenu) et ce qu'il <strong>collecte pour l'État</strong> (TVA à reverser).</p>
+    <table>
+      <thead><tr><th>Indicateur</th><th>Source</th><th>Calcul</th></tr></thead>
+      <tbody>
+        <tr><td>Cash collecté aujourd'hui (TTC)</td><td><code>payments</code></td><td><code>SUM(collected_amount_cents) WHERE status='collected' AND collected_at::date = current_date</code></td></tr>
+        <tr><td>TVA collectée du jour (à reverser)</td><td><code>orders.vat_amount_cents</code></td><td><code>SUM(vat_amount_cents) WHERE paid_at::date = current_date</code> — figée par commande à la génération du code</td></tr>
+        <tr><td>Revenu du jour</td><td><code>orders</code></td><td><code>SUM(margin_fixed_cents + margin_safety_cents + service_fee_cents) WHERE paid_at::date = current_date</code></td></tr>
+        <tr><td>Montant en attente de collecte</td><td><code>orders</code></td><td><code>SUM(total_price_cents) WHERE status IN ('AWAITING_COURIER','COURIER_ASSIGNED','OUT_FOR_COLLECTION')</code> — attendu mais pas encore collecté</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>La TVA collectée n'est pas un revenu</strong> Le montant de TVA (<code>orders.vat_amount_cents</code>, figé à la génération du code) est encaissé pour le compte de l'État et doit être reversé (Doc 8). L'espace manager l'affiche comme une <strong>dette</strong> distincte, jamais agrégée avec le revenu (marges + frais de service).</div>
+    </div>
+
+    <h3>Paiements envoyés aux fournisseurs (Duffel, Hotelbeds)</h3>
+    <p>Duffel fonctionne avec un <strong>solde prépayé</strong> (avance) ; Hotelbeds est <strong>post-payé</strong> (aucun solde à surveiller, la dette est réglée à la collecte — Doc 8). Le manager affiche le solde Duffel et le détail de chaque dépense, déjà couverts par les tables du Doc 8.</p>
+    <div class="screen-mock">
+      <div class="mock-title">Maquette fonctionnelle — comptes fournisseurs</div>
+      <div class="mock-row"><span>Duffel Balance (avance prépayée)</span><span class="mock-tag green">1 240,00 €</span></div>
+      <div class="mock-row"><span>Hotelbeds — post-payé (aucun solde)</span><span class="mock-tag green">dette réglée à la collecte</span></div>
+    </div>
+    <table>
+      <thead><tr><th>Indicateur</th><th>Source</th><th>Calcul</th></tr></thead>
+      <tbody>
+        <tr><td>Solde Duffel (avance)</td><td><code>provider_wallets.last_known_balance_cents</code></td><td>Lecture directe — Duffel uniquement (Hotelbeds post-payé, hors wallet)</td></tr>
+        <tr><td>Alerte solde bas Duffel</td><td><code>provider_wallets</code></td><td><code>last_known_balance_cents &lt; low_balance_threshold_cents</code> (requête type du Doc 2)</td></tr>
+        <tr><td>Règlements Hotelbeds (post-payé)</td><td><code>supplier_bookings.settlement_status</code></td><td>Suivi des dettes réglées / en échec (<code>settled</code> / <code>failed</code>) — pas de solde prépayé</td></tr>
+        <tr><td>Journal des dépenses / mouvements</td><td><code>wallet_transactions</code></td><td>Liste chronologique, jointe à <code>supplier_bookings</code> pour retrouver la commande d'origine</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Bénéfice brut, bénéfice net, et trésorerie</h3>
+    <p>Trois notions à ne jamais confondre dans l'affichage, classées de la plus optimiste à la plus réaliste.</p>
+    <div class="formula-box" style="background: rgba(31,68,56,0.06); border-radius: 10px; padding: 14px 16px; margin: 14px 0; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+      revenu_commande = orders.margin_fixed_cents + orders.margin_safety_cents + orders.service_fee_cents<br>
+      bénéfice_net = Σ revenu_commande − coûts d'exploitation fixes (dont salaires agents)
+    </div>
+    <pre><span class="kw">SELECT</span> DATE_TRUNC(<span class="str">'day'</span>, confirmed_at) <span class="kw">AS</span> jour,
+       SUM(margin_fixed_cents + margin_safety_cents + service_fee_cents) <span class="kw">AS</span> revenu_cents,
+       SUM(vat_amount_cents) <span class="kw">AS</span> tva_collectee_cents,
+       COUNT(*) <span class="kw">AS</span> nb_commandes
+<span class="kw">FROM</span> orders
+<span class="kw">WHERE</span> status = <span class="str">'CONFIRMED'</span>
+<span class="kw">GROUP BY</span> jour
+<span class="kw">ORDER BY</span> jour <span class="kw">DESC</span>;
+<span class="comment">-- Bénéfice net = Σ revenu − coûts d'exploitation fixes (salaires agents, hébergement…), calculés hors de cette table</span></pre>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Séparer le revenu de la TVA collectée</strong> Le revenu (marges + frais de service) est ce que PayEnCash garde ; la TVA collectée est une dette à reverser. Ne jamais présenter le cash TTC collecté comme un revenu — afficher le revenu, net des coûts d'exploitation fixes, comme indicateur principal, et la TVA à reverser à part.</div>
+    </div>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Trésorerie réelle ≠ revenu comptable</strong> Comme expliqué au Doc 8, le cash est collecté immédiatement mais doit être déposé en banque avant de réapprovisionner l'avance Duffel. Le tableau de bord "trésorerie" doit distinguer : le revenu comptable (ci-dessus), le solde réel du Duffel Balance (<code>provider_wallets</code>, ce qui reste pour avancer les vols), la TVA collectée à reverser, et le cash collecté en attente de dépôt — ne jamais les fusionner sous peine de donner une fausse impression de liquidité disponible.</div>
+    </div>
+
+    <h3>Projection sur les réservations en cours et prévues</h3>
+    <p>Distincte du bénéfice déjà réalisé (commandes <code>CONFIRMED</code>) : une estimation de ce que les commandes pas encore finalisées pourraient rapporter si elles se concrétisent, pour donner une visibilité à court terme sans attendre la confirmation effective.</p>
+    <table>
+      <thead><tr><th>Indicateur</th><th>Statuts inclus</th><th>Calcul</th><th>Fiabilité</th></tr></thead>
+      <tbody>
+        <tr><td>Revenu potentiel en cours de collecte</td><td><code>AWAITING_COURIER</code> → <code>OUT_FOR_COLLECTION</code></td><td><code>SUM(margin_fixed_cents + margin_safety_cents + service_fee_cents)</code> sur ces statuts</td><td>Élevée à court terme — le code est généré et un agent est (ou va être) dispatché, mais la collecte peut encore échouer avant <code>collection_deadline_at</code></td></tr>
+        <tr><td>Revenu potentiel en cours de choix</td><td><code>DRAFT</code></td><td>Même calcul sur les commandes <code>DRAFT</code> non expirées</td><td>Faible — le client peut abandonner avant de générer un code ; taux de conversion DRAFT→collecte à mesurer pour calibrer</td></tr>
+      </tbody>
+    </table>
+    <pre><span class="kw">SELECT</span> status,
+       SUM(margin_fixed_cents + margin_safety_cents + service_fee_cents) <span class="kw">AS</span> revenu_potentiel_cents,
+       COUNT(*) <span class="kw">AS</span> nb_commandes
+<span class="kw">FROM</span> orders
+<span class="kw">WHERE</span> status <span class="kw">IN</span> (<span class="str">'DRAFT'</span>, <span class="str">'AWAITING_COURIER'</span>, <span class="str">'COURIER_ASSIGNED'</span>, <span class="str">'OUT_FOR_COLLECTION'</span>)
+  <span class="kw">AND</span> (draft_expires_at &gt; now() <span class="kw">OR</span> collection_deadline_at &gt; now())
+<span class="kw">GROUP BY</span> status;</pre>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Une projection, pas une promesse</strong> Ce chiffre ne doit jamais être additionné au revenu déjà réalisé dans l'affichage principal — afficher les deux côte à côte, étiquetés "réalisé" et "potentiel", pour ne pas créer une impression de revenu acquis qui ne l'est pas encore.</div>
+    </div>
+  </section>
+
+  <section class="section" id="commissions">
+    <h2>Gestion des marges, frais de service &amp; TVA</h2>
+    <p>Plusieurs configurations, toutes réservées au rôle <code>owner</code> (Doc 5) : les <strong>marges</strong> commerciales (<code>margin_config</code>), la <strong>frais de service d'encaissement</strong> (<code>delivery_fee_config</code>) et le <strong>taux de TVA</strong> (<code>vat_rate</code>). Toutes définissent des composantes du prix TTC payé par le client (revenu ou taxe) — il n'y a plus de coût de prestataire de paiement à configurer.</p>
+
+    <h3>Marges PayEnCash (revenu)</h3>
+    <p>Page de configuration permettant de modifier les taux de marge (Doc 4) sans toucher au code, via la table <code>margin_config</code> (Doc 2) — réservée au rôle <code>owner</code>.</p>
+    <div class="screen-mock">
+      <div class="mock-title">Maquette fonctionnelle — configuration des marges</div>
+      <div class="mock-row"><span>Vol seul</span><span class="mock-tag green">15% (plancher 3,00 €)</span></div>
+      <div class="mock-row"><span>Hébergement seul</span><span class="mock-tag green">10%</span></div>
+      <div class="mock-row"><span>Package vol + hébergement</span><span class="mock-tag green">8%</span></div>
+    </div>
+    <h4>Implémentation (pseudo-code)</h4>
+    <pre><span class="kw">function</span> getCurrentMarginConfig(category) {
+  <span class="comment">// category : 'flight_only' | 'stay_only' | 'package'</span>
+  <span class="kw">return</span> db.query(<span class="str">`SELECT percentage, fixed_floor_cents FROM margin_config WHERE category = $1`</span>, [category]);
+}
+
+<span class="kw">function</span> updateMarginConfig(category, newPercentage, managerId) {
+  db.transaction(<span class="kw">async</span> (tx) =&gt; {
+    <span class="kw">await</span> tx.query(<span class="str">`UPDATE margin_config SET percentage = $1, updated_by = $2, updated_at = now() WHERE category = $3`</span>,
+      [newPercentage, managerId, category]);
+    <span class="kw">await</span> tx.query(<span class="str">`INSERT INTO audit_log (entity_type, entity_id, action, actor, details) VALUES ('margin_config', $1, 'margin_updated', $2, $3)`</span>,
+      [category, managerId, { new_percentage: newPercentage }]);
+  });
+}</pre>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Effet différé, jamais rétroactif</strong> Une modification de taux ne s'applique qu'aux nouvelles recherches comparées (<code>flight_search_results</code>/<code>stay_search_results</code>, Doc 2) effectuées après le changement — voir le rappel détaillé au Doc 2, section <code>margin_config</code>. Aucune commande déjà figée n'est recalculée.</div>
+    </div>
+    <h4>Suivi des revenus générés par taux</h4>
+    <p>Pour évaluer l'impact d'un changement de taux dans le temps, croiser <code>orders.margin_fixed_cents</code> avec la période d'application du taux concerné (déductible de l'historique <code>updated_at</code> de <code>margin_config</code>, ou d'un futur historique dédié si un suivi plus fin que "dernier taux en date" devient nécessaire).</p>
+
+    <h3>Frais de service d'encaissement (revenu)</h3>
+    <p>Configuration <strong>modulaire</strong> de la frais de service via <code>delivery_fee_config</code> (Doc 2, D13) — chaque composante est indépendamment activable/désactivable. Sa somme est figée dans <code>orders.service_fee_cents</code> à la génération du code et incluse dans le prix TTC payé par le client.</p>
+    <div class="screen-mock">
+      <div class="mock-title">Maquette fonctionnelle — composantes de la frais de service</div>
+      <div class="mock-row"><span>Montant fixe</span><span class="mock-tag green">activé · 2,00 €</span></div>
+      <div class="mock-row"><span>Pourcentage du montant</span><span class="mock-tag green">activé · 1,5 %</span></div>
+      <div class="mock-row"><span>Prix au kilomètre</span><span class="mock-tag amber">désactivé</span></div>
+      <div class="mock-row"><span>Majoration de nuit</span><span class="mock-tag green">activé · +1,00 € (22h–6h)</span></div>
+    </div>
+
+    <h3>Taux de TVA</h3>
+    <p>Le taux de TVA (<code>vat_rate</code>, Doc 2 / Doc 4) est configurable ici — valeur par défaut 20 %. Il est figé sur chaque commande à la génération du code (<code>orders.vat_rate</code>) et sert à calculer <code>vat_amount_cents</code>. La TVA collectée est une dette à reverser (Doc 8), pas un revenu.</p>
+    <div class="screen-mock">
+      <div class="mock-title">Maquette fonctionnelle — taux de TVA</div>
+      <div class="mock-row"><span>Taux de TVA appliqué</span><span class="mock-tag green">20 %</span></div>
+    </div>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Bien distinguer revenu et taxe</strong> Les marges et la frais de service sont des <strong>revenus</strong> PayEnCash ; la TVA est une <strong>taxe collectée pour l'État</strong>. Ces configurations modifient toutes le prix TTC payé par le client, mais ne doivent jamais être confondues dans le suivi financier (Doc 8) : le revenu est à vous, la TVA est à reverser. Toute modification est réservée au rôle <code>owner</code> et journalisée dans <code>audit_log</code>.</div>
+    </div>
+  </section>
+
+  <section class="section" id="comptabilite">
+    <h2>Comptabilité &amp; TVA — suivre, provisionner, exporter</h2>
+    <p>Régler le taux de TVA ne suffit pas. La Doc 8 impose trois choses de plus : <strong>suivre</strong> la TVA collectée (∑ <code>orders.vat_amount_cents</code> sur les commandes <code>PAID</code> / <code>CONFIRMED</code> d'une période), la <strong>mettre de côté</strong> en vue du reversement, et <strong>cadrer la périodicité déclarative</strong> avec l'expert-comptable. Aucun écran ne portait cette obligation : la TVA n'apparaissait que comme un chiffre parmi d'autres sur le suivi financier, sans provision et sans pièce exportable. <strong>Un montant qu'on affiche sans le provisionner est un montant qu'on dépense.</strong></p>
+    <p>L'écran <code>14-comptabilite</code> est le pendant de la vue trésorerie : celle-ci répond à « où est notre argent ? », celui-là à « combien, là-dedans, n'est pas à nous ? ». Trois chiffres, jamais additionnés à un revenu.</p>
+    <div class="screen-mock">
+      <div class="mock-title">Maquette fonctionnelle — comptabilité &amp; TVA (période 2026-07)</div>
+      <div class="mock-row"><span>TVA collectée <em>— commandes PAID / CONFIRMED</em></span><span class="mock-tag green">9 118,40 €</span></div>
+      <div class="mock-row"><span>Mise de côté <em>— provisionnée au rapprochement</em></span><span class="mock-tag green">7 878,40 €</span></div>
+      <div class="mock-row"><span>Non provisionné <em>— écart à traiter</em></span><span class="mock-tag amber">1 240,00 €</span></div>
+      <div class="mock-row"><span>Exports CSV <em>— ventes, TVA, trésorerie, fournisseurs, audit</em></span><span class="mock-tag red">à implémenter</span></div>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>La provision se constitue au rapprochement, pas à la collecte</strong> Tant que le rapport bancaire n'a pas confirmé le dépôt, l'argent n'est pas là pour être mis de côté. C'est la règle qui gouverne déjà la paie des agents salariés : seul l'état <code>on_account</code> autorise à disposer des fonds (D16). Provisionner sur du cash encore chez un agent, ce serait mettre de côté une créance.</div>
+    </div>
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>La périodicité affichée est une hypothèse, pas une règle</strong> Le rythme déclaratif (mensuel, trimestriel), le régime applicable et la TVA déductible sur les achats relèvent de l'<strong>expert-comptable</strong> et ne sont pas arbitrés (Doc 8 ; réserve fiscale du Doc 4). Conséquence directe sur le code : la période est un <strong>paramètre</strong> (<code>?period=YYYY-MM</code>), jamais une constante, et l'agrégat trimestriel se déduit de trois périodes mensuelles. Aucun <code>if (trimestriel)</code> en dur — sinon le jour où le comptable tranche, c'est l'endpoint qu'il faut réécrire.</div>
+    </div>
+  </section>
+
+  <section class="section" id="tracabilite">
+    <h2>Traçabilité — chaque fonctionnalité, son écran et son endpoint</h2>
+    <p>Cette matrice existe parce qu'un audit a montré le contraire de ce qu'on croyait : <strong>l'API manager préexistante — 17 chemins réellement appelés par <code>manager.facade.ts</code> — n'était documentée nulle part</strong>. Les seuls endpoints décrits dans la Doc 3 étaient ceux de la refonte agent. Un développeur travaillant à partir de la seule documentation aurait donc réécrit des endpoints existants, ou pire, aurait cru la fonctionnalité absente.</p>
+    <p>Règle de lecture : une ligne <span class="mock-tag red">à combler</span> est un trou <strong>à traiter avant l'implémentation</strong>, pas pendant. Une ligne <span class="mock-tag amber">partiel</span> signifie que la fonctionnalité est décrite mais que son contrat d'interface n'est pas encore figé.</p>
+    <div class="callout info">
+      <span class="callout-icon">🧩</span>
+      <div><strong>Où trouver le schéma et l'API de ces lignes « à combler »</strong> Les entités et endpoints correspondant aux trous ci-dessous (conformité <strong>KYB/KYC</strong>, <strong>cash &amp; rémunération</strong> — <code>cash_floats</code>, <code>tips</code>, primes —, <strong>RH agent de caisse mobile</strong> — <code>applications</code>, <code>contracts</code>, <code>service_sessions</code>, <code>shift_checklists</code> —, <strong>dispatch &amp; planning</strong>, <strong>comptabilité de gestion</strong> — <code>ledger_entries</code>, compte de résultat —, <strong>plateforme</strong> — téléphonie, messagerie, consentements —, <strong>flotte &amp; assurances</strong>, <strong>commercial</strong> et <strong>ligne Mode</strong>) sont spécifiés dans <code>MODELE-DONNEES-COMPLEMENT-2026-08.md</code> (colonnes, FK, enums, familles d'endpoints, ordre de construction P0→P4). C'est la source à ouvrir avant de câbler chaque ligne <span class="mock-tag red">à combler</span>.</div>
+    </div>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Les maquettes manager ont été refaites contre l'application réelle, écran par écran</strong> La première version avait été reconstituée à partir des routes et de la façade — jamais depuis l'écran lui-même. Résultat : des blocs inventés (une colonne « dont TVA » sur la liste des réservations, une barre de recherche sur le journal d'audit) et des blocs réels absents (le sélecteur de jour et la satisfaction du mois sur le centre d'appels, le bouton « Enregistrer » par ligne de marge, la moitié de l'écran financier). <strong>Une liste d'endpoints ne dit pas ce que l'écran montre</strong> : les lignes ci-dessous sont désormais vérifiées sur l'écran, pas déduites de l'API.</div>
+    </div>
+
+    <table>
+      <thead><tr><th>Fonctionnalité</th><th>Écran</th><th>Endpoint</th><th>Documentation</th><th>État</th></tr></thead>
+      <tbody>
+        <tr><td>Connexion et session</td><td>01-connexion</td><td><code>/manager/auth/login · refresh · logout</code></td><td>Doc 3 §11</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Commandes en attente d’action</td><td>02-tableau-de-bord</td><td><code>/manager/reservations/pending</code></td><td>Doc 3 §11</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Activité des encaissements en direct</td><td>03-encaissements</td><td><code>/manager/deliveries</code></td><td>Doc 3 §12 · Doc 9</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Réattribution d’une tournée</td><td>03-encaissements</td><td><code>/manager/deliveries/{id}/reassign</code></td><td>Doc 9</td><td><span class="mock-tag amber">partiel</span></td></tr>
+        <tr><td>Liste et filtres par statut <span class="meta">(En attente · Brouillons · Confirmées · Incidents &amp; en cours)</span></td><td>04-commandes</td><td><code>/manager/reservations/by-status</code></td><td>Doc 3 §11</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Tri par urgence (expiration la plus proche)</td><td>04-commandes</td><td><code>/manager/reservations/pending</code></td><td>Doc 3 §11</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Recherche de commande <span class="meta">(par référence uniquement — le reste est chiffré)</span></td><td>04-commandes</td><td><code>/manager/reservations/search</code></td><td>Doc 3 §11</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Détail d’une commande</td><td>12-commande-detail</td><td><code>/manager/reservations/{id}</code></td><td>Doc 3 §11</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Confirmation manuelle d’un encaissement</td><td>04-commandes · 12-commande-detail<span class="meta">Disponible depuis la liste, pas seulement depuis le détail.</span></td><td><code>/manager/reservations/{id}/confirm-payment</code></td><td>Doc 3 §11</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Annulation dans les règles</td><td>04-commandes · 12-commande-detail</td><td><code>/manager/reservations/{id}/cancel</code></td><td>Doc 3 §11 · Doc 7</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Annulation forcée (perte assumée)</td><td>04-commandes · 12-commande-detail<span class="meta">Réservée aux états DRAFT, PENDING_PAYMENT et FAILED.</span></td><td><code>/manager/reservations/{id}/force-cancel</code></td><td>Doc 3 §11 · Doc 7</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Programmation d’un appel satisfaction depuis la liste</td><td>04-commandes</td><td><code>/manager/calls/satisfaction</code></td><td>Doc 3 §11 · Doc 9</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Validation d’un dossier agent</td><td>05-agents</td><td><code>/manager/couriers/{id}/approve</code></td><td>Doc 3 §12 · Doc 9</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Refus d’un dossier</td><td>05-agents</td><td><code>/manager/couriers/{id}/reject</code></td><td>Doc 3 §12 · Doc 9</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Remise et révocation de la carte de dépôt</td><td>05-agents</td><td><code>/manager/couriers/{id}/deposit-card</code></td><td>Doc 8 · Doc 9</td><td><span class="mock-tag amber">partiel</span></td></tr>
+        <tr><td>Encours de cash par agent</td><td>05-agents</td><td><code>/manager/couriers</code></td><td>Doc 9</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Zones, rayons et plafonds</td><td>06-zones-dispatch</td><td><code>/manager/delivery-zones</code></td><td>Doc 3 §12 · Doc 9</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Règles de dispatch et tournée groupée</td><td>06-zones-dispatch</td><td><code>/manager/dispatch-config</code></td><td>Doc 1 · Doc 9</td><td><span class="mock-tag amber">partiel</span></td></tr>
+        <tr><td>Les quatre poches du cash</td><td>07-tresorerie</td><td><code>/treasury/balance</code></td><td>Doc 8 · Doc 9</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Écarts de rapprochement</td><td>07-tresorerie</td><td><code>/treasury/reconciliation-gaps</code></td><td>Doc 8 · Doc 9</td><td><span class="mock-tag amber">partiel</span></td></tr>
+        <tr><td>Synchronisation Qonto</td><td>07-tresorerie</td><td><code>/treasury/qonto/sync</code></td><td>Doc 3 §9 · Doc 8</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Ventilation des paies agents</td><td>07-tresorerie</td><td><code>/treasury/payouts/run</code></td><td>Doc 3 §9 · Doc 8</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Revenu, TVA collectée, bénéfice net</td><td>08-finance</td><td><code>/manager/finance/dashboard</code></td><td>Doc 3 §11 · Doc 8</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Revenu par composante tarifaire</td><td>08-finance</td><td><code>/manager/finance/revenue-by-rate</code></td><td>Doc 3 §11 · Doc 4</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Solde prépayé Duffel et seuil d’alerte</td><td>13-solde-fournisseur</td><td><code>/manager/finance/wallets</code></td><td>Doc 3 §11 · Doc 8</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Mouvements du solde</td><td>13-solde-fournisseur</td><td><code>/manager/finance/wallet-transactions</code></td><td>Doc 3 §11</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Recharge du solde prépayé</td><td>08-finance · 13-solde-fournisseur<span class="meta">Le bloc « Wallets fournisseurs » est présent sur l’écran financier lui-même.</span></td><td><code>/manager/finance/wallets/{id}/top-up</code></td><td>Doc 3 §11 · Doc 8</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Appels à passer</td><td>09-appels</td><td><code>/manager/calls/planning</code></td><td>Doc 3 §11 · Doc 7</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Consultation d’un jour passé</td><td>09-appels<span class="meta">Sélecteur de jour ; la planification accepte n’importe quelle date antérieure.</span></td><td><code>/manager/calls/planning?date=</code></td><td>Doc 3 §11</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Clôture d’un appel</td><td>09-appels</td><td><code>/manager/calls/{id}/complete</code></td><td>Doc 3 §11</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Questionnaire de satisfaction</td><td>09-appels</td><td><code>/manager/calls/satisfaction</code></td><td>Doc 3 §11 · Doc 9</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Satisfaction agrégée du mois <span class="meta">Note moyenne, nombre de réponses et verbatims.</span></td><td>09-appels</td><td><code>/manager/calls/satisfaction?period=</code></td><td>Doc 3 §11 · Doc 9</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Marges de pricing</td><td>10-configuration</td><td><code>/manager/config/margins</code></td><td>Doc 3 §11 · Doc 4</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Frais de service (D13)</td><td>10-configuration</td><td><code>/manager/config/fees</code></td><td>Doc 3 §11 · Doc 9</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Taux de TVA</td><td>10-configuration</td><td><code>/manager/config</code></td><td>Doc 3 §11 · Doc 8</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Rythme du circuit du cash</td><td>10-configuration</td><td><code>/manager/config</code></td><td>Doc 8 · Doc 9</td><td><span class="mock-tag amber">partiel</span></td></tr>
+        <tr><td>Marges par catégorie (vol seul / séjour seul / package)</td><td>10-configuration</td><td><code>/manager/config/margins</code></td><td>Doc 3 §11 · Doc 4</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Marge de sécurité (percentile 95)</td><td>10-configuration</td><td><code>/manager/config/margins</code></td><td>Doc 4</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Bénéfice net réalisé vs potentiel</td><td>08-finance</td><td><code>/manager/finance/dashboard</code></td><td>Doc 8 · Doc 9</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Segmentation par fiabilité (DRAFT / PENDING)</td><td>08-finance</td><td><code>/manager/finance/dashboard</code></td><td>Doc 9</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Journal des dépenses fournisseurs</td><td>08-finance</td><td><code>/manager/finance/wallet-transactions</code></td><td>Doc 3 §11</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Seuil d’alerte par compte fournisseur</td><td>13-solde-fournisseur</td><td><code>/manager/finance/wallets</code></td><td>Doc 3 §11 · Doc 8</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Détail financier jour par jour</td><td>08-finance</td><td><code>/manager/finance/dashboard</code></td><td>Doc 9</td><td><span class="mock-tag amber">partiel</span></td></tr>
+        <tr><td>Journal d’audit</td><td>11-audit</td><td><code>/manager/audit</code></td><td>Doc 3 §11</td><td><span class="mock-tag green">tracé</span></td></tr>
+        <tr><td>Lisibilité du journal <span class="meta">Acteur nommé au lieu de son UUID, détail rédigé au lieu du JSON, filtre de période.</span></td><td>11-audit</td><td><code>/manager/audit</code> — champ <code>actor_name</code> à ajouter</td><td>Doc 9</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>TVA collectée par période <span class="meta">∑ <code>vat_amount_cents</code> sur les commandes PAID / CONFIRMED.</span></td><td>14-comptabilite</td><td><code>/manager/accounting/vat?period=</code></td><td>Doc 8 · Doc 9</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Provision de TVA et écart non provisionné</td><td>14-comptabilite</td><td><code>/manager/accounting/vat?period=</code></td><td>Doc 8</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Exports comptables (CSV)<span class="meta">Ventes, TVA, trésorerie, dépenses fournisseurs, audit.</span></td><td>14-comptabilite</td><td><code>/manager/accounting/export/{journal}?period=</code></td><td>Doc 8</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Périodicité déclarative et régime fiscal</td><td>10-configuration · 14-comptabilite</td><td>— <span class="meta">Arbitrage externe : aucun endpoint tant que le régime n’est pas fixé.</span></td><td>Doc 8 · Doc 4</td><td><span class="mock-tag amber">partiel</span></td></tr>
+        <tr><td>Candidature agent <span class="meta">CV, CNI, aptitudes ; tout candidat est invité à une session.</span></td><td>05-agents (recrutement)</td><td><code>POST /manager/applications</code></td><td>Doc 2 · NOUVELLES-FONCTIONNALITES §1</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Session de recrutement <span class="meta">Créneau individuel ou collectif, fiche d’évaluation.</span></td><td>05-agents (recrutement)</td><td><code>/manager/recruitment-sessions</code></td><td>Doc 2 · NOUVELLES-FONCTIONNALITES §1</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Embauche &amp; habilitation <span class="meta">Contrat salarié, sans clause de responsabilité pécuniaire.</span></td><td>05-agents (recrutement)</td><td><code>POST /manager/couriers/{id}/hire</code> · <code>…/habilitate</code></td><td>Doc 2 · NOUVELLES-FONCTIONNALITES §1</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Carte de dépôt nominative Cash Services <span class="meta">Remise à l’habilitation, plafond par carte / jour, désactivée au départ.</span></td><td>05-agents</td><td><code>/manager/couriers/{id}/deposit-card</code></td><td>Doc 8 · NOUVELLES-FONCTIONNALITES §1</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Validation de prise de poste <span class="meta">Check-list, carte présente, fond de caisse compté — bloque si incomplète.</span></td><td>05-agents · planning</td><td><code>/manager/service-sessions/{id}/checklist</code></td><td>NOUVELLES-FONCTIONNALITES §8</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Appels sortants &amp; téléphonie (API) <span class="meta">Click-to-call, journal d’appels.</span></td><td>09-appels</td><td><code>/manager/telephony/*</code></td><td>NOUVELLES-FONCTIONNALITES §2</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>CRM client + notation + consentement notifications</td><td>18-fiche-client</td><td><code>/manager/crm/*</code> · <code>/manager/consents</code></td><td>NOUVELLES-FONCTIONNALITES §4</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Flotte véhicules société + assurances</td><td>Flotte</td><td><code>/manager/fleet/*</code> · <code>/manager/insurance-policies</code></td><td>NOUVELLES-FONCTIONNALITES §5</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Silos d’appel commercial + relance abandon de tunnel</td><td>Appels commerciaux</td><td><code>/manager/sales-callbacks/*</code></td><td>NOUVELLES-FONCTIONNALITES §6</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Planning / pointage (prise &amp; fin de service)</td><td>planning</td><td><code>/manager/service-sessions</code></td><td>NOUVELLES-FONCTIONNALITES §8</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Prise de rendez-vous / créneau de collecte</td><td>planning des tournées</td><td><code>orders.collection_slot</code></td><td>NOUVELLES-FONCTIONNALITES §13</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>KYB fournisseurs (ligne MODE) <span class="meta">SIRET + facture conforme avant référencement.</span></td><td>KYB fournisseurs</td><td><code>/manager/suppliers/{id}/kyb</code></td><td>MISE-A-JOUR §C · Étape 4 F11/F12</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>KYC client gradué <span class="meta">Renforcé à 3 achats ou 1 000 € / 7 j ; prestataire PVID.</span></td><td>18-fiche-client</td><td><code>/manager/customers/{id}/kyc</code></td><td>MISE-A-JOUR §C</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Catalogue des e-mails transactionnels <span class="meta">9 modèles ; <code>code_generated</code> décrit encore un parcours supprimé.</span></td><td>16-communications</td><td><code>/manager/communications/templates</code></td><td>Doc 2</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Journal des envois (e-mail, SMS, push)</td><td>16-communications</td><td><code>/manager/communications/log</code> — table <code>notification_log</code></td><td>Doc 2</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Notifications in-app (client, agent, manager)</td><td>16-communications</td><td><code>/notifications</code> · <code>/notifications/{id}/read</code></td><td>Doc 2</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Gestion des comptes manager <span class="meta">La table <code>manager_users</code> n’a ni écran ni endpoint.</span></td><td>—</td><td>—</td><td>Doc 2</td><td><span class="mock-tag red">à combler</span></td></tr>
+        <tr><td>Consultation d’un compte client</td><td>—</td><td>—</td><td>Doc 10</td><td><span class="mock-tag red">à combler</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout danger">
+      <span class="callout-icon">🔴</span>
+      <div><strong>Trois fonctionnalités déplacent de l'argent hors du parcours normal</strong> La confirmation manuelle d'un encaissement, l'annulation forcée et la recharge du solde prépayé contournent, par construction, les garde-fous du flux automatique. Chacune exige une <strong>confirmation explicite</strong>, un <strong>motif obligatoire</strong> et une <strong>trace nominative</strong> dans <code>audit_log</code>. <code>confirm-payment</code> est la plus sensible : elle déclenche l'achat fournisseur, donc un billet payé pour un cash qui n'a peut-être jamais été remis.</div>
+    </div>
+
+    <h3>Écarts entre le code actuel et la cible</h3>
+    <p>L'application manager tourne encore sur le modèle d'<strong>avant la refonte</strong> : la documentation a été refondue, le code ne l'a pas encore été. Ces écarts sont donc <strong>attendus</strong>, pas des oublis — ils sont listés ici pour que le portage des écrans (Task 8 du plan manager) sache exactement quoi retirer, et pour qu'on ne les prenne pas pour des fonctionnalités à conserver.</p>
+    <table>
+      <thead><tr><th>Où</th><th>Ce qui subsiste</th><th>Ce que devient cet élément après refonte</th></tr></thead>
+      <tbody>
+        <tr><td><code>ConfigEditor.tsx</code></td><td>Bloc « Frais prestataire de paiement » : pourcentage et frais fixe, réglables</td><td>À garder (révisé 17/09) : les frais du prestataire de prélèvement (Stripe) se règlent ici, taux et frais fixes ; les agents restent salariés (charge fixe), sans coût par course.</td></tr>
+        <tr><td><code>FinanceFigures.tsx</code></td><td>Anciens indicateurs « Coût prestataire (période) » et « En transit prestataire »</td><td>À remplacer par les quatre poches de trésorerie : le cash est encaissé en main propre, déposé au réseau Cash Services, puis rapproché (Doc 8).</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Le solde Hotelbeds visible aujourd'hui relève du même écart</strong> L'écran finance affiche un compte fournisseur Hotelbeds approvisionné, alors que la cible le décrit en <strong>post-payé</strong>, sans solde à porter (Doc 8). Ce n'est pas une erreur de documentation : c'est l'état antérieur du code, que la refonte n'a pas encore atteint. Le repère utile pour l'implémentation : <strong>la documentation décrit la cible, l'application décrit le présent</strong>, et l'écart entre les deux est exactement le périmètre des plans.</div>
+    </div>
+
+    <h3>Ce qui reste à figer</h3>
+    <table>
+      <thead><tr><th>Point</th><th>Pourquoi ce n'est pas encore tranché</th></tr></thead>
+      <tbody>
+        <tr><td>Réattribution manuelle d'une tournée</td><td>Le contrat n'existe pas encore : faut-il exclure l'agent précédent du nouveau tirage, et pendant combien de temps ?</td></tr>
+        <tr><td>Remise et révocation de la carte de dépôt</td><td>La table <code>deposit_cards</code> est définie (Doc 2), mais l'endpoint manager qui l'alimente reste à spécifier. Sans lui, un agent validé se bloque à sa première collecte.</td></tr>
+        <tr><td>Réglages de dispatch</td><td>Rayon, taille des tournées groupées et délai de réattribution sont affichés comme réglables, mais leur persistance n'a pas de table dédiée.</td></tr>
+        <tr><td>Écarts de rapprochement</td><td>La logique de détection est spécifiée (Doc 3 §8) ; l'endpoint de lecture pour le manager ne l'est pas encore.</td></tr>
+        <tr><td>Rythme du circuit du cash</td><td>Heure d'import Cash Services, fréquence de ventilation, seuil de dépôt (400 €), plafond d'encours et délai d'alerte sont exposés dans l'écran de configuration sans support de persistance décrit.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Ces cinq points ne bloquent pas le démarrage, mais ils bloquent la fin</strong> Les tâches de backend peuvent commencer sans eux. En revanche, aucun de ces écrans manager ne peut être terminé tant que son contrat n'est pas figé — et découvrir le trou au moment de câbler l'écran coûte bien plus cher que de le combler maintenant.</div>
+    </div>
+  </section>
+
+
+  <section class="section" id="kyb-kyc">
+    <h2>Conformité — KYB fournisseurs &amp; KYC client gradué</h2>
+    <p>AJEK est, en l'état, <strong>non assujettie aux obligations de vigilance LCB-FT</strong> — <strong>position à confirmer par avis juridique</strong> (MISE-A-JOUR §5/§E). En lieu et place des obligations LCB-FT, l'espace manager supervise deux dispositifs de <strong>prévention de la fraude / due diligence commerciale</strong> : le <strong>KYB des fournisseurs MODE</strong> et le <strong>KYC client gradué par volume</strong>. Aucun décaissement ni aucune confirmation ne s'appuie sur du cash <code>declared</code> non confirmé.</p>
+
+    <h3>KYB — commerçants fournisseurs (ligne MODE)</h3>
+    <p>Avant tout référencement d'un fournisseur de la ligne mode (voir <a href="../ESPACE-COMMERCANT/documents/partie-4-flux.html"><code>Étape 4 · flux F11/F12</code></a>), le manager vérifie : <strong>SIRET obligatoire</strong> et activité de revente déclarée ; <strong>facture conforme exigée</strong> pour chaque article acheté (aucun achat auprès d'un particulier non enregistré) ; traçabilité (contrat de fourniture, garantie de provenance, inscription au registre des objets mobiliers).</p>
+    <div class="screen-mock">
+      <div class="mock-title">Maquette fonctionnelle — validation KYB fournisseur</div>
+      <div class="mock-row"><span>Atelier Nour · SIRET vérifié · facture conforme</span><span class="mock-tag green">référencé</span></div>
+      <div class="mock-row"><span>Boutique Zélie · SIRET en attente</span><span class="mock-tag amber">à vérifier</span></div>
+    </div>
+
+    <h3>KYC — client, gradué par volume</h3>
+    <p>Le manager supervise un contrôle d'identité <strong>gradué</strong>, opéré par un prestataire <strong>certifié PVID (référentiel ANSSI)</strong> — seul le <strong>résultat</strong> de la vérification est conservé, jamais les copies de pièces.</p>
+    <table>
+      <thead><tr><th>Palier</th><th>Déclenchement</th><th>Effet</th></tr></thead>
+      <tbody>
+        <tr><td>Vérification simple</td><td>Systématique dès la 1re commande, avant attribution d'un agent</td><td>Le payeur et le bénéficiaire doivent être la même personne</td></tr>
+        <tr><td>Vérification renforcée</td><td>Dès qu'un client dépasse <strong>3 achats OU 1 000 € cumulés sur 7 jours glissants</strong> (seuil calculé en continu, sans intervention humaine)</td><td>Contrôle d'identité renforcé PVID avant poursuite</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>Finalité unique : prévention de la fraude et sécurité des agents</strong> Aucun usage commercial, aucun profilage, aucune notation des clients à partir du KYC. Le palier atteint (standard / renforcé) est affiché sur la fiche client du CRM (<code>18-fiche-client</code>, NOUVELLES-FONCTIONNALITES §4). La qualification LCB-FT reste <strong>à confirmer juridiquement</strong>.</div>
+    </div>
+  </section>
+
+
+  <section class="section" id="schema-impact">
+    <h2>Récapitulatif schéma de données</h2>
+    <p>Tables de pilotage propres au manager, détaillées intégralement au Doc 2 — résumées ici. L'espace manager <strong>supervise</strong> aussi les tables du sous-système encaissement (<code>couriers</code>, <code>delivery_zones</code>, <code>deliveries</code>, <code>delivery_tracking_events</code>, <code>courier_ratings</code>) définies au Doc 2, sans en être propriétaire.</p>
+    <table>
+      <thead><tr><th>Table</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>manager_users</code></td><td>Comptes du personnel d'AJEK, distincts des comptes clients</td></tr>
+        <tr><td><code>margin_config</code></td><td>Taux de marge configurables par catégorie (vol, hébergement, package)</td></tr>
+        <tr><td><code>delivery_fee_config</code></td><td>Frais de service d'encaissement modulaires (fixe / % / prix-km / majoration nuit), activables par composante (D13)</td></tr>
+        <tr><td><code>customer_calls</code></td><td>Planning et historique des appels clients, incluant les réponses au questionnaire de satisfaction</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section" id="checklist">
+    <h2>Checklist avant développement</h2>
+    <ul class="checklist">
+      <li>Implémenter le <strong>parcours RH de recrutement de l'agent salarié</strong> (candidature → session de recrutement pour tout candidat → embauche → habilitation → carte de dépôt nominative Cash Services, rôle <code>owner</code>) et les écrans de profils / disponibilité / notes (NOUVELLES-FONCTIONNALITES §1)</li>
+      <li>Construire la configuration des <strong>zones d'encaissement</strong> et de leurs limites (rayon max, tournées simultanées max, cash max / agent) qui bornent le dispatch</li>
+      <li>Construire la vue de <strong>supervision des encaissements</strong> temps réel (aucun agent, retard, litige cash, tournées de retour)</li>
+      <li>Implémenter le job CRON de génération automatique des <code>pre_departure_reminder</code>, en cohérence avec le Doc 5</li>
+      <li>Mettre en place le système d'authentification de l'espace manager, séparé de celui de l'app client (Doc 5)</li>
+      <li>Construire la vue de tableau de bord financier distinguant explicitement revenu (marges + frais de service), solde Duffel réel, TVA collectée à reverser, et cash en attente de dépôt (voir section suivi financier)</li>
+      <li>Rendre configurables les <strong>marges</strong>, les <strong>frais de service d'encaissement</strong> (<code>delivery_fee_config</code>) et le <strong>taux de TVA</strong> (<code>vat_rate</code>), au rôle <code>owner</code> uniquement, avec écriture systématique dans <code>audit_log</code> à chaque modification</li>
+      <li>Exposer les deux réglages de cash : <strong>seuil de dépôt Cash Services = 400 €</strong> (paramétrable, contrôle serveur <code>&gt; 40000</code>) et <strong>plafond de paiement en espèces = 1 000 € / transaction</strong> (paramétrable) avec anti-fractionnement</li>
+      <li>Construire la supervision de la conformité : <strong>KYB fournisseurs MODE</strong> (SIRET + facture conforme) et <strong>KYC client gradué</strong> (renforcé à 3 achats ou 1 000 € / 7 j, prestataire PVID) — statut d'assujettissement LCB-FT à confirmer juridiquement</li>
+      <li>Câbler les écrans manager d'août 2026 (recrutement, téléphonie/appels, CRM, flotte &amp; assurances société, silos commerciaux, planning/pointage, validation de prise de poste, affectation automatique, prise de rendez-vous) — spécifiés dans <code>NOUVELLES-FONCTIONNALITES-2026-08.md</code></li>
+      <li>Construire l'écran <strong>comptabilité</strong> : TVA collectée par période, <strong>provision</strong> constituée au rapprochement, écart non provisionné, et <strong>exports CSV</strong> (ventes, TVA, trésorerie, dépenses fournisseurs, audit) — la période reste un paramètre tant que le régime fiscal n'est pas arbitré</li>
+      <li>Rendre le <strong>journal d'audit lisible</strong> : nommer l'acteur au lieu d'afficher son UUID, rédiger le détail au lieu de recracher le JSON, et ajouter un filtre de période — en conservant l'entrée brute consultable, un journal d'audit ne se réécrit pas</li>
+    </ul>
+  </section>
+
+</main>
+
+</body>
+</html>
