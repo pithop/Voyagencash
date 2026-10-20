@@ -1,20 +1,26 @@
 {
-  "name": "payencash-fly",
-  "version": "1.0.0",
-  "description": "PayEnCash Fly — Application de réservation de billets d’avion",
+  "name": "voyagencash",
+  "version": "2.0.0",
+  "description": "voyagencash — Démonstration de réservation de billets d’avion",
   "main": "index.html",
   "scripts": {
-    "start": "npx serve .",
-    "dev": "npx serve ."
+    "start": "node scripts/serve.mjs",
+    "dev": "node scripts/serve.mjs",
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/serve.mjs --dist",
+    "test": "playwright test"
   },
   "keywords": [
-    "payencash",
-    "fly",
-    "billets-avion",
-    "duffel",
-    "flights"
+    "voyagencash",
+    "flights",
+    "demo"
   ],
   "author": "AJEK",
   "license": "UNLICENSED",
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "jsqr": "^1.4.0",
+    "pngjs": "^7.0.0"
+  }
 }

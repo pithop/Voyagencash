@@ -1,272 +1,592 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PayEnCash FLY — Réservation de billets d’avion</title>
-  <link rel="icon" type="image/png" sizes="64x64" href="depot-payencash-2026-09/ui/assets/logos/payencash-fly-blanc-64.png">
-  <link rel="apple-touch-icon" href="depot-payencash-2026-09/ui/assets/logos/payencash-fly-blanc-180.png">
-  <link rel="stylesheet" href="depot-payencash-2026-09/ui/assets/vendor/fonts.css">
-  <style>
-    :root {
-      --primary: #10A06A;
-      --primary-dark: #0C7F54;
-      --ink: #0F2A24;
-      --muted: #5C6B64;
-      --mint: #E6F4EC;
-      --bg: #091C17;
-      --card: #ffffff;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: radial-gradient(circle at 50% 0%, #154539 0%, var(--bg) 75%);
-      color: #fff;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      overflow-x: hidden;
-    }
-    header {
-      width: 100%;
-      max-width: 1200px;
-      padding: 20px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
-      color: #fff;
-    }
-    .brand img {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-    }
-    .brand-title {
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-    .brand-title span {
-      color: #3FD99B;
-    }
-    .nav-actions {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 18px;
-      border-radius: 999px;
-      font-size: 13.5px;
-      font-weight: 700;
-      text-decoration: none;
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-    .btn-primary {
-      background: #10A06A;
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(16, 160, 106, 0.4);
-    }
-    .btn-primary:hover {
-      background: #13b87b;
-      transform: translateY(-1px);
-    }
-    .btn-outline {
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      color: #fff;
-      background: rgba(255, 255, 255, 0.05);
-    }
-    .btn-outline:hover {
-      background: rgba(255, 255, 255, 0.12);
-    }
-
-    main {
-      width: 100%;
-      max-width: 1200px;
-      padding: 28px 20px 60px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 28px;
-    }
-    .hero-text {
-      text-align: center;
-      max-width: 680px;
-    }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: 999px;
-      background: rgba(63, 217, 155, 0.15);
-      color: #3FD99B;
-      font-size: 12.5px;
-      font-weight: 700;
-      margin-bottom: 12px;
-      border: 1px solid rgba(63, 217, 155, 0.3);
-    }
-    h1 {
-      font-size: 38px;
-      font-weight: 800;
-      line-height: 1.15;
-      letter-spacing: -0.03em;
-      margin-bottom: 12px;
-    }
-    h1 span {
-      background: linear-gradient(120deg, #3FD99B, #fff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    p.desc {
-      font-size: 16px;
-      color: #A3B8B0;
-      line-height: 1.5;
-    }
-
-    .preview-container {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-    }
-    .phone-mockup {
-      width: 100%;
-      max-width: 430px;
-      height: 860px;
-      border-radius: 46px;
-      background: #000;
-      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 0 10px #1e2926, 0 0 0 12px rgba(255, 255, 255, 0.1);
-      overflow: hidden;
-      position: relative;
-    }
-    .phone-mockup iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      background: #fff;
-    }
-
-    .quick-links {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 14px;
-      width: 100%;
-      max-width: 880px;
-      margin-top: 10px;
-    }
-    .quick-card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 18px;
-      padding: 16px 18px;
-      text-decoration: none;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      transition: all 0.2s ease;
-    }
-    .quick-card:hover {
-      background: rgba(255, 255, 255, 0.09);
-      border-color: #3FD99B;
-      transform: translateY(-2px);
-    }
-    .quick-card b {
-      font-size: 15px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .quick-card span {
-      font-size: 12.5px;
-      color: #A3B8B0;
-    }
-
-    @media (max-width: 600px) {
-      h1 { font-size: 28px; }
-      .phone-mockup {
-        height: 88vh;
-        border-radius: 0;
-        box-shadow: none;
-        max-width: 100%;
-      }
-      .preview-container {
-        padding: 0;
-      }
-    }
-  </style>
-</head>
-<body>
-
-  <header>
-    <a href="depot-payencash-2026-09/ui/ecrans/01-accueil.html" class="brand">
-      <img src="depot-payencash-2026-09/ui/assets/logos/payencash-fly-blanc-180.png" alt="PayEnCash Fly">
-      <div class="brand-title">pay<span>En</span>Cash <em>FLY</em></div>
-    </a>
-    <div class="nav-actions">
-      <a href="depot-payencash-2026-09/ui/ecrans/01-accueil.html" class="btn btn-outline" target="_blank">Plein écran ↗</a>
-      <a href="depot-payencash-2026-09/ui/parcours/02-vol-aller-retour.html" class="btn btn-primary" target="_blank">Réserver un vol</a>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#016bfd" />
+    <meta
+      name="description"
+      content="Découvrez voyagencash : recherchez un vol et explorez une réservation complète avec paiement en espèces simulé, carte ou Apple Pay."
+    />
+    <title>voyagencash — Le voyage commence ici.</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg" />
+    <link rel="stylesheet" href="/assets/css/style.css" />
+    <script defer src="/assets/js/vendor/qrcode.js"></script>
+    <script defer src="/assets/js/flight-engine.js"></script>
+    <script defer src="/assets/js/booking-manager.js"></script>
+    <script defer src="/assets/js/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Aller au contenu</a>
+    <svg
+      class="svg-library"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <defs>
+        <symbol id="i-plane" viewBox="0 0 24 24">
+          <path d="m22 2-7 20-4-9-9-4Z M11 13 22 2" />
+        </symbol>
+        <symbol id="i-search" viewBox="0 0 24 24">
+          <circle cx="10.5" cy="10.5" r="6.5" />
+          <path d="m16 16 5 5" />
+        </symbol>
+        <symbol id="i-pin" viewBox="0 0 24 24">
+          <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
+          <circle cx="12" cy="10" r="2.5" />
+        </symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24">
+          <path d="M4 12h16m-6-6 6 6-6 6" />
+        </symbol>
+        <symbol id="i-swap" viewBox="0 0 24 24">
+          <path d="M4 7h16l-4-4M20 17H4l4 4" />
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24">
+          <path d="m5 12 4 4L19 6" />
+        </symbol>
+        <symbol id="i-bag" viewBox="0 0 24 24">
+          <rect x="5" y="6" width="14" height="15" rx="3" />
+          <path d="M9 6V3h6v3M9 10v7m6-7v7" />
+        </symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24">
+          <path d="m12 2 8 4v6c0 5-8 10-8 10S4 17 4 12V6Z m-5 10 3 3 5-6" />
+        </symbol>
+        <symbol id="i-wallet" viewBox="0 0 24 24">
+          <rect x="3" y="5" width="18" height="15" rx="3" />
+          <path d="M3 8V5l14-3v3m4 6h-6v5h6" />
+          <path d="M17 13.5h.01" />
+        </symbol>
+        <symbol id="i-card" viewBox="0 0 24 24">
+          <rect x="2" y="4" width="20" height="16" rx="3" />
+          <path d="M2 9h20M6 15h4" />
+        </symbol>
+        <symbol id="i-ticket" viewBox="0 0 24 24">
+          <path
+            d="M3 5h18v5a2 2 0 0 0 0 4v5H3v-5a2 2 0 0 0 0-4Z M15 5v3m0 3v2m0 3v3"
+          />
+        </symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v6l4 2" />
+        </symbol>
+        <symbol id="i-user" viewBox="0 0 24 24">
+          <circle cx="12" cy="7" r="4" />
+          <path d="M4 22v-3a8 8 0 0 1 16 0v3" />
+        </symbol>
+        <symbol id="i-close" viewBox="0 0 24 24">
+          <path d="m6 6 12 12M6 18 18 6" />
+        </symbol>
+        <symbol id="i-download" viewBox="0 0 24 24">
+          <path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5" />
+        </symbol>
+        <symbol id="i-menu" viewBox="0 0 24 24">
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </symbol>
+        <symbol id="i-globe" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <ellipse cx="12" cy="12" rx="4" ry="9" />
+          <path d="M3 12h18" />
+        </symbol>
+      </defs>
+    </svg>
+    <div class="demo-bar">
+      <span class="live-dot"></span> Version de démonstration
+      <span class="demo-detail"
+        >· Offres et paiements simulés, aucun débit réel.</span
+      ><a href="#faq">En savoir plus <span aria-hidden="true">↗</span></a>
     </div>
-  </header>
-
-  <main>
-    <div class="hero-text">
-      <div class="badge">✈️ Spécialiste Billets d'Avion · Connecté Duffel API</div>
-      <h1>Réserve tes <span>billets d’avion</span> sans carte bancaire</h1>
-      <p class="desc">Compare plus de 200 compagnies aériennes au meilleur prix garanti, réserve ton vol aller simple, aller-retour ou multi-destinations et règle en toute sécurité.</p>
-    </div>
-
-    <div class="preview-container">
-      <div class="phone-mockup">
-        <iframe id="app-frame" src="depot-payencash-2026-09/ui/ecrans/01-accueil.html" title="Application PayEnCash Fly"></iframe>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a href="#search" class="brand" aria-label="voyagencash, accueil"
+          ><img
+            src="/assets/img/logo-voyagencash.svg"
+            alt="voyagencash"
+            width="208"
+            height="48"
+        /></a>
+        <button
+          class="icon-button mobile-menu"
+          id="menu-toggle"
+          aria-label="Ouvrir la navigation"
+          aria-expanded="false"
+          aria-controls="main-nav"
+        >
+          <svg class="icon"><use href="#i-menu" /></svg>
+        </button>
+        <nav id="main-nav" aria-label="Navigation principale">
+          <a href="#search" data-nav="search">Rechercher un vol</a
+          ><a href="#stores" data-nav="stores">Où payer en espèces</a
+          ><a href="#faq" data-nav="faq">Aide & FAQ</a
+          ><a href="#bookings" data-nav="bookings" class="nav-bookings"
+            ><svg class="icon"><use href="#i-ticket" /></svg> Mes
+            réservations</a
+          >
+        </nav>
       </div>
-    </div>
-
-    <div class="quick-links">
-      <a href="depot-payencash-2026-09/ui/ecrans/01-accueil.html" class="quick-card" onclick="loadFrame(this.href); return false;">
-        <b>🔍 Recherche de vols</b>
-        <span>Choix aéroport, destination, dates et budget</span>
-      </a>
-      <a href="depot-payencash-2026-09/ui/parcours/02-vol-aller-retour.html" class="quick-card" onclick="loadFrame(this.href); return false;">
-        <b>⇄ Tunnel Aller-retour</b>
-        <span>Comparateur direct, sélection aller + retour</span>
-      </a>
-      <a href="depot-payencash-2026-09/ui/parcours/01-vol-aller-simple.html" class="quick-card" onclick="loadFrame(this.href); return false;">
-        <b>→ Tunnel Aller simple</b>
-        <span>Sélection directe du vol aller au meilleur tarif</span>
-      </a>
-      <a href="depot-payencash-2026-09/ui/ecrans/03-mes-codes.html" class="quick-card" onclick="loadFrame(this.href); return false;">
-        <b>🎟️ Mes billets & PNR</b>
-        <span>Suivi des commandes, cartes d'embarquement</span>
-      </a>
-    </div>
-  </main>
-
-  <script>
-    function loadFrame(url) {
-      document.getElementById('app-frame').src = url;
-      window.scrollTo({ top: document.querySelector('.preview-container').offsetTop - 30, behavior: 'smooth' });
-    }
-    // Sur mobile, ouvrir directement la vue app si l'écran est petit
-    if (window.innerWidth < 640 && !window.location.search.includes('preview')) {
-      // Affichage plein écran fluide
-    }
-  </script>
-
-</body>
+    </header>
+    <main id="main" tabindex="-1">
+      <section class="view" id="view-search" aria-labelledby="home-title">
+        <div class="hero">
+          <div class="container hero-inner">
+            <div class="hero-copy">
+              <div class="eyebrow">
+                <span class="tiny-plane">↗</span> VOTRE PROCHAINE HISTOIRE
+                COMMENCE ICI
+              </div>
+              <h1 id="home-title">
+                Le monde vous attend.<br /><span>Partez à votre façon.</span>
+              </h1>
+              <p>
+                Votre billet d’avion, votre liberté de paiement.<br />En
+                espèces, par carte ou avec Apple Pay.
+              </p>
+              <div class="hero-pills">
+                <span
+                  ><svg class="icon"><use href="#i-check" /></svg> Des prix TTC
+                  transparents</span
+                ><span
+                  ><svg class="icon"><use href="#i-check" /></svg> Un parcours
+                  tout simple</span
+                >
+              </div>
+            </div>
+            <div class="hero-art" aria-hidden="true">
+              <div class="orbit orbit-one"></div>
+              <div class="orbit orbit-two"></div>
+              <div class="globe">
+                <div class="globe-longitude"></div>
+                <div class="globe-latitude"></div>
+              </div>
+              <svg class="hero-plane" viewBox="0 0 100 100">
+                <path
+                  d="m90 10-22 77-17-29-33-12 11-8 29 3 21-22ZM51 58 79 19"
+                  fill="white"
+                  stroke="#d4e8ff"
+                  stroke-width="2"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <div class="floating-tag tag-top">
+                <span class="art-dot"></span> Votre prochaine escapade
+              </div>
+              <div class="mini-ticket">
+                <span class="mini-label">ENVIE D’AILLEURS ?</span>
+                <div>
+                  <b>PAR</b><svg class="icon"><use href="#i-plane" /></svg
+                  ><b>RAK</b>
+                </div>
+                <footer><span>Paris</span><span>Marrakech</span></footer>
+                <div class="mini-ticket-bottom">
+                  Un nouveau départ vous attend <span>↗</span>
+                </div>
+              </div>
+              <div class="floating-tag tag-bottom">
+                <svg class="icon"><use href="#i-wallet" /></svg> Le voyage,
+                accessible à tous.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="container search-area">
+          <form id="search-form" class="search-card">
+            <div class="search-top">
+              <div class="trip-tabs" role="group" aria-label="Type de voyage">
+                <button
+                  type="button"
+                  data-trip="roundtrip"
+                  aria-pressed="true"
+                  class="active"
+                >
+                  Aller-retour</button
+                ><button type="button" data-trip="oneway" aria-pressed="false">
+                  Aller simple</button
+                ><button type="button" data-trip="multi" aria-pressed="false">
+                  Multi-destinations
+                </button>
+              </div>
+              <label class="traveler-select"
+                ><svg class="icon"><use href="#i-user" /></svg
+                ><select id="traveler-count" aria-label="Nombre de passagers">
+                  <option value="1">1 passager</option>
+                  <option value="2">2 passagers</option>
+                  <option value="3">3 passagers</option>
+                  <option value="4">4 passagers</option>
+                  <option value="5">5 passagers</option>
+                  <option value="6">6 passagers</option>
+                  <option value="7">7 passagers</option>
+                  <option value="8">8 passagers</option>
+                  <option value="9">9 passagers</option></select
+                ><span>Économique</span></label
+              >
+            </div>
+            <div id="search-legs"></div>
+            <div class="search-bottom">
+              <button class="text-button" type="button" id="add-leg" hidden>
+                + Ajouter un trajet</button
+              ><span class="search-note"
+                ><svg class="icon"><use href="#i-shield" /></svg> Petit sac
+                inclus · Tarifs de démonstration</span
+              ><button class="button primary search-submit" type="submit">
+                <svg class="icon"><use href="#i-search" /></svg> Rechercher un
+                vol <span aria-hidden="true">→</span>
+              </button>
+            </div>
+            <p class="form-error" id="search-error" role="alert" hidden></p>
+          </form>
+          <div class="trust-row">
+            <span>VOTRE VOYAGE, EN TOUTE SIMPLICITÉ</span>
+            <div>
+              <svg class="icon"><use href="#i-globe" /></svg> 48 aéroports à
+              explorer
+            </div>
+            <div>
+              <svg class="icon"><use href="#i-wallet" /></svg> 3 façons de payer
+            </div>
+            <div>
+              <svg class="icon"><use href="#i-ticket" /></svg> Vos billets au
+              même endroit
+            </div>
+          </div>
+        </div>
+        <section
+          class="container inspiration"
+          aria-labelledby="destinations-title"
+        >
+          <div class="section-heading">
+            <div>
+              <div class="eyebrow">UN PEU D’INSPIRATION</div>
+              <h2 id="destinations-title">Et si vous partiez…</h2>
+              <p>Des retrouvailles, une escapade, une nouvelle aventure.</p>
+            </div>
+            <span class="small-muted"
+              >Sélectionnez une destination pour commencer</span
+            >
+          </div>
+          <div class="destination-grid">
+            <button class="destination-card marrakech" data-destination="RAK">
+              <div class="destination-art">
+                <span class="sun"></span><span class="architecture tower"></span
+                ><span class="architecture arch"></span
+                ><span class="landscape"></span
+                ><span class="destination-tag">L’appel du soleil</span>
+              </div>
+              <div class="destination-info">
+                <div>
+                  <h3>Marrakech</h3>
+                  <span>Maroc · RAK</span>
+                </div>
+                <span class="round-arrow">↗</span>
+              </div>
+            </button>
+            <button class="destination-card alger" data-destination="ALG">
+              <div class="destination-art">
+                <span class="sun"></span><span class="architecture tower"></span
+                ><span class="architecture arch"></span
+                ><span class="landscape"></span
+                ><span class="destination-tag">Le goût des retrouvailles</span>
+              </div>
+              <div class="destination-info">
+                <div>
+                  <h3>Alger</h3>
+                  <span>Algérie · ALG</span>
+                </div>
+                <span class="round-arrow">↗</span>
+              </div>
+            </button>
+            <button class="destination-card lisbonne" data-destination="LIS">
+              <div class="destination-art">
+                <span class="sun"></span><span class="architecture tower"></span
+                ><span class="architecture arch"></span
+                ><span class="landscape"></span
+                ><span class="destination-tag">Une parenthèse en ville</span>
+              </div>
+              <div class="destination-info">
+                <div>
+                  <h3>Lisbonne</h3>
+                  <span>Portugal · LIS</span>
+                </div>
+                <span class="round-arrow">↗</span>
+              </div>
+            </button>
+          </div>
+        </section>
+        <section class="container how-section">
+          <div class="how-intro">
+            <div class="eyebrow">LA LIBERTÉ, TOUT SIMPLEMENT</div>
+            <h2>Un billet d’avion. <br />Plusieurs façons de payer.</h2>
+            <p>
+              Découvrez le parcours de paiement en espèces dans notre
+              démonstration.
+            </p>
+            <a class="text-link" href="#stores"
+              >Découvrir les points de paiement <span>→</span></a
+            >
+          </div>
+          <div class="how-steps">
+            <article>
+              <span class="step-icon"
+                ><svg class="icon"><use href="#i-search" /></svg
+              ></span>
+              <div>
+                <small>01 · CHOISISSEZ</small>
+                <h3>Trouvez le vol qui vous ressemble</h3>
+                <p>Comparez les horaires, les compagnies et les tarifs.</p>
+              </div>
+            </article>
+            <article>
+              <span class="step-icon"
+                ><svg class="icon"><use href="#i-wallet" /></svg
+              ></span>
+              <div>
+                <small>02 · RÉSERVEZ</small>
+                <h3>Choisissez votre mode de paiement</h3>
+                <p>Générez un bon, ou testez la carte et Apple Pay.</p>
+              </div>
+            </article>
+            <article>
+              <span class="step-icon"
+                ><svg class="icon"><use href="#i-plane" /></svg
+              ></span>
+              <div>
+                <small>03 · RETROUVEZ</small>
+                <h3>Tout votre voyage au même endroit</h3>
+                <p>Téléchargez votre e-billet de démonstration.</p>
+              </div>
+            </article>
+          </div>
+        </section>
+      </section>
+      <section
+        class="view container page-view"
+        id="view-results"
+        hidden
+        aria-labelledby="results-title"
+      >
+        <div id="results-content"></div>
+      </section>
+      <section
+        class="view container page-view"
+        id="view-options"
+        hidden
+        aria-labelledby="options-title"
+      >
+        <div id="options-content"></div>
+      </section>
+      <section
+        class="view container page-view"
+        id="view-passengers"
+        hidden
+        aria-labelledby="passengers-title"
+      >
+        <div id="passengers-content"></div>
+      </section>
+      <section
+        class="view container page-view"
+        id="view-payment"
+        hidden
+        aria-labelledby="payment-title"
+      >
+        <div id="payment-content"></div>
+      </section>
+      <section
+        class="view container page-view"
+        id="view-confirmation"
+        hidden
+        aria-labelledby="confirmation-title"
+      >
+        <div id="confirmation-content"></div>
+      </section>
+      <section
+        class="view container page-view"
+        id="view-bookings"
+        hidden
+        aria-labelledby="bookings-title"
+      >
+        <div class="page-heading">
+          <div class="eyebrow">VOTRE ESPACE VOYAGE</div>
+          <h1 id="bookings-title">Mes réservations</h1>
+          <p>
+            Retrouvez vos voyages et vos bons de paiement, sur ce navigateur.
+          </p>
+        </div>
+        <div id="bookings-content"></div>
+      </section>
+      <section
+        class="view container page-view"
+        id="view-stores"
+        hidden
+        aria-labelledby="stores-title"
+      >
+        <div class="page-heading">
+          <div class="eyebrow">PRÈS DE CHEZ VOUS</div>
+          <h1 id="stores-title">Le voyage commence au coin de la rue.</h1>
+          <p>Découvrez le fonctionnement des points de paiement en espèces.</p>
+        </div>
+        <div class="notice">
+          <svg class="icon"><use href="#i-pin" /></svg
+          ><span
+            >Localisateur de démonstration : les points ci-dessous sont fictifs.
+            Aucun commerce ne peut encaisser ces bons.</span
+          >
+        </div>
+        <div class="locator-layout">
+          <div>
+            <label class="field-label" for="store-search"
+              >Ville ou code postal</label
+            >
+            <div class="store-search">
+              <svg class="icon"><use href="#i-search" /></svg
+              ><input
+                id="store-search"
+                type="search"
+                placeholder="Paris, Marseille, 69000…"
+                autocomplete="off"
+              />
+            </div>
+            <div id="store-list" aria-live="polite"></div>
+          </div>
+          <div
+            class="locator-map"
+            aria-label="Schéma de localisation des points fictifs"
+          >
+            <div class="map-river"></div>
+            <div class="map-road road-one"></div>
+            <div class="map-road road-two"></div>
+            <div class="map-road road-three"></div>
+            <span class="map-area area-one">CENTRE-VILLE</span
+            ><span class="map-area area-two">QUARTIER DE LA GARE</span
+            ><span class="map-park"></span>
+            <div id="map-pins"></div>
+            <div class="map-caption">
+              Schéma illustratif · aucune position géographique réelle
+            </div>
+          </div>
+        </div>
+        <div class="notice subtle">
+          Votre bon est disponible pendant 120 minutes. Dans cette
+          démonstration, la validation en caisse se fait depuis l’écran de
+          paiement.
+        </div>
+      </section>
+      <section
+        class="view container page-view faq-page"
+        id="view-faq"
+        hidden
+        aria-labelledby="faq-title"
+      >
+        <div class="page-heading">
+          <div class="eyebrow">ON VOUS ACCOMPAGNE</div>
+          <h1 id="faq-title">Des réponses avant de partir.</h1>
+          <p>Tout savoir sur cette version de voyagencash.</p>
+        </div>
+        <details open>
+          <summary>Peut-on acheter un vrai billet ici ?</summary>
+          <p>
+            Cette application est une démonstration fonctionnelle côté
+            navigateur. Les compagnies et les aéroports existent, mais les
+            offres, numéros de vol, disponibilités, références et billets sont
+            générés pour tester le parcours. Aucun contrat de transport n’est
+            créé. L’émission réelle nécessite une connexion à un fournisseur de
+            vols et à un service de paiement.
+          </p>
+        </details>
+        <details>
+          <summary>Comment fonctionne le bon d’achat ?</summary>
+          <p>
+            Après avoir renseigné vos passagers, choisissez « Bon d’achat
+            voyagencash ». Un code unique et son QR code sont enregistrés
+            pendant 120 minutes. Le bouton « Simuler la validation en caisse »
+            confirme instantanément votre réservation fictive. Aucun argent ne
+            doit être remis à un commerçant.
+          </p>
+        </details>
+        <details>
+          <summary>La carte bancaire et Apple Pay sont-ils débités ?</summary>
+          <p>
+            Non. La carte utilise une carte de test prédéfinie avec une étape 3D
+            Secure simulée. Apple Pay est également simulé, sans ouvrir de
+            portefeuille réel. Ne saisissez pas de coordonnées bancaires
+            réelles.
+          </p>
+        </details>
+        <details>
+          <summary>Que comprennent les tarifs et les options ?</summary>
+          <p>
+            Les tarifs affichés sont TTC et par passager. Un petit sac sous le
+            siège est inclus. Le bagage de soute de 23 kg coûte 35 € par
+            passager et par trajet sélectionné (70 € pour un aller-retour). La
+            garantie annulation simulée coûte 19 € par passager pour tout le
+            voyage. Les modalités des compagnies réelles ne sont pas
+            représentées.
+          </p>
+        </details>
+        <details>
+          <summary>Où sont enregistrées mes données ?</summary>
+          <p>
+            Votre sélection et vos réservations sont stockées uniquement dans le
+            stockage local de ce navigateur. Utilisez des identités fictives
+            pour les tests. Aucune donnée n’est envoyée à une compagnie et aucun
+            e-mail n’est envoyé. Les réservations ne sont pas synchronisées
+            entre appareils ; effacer les données du site les supprime.
+          </p>
+        </details>
+        <details>
+          <summary>Comment télécharger ou annuler une réservation ?</summary>
+          <p>
+            Depuis « Mes réservations », ouvrez le billet ou téléchargez le
+            document HTML autonome. Son bouton « Imprimer / Enregistrer en PDF »
+            permet d’enregistrer un PDF via votre navigateur. Vous pouvez
+            annuler une réservation en attente ou confirmée ; aucun
+            remboursement réel n’a lieu puisqu’aucun paiement n’a été effectué.
+          </p>
+        </details>
+        <details>
+          <summary>
+            Comment fonctionnent les horaires et les correspondances ?
+          </summary>
+          <p>
+            Les horaires sont affichés dans le fuseau local de chaque aéroport.
+            Les durées et les escales sont calculées. Pour un aller-retour ou un
+            voyage multi-destinations, nous proposons les vols suivants au moins
+            deux heures après l’arrivée du trajet précédent. Les documents
+            restent des spécimens, sans siège ni porte attribués.
+          </p>
+        </details>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>
+          <a href="#search" class="footer-brand">voyagen<span>cash</span></a>
+          <p>Le monde vous attend.</p>
+        </div>
+        <div class="footer-links">
+          <a href="#stores">Où payer</a><a href="#bookings">Mes réservations</a
+          ><a href="#faq">Aide & confidentialité</a>
+        </div>
+        <span class="footer-note"
+          >© <span id="year"></span> voyagencash<br />Démonstration · Aucun
+          billet réel émis</span
+        >
+      </div>
+    </footer>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <dialog id="app-dialog" aria-labelledby="dialog-title">
+      <button
+        type="button"
+        class="icon-button dialog-close"
+        aria-label="Fermer"
+      >
+        <svg class="icon"><use href="#i-close" /></svg>
+      </button>
+      <div id="dialog-content"></div>
+    </dialog>
+    <div id="print-area" aria-hidden="true"></div>
+    <noscript
+      ><div class="noscript">
+        Activez JavaScript pour rechercher des vols et utiliser cette
+        démonstration.
+      </div></noscript
+    >
+  </body>
 </html>
