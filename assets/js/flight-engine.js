@@ -269,6 +269,7 @@
     tz,
   }));
   const airlines = [
+    ["AZ", "ITA Airways", "#2459a7", "FCO"],
     ["AF", "Air France", "#172b68", "CDG"],
     ["TO", "Transavia", "#00836d", "ORY"],
     ["FR", "Ryanair", "#1a3471", "MAD"],
@@ -447,6 +448,14 @@
         price,
         departureHour: +time(depart, from).split(":")[0],
         cabin: "Économique",
+        cabinBagIncluded: !low,
+        departureTerminal: from === "CDG" ? "2F" : from === "ORY" ? "4" : "1",
+        arrivalTerminal: to === "ALG" ? "I" : "1",
+        punctuality: 90 + (i % 8),
+        co2Kg: Math.round(km * (long ? 0.09 : 0.115) * (stop ? 1.22 : 1)),
+        co2VsAverage: stop ? 8 : -18,
+        payment_requirements: { requires_instant_payment: false },
+        simulation: true,
       });
     }
     return offers;
@@ -456,6 +465,7 @@
     {
       max = Infinity,
       direct = false,
+      baggage = false,
       carriers = [],
       periods = [],
       sort = "best",
@@ -465,6 +475,7 @@
       (f) =>
         f.price <= max &&
         (!direct || f.stops === 0) &&
+        (!baggage || f.cabinBagIncluded) &&
         (!carriers.length || carriers.includes(f.airline.code)) &&
         (!periods.length ||
           periods.includes(

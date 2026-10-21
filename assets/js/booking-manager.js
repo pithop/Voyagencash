@@ -7,6 +7,21 @@
       crypto.getRandomValues(new Uint32Array(n)),
       (v) => chars[v % chars.length],
     ).join("");
+  const HOLD_SECONDS = 7200, CASH_LIMIT = 1000;
+  const transitions = Object.freeze({
+    INITIALIZED: ["HOLD_PENDING"],
+    HOLD_PENDING: ["AWAITING_CASH", "PAYMENT_CAPTURED", "EXPIRED", "CANCELLED"],
+    AWAITING_CASH: ["PAYMENT_CAPTURED", "EXPIRED", "CANCELLED"],
+    PAYMENT_CAPTURED: ["TICKET_ISSUED", "REFUND_PENDING"],
+    TICKET_ISSUED: ["REFUND_PENDING"],
+    EXPIRED: [], REFUND_PENDING: [], CANCELLED: [],
+  });
+  function transition(r, next) {
+    if (!transitions[r.state]?.includes(next))
+      throw new Error(`Transition de réservation interdite : ${r.state} → ${next}`);
+    r.state = next;
+    (r.stateHistory ||= []).push({ state: next, at: Date.now() });
+  }
   const clone = (v) => JSON.parse(JSON.stringify(v));
   function read(key, fallback) {
     const raw = localStorage.getItem(key);
@@ -46,12 +61,25 @@
       throw new Error(
         "Le format des réservations locales est invalide. Les données ont été conservées.",
       );
-    return records.map((r) =>
-      r.status === "pending" && Date.now() >= r.expiresAt
-        ? { ...r, status: "expired" }
-        : r,
-    );
+    let changed = false;
+    for (const r of records) {
+      if (!r.state) {
+        r.state = { confirmed: "TICKET_ISSUED", cancelled: "CANCELLED", expired: "EXPIRED" }[r.status]
+          || (r.method === "voucher" ? "AWAITING_CASH" : "HOLD_PENDING");
+        r.stateHistory = [{ state: r.state, at: r.createdAt }];
+        r.pnr = r.id.replace("VGC-", "").slice(0, 6);
+        changed = true;
+      }
+      if (r.status === "pending" && Date.now() >= r.expiresAt) {
+        transition(r, "EXPIRED");
+        r.status = "expired";
+        changed = true;
+      }
+    }
+    if (changed) write(KEY, records);
+    return records;
   }
+
   const get = (id) => all().find((r) => r.id === id);
   const total = (draft) => {
     const count = draft.search?.count || 1;
@@ -123,15 +151,31 @@
     if (draft.passengers.length !== draft.search.count)
       throw new Error("Complétez tous les passagers.");
     validatePassengers(draft.passengers, draft.contact, draft.flights[0].date);
+    if (method === "voucher" && total(draft).total > CASH_LIMIT)
+      throw new Error("PayEnCash : le plafond de 1 000 € en espèces est dépassé (art. L.112-6 et D.112-3 CMF). Choisissez la carte ou Apple Pay.");
     const records = all();
+    draft.checkoutKey ||= crypto.randomUUID();
+    const previous = records.find(r => r.checkoutKey === draft.checkoutKey);
+    if (previous) return previous;
+    const now = Date.now();
     const record = {
+      checkoutKey: draft.checkoutKey,
+      state: "INITIALIZED",
+      stateHistory: [{ state: "INITIALIZED", at: now }],
+      pnr: random(6),
+      demo: true,
+      paymentRail: method === "voucher" ? "PayEnCash" : method,
+      voucherToken: method === "voucher" ? random(32) : null,
+      fiscal: method === "voucher"
+        ? { type: "BUM", issuer: "AJEK / PayEnCash", article: "256 ter CGI", vatAtVoucherIssue: 0, taxEvent: "TICKET_ISSUED" }
+        : { type: "FLIGHT", taxEvent: "TICKET_ISSUED" },
       id: `VGC-${random(6)}`,
-      createdAt: Date.now(),
-      expiresAt: Date.now() + 120 * 60000,
+      createdAt: now,
+      expiresAt: now + HOLD_SECONDS * 1000,
       status: "pending",
       method,
       voucher:
-        method === "voucher" ? `BON-VGC-${random(8, "0123456789")}` : null,
+        method === "voucher" ? `VNC-2026-${random(5)}` : null,
       flights: clone(draft.flights),
       passengers: clone(draft.passengers),
       contact: clone(draft.contact),
@@ -148,6 +192,14 @@
       )
     )
       return create(draft, method);
+    transition(record, "HOLD_PENDING");
+    if (method === "voucher") transition(record, "AWAITING_CASH");
+    record.hold = {
+      type: "hold", live_mode: false, booking_reference: record.pnr,
+      payment_requirements: { requires_instant_payment: false },
+      payment_required_by: new Date(record.expiresAt).toISOString(),
+      price_guarantee_expires_at: new Date(record.expiresAt).toISOString(),
+    };
     write(KEY, [record, ...records]);
     return record;
   }
@@ -160,6 +212,8 @@
       throw new Error(
         "Cette réservation est expirée ou annulée. Lancez une nouvelle recherche.",
       );
+    transition(r, "PAYMENT_CAPTURED");
+    r.capturedAt = Date.now();
     r.status = "confirmed";
     r.confirmedAt = Date.now();
     const used = new Set(records.flatMap((b) => b.tickets || []));
@@ -171,6 +225,8 @@
       used.add(ticket);
       return ticket;
     });
+    transition(r, "TICKET_ISSUED");
+    r.fiscal = { ...r.fiscal, regularizedAt: r.confirmedAt };
     write(KEY, records);
     return r;
   }
@@ -180,13 +236,17 @@
     if (!r) throw new Error("Réservation introuvable.");
     if (!["confirmed", "pending"].includes(r.status))
       throw new Error("Cette réservation ne peut plus être annulée.");
+    if (r.state === "TICKET_ISSUED" || r.state === "PAYMENT_CAPTURED") {
+      transition(r, "REFUND_PENDING");
+      r.refund = { status: "pending", amount: r.total, currency: "EUR", simulated: true };
+    } else transition(r, "CANCELLED");
     r.status = "cancelled";
     r.cancelledAt = Date.now();
     write(KEY, records);
     return r;
   }
   function qr(payload) {
-    const code = qrcode(0, "M");
+    const code = qrcode(0, "Q");
     code.addData(payload);
     code.make();
     return code.createSvgTag({ cellSize: 4, margin: 16, scalable: true });
@@ -205,7 +265,7 @@
     );
   function ticketHTML(r) {
     const F = FlightEngine;
-    return `<div class="ticket-document"><div class="ticket-brand">voyagencash <span>e-billet de démonstration</span></div><div class="ticket-warning">SIMULATION · NON VALABLE POUR VOYAGER · Aucun billet émis par une compagnie</div><div class="ticket-heading"><div><small>Référence de réservation fictive</small><h2>${escape(r.id)}</h2></div><span class="badge">${r.status === "confirmed" ? "Simulation confirmée" : r.status === "cancelled" ? "Annulée" : "Non payé"}</span></div>${r.passengers.map((p, i) => `<article class="boarding-pass"><div class="pass-main"><small>PASSAGER ${i + 1} · ÉCONOMIQUE</small><h3>${escape(p.firstName)} ${escape(p.lastName)}</h3><p>N° e-ticket fictif : ${escape(r.tickets[i] || "En attente")}</p>${r.flights.map((f) => `<div class="pass-flight"><div><b>${escape(f.from)}</b><span>${escape(F.airport(f.from).city)}</span><strong>${F.time(f.departure, f.from)}</strong></div><div class="pass-middle">${escape(f.airline.name)}<br>${f.segments.map((s) => escape(s.number)).join(" / ")}<br>${F.duration(f.duration)} · ${f.stops ? "1 escale" : "Direct"}</div><div><b>${escape(f.to)}</b><span>${escape(F.airport(f.to).city)}</span><strong>${F.time(f.arrival, f.to)}</strong></div></div><p class="pass-date">Départ : ${F.dateLabel(f.date, true)} · Arrivée : ${F.dateLabel(F.dateInZone(f.arrival, F.airport(f.to).tz))}<br>Horaires locaux · Siège et porte : non attribués</p>${f.segments.length > 1 ? `<p class="muted">Escale à ${escape(F.airport(f.segments[0].to).city)} : ${F.duration((f.segments[1].departure - f.segments[0].arrival) / 60000)}</p>` : ""}`).join("")}</div><div class="pass-stub">${qr(`DEMO|${r.id}|${r.tickets[i] || "PENDING"}|${i + 1}`)}<b>${escape(r.id)}</b><small>Spécimen de carte d’embarquement</small></div></article>`).join("")}<div class="ticket-footer"><span>${r.options.baggage ? "Bagage en soute : 23 kg / passager / trajet" : "Petit sac sous le siège inclus"}<br>${r.options.guarantee ? "Garantie annulation simulée incluse" : "Sans garantie annulation"}</span><strong>Total TTC simulé : ${F.money(r.total)}</strong></div><p class="muted">Ce document ne permet ni l’enregistrement ni l’embarquement. Aucun paiement n’a été débité.</p></div>`;
+    return `<div class="ticket-document"><div class="ticket-brand">voyagencash <span>e-billet de démonstration</span></div><div class="ticket-warning">SIMULATION · NON VALABLE POUR VOYAGER · Aucun billet émis par une compagnie</div><div class="ticket-heading"><div><small>Référence de réservation fictive</small><h2>${escape(r.pnr || r.id)}</h2></div><span class="badge">${r.status === "confirmed" ? "Simulation confirmée" : r.status === "cancelled" ? "Annulée" : "Non payé"}</span></div>${r.passengers.map((p, i) => `<article class="boarding-pass" tabindex="0" aria-label="Pass de voyage interactif"><div class="pass-main"><small>PASSAGER ${i + 1} · ÉCONOMIQUE</small><h3>${escape(p.firstName)} ${escape(p.lastName)}</h3><p>N° e-ticket fictif : ${escape(r.tickets[i] || "En attente")}</p>${r.flights.map((f) => `<div class="pass-flight"><div><b>${escape(f.from)}</b><span>${escape(F.airport(f.from).city)}</span><strong>${F.time(f.departure, f.from)}</strong></div><div class="pass-middle">${escape(f.airline.name)}<br>${f.segments.map((s) => escape(s.number)).join(" / ")}<br>${F.duration(f.duration)} · ${f.stops ? "1 escale" : "Direct"}</div><div><b>${escape(f.to)}</b><span>${escape(F.airport(f.to).city)}</span><strong>${F.time(f.arrival, f.to)}</strong></div></div><p class="pass-date">Départ : ${F.dateLabel(f.date, true)} · Arrivée : ${F.dateLabel(F.dateInZone(f.arrival, F.airport(f.to).tz))}<br>Horaires locaux · Terminaux ${escape(f.departureTerminal || "—")} / ${escape(f.arrivalTerminal || "—")} (simulés) · Siège et porte non attribués</p>${f.segments.length > 1 ? `<p class="muted">Escale à ${escape(F.airport(f.segments[0].to).city)} : ${F.duration((f.segments[1].departure - f.segments[0].arrival) / 60000)}</p>` : ""}`).join("")}</div><div class="pass-stub">${qr(`DEMO|${r.id}|${r.tickets[i] || "PENDING"}|${i + 1}`)}<b>${escape(r.id)}</b><small>Spécimen de carte d’embarquement</small></div></article>`).join("")}<div class="ticket-footer"><span>${r.options.baggage ? "Bagage en soute : 23 kg / passager / trajet" : "Petit sac sous le siège inclus"}<br>${r.options.guarantee ? "Garantie annulation simulée incluse" : "Sans garantie annulation"}</span><strong>Total TTC simulé : ${F.money(r.total)}</strong></div><p class="muted">Ce document ne permet ni l’enregistrement ni l’embarquement. Aucun paiement n’a été débité.</p></div>`;
   }
   function download(id) {
     const r = get(id);
@@ -220,8 +280,45 @@
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
+  function wallet(id) {
+    const r = get(id);
+    if (!r || r.status !== "confirmed") throw new Error("Confirmez votre réservation avant l’export Wallet.");
+    const f = r.flights[0];
+    const pass = {
+      formatVersion: 1, passTypeIdentifier: "pass.voyagencash.demo", serialNumber: r.id,
+      teamIdentifier: "DEMOONLY00", organizationName: "voyagencash",
+      description: "Spécimen non signé · non valable pour voyager", logoText: "voyagencash",
+      foregroundColor: "rgb(255,255,255)", backgroundColor: "rgb(11,15,25)",
+      boardingPass: { transitType: "PKTransitTypeAir",
+        primaryFields: [{ key: "from", label: "DÉPART", value: f.from }, { key: "to", label: "ARRIVÉE", value: f.to }],
+        auxiliaryFields: [{ key: "pnr", label: "PNR SIMULÉ", value: r.pnr }],
+        backFields: [{ key: "notice", label: "Démonstration", value: "Archive non signée, non importable dans Apple Wallet. Aucun titre de transport." }],
+      },
+    };
+    const encoder = new TextEncoder();
+    const name = encoder.encode("pass.json"), data = encoder.encode(JSON.stringify(pass, null, 2));
+    let crc = 0xffffffff;
+    for (const byte of data) { crc ^= byte; for (let i = 0; i < 8; i++) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0); }
+    crc = (crc ^ 0xffffffff) >>> 0;
+    const local = new Uint8Array(30 + name.length + data.length), l = new DataView(local.buffer);
+    l.setUint32(0, 0x04034b50, true); l.setUint16(4, 20, true); l.setUint32(14, crc, true);
+    l.setUint32(18, data.length, true); l.setUint32(22, data.length, true); l.setUint16(26, name.length, true);
+    local.set(name, 30); local.set(data, 30 + name.length);
+    const central = new Uint8Array(46 + name.length), c = new DataView(central.buffer);
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true);
+    c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true); central.set(name, 46);
+    const end = new Uint8Array(22), e = new DataView(end.buffer);
+    e.setUint32(0, 0x06054b50, true); e.setUint16(8, 1, true); e.setUint16(10, 1, true);
+    e.setUint32(12, central.length, true); e.setUint32(16, local.length, true);
+    const url = URL.createObjectURL(new Blob([local, central, end], { type: "application/vnd.apple.pkpass" }));
+    const a = document.createElement("a"); a.href = url; a.download = `voyagencash-${r.id}-simulation.pkpass`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
   window.BookingManager = {
     KEY,
+    HOLD_SECONDS,
+    CASH_LIMIT,
+    wallet,
     all,
     get,
     total,

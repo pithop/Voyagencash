@@ -298,11 +298,11 @@
     if (activeAC && !e.target.closest(".search-field")) closeAutocomplete();
   });
   function progress(step) {
-    return `<div class="journey-progress" aria-label="Étapes de réservation">${["Vols", "Options", "Passagers", "Paiement", "Billet"].map((s, i) => `<span class="${i === step ? "current" : i < step ? "done" : ""}" ${i === step ? 'aria-current="step"' : ""}>${i < step ? "✓" : i + 1} ${s}</span>`).join('<span aria-hidden="true" style="padding:0;background:none">›</span>')}</div>`;
+    return `<div class="journey-progress" aria-label="Étapes de réservation">${["Vols", "Options", "Passagers", "Paiement", "Billet"].map((s, i) => `<span class="${i === step ? "current" : i < step ? "done" : ""}" ${i === step ? 'aria-current="step"' : ""}>${i < step ? icon("check") : i + 1} ${s}</span>`).join('<span aria-hidden="true" style="padding:0;background:none">›</span>')}</div>`;
   }
   function summary() {
     const t = B.total(draft);
-    return `<aside class="summary-panel" aria-label="Récapitulatif du voyage"><h2>Votre voyage, en un coup d’œil</h2>${draft.flights.map((f) => `<div class="summary-leg"><strong>${esc(F.airport(f.from).city)} → ${esc(F.airport(f.to).city)}</strong><small>${F.dateLabel(f.date)} · ${F.time(f.departure, f.from)} – ${F.time(f.arrival, f.to)}</small><small>${esc(f.airline.name)} · ${f.stops ? "1 escale" : "Direct"}</small></div>`).join("")}<div class="price-line"><span>Vols · ${draft.search.count} passager${draft.search.count > 1 ? "s" : ""}</span><strong>${F.money(t.flights)}</strong></div><div class="price-line"><span>Bagages en soute</span><strong>${t.baggage ? F.money(t.baggage) : "Non inclus"}</strong></div><div class="price-line"><span>Garantie annulation</span><strong>${t.guarantee ? F.money(t.guarantee) : "Non incluse"}</strong></div><div class="price-total"><span>Total TTC</span><strong>${F.money(t.total)}</strong></div><p>Prix simulé en euros, pour tous les passagers et trajets. Aucun débit réel.</p></aside>`;
+    return `<aside class="summary-panel" aria-label="Récapitulatif du voyage"><h2>Votre voyage, en un coup d’œil</h2>${draft.flights.map((f) => `<div class="summary-leg"><strong>${esc(F.airport(f.from).city)} → ${esc(F.airport(f.to).city)}</strong><small>${F.dateLabel(f.date)} · ${F.time(f.departure, f.from)} – ${F.time(f.arrival, f.to)}</small><small>${esc(f.airline.name)} · ${f.stops ? "1 escale" : "Direct"}</small></div>`).join("")}<div class="price-line"><span>Vols · ${draft.search.count} passager${draft.search.count > 1 ? "s" : ""}</span><strong>${F.money(t.flights)}</strong></div><div class="price-line"><span>Bagages en soute</span><strong>${t.baggage ? F.money(t.baggage) : "Non inclus"}</strong></div><div class="price-line"><span>Garantie annulation</span><strong>${t.guarantee ? F.money(t.guarantee) : "Non incluse"}</strong></div><div class="price-total"><span>Total TTC</span><strong>${F.money(t.total)}</strong></div><p>Prix simulé en euros, pour tous les passagers et trajets. Aucun débit réel.</p>${t.total > B.CASH_LIMIT ? `<p class="cash-limit-note">${icon("shield")} Au-delà de 1 000 €, choisissez la carte ou Apple Pay. Le règlement en espèces PayEnCash est indisponible (art. L.112-6 CMF).</p>` : ""}</aside>`;
   }
   function renderResults() {
     legIndex = Math.min(draft.flights.length, draft.search.legs.length - 1);
@@ -324,7 +324,7 @@
       ...new Map(offers.map((f) => [f.airline.code, f.airline])).values(),
     ];
     $("#results-content").innerHTML =
-      `${progress(0)}<div class="results-heading"><div><div class="eyebrow">${draft.search.type === "roundtrip" ? (legIndex ? "VOTRE VOL RETOUR" : "VOTRE VOL ALLER") : `TRAJET ${legIndex + 1} SUR ${draft.search.legs.length}`}</div><h1 id="results-title">${esc(F.airport(leg.from).city)} ${icon("arrow")} ${esc(F.airport(leg.to).city)}</h1><p>${F.dateLabel(leg.date, true)} · ${draft.search.count} passager${draft.search.count > 1 ? "s" : ""} · Économique</p></div><div class="booking-actions">${legIndex ? '<button class="button small" data-action="previous-leg">Modifier le vol précédent</button>' : ""}<a href="#search" class="button small">Modifier la recherche</a></div></div>${legIndex ? `<div class="notice">${icon("check")}<span>${legIndex} trajet${legIndex > 1 ? "s" : ""} sélectionné${legIndex > 1 ? "s" : ""} · ${draft.flights.map((f) => `${f.from} → ${f.to} à ${F.time(f.departure, f.from)}`).join(" · ")}</span></div>` : ""}<div class="results-layout"><aside class="filter-panel"><div><h2>Filtres</h2><button class="text-button" data-action="reset-filters">Réinitialiser</button></div><div class="filter-fields"><fieldset class="filter-group"><legend>Budget par passager</legend><input type="range" id="budget-filter" min="0" max="${filters.max}" step="1" value="${filters.max}" aria-label="Budget maximal par passager"><div class="budget-label"><span>0 €</span><output id="budget-output">${F.money(filters.max)}</output></div></fieldset><fieldset class="filter-group"><legend>Escales</legend><label><input type="checkbox" id="direct-filter"> Vols directs uniquement</label></fieldset><fieldset class="filter-group"><legend>Heure de départ</legend>${[
+      `${progress(0)}<div class="results-heading"><div><div class="eyebrow">${draft.search.type === "roundtrip" ? (legIndex ? "VOTRE VOL RETOUR" : "VOTRE VOL ALLER") : `TRAJET ${legIndex + 1} SUR ${draft.search.legs.length}`}</div><h1 id="results-title">${esc(F.airport(leg.from).city)} ${icon("arrow")} ${esc(F.airport(leg.to).city)}</h1><p>${F.dateLabel(leg.date, true)} · ${draft.search.count} passager${draft.search.count > 1 ? "s" : ""} · Économique</p></div><div class="booking-actions">${legIndex ? '<button class="button small" data-action="previous-leg">Modifier le vol précédent</button>' : ""}<a href="#search" class="button small">Modifier la recherche</a></div></div>${legIndex ? `<div class="notice">${icon("check")}<span>${legIndex} trajet${legIndex > 1 ? "s" : ""} sélectionné${legIndex > 1 ? "s" : ""} · ${draft.flights.map((f) => `${f.from} → ${f.to} à ${F.time(f.departure, f.from)}`).join(" · ")}</span></div>` : ""}<div class="results-layout"><aside class="filter-panel"><div><h2>Filtres</h2><button class="text-button" data-action="reset-filters">Réinitialiser</button></div><div class="filter-fields"><fieldset class="filter-group"><legend>Budget par passager</legend><input type="range" id="budget-filter" min="0" max="${filters.max}" step="1" value="${filters.max}" aria-label="Budget maximal par passager"><div class="budget-label"><span>0 €</span><output id="budget-output">${F.money(filters.max)}</output></div></fieldset><fieldset class="filter-group"><legend>Escales</legend><label><input type="checkbox" id="direct-filter"> Vols directs uniquement</label></fieldset><fieldset class="filter-group"><legend>Bagage cabine</legend><label><input type="checkbox" id="baggage-filter"> Valise cabine incluse</label></fieldset><fieldset class="filter-group"><legend>Heure de départ</legend>${[
         ["morning", "Matin · 06 h – 12 h"],
         ["afternoon", "Après-midi · 12 h – 18 h"],
         ["evening", "Soir · après 18 h"],
@@ -347,6 +347,7 @@
   function updateFilters() {
     filters.max = +$("#budget-filter").value;
     filters.direct = $("#direct-filter").checked;
+    filters.baggage = $("#baggage-filter").checked;
     filters.carriers = $$("[name=carrier-filter]:checked").map((e) => e.value);
     filters.periods = $$("[name=period-filter]:checked").map((e) => e.value);
     filters.sort = $("#sort-select").value;
@@ -364,7 +365,7 @@
             const dayDiff = Math.round(
               (Date.parse(arrivalDate) - Date.parse(f.date)) / 86400000,
             );
-            return `<article class="flight-card"><div class="flight-card-top"><span class="airline-badge" style="--carrier:${f.airline.color}">${f.airline.code}</span><div><strong>${esc(f.airline.name)}</strong><small>${f.segments.map((s) => s.number).join(" · ")} · Économique</small></div>${i === 0 ? `<span class="badge">${filters.sort === "price" ? "Le moins cher" : filters.sort === "duration" ? "Le plus rapide" : "Notre sélection"}</span>` : ""}</div><div class="flight-card-body"><div class="flight-time"><strong>${F.time(f.departure, f.from)}</strong><span>${f.from} · ${esc(F.airport(f.from).city)}</span></div><div class="timeline"><span>${F.duration(f.duration)}</span><div class="timeline-line">${icon("plane")}</div><span>${f.stops ? `1 escale · ${f.segments[0].to}` : "Direct"}</span></div><div class="flight-time"><strong>${F.time(f.arrival, f.to)}${dayDiff ? ` <small>${dayDiff > 0 ? "+" : ""}${dayDiff} j</small>` : ""}</strong><span>${f.to} · ${esc(F.airport(f.to).city)}</span></div><div class="flight-price"><strong>${F.money(f.price)}</strong><small>TTC / passager${draft.search.count > 1 ? ` · ${F.money(f.price * draft.search.count)} au total` : ""}</small><button class="button primary" data-select-flight="${f.id}" aria-label="Choisir ${esc(f.airline.name)} à ${F.time(f.departure, f.from)}, ${F.money(f.price)}">Choisir ${icon("arrow")}</button></div></div><details class="flight-details"><summary>Détails du vol & bagages</summary>${f.segments.map((s, n) => `<p><b>${s.number}</b> · ${s.from} ${F.time(s.departure, s.from)} → ${s.to} ${F.time(s.arrival, s.to)} · ${F.duration(s.duration)}${n < f.segments.length - 1 ? `<br>Escale à ${esc(F.airport(s.to).city)} : ${F.duration((f.segments[n + 1].departure - s.arrival) / 60000)}` : ""}</p>`).join("")}<p>Petit sac sous le siège inclus. Soute 23 kg : +35 € par passager et par trajet à l’étape suivante. Numéros de vol et disponibilités fictifs.</p></details></article>`;
+            return `<article class="flight-card"><div class="flight-card-top"><span class="airline-badge" style="--carrier:${f.airline.color}">${f.airline.code}</span><div><strong>${esc(f.airline.name)}</strong><small>${f.segments.map((s) => s.number).join(" · ")} · Économique</small></div>${i === 0 ? `<span class="badge">${filters.sort === "price" ? "Le moins cher" : filters.sort === "duration" ? "Le plus rapide" : "Notre sélection"}</span>` : ""}</div><div class="flight-card-body"><div class="flight-time"><strong>${F.time(f.departure, f.from)}</strong><span>${f.from} · ${esc(F.airport(f.from).city)}</span></div><div class="timeline"><span>${F.duration(f.duration)}</span><div class="timeline-line">${icon("plane")}</div><span>${f.stops ? `1 escale · ${f.segments[0].to}` : "Direct"}</span></div><div class="flight-time"><strong>${F.time(f.arrival, f.to)}${dayDiff ? ` <small>${dayDiff > 0 ? "+" : ""}${dayDiff} j</small>` : ""}</strong><span>${f.to} · ${esc(F.airport(f.to).city)}</span></div><div class="flight-price"><strong>${F.money(f.price)}</strong><small>TTC / passager${draft.search.count > 1 ? ` · ${F.money(f.price * draft.search.count)} au total` : ""}</small><button class="button primary" data-select-flight="${f.id}" aria-label="Choisir ${esc(f.airline.name)} à ${F.time(f.departure, f.from)}, ${F.money(f.price)}">Choisir ${icon("arrow")}</button></div></div><details class="flight-details"><summary>Détails du vol & bagages</summary>${f.segments.map((s, n) => `<p><b>${s.number}</b> · ${s.from} ${F.time(s.departure, s.from)} → ${s.to} ${F.time(s.arrival, s.to)} · ${F.duration(s.duration)}${n < f.segments.length - 1 ? `<br>Escale à ${esc(F.airport(s.to).city)} : ${F.duration((f.segments[n + 1].departure - s.arrival) / 60000)}` : ""}</p>`).join("")}<p>${f.cabinBagIncluded ? "Valise cabine et petit sac inclus." : "Petit sac sous le siège inclus."} Soute 23 kg : +35 € par passager et par trajet à l’étape suivante. Numéros de vol et disponibilités fictifs.</p></details></article>`;
           })
           .join("")
       : `<div class="empty-state">${icon("search")}<h2>Aucun vol pour cette sélection.</h2><p>${offers.length ? "Élargissez votre budget ou retirez un filtre." : "Essayez une autre date. Les trajets suivants doivent partir au moins deux heures après votre arrivée."}</p><button class="button" data-action="${offers.length ? "reset-filters" : "change-search"}">${offers.length ? "Réinitialiser les filtres" : "Modifier la recherche"}</button></div>`;
@@ -383,7 +384,7 @@
     );
   }
   function passengerFields(p, i) {
-    return `<section class="panel"><h2><span class="passenger-number">${i + 1}</span> Passager ${i + 1}</h2><p>Utilisez une identité fictive pour cette démonstration.</p><div class="form-grid"><label>Prénom<input name="firstName-${i}" value="${esc(p.firstName)}" autocomplete="off" minlength="2" maxlength="60" required></label><label>Nom<input name="lastName-${i}" value="${esc(p.lastName)}" autocomplete="off" minlength="2" maxlength="60" required></label><label>Date de naissance<input type="date" name="birthDate-${i}" value="${esc(p.birthDate)}" min="1900-01-01" max="${localToday()}" required></label><label>Type de document<select name="documentType-${i}"><option value="passport" ${p.documentType !== "id" ? "selected" : ""}>Passeport</option><option value="id" ${p.documentType === "id" ? "selected" : ""}>Carte nationale d’identité</option></select></label><label class="wide">Numéro de document (fictif)<input name="document-${i}" value="${esc(p.document)}" autocomplete="off" minlength="5" maxlength="20" pattern="[A-Za-z0-9 \\-]{5,20}" placeholder="Ex. TEST12345" required></label></div></section>`;
+    return `<section class="panel"><h2><span class="passenger-number">${i + 1}</span> Passager ${i + 1}</h2><p>Utilisez une identité fictive pour cette démonstration.</p><div class="form-grid"><label>Prénom<input id="p-first-${i}" name="firstName-${i}" value="${esc(p.firstName)}" autocomplete="off" minlength="2" maxlength="60" required></label><label>Nom<input id="p-last-${i}" name="lastName-${i}" value="${esc(p.lastName)}" autocomplete="off" minlength="2" maxlength="60" required></label><label>Date de naissance<input type="date" id="p-dob-${i}" name="birthDate-${i}" value="${esc(p.birthDate)}" min="1900-01-01" max="${localToday()}" required></label><label>Type de document<select id="p-doc-type-${i}" name="documentType-${i}"><option value="passport" ${p.documentType !== "id" ? "selected" : ""}>Passeport</option><option value="id" ${p.documentType === "id" ? "selected" : ""}>Carte nationale d’identité</option></select></label><label class="wide">Numéro de document (fictif)<input id="p-doc-${i}" name="document-${i}" value="${esc(p.document)}" autocomplete="off" minlength="5" maxlength="20" pattern="[A-Za-z0-9 \\-]{5,20}" placeholder="Ex. TEST12345" required></label></div></section>`;
   }
   function collectPassengers() {
     const form = $("#passengers-form");
@@ -403,7 +404,7 @@
   }
   function renderPassengers() {
     $("#passengers-content").innerHTML =
-      `${progress(2)}<div class="page-heading"><h1 id="passengers-title">Qui embarque avec nous ?</h1><p>Renseignez les passagers et les coordonnées de votre réservation.</p></div><div class="checkout-layout"><form id="passengers-form">${Array.from({ length: draft.search.count }, (_, i) => passengerFields(draft.passengers[i] || {}, i)).join("")}<section class="panel"><h2>Vos coordonnées</h2><p>Aucun message ne sera envoyé. Les données restent sur ce navigateur.</p><div class="form-grid"><label>Adresse e-mail<input type="email" name="email" value="${esc(draft.contact.email)}" placeholder="prenom@example.test" autocomplete="off" maxlength="150" required></label><label>Téléphone<input type="tel" name="phone" value="${esc(draft.contact.phone)}" placeholder="06 00 00 00 00" autocomplete="off" maxlength="22" required></label></div></section><label class="consent"><input type="checkbox" id="passenger-consent" required><span>Je confirme les informations saisies et comprends qu’il s’agit d’une simulation. Mes données fictives seront enregistrées sur ce navigateur.</span></label><p id="passenger-error" class="form-error" role="alert" hidden></p><div class="actions"><a class="text-button" href="#options">← Options</a><button class="button primary" type="submit">Continuer vers le paiement ${icon("arrow")}</button></div></form>${summary()}</div>`;
+      `${progress(2)}<div class="page-heading"><h1 id="passengers-title">Qui embarque avec nous ?</h1><p>Renseignez les passagers et les coordonnées de votre réservation.</p></div><div class="checkout-layout"><form id="passengers-form">${Array.from({ length: draft.search.count }, (_, i) => passengerFields(draft.passengers[i] || {}, i)).join("")}<section class="panel"><h2>Vos coordonnées</h2><p>Aucun message ne sera envoyé. Les données restent sur ce navigateur.</p><div class="form-grid"><label>Adresse e-mail<input type="email" id="contact-email" name="email" value="${esc(draft.contact.email)}" placeholder="prenom@example.test" autocomplete="off" maxlength="150" required></label><label>Téléphone<input type="tel" id="contact-phone" name="phone" value="${esc(draft.contact.phone)}" placeholder="06 00 00 00 00" autocomplete="off" maxlength="22" required></label></div></section><label class="consent"><input type="checkbox" id="passenger-consent" required><span>Je confirme les informations saisies et comprends qu’il s’agit d’une simulation. Mes données fictives seront enregistrées sur ce navigateur.</span></label><p id="passenger-error" class="form-error" role="alert" hidden></p><div class="actions"><a class="text-button" href="#options">← Options</a><button class="button primary" id="confirm-booking" type="submit">Continuer vers le paiement ${icon("arrow")}</button></div></form>${summary()}</div>`;
     $("#passengers-form").addEventListener("input", () => {
       collectPassengers();
     });
@@ -439,7 +440,7 @@
         [
           "voucher",
           "wallet",
-          "Bon d’achat voyagencash",
+          "PayEnCash · en espèces",
           "Paiement en espèces · bon valable 120 minutes",
         ],
         [
@@ -448,15 +449,15 @@
           "Carte bancaire",
           "Carte de test · authentification 3D Secure simulée",
         ],
-        ["apple", "wallet", "Apple Pay", "Simulation du paiement express"],
+        ["apple", "apple", "Apple Pay", "Simulation du paiement express"],
       ]
         .map(
           ([v, ic, title, desc]) =>
-            `<label class="payment-choice">${icon(ic)}<span><strong>${title}</strong><small>${desc}</small></span><input type="radio" name="payment-method" value="${v}" ${v === "voucher" ? "checked" : ""}></label>`,
+            `<label class="payment-choice">${icon(ic)}<span><strong>${title}</strong><small>${desc}</small></span><input id="${{voucher: "pay-voucher-trigger", card: "card-pay", apple: "apple-pay"}[v]}" type="radio" name="payment-method" value="${v}" ${v === "voucher" ? "checked" : ""}></label>`,
         )
         .join(
           "",
-        )}</div><div id="payment-detail"></div><label class="consent"><input type="checkbox" id="payment-consent"><span>J’accepte de créer une réservation fictive. Aucun billet réel ne sera émis et aucun montant ne sera débité.</span></label><button class="button primary full" data-action="pay" id="pay-button">Générer mon bon d’achat ${icon("arrow")}</button><div class="actions"><a href="#passengers" class="text-button">← Passagers</a><span class="muted">${icon("shield")} Démonstration sans débit</span></div></div>${summary()}</div>`;
+        )}</div>${B.total(draft).total > B.CASH_LIMIT ? `<div class="notice amber" role="alert">${icon("shield")}<span>Votre panier dépasse 1 000 €. Le paiement en espèces PayEnCash est indisponible (art. L.112-6 et D.112-3 CMF). Choisissez la carte ou Apple Pay.</span></div>` : ""}<div id="payment-detail"></div><label class="consent"><input type="checkbox" id="payment-consent"><span>J’accepte de créer une réservation fictive. Aucun billet réel ne sera émis et aucun montant ne sera débité.</span></label><button class="button primary full" data-action="pay" id="pay-button">Générer mon bon PayEnCash ${icon("arrow")}</button><div class="actions"><a href="#passengers" class="text-button">← Passagers</a><span class="muted">${icon("shield")} Démonstration sans débit</span></div></div>${summary()}</div>`;
     $$("[name=payment-method]").forEach((el) =>
       el.addEventListener("change", renderPaymentDetail),
     );
@@ -466,21 +467,57 @@
     const method = $("[name=payment-method]:checked").value;
     $("#payment-detail").innerHTML =
       method === "voucher"
-        ? `<div class="payment-detail"><strong>Réservez maintenant, testez le paiement ensuite.</strong><p>Votre bon et son QR code seront disponibles dans « Mes réservations ». Vous disposerez de 120 minutes pour simuler sa validation en caisse.</p></div>`
+        ? `<div class="payment-detail"><strong>Un bon. Deux heures. Votre liberté.</strong><p>Bon prépayé partenaire AJEK / PayEnCash · 120 minutes pour rejoindre un point de vente. Plafond : 1 000 € en espèces. Le QR code de cette démonstration ne peut pas être encaissé.</p></div>`
         : method === "card"
           ? '<div class="payment-detail"><strong>Votre carte de test est prête.</strong><div class="test-card"><span>CARTE DE DÉMONSTRATION</span><strong>4242 4242 4242 4242</strong><span>12 / 30 &nbsp; · &nbsp; CVC 123 &nbsp; · &nbsp; TEST</span></div><p>Aucune coordonnée bancaire réelle n’est nécessaire. L’étape suivante simule la validation 3D Secure.</p></div>'
           : '<div class="payment-detail"><strong>Apple Pay · mode démonstration</strong><p>Une fenêtre de confirmation simulera l’autorisation du paiement. Aucun portefeuille ni compte Apple n’est utilisé.</p></div>';
+    const overLimit = B.total(draft).total > B.CASH_LIMIT;
+    $("#pay-voucher-trigger").disabled = overLimit;
+    $("#pay-button").disabled = method === "voucher" && overLimit;
     $("#pay-button").innerHTML =
       (method === "voucher"
-        ? "Générer mon bon d’achat"
+        ? "Générer mon bon PayEnCash"
         : `Simuler le paiement de ${F.money(B.total(draft).total)}`) +
       " " +
       icon("arrow");
   }
+  function travelPass(r) {
+    const f = r.flights[0];
+    const stateText = r.status === "confirmed" ? "ÉMISSION CONFIRMÉE" : r.status === "pending" ? "VOTRE PLACE VOUS ATTEND" : "RÉSERVATION CLÔTURÉE";
+    return `<article class="travel-pass" tabindex="0" aria-label="Pass de voyage interactif">
+      <div class="travel-pass-top"><span class="airline-badge" style="--carrier:${f.airline.color}">${f.airline.code}</span><div><strong>${esc(f.airline.name)}</strong><small>${f.segments.map(s => esc(s.number)).join(" · ")} · ${esc(f.cabin)}</small></div><span class="pass-edition">TRAVEL PASS / 01</span></div>
+      <div class="travel-pass-route"><div><span>${esc(F.airport(f.from).city)}</span><b>${f.from}</b><strong>${F.time(f.departure, f.from)}</strong><small>Terminal ${esc(f.departureTerminal || "1")} · simulé</small></div><div class="route-drawing">${icon("flight")}<span>${F.duration(f.duration)}</span><small>${f.stops ? "1 escale" : "Vol direct"}</small></div><div><span>${esc(F.airport(f.to).city)}</span><b>${f.to}</b><strong>${F.time(f.arrival, f.to)}</strong><small>Terminal ${esc(f.arrivalTerminal || "1")} · simulé</small></div></div>
+      <div class="travel-pass-details"><div><small>PASSAGER PRINCIPAL</small><strong>${esc(r.passengers[0].firstName)} ${esc(r.passengers[0].lastName)}</strong></div><div><small>DÉPART</small><strong>${F.dateLabel(f.date)}</strong></div><div><small>PNR SIMULÉ</small><strong class="pnr">${esc(r.pnr || r.id.slice(-6))}</strong></div></div>
+      <div class="departure-gauge"><div><span>${icon("clock")} <span data-departure-label></span></span><small>${r.flights.length} trajet(s) · ${r.passengers.length} passager(s)</small></div><progress data-departure-progress max="100" value="0" aria-label="Progression vers le départ"></progress></div>
+      <div class="pass-security"><span class="live-dot"></span>${stateText}<span>SPÉCIMEN · NON VALABLE POUR VOYAGER</span></div>
+    </article>`;
+  }
+  function insights(r) {
+    const f = r.flights[0], airport = F.airport(f.to);
+    return `<div class="insights-grid">
+      <article class="insight weather-cell"><div class="insight-label">${icon("sun")} À L’ARRIVÉE <span>${f.to}</span></div><div class="insight-value" id="arrival-weather">— <small>°C</small></div><strong>${esc(airport.city)} <span data-local-clock="${f.to}">${F.time(Date.now(), f.to)}</span></strong><p id="weather-description">Météo actuelle à destination</p><button class="text-button" data-weather="${f.to}">Actualiser la météo ${icon("arrow")}</button></article>
+      <article class="insight"><div class="insight-label">${icon("radar")} FLIGHT INTELLIGENCE</div><div class="insight-value">${f.punctuality || 94}<small>%</small><span class="signal-bars"><i></i><i></i><i></i><i></i><i></i></span></div><strong>Vol ponctuel à ${f.punctuality || 94}%</strong><p>Risque de retard très faible</p><small class="data-note">Indicateur de démonstration · sans suivi réel</small></article>
+      <article class="insight co2-cell"><div class="insight-label">${icon("leaf")} UNE EMPREINTE PLUS LÉGÈRE</div><div class="insight-value">${f.co2Kg || 142}<small> kg</small></div><strong>CO2e / passager</strong><p><span class="positive">${f.co2VsAverage ?? -18}% vs moyenne simulée</span></p><small class="data-note">Estimation distance × facteur · hors traînées</small></article>
+      <article class="insight freeze-cell"><div class="insight-label">${icon("lock")} PRICE FREEZE</div><div class="insight-value">120<small> min</small></div><strong>Votre prix garde les pieds sur terre.</strong><p>Gel de tarif inclus, sans débit pendant la réservation.</p><button class="text-button" data-action="freeze-details">Comprendre la garantie ${icon("arrow")}</button></article>
+    </div>`;
+  }
+  function nearbyPreview(r) {
+    const origin = geoPosition || F.airport(r.flights[0].from);
+    const nearest = [...stores].sort((a,b) => F.distance(origin,a) - F.distance(origin,b)).slice(0,3);
+    return `<section class="nearby-preview"><div class="nearby-heading"><div><span class="eyebrow">LE VOYAGE COMMENCE TOUT PRÈS</span><h3>Votre prochain point de passage.</h3></div>${icon("pin")}</div><p>Points illustratifs · distances à vol d’oiseau depuis ${geoPosition ? "votre position" : esc(origin.city) + " " + origin.code}</p>${nearest.map(s => `<a href="#stores" class="nearby-row"><span class="nearby-icon">${icon("pin")}</span><span><strong>${esc(s.name)}</strong><small>${esc(s.area)} · ${esc(s.city)}</small></span><span>${Math.round(F.distance(origin,s))} km ${icon("chevron")}</span></a>`).join("")}<a href="#stores" class="text-button">Localiser les points avec mon GPS ${icon("arrow")}</a></section>`;
+  }
   function renderPending(r) {
-    $("#payment-content").innerHTML =
-      `${progress(3)}<div class="page-heading"><h1 id="payment-title">${r.method === "voucher" ? "Votre bon est prêt. Le voyage se rapproche." : "Votre paiement attend sa validation."}</h1><p>Réservation ${esc(r.id)} · Retrouvable dans « Mes réservations »</p></div><div class="checkout-layout"><div class="panel voucher-center"><h2>${r.method === "voucher" ? "Bon d’achat voyagencash" : "Paiement de démonstration"}</h2>${r.method === "voucher" ? `<p>Présentez ce QR code uniquement dans le cadre de cette simulation.</p>${B.qr(`DEMO|${r.voucher}|${r.id}|EUR|${r.total.toFixed(2)}`)}<div class="voucher-code">${r.voucher}</div><div class="voucher-actions"><button class="text-button" data-action="copy-voucher">Copier le code</button><a class="text-button" href="#stores">Où payer</a></div>` : ""}<div class="countdown">${icon("clock")}<span id="voucher-timer" role="timer" aria-label="Temps restant"></span></div><p>Montant de la simulation : <strong>${F.money(r.total)}</strong></p><button class="button primary full" id="validate-payment" data-action="${r.method === "voucher" ? "validate-voucher" : "resume-payment"}">${r.method === "voucher" ? "Simuler la validation en caisse" : "Reprendre le paiement simulé"} ${icon("check")}</button><p id="pending-status">Aucun commerce ne peut encaisser ce paiement. Aucun débit réel.</p><div class="actions"><a href="#bookings" class="text-button">Mes réservations</a><button class="text-button" data-cancel="${r.id}">Annuler cette réservation</button></div></div>${summary()}</div>`;
-    updateTimer();
+    $("#payment-content").innerHTML = `${progress(3)}<div class="page-heading dashboard-heading"><div><div class="eyebrow">VOTRE VOYAGE PREND FORME</div><h1 id="payment-title">Prochain arrêt : <span>${esc(F.airport(r.flights[0].to).city)}.</span></h1><p>Votre réservation est conservée. Il ne reste que le paiement.</p></div><span class="badge green">${icon("lock")} Tarif gelé · simulation</span></div>
+    <div class="bento-grid"><div class="bento-main">${travelPass(r)}<div class="hold-steps"><span class="done">${icon("check")} Vol sélectionné</span><span class="current">${icon("clock")} Paiement attendu</span><span>${icon("ticket")} Billet à émettre</span></div><div class="hold-note">${icon("shield")} <p>Retrouvez ce voyage à tout moment dans <a href="#bookings">Mes réservations</a>. Votre place est retenue pendant 120 minutes dans cette simulation.</p></div>${r.flights.length > 1 ? `<div class="next-legs">${r.flights.slice(1).map(f => `<p>${icon("plane")} <strong>${f.from} → ${f.to}</strong><span>${F.dateLabel(f.date)} · ${F.time(f.departure,f.from)} · ${esc(f.airline.name)}</span></p>`).join("")}</div>` : ""}${r.method === "voucher" ? nearbyPreview(r) : ""}</div>
+    <aside class="panel voucher-center"><div class="payment-panel-heading"><span class="eyebrow">${r.method === "voucher" ? "VOTRE BON PRÉPAYÉ" : "VOTRE PAIEMENT"}</span><span class="badge">Simulation</span></div><h2>${r.method === "voucher" ? "PayEnCash" : r.method === "apple" ? "Apple Pay" : "Carte bancaire"}<span class="pay-brand-dot">.</span></h2><p>${r.method === "voucher" ? "Le dernier pas vers votre prochain départ." : "Autorisez votre paiement pour confirmer le voyage."}</p>
+    ${r.method === "voucher" ? B.qr(`DEMO|BON-VGC-${r.id.slice(4)}|${r.voucher}|${r.voucherToken || r.id}`) + `<div class="voucher-code">${esc(r.voucher)}</div><div class="voucher-actions"><button class="text-button" data-action="copy-voucher">Copier la référence</button><span>QR de démonstration</span></div>` : ""}
+    <div class="countdown"><div class="countdown-ring"><svg viewBox="0 0 80 80" aria-hidden="true"><circle class="ring-track" cx="40" cy="40" r="34"/><circle id="timer-ring" cx="40" cy="40" r="34" pathLength="100"/></svg>${icon("clock")}</div><div><small>VOTRE TEMPS POUR PAYER</small><span id="voucher-timer" role="timer" aria-label="Temps restant"></span><small id="timer-warning">Votre tarif reste identique.</small></div></div>
+    <div class="voucher-total"><span>Montant à régler</span><strong>${F.money(r.total)}</strong></div>
+    ${r.method === "voucher" ? `<a class="button primary full" href="#stores">${icon("pin")} Trouver un point PayEnCash ${icon("arrow")}</a>` : ""}
+    <button class="button full ${r.method === "voucher" ? "" : "primary"}" id="validate-payment" data-action="${r.method === "voucher" ? "validate-voucher" : "resume-payment"}">${r.method === "voucher" ? "Simuler la validation en caisse" : "Reprendre le paiement simulé"} ${icon("check")}</button><p id="pending-status">Bon de démonstration, non encaissable. Aucun débit réel.</p>
+    ${r.method === "voucher" ? `<div class="voucher-legal">Cadre modélisé · <a href="#faq">Conditions du bon</a><br>AJEK / PayEnCash · Bon partenaire · L.521-3 CMF<br>BUM · art. 256 ter CGI · TVA à l’émission du billet<br>Espèces : 1 000 € maximum par transaction</div>` : ""}
+    <button class="text-button cancel-link" id="cancel-booking" data-cancel="${r.id}">Annuler cette réservation</button></aside></div>${insights(r)}`;
+    updateTimer(); updateTravelClock();
   }
   function updateTimer() {
     const timer = $("#voucher-timer");
@@ -493,6 +530,11 @@
         ? `${Math.floor(seconds / 60)} min ${String(seconds % 60).padStart(2, "0")} s restantes`
         : "Bon expiré";
       const expired = remaining === 0 || r.status !== "pending";
+      const urgent = seconds > 0 && seconds < 900 && !expired;
+      $(".countdown").classList.toggle("urgent", urgent);
+      $(".countdown").classList.toggle("expired", expired);
+      $("#timer-ring").style.strokeDashoffset = String(100 - Math.min(100, seconds / B.HOLD_SECONDS * 100));
+      $("#timer-warning").textContent = expired ? "Votre réservation est clôturée." : urgent ? "Moins de 15 minutes pour régler votre bon." : "Votre tarif reste identique.";
       $("#validate-payment").disabled = expired;
       if (expired)
         $("#pending-status").textContent =
@@ -513,6 +555,7 @@
   }
   function finishPayment() {
     const r = B.confirm(currentId);
+    haptic();
     safe(() => persist());
     $("#app-dialog").close();
     go("confirmation");
@@ -520,9 +563,9 @@
   }
   function renderConfirmation() {
     const r = B.get(currentId);
-    $("#confirmation-content").innerHTML =
-      `${progress(4)}<div class="confirmation-heading"><div class="success-icon">${icon("check")}</div><h1 id="confirmation-title">Votre prochaine aventure prend forme.</h1><p>Votre réservation de démonstration est confirmée et enregistrée sur ce navigateur. Aucun e-mail ni billet réel n’a été envoyé.</p></div>${B.ticketHTML(r)}<div class="center-actions"><button class="button primary" data-download="${r.id}">${icon("download")} Télécharger l’e-billet</button><button class="button" data-print="${r.id}">Imprimer / PDF</button><a href="#bookings" class="button">Mes réservations</a></div>`;
+    $("#confirmation-content").innerHTML = `${progress(4)}<div class="confirmation-heading"><div class="success-icon">${icon("check")}</div><div class="eyebrow">LE VOYAGE EST À VOUS</div><h1 id="confirmation-title">L’ailleurs n’attend plus que vous.</h1><p>Réservation simulée confirmée. Votre pass est enregistré sur ce navigateur.</p></div><div class="bento-grid"><div class="bento-main">${travelPass(r)}</div><aside class="panel wallet-panel"><div class="eyebrow">VOTRE VOYAGE, AVEC VOUS</div>${icon("ticket")}<h2>Prêt à vous suivre.</h2><p>Gardez votre pass à portée de main.</p><button class="button primary full" data-download="${r.id}">${icon("download")} Télécharger l’e-billet</button><button class="button full" data-wallet="${r.id}">${icon("apple")} Ajouter à Apple Wallet</button><small>Export .pkpass simulé, non signé et non importable.</small><button class="text-button" data-print="${r.id}">Imprimer / PDF ${icon("arrow")}</button><a href="#bookings" class="text-button">Mes réservations</a></aside></div>${insights(r)}<details class="ticket-details" open><summary>Vos documents de voyage · ${r.passengers.length} passager(s)</summary>${B.ticketHTML(r)}</details>`;
     $("#print-area").innerHTML = B.ticketHTML(r);
+    updateTravelClock();
   }
   const statusLabel = {
     pending: "En attente de paiement",
@@ -539,65 +582,69 @@
   const stores = [
     {
       id: 1,
-      name: "Point démo République",
+      name: "Tabac Presse République",
       city: "Paris",
       zip: "75011",
-      area: "Quartier République",
+      area: "12 boulevard du Temple",
       hours: "Lun–sam · 9 h – 19 h",
       x: 24,
       y: 38,
     },
     {
       id: 2,
-      name: "Point démo Saint-Charles",
+      name: "Le Kiosque Saint-Charles",
       city: "Marseille",
       zip: "13001",
-      area: "Quartier de la gare",
+      area: "8 boulevard d’Athènes",
       hours: "Lun–sam · 10 h – 19 h",
       x: 65,
       y: 55,
     },
     {
       id: 3,
-      name: "Point démo Part-Dieu",
+      name: "Tabac Presse Part-Dieu",
       city: "Lyon",
       zip: "69003",
-      area: "Quartier Part-Dieu",
+      area: "17 rue de la Villette",
       hours: "Lun–ven · 9 h – 18 h",
       x: 43,
       y: 28,
     },
     {
       id: 4,
-      name: "Point démo Capitole",
+      name: "Le Comptoir du Capitole",
       city: "Toulouse",
       zip: "31000",
-      area: "Centre-ville",
+      area: "6 rue du Taur",
       hours: "Lun–sam · 9 h – 18 h",
       x: 31,
       y: 69,
     },
     {
       id: 5,
-      name: "Point démo Wazemmes",
+      name: "Tabac Presse Wazemmes",
       city: "Lille",
       zip: "59000",
-      area: "Quartier Wazemmes",
+      area: "31 rue Léon Gambetta",
       hours: "Mar–sam · 10 h – 19 h",
       x: 77,
       y: 23,
     },
     {
       id: 6,
-      name: "Point démo Centre",
+      name: "Le Kiosque Gambetta",
       city: "Bordeaux",
       zip: "33000",
-      area: "Centre-ville",
+      area: "14 place Gambetta",
       hours: "Lun–sam · 9 h – 19 h",
       x: 66,
       y: 77,
     },
   ];
+  stores.push({ id: 7, name: "Tabac Presse Jean-Médecin", city: "Nice", zip: "06000", area: "22 avenue Jean-Médecin", hours: "Lun–sam · 8 h – 19 h 30", x: 82, y: 66 });
+  const storeCoordinates = [[48.866,2.365],[43.299,5.379],[45.759,4.863],[43.605,1.443],[50.627,3.05],[44.841,-0.58],[43.702,7.267]];
+  stores.forEach((store, i) => { [store.lat, store.lon] = storeCoordinates[i]; store.estimatedKm = [0.7,0.4,0.8,0.3,1.2,0.6,0.5][i]; });
+  let geoPosition = null;
   let activeStore = 1;
   function renderStores() {
     const q = $("#store-search").value.trim().toLowerCase();
@@ -608,16 +655,17 @@
           q.endsWith("000") &&
           s.zip.slice(0, 2) === q.slice(0, 2)),
     );
+    if (geoPosition) matched.sort((a, b) => F.distance(geoPosition, a) - F.distance(geoPosition, b));
     if (!matched.some((s) => s.id === activeStore))
       activeStore = matched[0]?.id;
     $("#store-list").innerHTML = matched.length
       ? matched
           .map(
             (s) =>
-              `<button class="store-item ${s.id === activeStore ? "active" : ""}" data-store="${s.id}" aria-pressed="${s.id === activeStore}"><strong>${s.id}. ${s.name}</strong><p>${s.area} · ${s.zip} ${s.city}</p><small>${s.hours} · Horaires fictifs</small></button>`,
+              `<button class="store-item ${s.id === activeStore ? "active" : ""}" data-store="${s.id}" aria-pressed="${s.id === activeStore}"><strong>${s.id}. ${s.name}</strong><p>${s.area} · ${s.zip} ${s.city}</p><small>${s.hours} · indicatifs</small><span class="store-distance">${icon("pin")} ${geoPosition ? F.distance(geoPosition, s).toFixed(1) : s.estimatedKm} km estimés ${geoPosition ? "à vol d’oiseau" : "du centre"}</span></button>`,
           )
           .join("")
-      : '<div class="empty-state"><h2>Aucun point démo trouvé.</h2><p>Essayez Paris, Marseille, Lyon, Toulouse, Lille ou Bordeaux.</p></div>';
+      : '<div class="empty-state"><h2>Aucun point démo trouvé.</h2><p>Essayez Paris, Marseille, Lyon, Toulouse, Nice, Lille ou Bordeaux.</p></div>';
     $("#map-pins").innerHTML = matched
       .map(
         (s) =>
@@ -671,6 +719,9 @@
         } else go("options");
       }
       if (b.dataset.download) B.download(b.dataset.download);
+      if (b.dataset.wallet) { B.wallet(b.dataset.wallet); toast("Spécimen .pkpass exporté. La signature Apple est nécessaire pour l’import Wallet."); }
+      if (b.dataset.weather) refreshWeather(b.dataset.weather);
+      if (b.id === "locate-stores") locateStores();
       if (b.dataset.print) {
         const r = B.get(b.dataset.print);
         $("#print-area").innerHTML = B.ticketHTML(r);
@@ -701,6 +752,7 @@
         renderStores();
       }
       const action = b.dataset.action;
+      if (action === "freeze-details") openDialog(`<div class="secure-icon">${icon("lock")}</div><h2 id="dialog-title">120 minutes pour décider.</h2><p>Le gel de tarif est inclus dans votre réservation simulée, sans frais et sans débit. Il démarre à la création du bon et expire après deux heures. Le compte à rebours fait foi, même après un rechargement.</p><p>Une fois ce délai écoulé, le bon ne peut plus être validé. Lancez une nouvelle recherche pour connaître les nouveaux tarifs. Les délais réels dépendent de l’offre et de la compagnie.</p><button class="button primary full" data-action="close-dialog">Compris</button>`);
       if (action === "reset-filters") renderResults();
       if (action === "change-search") go("search");
       if (action === "previous-leg" || action === "reselect-last") {
@@ -727,6 +779,7 @@
         currentId = r.id;
         safe(() => persist());
         renderPending(r);
+        if (method === "voucher") haptic();
         if (method !== "voucher") authDialog(r);
       }
       if (action === "validate-voucher" || action === "authorize-payment")
@@ -864,6 +917,106 @@
     window.scrollTo({ top: 0, behavior: "instant" });
     $("#main").focus({ preventScroll: true });
   }
+  function haptic() {
+    try { navigator.vibrate?.([15, 30, 20]); } catch { /* Optional capability. */ }
+  }
+  let soundEnabled = false, audioContext;
+  try { soundEnabled = localStorage.getItem("voyagencash_sound") === "on"; } catch { /* Preference is optional. */ }
+  function updateSoundButton() {
+    const button = $("#sound-toggle");
+    button.setAttribute("aria-pressed", String(soundEnabled));
+    button.setAttribute("aria-label", soundEnabled ? "Désactiver les sons d’interface" : "Activer les sons d’interface");
+    button.title = button.getAttribute("aria-label");
+    button.innerHTML = icon(soundEnabled ? "sound" : "mute");
+  }
+  function mechanicalClick() {
+    if (!soundEnabled) return;
+    try {
+      const Audio = window.AudioContext || window.webkitAudioContext;
+      if (!Audio) return;
+      audioContext ||= new Audio();
+      audioContext.resume().catch(() => {});
+      const oscillator = audioContext.createOscillator(), gain = audioContext.createGain();
+      const now = audioContext.currentTime;
+      oscillator.type = "sine"; oscillator.frequency.value = 1200;
+      gain.gain.setValueAtTime(0.035, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.012);
+      oscillator.connect(gain); gain.connect(audioContext.destination);
+      oscillator.start(now); oscillator.stop(now + 0.012);
+      oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+    } catch { /* Browsers without audio support keep the full booking flow. */ }
+  }
+  $("#sound-toggle").addEventListener("click", () => {
+    soundEnabled = !soundEnabled;
+    try { localStorage.setItem("voyagencash_sound", soundEnabled ? "on" : "off"); } catch { /* Optional. */ }
+    updateSoundButton(); mechanicalClick();
+  });
+  document.addEventListener("change", e => { if (e.target.matches("input[type=checkbox],input[type=radio],input[type=date],select,input[type=range]")) mechanicalClick(); });
+  document.addEventListener("click", e => { if (e.target.closest("[data-trip],[data-airport-choice],[data-swap]")) mechanicalClick(); });
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  function tilt(card, x, y) {
+    if (reducedMotion.matches) return;
+    card.style.setProperty("--shine-x", `${Math.max(0, Math.min(100, x))}%`);
+    card.style.setProperty("--shine-y", `${Math.max(0, Math.min(100, y))}%`);
+  }
+  document.addEventListener("pointermove", e => {
+    const card = e.target.closest(".travel-pass,.boarding-pass");
+    if (!card || e.pointerType === "touch") return;
+    const box = card.getBoundingClientRect(); tilt(card, (e.clientX - box.left) / box.width * 100, (e.clientY - box.top) / box.height * 100);
+  }, { passive: true });
+  let orientationEnabled = false;
+  async function enableOrientation() {
+    if (orientationEnabled || reducedMotion.matches || !window.DeviceOrientationEvent) return;
+    try {
+      if (typeof DeviceOrientationEvent.requestPermission === "function" && await DeviceOrientationEvent.requestPermission() !== "granted") return;
+      orientationEnabled = true;
+      window.addEventListener("deviceorientation", e => {
+        if (e.gamma == null || e.beta == null) return;
+        $$(".travel-pass,.boarding-pass").forEach(card => tilt(card, 50 + e.gamma, 50 + e.beta / 2));
+      }, { passive: true });
+    } catch { /* Static hologram remains available. */ }
+  }
+  document.addEventListener("pointerdown", e => { if (e.target.closest(".travel-pass,.boarding-pass")) enableOrientation(); }, { passive: true });
+  function updateTravelClock() {
+    $$('[data-local-clock]').forEach(el => { el.textContent = F.time(Date.now(), el.dataset.localClock); });
+    if (!currentId || !$("[data-departure-label]")) return;
+    safe(() => {
+      const r = B.get(currentId), departure = r.flights[0].departure;
+      const remaining = Math.max(0, departure - Date.now());
+      const hours = Math.floor(remaining / 3600000);
+      $("[data-departure-label]").textContent = remaining ? `Départ dans ${Math.floor(hours / 24)} j ${hours % 24} h` : "Heure de départ atteinte";
+      $("[data-departure-progress]").value = Math.max(0, Math.min(100, (Date.now() - r.createdAt) / (departure - r.createdAt) * 100));
+    });
+  }
+  async function refreshWeather(code) {
+    const button = $(`[data-weather="${code}"]`), output = $("#arrival-weather"), description = $("#weather-description");
+    if (!button || button.disabled) return;
+    button.disabled = true; description.textContent = "Recherche de la météo actuelle…";
+    try {
+      const airport = F.airport(code);
+      const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${airport.lat}&longitude=${airport.lon}&current=temperature_2m,weather_code&timezone=auto`, { signal: AbortSignal.timeout(8000) });
+      if (!response.ok) throw new Error("Weather unavailable");
+      const data = await response.json();
+      if (!Number.isFinite(data.current?.temperature_2m)) throw new Error("Invalid weather");
+      if (!output.isConnected) return;
+      output.innerHTML = `${Math.round(data.current.temperature_2m)}<small> °C</small>`;
+      description.textContent = `Météo actuelle · relevé ${data.current.time.slice(11,16)} locale`;
+      button.textContent = "Actualiser · Open-Meteo";
+    } catch { if (description.isConnected) description.textContent = "Météo indisponible. Réessayez dans un instant."; }
+    finally { button.disabled = false; }
+  }
+  function locateStores() {
+    const status = $("#geo-status"), button = $("#locate-stores");
+    if (!navigator.geolocation) { status.textContent = "GPS indisponible. Recherchez votre ville."; return; }
+    button.disabled = true; status.textContent = "Recherche de votre position…";
+    navigator.geolocation.getCurrentPosition(position => {
+      geoPosition = { lat: position.coords.latitude, lon: position.coords.longitude };
+      $("#store-search").value = ""; button.disabled = false;
+      status.textContent = "Points classés par distance à vol d’oiseau depuis votre position. Adresses de démonstration.";
+      renderStores();
+    }, () => { button.disabled = false; status.textContent = "Position indisponible ou refusée. Recherchez votre ville ou code postal."; }, { timeout: 10000, maximumAge: 60000 });
+  }
+  updateSoundButton();
+  setInterval(updateTravelClock, 30000);
   window.addEventListener("hashchange", route);
   window.addEventListener("storage", (e) => {
     if (e.key === B.KEY) {

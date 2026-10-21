@@ -3,13 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#016bfd" />
+    <meta name="theme-color" content="#0B0F19" />
     <meta
       name="description"
       content="Découvrez voyagencash : recherchez un vol et explorez une réservation complète avec paiement en espèces simulé, carte ou Apple Pay."
     />
     <title>voyagencash — Le voyage commence ici.</title>
     <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg" />
+    <link rel="preload" href="/assets/fonts/manrope-latin-variable.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/assets/css/style.css" />
     <script defer src="/assets/js/vendor/qrcode.js"></script>
     <script defer src="/assets/js/flight-engine.js"></script>
@@ -87,23 +88,28 @@
           <ellipse cx="12" cy="12" rx="4" ry="9" />
           <path d="M3 12h18" />
         </symbol>
+        <symbol id="i-sound" viewBox="0 0 24 24"><path d="M11 4 5 9H2v6h3l6 5ZM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
+        <symbol id="i-mute" viewBox="0 0 24 24"><path d="M11 4 5 9H2v6h3l6 5ZM16 9l6 6m0-6-6 6"/></symbol>
+        <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 1v2m0 18v2M1 12h2m18 0h2M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></symbol>
+        <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M20 3C8 2 2 8 5 16c8 6 16-1 15-13ZM3 22 15 10"/></symbol>
+        <symbol id="i-radar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="m12 12 7-7M12 3v2M3 12h2M12 19v2M19 12h2"/></symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="12" rx="3"/><path d="M8 10V6a4 4 0 0 1 8 0v4M12 14v4"/></symbol>
+        <symbol id="i-gps" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 1v4m0 14v4M1 12h4m14 0h4"/></symbol>
+        <symbol id="i-apple" viewBox="0 0 24 24"><path d="M15 3c1-2 3-2 3-2 0 2-1 4-3 4M12 7c-3-3-9-1-9 5 0 5 3 10 6 10l3-1 3 1c2 0 4-3 5-6-4-2-4-6-1-8-2-3-5-2-7-1Z"/></symbol>
+        <symbol id="i-flight" viewBox="0 0 24 24"><path d="M12 2c-1 0-2 1-2 3v4l-8 5v2l8-2v5l-3 2v1l5-1 5 1v-1l-3-2v-5l8 2v-2l-8-5V5c0-2-1-3-2-3Z"/></symbol>
+        <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
       </defs>
     </svg>
     <div class="demo-bar">
       <span class="live-dot"></span> Version de démonstration
       <span class="demo-detail"
         >· Offres et paiements simulés, aucun débit réel.</span
-      ><a href="#faq">En savoir plus <span aria-hidden="true">↗</span></a>
+      ><a href="#faq">En savoir plus <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
     </div>
     <header class="site-header">
       <div class="container header-inner">
-        <a href="#search" class="brand" aria-label="voyagencash, accueil"
-          ><img
-            src="/assets/img/logo-voyagencash.svg"
-            alt="voyagencash"
-            width="208"
-            height="48"
-        /></a>
+        <a href="#search" class="brand" aria-label="voyagencash, accueil"><span class="brand-symbol"><svg class="icon"><use href="#i-flight"/></svg></span><span>voyagen<span class="brand-cash">cash</span></span></a>
+        <button class="icon-button sound-toggle" id="sound-toggle" aria-label="Activer les sons d’interface" aria-pressed="false" title="Activer les sons"><svg class="icon"><use href="#i-mute"/></svg></button>
         <button
           class="icon-button mobile-menu"
           id="menu-toggle"
@@ -114,8 +120,8 @@
           <svg class="icon"><use href="#i-menu" /></svg>
         </button>
         <nav id="main-nav" aria-label="Navigation principale">
-          <a href="#search" data-nav="search">Rechercher un vol</a
-          ><a href="#stores" data-nav="stores">Où payer en espèces</a
+          <a href="#search" data-nav="search">Explorer</a
+          ><a href="#stores" data-nav="stores">Points PayEnCash</a
           ><a href="#faq" data-nav="faq">Aide & FAQ</a
           ><a href="#bookings" data-nav="bookings" class="nav-bookings"
             ><svg class="icon"><use href="#i-ticket" /></svg> Mes
@@ -130,60 +136,32 @@
           <div class="container hero-inner">
             <div class="hero-copy">
               <div class="eyebrow">
-                <span class="tiny-plane">↗</span> VOTRE PROCHAINE HISTOIRE
-                COMMENCE ICI
+                <span class="live-dot"></span> LA LIBERTÉ PREND SON ENVOL
               </div>
               <h1 id="home-title">
-                Le monde vous attend.<br /><span>Partez à votre façon.</span>
+                L’ailleurs.<br /><span>À votre façon.</span>
               </h1>
               <p>
-                Votre billet d’avion, votre liberté de paiement.<br />En
-                espèces, par carte ou avec Apple Pay.
+                Les retrouvailles n’attendent pas.<br />Réservez votre vol. Payez en espèces avec PayEnCash,<br class="desktop-break" /> par carte ou avec Apple Pay.
               </p>
               <div class="hero-pills">
                 <span
-                  ><svg class="icon"><use href="#i-check" /></svg> Des prix TTC
-                  transparents</span
+                  ><svg class="icon"><use href="#i-check" /></svg> Votre tarif gelé 120 min</span
                 ><span
-                  ><svg class="icon"><use href="#i-check" /></svg> Un parcours
-                  tout simple</span
+                  ><svg class="icon"><use href="#i-check" /></svg> Espèces, carte, Apple Pay</span
                 >
               </div>
             </div>
             <div class="hero-art" aria-hidden="true">
-              <div class="orbit orbit-one"></div>
-              <div class="orbit orbit-two"></div>
-              <div class="globe">
-                <div class="globe-longitude"></div>
-                <div class="globe-latitude"></div>
-              </div>
-              <svg class="hero-plane" viewBox="0 0 100 100">
-                <path
-                  d="m90 10-22 77-17-29-33-12 11-8 29 3 21-22ZM51 58 79 19"
-                  fill="white"
-                  stroke="#d4e8ff"
-                  stroke-width="2"
-                  stroke-linejoin="round"
-                />
-              </svg>
-              <div class="floating-tag tag-top">
-                <span class="art-dot"></span> Votre prochaine escapade
-              </div>
-              <div class="mini-ticket">
-                <span class="mini-label">ENVIE D’AILLEURS ?</span>
-                <div>
-                  <b>PAR</b><svg class="icon"><use href="#i-plane" /></svg
-                  ><b>RAK</b>
-                </div>
-                <footer><span>Paris</span><span>Marrakech</span></footer>
-                <div class="mini-ticket-bottom">
-                  Un nouveau départ vous attend <span>↗</span>
-                </div>
-              </div>
-              <div class="floating-tag tag-bottom">
-                <svg class="icon"><use href="#i-wallet" /></svg> Le voyage,
-                accessible à tous.
-              </div>
+              <div class="orbital-label">LE MONDE EST À PORTÉE DE MAIN <span>48 DESTINATIONS</span></div>
+              <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+              <div class="globe"><div class="globe-longitude"></div><div class="globe-latitude"></div><div class="globe-meridian"></div></div>
+              <div class="route-point point-paris"><span></span>PARIS <b>CDG</b></div>
+              <div class="route-point point-marrakech"><span></span>MARRAKECH <b>RAK</b></div>
+              <svg class="hero-plane icon"><use href="#i-flight"/></svg>
+              <div class="mini-ticket"><span class="mini-label">VOTRE PROCHAIN DÉPART</span><div><b>CDG</b><svg class="icon"><use href="#i-plane"/></svg><b>RAK</b></div><footer><span>Paris</span><span>Marrakech</span></footer><div class="mini-ticket-bottom"><span class="live-dot"></span> L’envie de partir. La liberté de payer.</div></div>
+              <div class="floating-tag tag-top"><svg class="icon"><use href="#i-lock"/></svg><div>Un peu de temps pour vous.<b>Tarif gelé pendant 2 heures</b></div></div>
+              <span class="orbit-coordinate">48°51′ N &nbsp; 2°21′ E</span>
             </div>
           </div>
         </div>
@@ -234,7 +212,7 @@
             <p class="form-error" id="search-error" role="alert" hidden></p>
           </form>
           <div class="trust-row">
-            <span>VOTRE VOYAGE, EN TOUTE SIMPLICITÉ</span>
+            <span>LE VOYAGE, SANS COMPROMIS</span>
             <div>
               <svg class="icon"><use href="#i-globe" /></svg> 48 aéroports à
               explorer
@@ -254,12 +232,12 @@
         >
           <div class="section-heading">
             <div>
-              <div class="eyebrow">UN PEU D’INSPIRATION</div>
-              <h2 id="destinations-title">Et si vous partiez…</h2>
-              <p>Des retrouvailles, une escapade, une nouvelle aventure.</p>
+              <div class="eyebrow">PROCHES DU CŒUR. À PORTÉE DE VOL.</div>
+              <h2 id="destinations-title">La distance s’efface.</h2>
+              <p>Un retour aux sources. Un premier départ. Votre prochaine histoire.</p>
             </div>
             <span class="small-muted"
-              >Sélectionnez une destination pour commencer</span
+              >FRANCE / MAGHREB & EUROPE</span
             >
           </div>
           <div class="destination-grid">
@@ -275,7 +253,7 @@
                   <h3>Marrakech</h3>
                   <span>Maroc · RAK</span>
                 </div>
-                <span class="round-arrow">↗</span>
+                <span class="round-arrow"><svg class="icon"><use href="#i-arrow"/></svg></span>
               </div>
             </button>
             <button class="destination-card alger" data-destination="ALG">
@@ -290,22 +268,22 @@
                   <h3>Alger</h3>
                   <span>Algérie · ALG</span>
                 </div>
-                <span class="round-arrow">↗</span>
+                <span class="round-arrow"><svg class="icon"><use href="#i-arrow"/></svg></span>
               </div>
             </button>
-            <button class="destination-card lisbonne" data-destination="LIS">
+            <button class="destination-card lisbonne" data-destination="TUN">
               <div class="destination-art">
                 <span class="sun"></span><span class="architecture tower"></span
                 ><span class="architecture arch"></span
                 ><span class="landscape"></span
-                ><span class="destination-tag">Une parenthèse en ville</span>
+                ><span class="destination-tag">La Méditerranée vous appelle</span>
               </div>
               <div class="destination-info">
                 <div>
-                  <h3>Lisbonne</h3>
-                  <span>Portugal · LIS</span>
+                  <h3>Tunis</h3>
+                  <span>Tunisie · TUN</span>
                 </div>
-                <span class="round-arrow">↗</span>
+                <span class="round-arrow"><svg class="icon"><use href="#i-arrow"/></svg></span>
               </div>
             </button>
           </div>
@@ -313,10 +291,9 @@
         <section class="container how-section">
           <div class="how-intro">
             <div class="eyebrow">LA LIBERTÉ, TOUT SIMPLEMENT</div>
-            <h2>Un billet d’avion. <br />Plusieurs façons de payer.</h2>
+            <h2>Votre prochain départ.<br />Au coin de la rue.</h2>
             <p>
-              Découvrez le parcours de paiement en espèces dans notre
-              démonstration.
+              Avec PayEnCash, votre réservation en ligne se poursuit chez un buraliste ou un commerce de proximité partenaire.
             </p>
             <a class="text-link" href="#stores"
               >Découvrir les points de paiement <span>→</span></a
@@ -340,7 +317,7 @@
               <div>
                 <small>02 · RÉSERVEZ</small>
                 <h3>Choisissez votre mode de paiement</h3>
-                <p>Générez un bon, ou testez la carte et Apple Pay.</p>
+                <p>Générez votre bon PayEnCash, valable 120 minutes.</p>
               </div>
             </article>
             <article>
@@ -420,7 +397,7 @@
         <div class="page-heading">
           <div class="eyebrow">PRÈS DE CHEZ VOUS</div>
           <h1 id="stores-title">Le voyage commence au coin de la rue.</h1>
-          <p>Découvrez le fonctionnement des points de paiement en espèces.</p>
+          <p>Le réseau de buralistes et commerces de proximité PayEnCash.</p>
         </div>
         <div class="notice">
           <svg class="icon"><use href="#i-pin" /></svg
@@ -443,6 +420,8 @@
                 autocomplete="off"
               />
             </div>
+            <button class="button full" id="locate-stores"><svg class="icon"><use href="#i-gps"/></svg> Autour de moi</button>
+            <p id="geo-status" role="status" class="small-muted">Distances estimées depuis le centre-ville.</p>
             <div id="store-list" aria-live="polite"></div>
           </div>
           <div
@@ -479,6 +458,13 @@
           <h1 id="faq-title">Des réponses avant de partir.</h1>
           <p>Tout savoir sur cette version de voyagencash.</p>
         </div>
+        <details>
+          <summary>Quel cadre pour le bon prépayé PayEnCash ?</summary>
+          <p>Le parcours modélise un bon d’achat / bon prépayé partenaire émis par AJEK / PayEnCash, sous le cadre de l’article L.521-3 du Code monétaire et financier. Son application à un réseau limité dépend des accords et conditions réglementaires ; cette démonstration ne constitue pas un agrément.</p>
+          <p>Le plafond appliqué est de 1 000 € en espèces par transaction (articles L.112-6 et D.112-3 CMF). Au-delà, choisissez la carte bancaire ou Apple Pay, sans fractionnement du paiement.</p>
+          <p>Le modèle fiscal retenu est le Bon à Usages Multiples (BUM, article 256 ter CGI) : aucune avance de TVA à l’émission du bon ; régularisation à l’émission effective du billet par la compagnie. Cette qualification doit être validée sur les conditions contractuelles du bon.</p>
+          <p><a href="https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000035430673" target="_blank" rel="noopener noreferrer">Article L.521-3 CMF</a> · <a href="https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000037951759" target="_blank" rel="noopener noreferrer">Article 256 ter CGI</a></p>
+        </details>
         <details open>
           <summary>Peut-on acheter un vrai billet ici ?</summary>
           <p>
@@ -493,8 +479,7 @@
         <details>
           <summary>Comment fonctionne le bon d’achat ?</summary>
           <p>
-            Après avoir renseigné vos passagers, choisissez « Bon d’achat
-            voyagencash ». Un code unique et son QR code sont enregistrés
+            Après avoir renseigné vos passagers, choisissez « Bon prépayé PayEnCash ». Un code unique et son QR code sont enregistrés
             pendant 120 minutes. Le bouton « Simuler la validation en caisse »
             confirme instantanément votre réservation fictive. Aucun argent ne
             doit être remis à un commerçant.
@@ -562,7 +547,7 @@
         </div>
         <div class="footer-links">
           <a href="#stores">Où payer</a><a href="#bookings">Mes réservations</a
-          ><a href="#faq">Aide & confidentialité</a>
+          ><a href="#faq">Aide & confidentialité</a><a href="https://payencash.com/" target="_blank" rel="noopener noreferrer">PayEnCash</a>
         </div>
         <span class="footer-note"
           >© <span id="year"></span> voyagencash<br />Démonstration · Aucun
