@@ -136,7 +136,7 @@ async function search(query) {
     direct: !!direct.length,
     observedAt: Date.now(),
   });
-  if (process.env.DATABASE_URL) {
+  if (process.env.DATABASE_URL || process.env.STORAGE_URL || process.env.POSTGRES_URL) {
     const key = `${query.from}:${query.to}:${query.count}:${query.date}`;
     try {
       await require("./database.js")
@@ -163,7 +163,7 @@ async function calendar(query) {
     }
     return { source: "demo", simulation: true, days: cached.days };
   }
-  if (process.env.DATABASE_URL) {
+  if (process.env.DATABASE_URL || process.env.STORAGE_URL || process.env.POSTGRES_URL) {
     try {
       const { rows } = await require("./database.js")
         .database()

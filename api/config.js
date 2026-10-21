@@ -7,7 +7,7 @@ module.exports = endpoint("GET", async (req, res) =>
       !!(
         process.env.PAYENCASH_WEBHOOK_SECRET &&
         process.env.DUFFEL_API_TOKEN &&
-        process.env.DATABASE_URL &&
+        (process.env.DATABASE_URL || process.env.STORAGE_URL || process.env.POSTGRES_URL) &&
         process.env.PAYENCASH_ADAPTER_URL &&
         process.env.PAYENCASH_API_KEY &&
         process.env.VOUCHER_SIGNING_SECRET
