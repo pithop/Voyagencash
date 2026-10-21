@@ -466,7 +466,16 @@
       : `<div class="empty-state">${icon("search")}<h2>Aucun vol pour cette sélection.</h2><p>${offers.length ? "Élargissez votre budget ou retirez un filtre." : "Essayez une autre date. Les trajets suivants doivent partir au moins deux heures après votre arrivée."}</p><button class="button" data-action="${offers.length ? "reset-filters" : "change-search"}">${offers.length ? "Réinitialiser les filtres" : "Modifier la recherche"}</button></div>`;
   }
   function renderOptions() {
-    if (draft.flights.some(f => f.simulation === false)) { LiveBooking.mount($("#options-content"), draft).catch(e=>toast(e.message,true)); return; }
+    if (FlightAPI.checkout && draft.flights.some((f) => f.simulation === false)) {
+      LiveBooking.mount($("#options-content"), draft).catch((e) =>
+        toast(e.message, true),
+      );
+      return;
+    }
+    if (!FlightAPI.checkout) {
+      draft.flights.forEach((f) => (f.simulation = true));
+      persist();
+    }
     $("#options-content").innerHTML =
       `${progress(1)}<div class="page-heading"><h1 id="options-title">Un voyage à votre mesure.</h1><p>Emportez ce qui compte. Tous les suppléments sont affichés ici.</p></div><div class="checkout-layout"><div><div class="panel"><h2>Vos bagages</h2><p>Ces options s’appliquent à chaque passager et à chaque trajet sélectionné.</p><div class="option-card">${icon("bag")}<span><strong>Un petit sac sous le siège</strong><small>Inclus pour chaque passager dans cette simulation.</small></span><span class="badge green">Inclus</span></div><label class="option-card">${icon("bag")}<span><strong>Bagage en soute · 23 kg</strong><small>35 € / passager / trajet · ${draft.search.count} × ${draft.flights.length} trajet(s)</small></span><b>+${F.money(35 * draft.search.count * draft.flights.length)}</b><input type="checkbox" id="baggage-option" ${draft.options.baggage ? "checked" : ""} aria-label="Ajouter le bagage en soute"></label></div><div class="panel"><h2>Un peu plus de tranquillité</h2><label class="option-card">${icon("shield")}<span><strong>Garantie annulation</strong><small>Option fictive · 19 € / passager pour tout le voyage. Aucun contrat d’assurance réel.</small></span><b>+${F.money(19 * draft.search.count)}</b><input type="checkbox" id="guarantee-option" ${draft.options.guarantee ? "checked" : ""} aria-label="Ajouter la garantie annulation"></label></div><div class="actions"><button class="text-button" data-action="reselect-last">← Modifier les vols</button><button class="button primary" data-action="to-passengers">Continuer vers les passagers ${icon("arrow")}</button></div></div><div id="options-summary">${summary()}</div></div>`;
     ["baggage", "guarantee"].forEach((k) =>
@@ -824,8 +833,9 @@
       if (b.dataset.selectFlight) {
         const f = offers.find((f) => f.id === b.dataset.selectFlight);
         if (!f) return;
+        const flightToSave = FlightAPI.checkout ? f : { ...f, simulation: true };
         draft.flights = draft.flights.slice(0, legIndex);
-        draft.flights.push(f);
+        draft.flights.push(flightToSave);
         persist();
         if (draft.flights.length < draft.search.legs.length) {
           renderResults();

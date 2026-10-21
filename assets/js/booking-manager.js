@@ -139,7 +139,8 @@
       throw new Error("Saisissez un numéro de téléphone valide.");
   }
   function create(draft, method) {
-    if(draft.flights.some(f => f.simulation === false)) throw new Error("Une offre réelle doit être réservée par le service sécurisé.");
+    if (window.FlightAPI?.checkout && draft.flights.some((f) => f.simulation === false))
+      throw new Error("Une offre réelle doit être réservée par le service sécurisé.");
     if (!["voucher", "card", "apple"].includes(method))
       throw new Error("Mode de paiement invalide.");
     if (

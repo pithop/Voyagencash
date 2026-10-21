@@ -78,5 +78,8 @@
     get mode() {
       return config?.mode;
     },
+    get checkout() {
+      return !!config?.checkout;
+    },
   };
 })();
