@@ -1,5 +1,6 @@
 const F = require("../assets/js/flight-engine.js");
 const { HttpError } = require("./http.js");
+const ryanair = require("./ryanair.js");
 const observations = new Map();
 const demoCalendars = new Map();
 function validate(input, calendar = false) {
@@ -111,6 +112,7 @@ function normalize(offer, query) {
 async function search(query) {
   if (!process.env.DUFFEL_API_TOKEN)
     return { source: "demo", simulation: true, offers: F.generate(query) };
+  const ryanairPromise = ryanair.search(query).catch(() => []);
   const data = await duffel("/air/offer_requests?return_offers=true", {
     slices: [
       { origin: query.from, destination: query.to, departure_date: query.date },
@@ -118,7 +120,7 @@ async function search(query) {
     passengers: Array.from({ length: query.count }, () => ({ type: "adult" })),
     cabin_class: "economy",
   });
-  const offers = (data.offers || [])
+  const duffelOffers = (data.offers || [])
     .filter((o) =>
       o.slices[0].segments.every(
         (s) =>
@@ -127,6 +129,10 @@ async function search(query) {
     )
     .map((o) => normalize(o, query))
     .filter(Boolean);
+  const ryanairOffers = await ryanairPromise;
+  const offers = [...duffelOffers, ...ryanairOffers].sort(
+    (a, b) => a.price - b.price,
+  );
   const direct = offers.filter((o) => !o.stops);
   const minPrice = direct.length
     ? Math.min(...direct.map((o) => o.price))
@@ -154,7 +160,7 @@ async function search(query) {
       /* Availability is returned even if the optional fare cache is unavailable. */
     }
   }
-  return { source: "duffel", simulation: false, offers };
+  return { source: duffelOffers.length ? "duffel" : "ryanair", simulation: false, offers };
 }
 async function calendar(query) {
   if (!process.env.DUFFEL_API_TOKEN) {
@@ -180,6 +186,25 @@ async function calendar(query) {
     } catch {
       /* Unknown prices remain unknown. */
     }
+  }
+  try {
+    const rf = await ryanair.calendarFares(query.from, query.to, query.month);
+    if (rf && rf.size) {
+      for (const [dStr, fInfo] of rf) {
+        const key = `${query.from}:${query.to}:${query.count}:${dStr}`;
+        const existing = observations.get(key);
+        if (!existing || existing.price === null || fInfo.price < existing.price) {
+          observations.set(key, {
+            date: dStr,
+            price: fInfo.price,
+            direct: true,
+            observedAt: Date.now(),
+          });
+        }
+      }
+    }
+  } catch {
+    /* Best effort */
   }
   const length = new Date(
     +query.month.slice(0, 4),

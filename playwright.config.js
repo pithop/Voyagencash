@@ -1,3 +1,4 @@
+process.env.VOYAGENCASH_TEST_MODE = "true";
 const { defineConfig } = require("@playwright/test");
 module.exports = defineConfig({
   testDir: "./tests",
