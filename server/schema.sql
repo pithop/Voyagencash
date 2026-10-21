@@ -35,3 +35,7 @@ CREATE TABLE IF NOT EXISTS fare_observations (
   observed_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS fare_observations_time ON fare_observations(observed_at);
+
+-- Idempotent migration for delayed provider issuance.
+ALTER TABLE payment_outbox ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz NOT NULL DEFAULT now();
+CREATE INDEX IF NOT EXISTS payment_outbox_pending ON payment_outbox(state,next_attempt_at);

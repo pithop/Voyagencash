@@ -306,26 +306,25 @@
         Math.sin(rad(b.lon - a.lon) / 2) ** 2;
     return 6371 * 2 * Math.asin(Math.min(1, Math.sqrt(h)));
   }
+  // Reuse Intl instances: a month computes hundreds of local departure times.
+  // Constructing a formatter for each time used to block the server event loop.
+  const formatters = new Map();
+  function formatter(kind, locale, options) {
+    const key = `${kind}:${options.timeZone || ""}`;
+    if (!formatters.has(key)) formatters.set(key, new Intl.DateTimeFormat(locale, options));
+    return formatters.get(key);
+  }
   const dateInZone = (ms, tz) =>
-    new Intl.DateTimeFormat("en-CA", {
-      timeZone: tz,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date(ms));
+    formatter("date", "en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ms));
   const time = (ms, code) =>
-    new Intl.DateTimeFormat("fr-FR", {
-      timeZone: airport(code).tz,
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(ms));
+    formatter("time", "fr-FR", { timeZone: airport(code).tz, hour: "2-digit", minute: "2-digit" }).format(new Date(ms));
   function localUTC(date, hour, minute, tz) {
     const target = Date.parse(
       `${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00Z`,
     );
     let result = target;
     for (let i = 0; i < 3; i++) {
-      const parts = new Intl.DateTimeFormat("en-GB", {
+      const parts = formatter("parts", "en-GB", {
         timeZone: tz,
         year: "numeric",
         month: "2-digit",
@@ -350,19 +349,14 @@
   }
   const duration = (m) =>
     `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")}`;
-  const money = (n) =>
-    new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "EUR",
-      maximumFractionDigits: 2,
-    }).format(n);
+  const currencyFormat = new Intl.NumberFormat("fr-FR", {
+    style: "currency", currency: "EUR", maximumFractionDigits: 2,
+  });
+  const money = (n) => currencyFormat.format(n);
   const dateLabel = (date, long = false) =>
-    new Intl.DateTimeFormat("fr-FR", {
-      weekday: long ? "long" : "short",
-      day: "numeric",
-      month: long ? "long" : "short",
-      year: long ? "numeric" : undefined,
-      timeZone: "UTC",
+    formatter(long ? "long-label" : "short-label", "fr-FR", {
+      weekday: long ? "long" : "short", day: "numeric",
+      month: long ? "long" : "short", year: long ? "numeric" : undefined, timeZone: "UTC",
     }).format(new Date(date + "T12:00:00Z"));
   function generate({ from, to, date }) {
     const a = airport(from),

@@ -102,6 +102,8 @@
     return `<div class="search-field"><label for="${side}-${index}">${side === "from" ? "Départ" : "Destination"}</label><input id="${side}-${index}" data-airport="${side}" data-leg="${index}" value="${esc(airportLabel(leg[side]))}" placeholder="Ville ou aéroport" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggest-${side}-${index}" autocomplete="off" required><div class="autocomplete" id="suggest-${side}-${index}" role="listbox" aria-label="Aéroports" hidden></div></div>`;
   }
   function renderSearch() {
+    availabilityGeneration++;
+    $("#search-availability").hidden = true;
     $$("#search-form [data-trip]").forEach((b) => {
       b.classList.toggle("active", b.dataset.trip === search.type);
       b.setAttribute("aria-pressed", String(b.dataset.trip === search.type));
@@ -118,13 +120,30 @@
       input.setAttribute("aria-haspopup", "dialog");
       input.parentElement.classList.add("date-field");
       const caption=document.createElement("span");caption.className="date-caption";caption.textContent=F.dateLabel(input.value);caption.setAttribute("aria-hidden","true");input.after(caption);
-      input.addEventListener("click", e => { e.preventDefault(); openSearchCalendar(input); });
+      const fare = document.createElement("small");
+      fare.className = "date-fare unknown";
+      fare.textContent = "Prix à vérifier";
+      input.parentElement.append(fare);
+      const returning = input.id === "return-date";
+      const leg = search.legs[returning ? 0 : +input.dataset.date];
+      if (F.airport(leg.from) && F.airport(leg.to) && leg.from !== leg.to && input.value)
+        FlightAPI.calendar({ from: returning ? leg.to : leg.from, to: returning ? leg.from : leg.to, month: input.value.slice(0, 7), count: search.count }).then(data => {
+          if (!fare.isConnected) return;
+          const day = data.days.find(d => d.date === input.value);
+          fare.className = `date-fare ${day?.tier || "unknown"}`;
+          fare.textContent = day?.price == null ? (day?.direct === false ? "Aucun vol direct" : "Prix à vérifier") : `Dès ${F.money(day.price)} / adulte`;
+          fare.title = data.simulation ? "Prix indicatif de démonstration, vol direct" : "Prix indicatif observé, vol direct";
+        }).catch(() => {});
+      input.parentElement.addEventListener("click", e => { e.preventDefault(); openSearchCalendar(input); });
       input.addEventListener("keydown", e => { if (["Enter", " "].includes(e.key)) { e.preventDefault(); openSearchCalendar(input); } });
     });
     $$("[data-airport]").forEach((input) => {
       input.addEventListener("focus", () => showAutocomplete(input, true));
       input.addEventListener("input", () => {
         search.legs[+input.dataset.leg][input.dataset.airport] = "";
+        availabilityGeneration++;
+        $("#search-availability").hidden = true;
+        $(".search-fares").hidden = true;
         showAutocomplete(input, false);
       });
       input.addEventListener("keydown", (e) => {
@@ -151,6 +170,37 @@
         if (e.key === "Tab") closeAutocomplete();
       });
     });
+    refreshSearchFares();
+  }
+  let availabilityGeneration = 0;
+  function refreshSearchFares() {
+    const leg = search.legs[0];
+    const valid = F.airport(leg.from) && F.airport(leg.to) && leg.from !== leg.to && leg.date;
+    $(".search-fares").hidden = !valid;
+    if (valid) FareStrip.mount($("#search-fare-strip"), { ...leg, count: search.count }, date => {
+      const input = $("#date-0"); input.value = date;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      refreshAvailability();
+    });
+  }
+  async function refreshAvailability(fieldId) {
+    const generation = ++availabilityGeneration;
+    const selected = search.legs[0];
+    const leg = fieldId === "return-date" ? { from: selected.to, to: selected.from, date: search.returnDate } : selected;
+    if (!F.airport(leg.from) || !F.airport(leg.to) || leg.from === leg.to) return;
+    const node = $("#search-availability");
+    node.hidden = false;
+    node.textContent = "Actualisation des vols…";
+    try {
+      const response = await FlightAPI.search({ ...leg, count: search.count });
+      if (generation !== availabilityGeneration || view !== "search") return;
+      const min = Math.min(...response.offers.map(f => f.price));
+      node.textContent = response.offers.length
+        ? `${response.offers.length} vols${response.simulation ? " de démonstration" : " disponibles"} · dès ${F.money(min)} par adulte. Lancez la recherche pour comparer.`
+        : "Aucun vol trouvé à cette date. Essayez un autre jour.";
+    } catch (error) {
+      if (generation === availabilityGeneration) node.textContent = error.message;
+    }
   }
   function openSearchCalendar(input) {
     closeAutocomplete();
@@ -159,6 +209,7 @@
     PriceCalendar.open({ ...leg, from: returning ? leg.to : leg.from, to: returning ? leg.from : leg.to, date: input.value, min: input.min, count: search.count, title: returning ? "Choisissez votre retour" : "Choisissez votre départ", onSelect(date) {
       const field = document.getElementById(input.id); field.value = date; field.dispatchEvent(new Event("change", { bubbles: true }));
       const feedback = $("#search-error"); feedback.hidden = true;
+      refreshAvailability(input.id);
     }});
   }
   function showAutocomplete(input, all) {
@@ -194,8 +245,11 @@
     search.legs[+input.dataset.leg][input.dataset.airport] = code;
     input.value = airportLabel(code);
     closeAutocomplete();
-    input.focus();
+    renderSearch();
+    document.getElementById(input.id).focus();
     closeAutocomplete();
+    availabilityGeneration++;
+    $("#search-availability").hidden = true;
   }
   $("#search-form").addEventListener("click", (e) => {
     const choice = e.target.closest("[data-airport-choice]");
@@ -245,7 +299,7 @@
       renderSearch();
     }
     if (e.target.id === "return-date") { search.returnDate = e.target.value; renderSearch(); }
-    if (e.target.id === "traveler-count") search.count = +e.target.value;
+    if (e.target.id === "traveler-count") { search.count = +e.target.value; renderSearch(); }
   });
   $("#add-leg").addEventListener("click", () => {
     if (search.legs.length < 4) {
@@ -301,7 +355,7 @@
       button.disabled = true;
       button.innerHTML =
         '<span class="spinner" style="width:17px;height:17px;margin:0"></span> Recherche des vols…';
-      await new Promise((r) => setTimeout(r, 450));
+
       if (generation === searchGeneration && view === "search") go("results");
       button.disabled = false;
       button.innerHTML =
@@ -321,12 +375,25 @@
     const t = B.total(draft);
     return `<aside class="summary-panel" aria-label="Récapitulatif du voyage"><h2>Votre voyage, en un coup d’œil</h2>${draft.flights.map((f) => `<div class="summary-leg"><strong>${esc(F.airport(f.from).city)} → ${esc(F.airport(f.to).city)}</strong><small>${F.dateLabel(f.date)} · ${F.time(f.departure, f.from)} – ${F.time(f.arrival, f.to)}</small><small>${esc(f.airline.name)} · ${f.stops ? "1 escale" : "Direct"}</small></div>`).join("")}<div class="price-line"><span>Vols · ${draft.search.count} passager${draft.search.count > 1 ? "s" : ""}</span><strong>${F.money(t.flights)}</strong></div><div class="price-line"><span>Bagages en soute</span><strong>${t.baggage ? F.money(t.baggage) : "Non inclus"}</strong></div><div class="price-line"><span>Garantie annulation</span><strong>${t.guarantee ? F.money(t.guarantee) : "Non incluse"}</strong></div><div class="price-total"><span>Total TTC</span><strong>${F.money(t.total)}</strong></div><p>Prix simulé en euros, pour tous les passagers et trajets. Aucun débit réel.</p>${t.total > B.CASH_LIMIT ? `<p class="cash-limit-note">${icon("shield")} Au-delà de 1 000 €, choisissez la carte ou Apple Pay. Le règlement en espèces PayEnCash est indisponible (art. L.112-6 CMF).</p>` : ""}</aside>`;
   }
+  function selectResultDate(date) {
+    draft.search.legs[legIndex].date = date;
+    draft.flights = draft.flights.slice(0, legIndex);
+    for (let i = legIndex + 1; i < draft.search.legs.length; i++)
+      if (draft.search.legs[i].date < date) draft.search.legs[i].date = date;
+    search = structuredClone(draft.search);
+    if (search.type === "roundtrip") {
+      search.returnDate = search.legs[1].date;
+      search.legs = search.legs.slice(0, 1);
+    }
+    persist();
+    renderResults();
+  }
   let resultsGeneration = 0;
   async function renderResults() {
     const generation = ++resultsGeneration;
     legIndex = Math.min(draft.flights.length, draft.search.legs.length - 1);
     const leg = draft.search.legs[legIndex];
-    $("#results-content").innerHTML = `${progress(0)}<div class="results-loading" role="status"><span class="spinner"></span><h2>Votre prochain départ se précise.</h2><p>Recherche des meilleurs vols disponibles…</p></div>`;
+    $("#results-content").innerHTML = `${progress(0)}<div class="results-loading" role="status"><span class="spinner"></span><h2>Recherche de vos vols</h2><p>Comparaison des horaires et des tarifs disponibles…</p></div>`;
     let response;
     try { response = await FlightAPI.search({ ...leg, count: draft.search.count }); }
     catch (error) {
@@ -351,7 +418,7 @@
       ...new Map(offers.map((f) => [f.airline.code, f.airline])).values(),
     ];
     $("#results-content").innerHTML =
-      `${progress(0)}<div class="results-heading"><div><div class="eyebrow">${draft.search.type === "roundtrip" ? (legIndex ? "VOTRE VOL RETOUR" : "VOTRE VOL ALLER") : `TRAJET ${legIndex + 1} SUR ${draft.search.legs.length}`}</div><h1 id="results-title">${esc(F.airport(leg.from).city)} ${icon("arrow")} ${esc(F.airport(leg.to).city)}</h1><p>${F.dateLabel(leg.date, true)} · ${draft.search.count} passager${draft.search.count > 1 ? "s" : ""} · Économique</p></div><div class="booking-actions">${legIndex ? '<button class="button small" data-action="previous-leg">Modifier le vol précédent</button>' : ""}<a href="#search" class="button small">Modifier la recherche</a></div></div>${legIndex ? `<div class="notice">${icon("check")}<span>${legIndex} trajet${legIndex > 1 ? "s" : ""} sélectionné${legIndex > 1 ? "s" : ""} · ${draft.flights.map((f) => `${f.from} → ${f.to} à ${F.time(f.departure, f.from)}`).join(" · ")}</span></div>` : ""}<div class="date-explorer"><div><span class="eyebrow">UN JOUR PEUT TOUT CHANGER</span><strong>Comparez les prix du mois</strong></div><button class="button" data-action="result-calendar">${F.dateLabel(leg.date)} ${icon("chevron")}</button></div><button class="button mobile-filter-button" data-action="open-filters">Filtres ${icon("menu")}</button><div class="results-layout"><aside class="filter-panel" id="result-filters"><button class="icon-button filter-close" data-action="close-filters" aria-label="Fermer les filtres">${icon("close")}</button><div><h2>Filtres</h2><button class="text-button" data-action="reset-filters">Réinitialiser</button></div><div class="filter-fields"><fieldset class="filter-group"><legend>Budget par passager</legend><input type="range" id="budget-filter" min="0" max="${filters.max}" step="1" value="${filters.max}" aria-label="Budget maximal par passager"><div class="budget-label"><span>0 €</span><output id="budget-output">${F.money(filters.max)}</output></div></fieldset><fieldset class="filter-group"><legend>Escales</legend><label><input type="checkbox" id="direct-filter"> Vols directs uniquement</label></fieldset><fieldset class="filter-group"><legend>Bagage cabine</legend><label><input type="checkbox" id="baggage-filter"> Valise cabine incluse</label></fieldset><fieldset class="filter-group"><legend>Heure de départ</legend>${[
+      `${progress(0)}<div class="results-heading"><div><div class="eyebrow">${draft.search.type === "roundtrip" ? (legIndex ? "VOTRE VOL RETOUR" : "VOTRE VOL ALLER") : `TRAJET ${legIndex + 1} SUR ${draft.search.legs.length}`}</div><h1 id="results-title">${esc(F.airport(leg.from).city)} ${icon("arrow")} ${esc(F.airport(leg.to).city)}</h1><p>${F.dateLabel(leg.date, true)} · ${draft.search.count} passager${draft.search.count > 1 ? "s" : ""} · Économique</p></div><div class="booking-actions">${legIndex ? '<button class="button small" data-action="previous-leg">Modifier le vol précédent</button>' : ""}<a href="#search" class="button small">Modifier la recherche</a></div></div>${legIndex ? `<div class="notice">${icon("check")}<span>${legIndex} trajet${legIndex > 1 ? "s" : ""} sélectionné${legIndex > 1 ? "s" : ""} · ${draft.flights.map((f) => `${f.from} → ${f.to} à ${F.time(f.departure, f.from)}`).join(" · ")}</span></div>` : ""}<div class="date-explorer"><div><span class="eyebrow">VOS DATES, VOTRE BUDGET</span><strong>Choisissez le jour qui vous convient</strong></div><button class="button" data-action="result-calendar">${F.dateLabel(leg.date)} ${icon("chevron")}</button></div><div id="results-fare-strip" class="results-fares"></div><button class="button mobile-filter-button" data-action="open-filters">Filtres ${icon("menu")}</button><div class="results-layout"><aside class="filter-panel" id="result-filters"><button class="icon-button filter-close" data-action="close-filters" aria-label="Fermer les filtres">${icon("close")}</button><div><h2>Filtres</h2><button class="text-button" data-action="reset-filters">Réinitialiser</button></div><div class="filter-fields"><fieldset class="filter-group"><legend>Budget par passager</legend><input type="range" id="budget-filter" min="0" max="${filters.max}" step="1" value="${filters.max}" aria-label="Budget maximal par passager"><div class="budget-label"><span>0 €</span><output id="budget-output">${F.money(filters.max)}</output></div></fieldset><fieldset class="filter-group"><legend>Escales</legend><label><input type="checkbox" id="direct-filter"> Vols directs uniquement</label></fieldset><fieldset class="filter-group"><legend>Bagage cabine</legend><label><input type="checkbox" id="baggage-filter"> Valise cabine incluse</label></fieldset><fieldset class="filter-group"><legend>Heure de départ</legend>${[
         ["morning", "Matin · 06 h – 12 h"],
         ["afternoon", "Après-midi · 12 h – 18 h"],
         ["evening", "Soir · après 18 h"],
@@ -363,6 +430,7 @@
         .join(
           "",
         )}</fieldset><fieldset class="filter-group airline-filters"><legend>Compagnies aériennes</legend><div class="airline-checkboxes">${carriers.map((c) => `<label><input type="checkbox" name="carrier-filter" value="${c.code}">${esc(c.name)}</label>`).join("")}</div></fieldset></div></aside><div><div class="sort-bar"><span id="result-count" role="status"></span><label>Trier par <select id="sort-select"><option value="best">Meilleur rapport</option><option value="price">Prix croissant</option><option value="duration">Durée la plus courte</option></select></label></div><div id="flight-list"></div><p class="muted">${response.simulation ? "Offres de démonstration. Aucun billet réel." : "Offres Duffel. Prix et disponibilité à reconfirmer avant réservation."} Horaires locaux. Prix TTC par passager.</p></div></div>`;
+    FareStrip.mount($("#results-fare-strip"), { ...leg, count: draft.search.count, min: legIndex ? draft.search.legs[legIndex - 1].date : localToday() }, selectResultDate);
     $("#results-content").oninput = (e) => {
       if (e.target.matches("input,select")) updateFilters();
     };
@@ -800,7 +868,10 @@
       const action = b.dataset.action;
       if (action === "open-filters") { const panel=$("#result-filters");panel.classList.add("filters-open");panel.setAttribute("role","dialog");panel.setAttribute("aria-modal","true");panel.querySelector("button").focus(); }
       if (action === "close-filters") { $("#result-filters").classList.remove("filters-open");$("#result-filters").removeAttribute("role");$("#result-filters").removeAttribute("aria-modal");$(".mobile-filter-button").focus(); }
-      if (action === "result-calendar") { const leg=draft.search.legs[legIndex];PriceCalendar.open({...leg,count:draft.search.count,onSelect(date){leg.date=date;draft.flights=draft.flights.slice(0,legIndex);for(let i=legIndex+1;i<draft.search.legs.length;i++)if(draft.search.legs[i].date<date)draft.search.legs[i].date=date;search.legs[0].date=draft.search.legs[0].date;if(search.type==="roundtrip")search.returnDate=draft.search.legs[1].date;persist();renderResults();}}); }
+      if (action === "result-calendar") {
+        const leg = draft.search.legs[legIndex];
+        PriceCalendar.open({ ...leg, count: draft.search.count, min: legIndex ? draft.search.legs[legIndex - 1].date : localToday(), onSelect: selectResultDate });
+      }
       if (action === "print-voucher") { const r=B.get(currentId);$("#print-area").innerHTML=`<div class="printed-voucher"><h1>voyagencash · PayEnCash</h1><p>Bon de démonstration · non encaissable</p>${B.qr(`DEMO|${r.voucher}|${r.voucherToken}`)}<h2>${esc(r.voucher)}</h2><p>${F.money(r.total)} · Échéance : ${new Date(r.expiresAt).toLocaleString("fr-FR")}</p></div>`;window.print(); }
 
       if (action === "freeze-details") openDialog(`<div class="secure-icon">${icon("lock")}</div><h2 id="dialog-title">120 minutes pour décider.</h2><p>Le gel de tarif est inclus dans votre réservation simulée, sans frais et sans débit. Il démarre à la création du bon et expire après deux heures. Le compte à rebours fait foi, même après un rechargement.</p><p>Une fois ce délai écoulé, le bon ne peut plus être validé. Lancez une nouvelle recherche pour connaître les nouveaux tarifs. Les délais réels dépendent de l’offre et de la compagnie.</p><button class="button primary full" data-action="close-dialog">Compris</button>`);
@@ -981,7 +1052,7 @@
         $("#bookings-content").innerHTML =
           `<div class="empty-state"><h2>Stockage local indisponible</h2><p>${esc(e.message)}</p><a class="button" href="#search">Revenir à la recherche</a></div>`;
     }
-    document.title = `voyagencash — ${{ search: "Le voyage commence ici", results: "Choisissez votre vol", options: "Vos options", passengers: "Vos passagers", payment: "Votre paiement", confirmation: "Votre e-billet", bookings: "Mes réservations", stores: "Où payer", faq: "Aide & FAQ" }[view]}`;
+    document.title = `voyagencash — ${{ search: "Trouvez votre prochain vol", results: "Choisissez votre vol", options: "Vos options", passengers: "Vos passagers", payment: "Votre paiement", confirmation: "Votre e-billet", bookings: "Mes réservations", stores: "Où payer", faq: "Aide & FAQ" }[view]}`;
     window.scrollTo({ top: 0, behavior: "instant" });
     $("#main").focus({ preventScroll: true });
   }

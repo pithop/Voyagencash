@@ -21,7 +21,7 @@ module.exports = endpoint("POST", async (req, res) => {
       422,
       "Le plafond espèces est de 1 000 € par réservation.",
     );
-  const reference = `VNC-${new Date().getUTCFullYear()}-${crypto.createHash("sha256").update(hold.id).digest("hex").slice(0, 5).toUpperCase()}`;
+  const reference = `VNC-${new Date().getUTCFullYear()}-${crypto.createHash("sha256").update(hold.id).digest("hex").slice(0, 12).toUpperCase()}`;
   const voucher = {
     kind: "voucher",
     orderId: hold.id,

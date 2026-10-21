@@ -250,7 +250,9 @@
     const code = qrcode(0, "Q");
     code.addData(payload);
     code.make();
-    return code.createSvgTag({ cellSize: 4, margin: 16, scalable: true });
+    const size = (code.getModuleCount() + 8) * 3;
+    return code.createSvgTag({ cellSize: 4, margin: 16, scalable: true })
+      .replace("<svg", `<svg class="qr-code" shape-rendering="crispEdges" style="--qr-size:${size}px"`);
   }
   const escape = (s) =>
     String(s ?? "").replace(

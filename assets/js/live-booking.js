@@ -2,7 +2,12 @@
 (() => {
   const esc = BookingManager.escape,
     F = FlightEngine;
-  let active, timer, activeContainer;
+  let active, timer, pollTimer, activeContainer, generation = 0;
+  function stop() {
+    generation++;
+    clearInterval(timer);
+    clearTimeout(pollTimer);
+  }
   const key = "voyagencash_live_orders";
   function records() {
     try {
@@ -26,7 +31,7 @@
   }
   async function mount(container, draft) {
     activeContainer = container;
-    clearInterval(timer);
+    stop();
     const config = await FlightAPI.ready;
     const total = draft.flights.reduce(
       (s, f) => s + f.price * draft.search.count,
@@ -89,7 +94,10 @@
   async function showVoucher(container, record) {
     active = record;
     activeContainer = container;
-    clearInterval(timer);
+    stop();
+    const session = generation;
+    const current = () => generation === session && container.isConnected;
+    let checking = false, terminal = false;
     container.innerHTML = `<div class="page-heading"><h1 id="options-title">Votre réservation PayEnCash</h1><p>Réservation réelle · le billet sera émis après réception du paiement.</p></div><div class="panel live-voucher"><div id="live-voucher-content"></div><p id="live-state" role="status">Vérification de votre réservation…</p><p id="live-error" class="form-error" role="alert" hidden></p><div class="booking-actions"><button class="button" data-live-status>Actualiser le paiement</button><a class="button" href="#stores">Points de paiement</a><button class="button" data-live-print>Imprimer / PDF</button></div></div>`;
     const content = container.querySelector("#live-voucher-content");
     async function loadVoucher() {
@@ -99,6 +107,7 @@
           (await FlightAPI.request("/api/payencash/voucher", {
             holdToken: record.holdToken,
           }));
+        if (!current()) return;
         record.voucher = voucher;
         save(record);
         content.innerHTML = `<h2>Bon PayEnCash</h2>${BookingManager.qr(voucher.qrPayload)}<strong class="voucher-code">${esc(voucher.reference)}</strong><p>${F.money(voucher.amountCents / 100)}</p><p id="live-deadline"></p><button class="text-button" data-live-copy>Copier la référence</button>`;
@@ -122,17 +131,25 @@
         tick();
         timer = setInterval(tick, 1000);
       } catch (error) {
+        if (!current()) return;
         feedback(error);
         content.innerHTML =
           '<button class="button" data-live-retry>Réessayer l’émission du bon</button>';
         content.querySelector("button").onclick = loadVoucher;
       }
     }
-    container.querySelector("[data-live-status]").onclick = async () => {
+    const statusButton = container.querySelector("[data-live-status]");
+    async function checkStatus() {
+      if (!current() || checking || terminal) return;
+      clearTimeout(pollTimer);
+      checking = true;
+      statusButton.disabled = true;
       try {
         const status = await FlightAPI.request("/api/orders/status", {
           token: record.token,
         });
+        if (!current()) return;
+        container.querySelector("#live-error").hidden = true;
         container.querySelector("#live-state").textContent =
           {
             awaiting_cash: "Paiement en attente",
@@ -140,7 +157,15 @@
             ticket_issued: "Billet émis par la compagnie",
             expired: "Réservation expirée",
             refund_pending: "Paiement à rapprocher · remboursement à traiter",
+            reconciliation_required: "Votre paiement nécessite une vérification par le service de réservation",
           }[status.status] || "Vérification opérateur en cours";
+        record.status = status.status;
+        save(record);
+        terminal = ["ticket_issued", "expired", "refund_pending", "reconciliation_required"].includes(status.status);
+        if (status.status !== "awaiting_cash") {
+          clearInterval(timer);
+          content.innerHTML = `<h2>${status.status === "payment_received" ? "Votre paiement est reçu" : status.status === "expired" ? "Le délai de paiement est terminé" : "Suivi de votre réservation"}</h2><p class="voucher-code">${esc(record.voucher?.reference || record.id)}</p><p>${status.status === "payment_received" ? "La compagnie prépare votre billet. Cette page se met à jour automatiquement." : "Ne réglez plus ce bon. Consultez l’état de votre réservation ci-dessous."}</p>`;
+        }
         if (status.ticket) {
           clearInterval(timer);
           content.innerHTML = `<h2>Votre billet électronique</h2><p>Référence compagnie : <strong>${esc(status.ticket.bookingReference)}</strong></p>${status.ticket.slices.map((s) => `<p>${esc(s.origin)} → ${esc(s.destination)} · ${esc(s.departingAt.replace("T", " "))}</p>`).join("")}${(status.ticket.documents || []).map((d) => `<p>${esc(d.type)} · ${esc(d.unique_identifier)}</p>`).join("")}<p>Effectuez l’enregistrement auprès de la compagnie pour votre carte d’embarquement.</p><button class="button" data-live-wallet>Ajouter la réservation à Apple Wallet</button>`;
@@ -164,9 +189,16 @@
           };
         }
       } catch (error) {
-        feedback(error);
+        if (current()) feedback(error);
+      } finally {
+        checking = false;
+        if (current()) {
+          statusButton.disabled = false;
+          if (!terminal) pollTimer = setTimeout(checkStatus, document.hidden ? 30000 : 5000);
+        }
       }
-    };
+    }
+    statusButton.onclick = () => { terminal = false; checkStatus(); };
     container.querySelector("[data-live-print]").onclick = () => {
       document.querySelector("#print-area").innerHTML = content.innerHTML;
       document
@@ -175,7 +207,7 @@
       window.print();
     };
     await loadVoucher();
-    container.querySelector("[data-live-status]").click();
+    if (current()) await checkStatus();
   }
   function appendBookings(container) {
     const saved = records();
@@ -192,6 +224,7 @@
     });
     container.prepend(section);
   }
-  window.addEventListener("hashchange", () => clearInterval(timer));
+  window.addEventListener("hashchange", stop);
+  window.addEventListener("pagehide", stop);
   window.LiveBooking = { mount, appendBookings };
 })();

@@ -27,7 +27,7 @@
     trigger;
   async function render() {
     const request = ++generation;
-    dialog.innerHTML = `<div class="calendar-top"><div><span class="eyebrow">DES DATES QUI FONT LA DIFFÉRENCE</span><h2 id="calendar-title">${context.title || "Choisissez votre départ"}</h2><p>${esc(F.airport(context.from)?.city || context.from)} <span aria-hidden="true">→</span> ${esc(F.airport(context.to)?.city || context.to)} · prix par adulte, vol direct</p></div><button class="icon-button" data-calendar-close aria-label="Fermer le calendrier"><svg class="icon"><use href="#i-close"/></svg></button></div><div class="calendar-navigation"><button class="icon-button" data-month="-1" aria-label="Mois précédent" ${month <= today().slice(0, 7) ? "disabled" : ""}><svg class="icon flip"><use href="#i-chevron"/></svg></button><h3>${monthName(month)}</h3><button class="icon-button" data-month="1" aria-label="Mois suivant" ${month >= maxDate().slice(0, 7) ? "disabled" : ""}><svg class="icon"><use href="#i-chevron"/></svg></button></div><div class="calendar-week" aria-hidden="true">${["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((d) => `<span>${d}</span>`).join("")}</div><div class="calendar-grid" aria-label="Jours du mois" aria-busy="true"></div><div class="calendar-legend"><span><i class="low"></i>Prix bas</span><span><i class="medium"></i>Prix moyen</span><span><i class="high"></i>Prix élevé</span></div><p class="calendar-disclaimer" role="status">Chargement des prix…</p>`;
+    dialog.innerHTML = `<div class="calendar-top"><div><span class="eyebrow">CALENDRIER DES PRIX</span><h2 id="calendar-title">${context.title || "Choisissez votre départ"}</h2><p>${esc(F.airport(context.from)?.city || context.from)} <span aria-hidden="true">→</span> ${esc(F.airport(context.to)?.city || context.to)} · prix par adulte, vol direct</p></div><button class="icon-button" data-calendar-close aria-label="Fermer le calendrier"><svg class="icon"><use href="#i-close"/></svg></button></div><div class="calendar-navigation"><button class="icon-button" data-month="-1" aria-label="Mois précédent" ${month <= today().slice(0, 7) ? "disabled" : ""}><svg class="icon flip"><use href="#i-chevron"/></svg></button><h3>${monthName(month)}</h3><button class="icon-button" data-month="1" aria-label="Mois suivant" ${month >= maxDate().slice(0, 7) ? "disabled" : ""}><svg class="icon"><use href="#i-chevron"/></svg></button></div><div class="calendar-week" aria-hidden="true">${["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((d) => `<span>${d}</span>`).join("")}</div><div class="calendar-grid" aria-label="Jours du mois" aria-busy="true"></div><div class="calendar-legend"><span><i class="low"></i>Prix bas</span><span><i class="medium"></i>Prix moyen</span><span><i class="high"></i>Prix élevé</span></div><p class="calendar-disclaimer" role="status">Chargement des prix…</p>`;
     // Date buttons are available immediately, even when price retrieval is slow.
     const count = new Date(+month.slice(0, 4), +month.slice(5), 0).getDate();
     draw(
@@ -63,6 +63,7 @@
   }
   function draw(days) {
     const offset = (new Date(month + "-01T12:00:00Z").getUTCDay() + 6) % 7;
+    const focused = dialog.contains(document.activeElement) ? document.activeElement.dataset.calendarDate : null;
     dialog.querySelector(".calendar-grid").innerHTML =
       '<span aria-hidden="true"></span>'.repeat(offset) +
       days
@@ -86,6 +87,7 @@
           return `<button type="button" class="calendar-day ${d.tier}${context.date === d.date ? " selected" : ""}" data-calendar-date="${d.date}" aria-label="${F.dateLabel(d.date, true)}, ${label}" aria-pressed="${context.date === d.date}" ${disabled ? "disabled" : ""}><span>${Number(d.date.slice(-2))}</span><small class="day-price">${price}</small></button>`;
         })
         .join("");
+    if (focused) dialog.querySelector(`[data-calendar-date="${focused}"]`)?.focus({ preventScroll: true });
   }
   dialog.addEventListener("click", (e) => {
     const day = e.target.closest("[data-calendar-date]");

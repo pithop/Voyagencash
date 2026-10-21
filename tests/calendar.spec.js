@@ -205,3 +205,63 @@ test("live offer stays outside the demo checkout and uses hold, voucher and stat
     "VNC-2026-ABCDE",
   );
 });
+
+test("inline fares update the departure, availability and result offers without losing the route", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator('.date-fare').first()).toContainText('€');
+  await expect(page.locator('#search-fare-strip .fare-day')).toHaveCount(7);
+  const day = page.locator('#search-fare-strip .fare-day:not(.selected)').last();
+  const selected = await day.getAttribute('data-fare-date');
+  const refreshed = page.waitForRequest(r => r.url().endsWith('/api/flights/search') && r.postDataJSON().date === selected);
+  await day.click();
+  await refreshed;
+  await expect(page.locator('#date-0')).toHaveValue(selected);
+  await expect(page.locator('#search-availability')).toContainText('20 vols');
+  await page.locator('[data-trip=oneway]').click();
+  await page.locator('.search-submit').click();
+  await expect(page.locator('.flight-card')).toHaveCount(20);
+  const alternate = page.locator('#results-fare-strip .fare-day:not(.selected)').first();
+  const resultDate = await alternate.getAttribute('data-fare-date');
+  const search = page.waitForRequest(r => r.url().endsWith('/api/flights/search') && r.postDataJSON().date === resultDate);
+  await alternate.click();
+  await search;
+  await expect(page.locator('.flight-card')).toHaveCount(20);
+  await expect(page.locator(`#results-fare-strip [data-fare-date="${resultDate}"]`)).toHaveAttribute('aria-pressed', 'true');
+  await page.goto('/#search');
+  await expect(page.locator('#date-0')).toHaveValue(resultDate);
+});
+
+test("live payment confirmation arrives automatically and removes the payable QR", async ({ page }) => {
+  let state = "awaiting_cash", statusCalls = 0;
+  await page.route('**/api/config', r => r.fulfill({ json: { mode: 'live', checkout: true } }));
+  await page.route('**/api/payencash/stores', r => r.fulfill({ json: { source: 'partner', stores: [] } }));
+  await page.route('**/api/flights/calendar?*', r => r.fulfill({ json: { source: 'duffel-cache', simulation: false, days: [] } }));
+  await page.route('**/api/orders/status', r => {
+    statusCalls++;
+    return r.fulfill({ json: { status: state, ...(state === 'ticket_issued' ? { ticket: {
+      bookingReference: 'ABCDEF', slices: [{ origin:'CDG', destination:'RAK', departingAt:'2026-12-01T10:00:00' }],
+      documents:[{type:'electronic_ticket',unique_identifier:'123-456789'}],
+    } } : {}) } });
+  });
+  await page.goto('/');
+  await page.clock.install();
+  await page.evaluate(() => localStorage.setItem('voyagencash_live_orders', JSON.stringify([{
+    id:'ord_test', token:'capability', expiresAt:Date.now()+7200000, amountCents:14200,
+    voucher:{reference:'VNC-2026-ABCDE',qrPayload:'PARTNER|ABCDEF|14200',expiresAt:Date.now()+7200000,amountCents:14200},
+  }])));
+  await page.goto('/#bookings');
+  await page.locator('[data-live-resume]').click();
+  await expect(page.locator('#live-state')).toHaveText('Paiement en attente');
+  await expect(page.locator('#live-voucher-content > svg')).toBeVisible();
+  state = 'payment_received';
+  await page.clock.runFor(5100);
+  await expect(page.locator('#live-state')).toContainText('Paiement reçu');
+  await expect(page.locator('#live-voucher-content > svg')).toHaveCount(0);
+  state = 'ticket_issued';
+  await page.clock.runFor(5100);
+  await expect(page.locator('#live-voucher-content')).toContainText('ABCDEF');
+  await expect(page.locator('#live-state')).toContainText('Billet émis');
+  const finalCalls = statusCalls;
+  await page.clock.runFor(11000);
+  expect(statusCalls).toBe(finalCalls);
+});

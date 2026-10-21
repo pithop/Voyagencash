@@ -31,6 +31,7 @@ const handler = endpoint("POST", async (req, res) => {
     throw new HttpError(400, "JSON invalide.");
   }
   if (
+    !event || typeof event !== "object" ||
     typeof event.id !== "string" ||
     !/^[A-Za-z0-9_-]{1,100}$/.test(event.id) ||
     event.type !== "voucher.paid" ||

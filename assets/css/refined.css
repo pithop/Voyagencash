@@ -1643,3 +1643,219 @@ input[type="range"] {
 .summary-panel>.cash-limit-note { color:#946000; background:#fff7e7; border-color:#eed8a8; }
 
 .option-card > .badge { flex: 0 0 auto; }
+
+/* Product layout: generous type, a photographic destination, one clear search surface. */
+:root { --fare-low:#10b981; --fare-medium:#f59e0b; --fare-high:#ef4444; }
+body { background:#f7f8fa; }
+.demo-bar { min-height:30px; font-size:11px; background:#eef4ff; color:#405a7b; }
+.header-inner { height:82px; min-height:82px; }
+.brand { font-size:27px; letter-spacing:-1.5px; color:#10243e; }
+.brand-symbol { background:none; width:34px; height:38px; border-radius:0; transform:none; }
+.brand-symbol .icon { width:32px; height:32px; color:#016bfd; fill:currentColor; stroke:none; transform:rotate(40deg); }
+.brand-cash { color:inherit; }
+#main-nav { gap:30px; }
+#main-nav a { font-size:13px; color:#42536b; }
+#main-nav .nav-bookings { border-color:#dbe4ef; background:white; border-radius:8px; }
+.sound-toggle { border:0; color:#576d88; }
+.hero { position:relative; isolation:isolate; background:#016bfd; overflow:hidden; }
+.hero-inner { position:static; min-height:365px; grid-template-columns:1fr 1fr; padding-block:49px 110px; gap:24px; }
+.hero-copy { z-index:2; max-width:none; text-align:left; }
+.hero-copy .eyebrow { color:#d2e6ff; font-size:11px; letter-spacing:2px; margin-bottom:20px; }
+.hero h1 { font-size:clamp(58px,6vw,84px); color:white; letter-spacing:-4px; font-weight:750; line-height:1.08; }
+.hero h1 span { color:white; }
+.hero-copy > p { font-size:16px; line-height:1.75; color:#e0edff; margin-top:22px; max-width:480px; }
+.hero-payment-link { display:inline-flex; align-items:center; gap:10px; margin-top:23px; color:white; font-size:12px; font-weight:600; }
+.hero-payment-link .icon { width:17px; height:17px; }
+.hero-payment-link:hover { text-decoration:underline; text-underline-offset:5px; }
+.hero-visual { position:absolute; z-index:0; inset:0 0 0 auto; width:51%; height:100%; border-radius:0; background:#759ac1; display:block; }
+.hero-visual > img { object-position:50% 52%; }
+.hero-image-shade { background:linear-gradient(90deg,#016bfd 0%,#016bfd50 26%,#011c3e00 65%),linear-gradient(0deg,#05254177,transparent 50%); }
+.photo-location { display:flex; gap:10px; align-items:center; left:auto; right:max(40px,calc((100vw - 1240px)/2)); bottom:104px; color:white; }
+.photo-location > .icon { width:20px; height:20px; }
+.photo-location span { font-size:13px; opacity:1; font-weight:700; }
+.photo-location b { display:block; font-size:10px; margin-top:4px; letter-spacing:1px; font-weight:500; }
+.search-area { margin-top:-74px; }
+.search-card { padding:25px 28px 23px; border-radius:14px; border:1px solid #dce3ed; box-shadow:0 8px 28px #122d4b0d; }
+.search-top { margin-bottom:22px; }
+.trip-tabs { background:none; border-bottom:1px solid #e1e7ee; border-radius:0; padding:0; gap:22px; }
+.trip-tabs button { color:#58697e; font-size:13px; font-weight:650; border-radius:0; padding:9px 0 12px; border-bottom:2px solid transparent; margin-bottom:-1px; }
+.trip-tabs button.active { box-shadow:none; background:none; border-color:#016bfd; color:#016bfd; }
+.traveler-select, .traveler-select select { font-size:13px; }
+.search-leg { align-items:stretch; gap:12px; }
+.search-field { min-height:82px; display:flex; flex-direction:column; justify-content:center; background:white; border-color:#cdd7e4; padding:13px 16px; border-radius:8px; }
+.search-field label { font-size:11px; color:#56687e; text-transform:none; letter-spacing:0; }
+.search-field input { font-size:15px; font-weight:700; height:29px; min-height:29px; }
+.search-leg > .swap-button { align-self:center; width:32px; height:32px; }
+.date-field { justify-content:flex-start; }
+.date-caption { top:33px; bottom:auto; left:16px; font-size:14px; }
+.date-fare { font-size:11px; line-height:1.5; white-space:nowrap; color:#617188; margin-top:2px; }
+.date-fare::before { content:""; display:inline-block; width:6px; height:6px; margin-right:5px; border-radius:50%; vertical-align:middle; background:#bac4d0; }
+.date-fare.low::before { background:var(--fare-low); }
+.date-fare.medium::before { background:var(--fare-medium); }
+.date-fare.high::before { background:var(--fare-high); }
+.search-note { font-size:11px; color:#586c83; }
+.search-submit { font-size:14px; min-height:48px; padding-inline:26px; border-radius:8px; }
+.search-submit > span { margin-left:16px; }
+.search-bottom { margin-top:20px; }
+.search-fares { margin-top:22px; padding-top:18px; border-top:1px solid #e7ebf1; }
+.fare-heading { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; color:#40516a; font-size:12px; font-weight:650; }
+.fare-key { display:flex; align-items:center; gap:6px; font-size:11px; font-weight:500; color:#63748a; }
+.fare-key i { width:6px; height:6px; background:var(--fare-low); border-radius:50%; }
+.fare-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; }
+.fare-day { position:relative; min-width:0; min-height:69px; padding:10px 4px 14px; border:1px solid #e2e8f0; border-radius:7px; background:white; color:#263e5c; transition:border-color .15s,background .15s; }
+.fare-day span { display:block; font-size:11px; white-space:nowrap; color:#5a6e86; }
+.fare-day strong { display:block; font-size:16px; margin-top:5px; letter-spacing:-.4px; }
+.fare-day i { position:absolute; height:3px; width:20px; border-radius:2px; bottom:5px; left:calc(50% - 10px); }
+.fare-day.low i { background:var(--fare-low); }
+.fare-day.medium i { background:var(--fare-medium); }
+.fare-day.high i { background:var(--fare-high); }
+.fare-day.low { background:#f2fbf7; }
+.fare-day.selected { border-color:#016bfd; background:#edf4ff; box-shadow:inset 0 0 0 1px #016bfd; }
+.fare-day.selected strong { color:#016bfd; }
+.fare-day:hover { border-color:#016bfd; background:#eef5ff; }
+.fare-source { font-size:10px; margin:8px 0 0; color:#687c94; }
+#search-availability { color:#295071; font-size:12px; margin-top:10px; }
+.results-fares { margin:-10px 0 26px; }
+.date-explorer { background:transparent; border:0; padding:0; margin-bottom:22px; }
+.date-explorer .eyebrow { font-size:10px; }
+.date-explorer strong { font-size:15px; }
+.trust-row { display:flex; justify-content:space-between; gap:24px; padding:24px 4px; color:#64748b; font-size:12px; }
+.trust-row > div { display:flex; align-items:center; gap:10px; }
+.trust-row strong { color:#354a64; font-weight:650; }
+.trust-row .icon { color:#016bfd; width:19px; height:19px; }
+.inspiration { padding-block:38px 52px; }
+.section-heading { align-items:end; margin-bottom:25px; }
+.section-heading .eyebrow { font-size:10px; color:#526c8b; letter-spacing:1.8px; }
+.section-heading h2 { font-size:30px; font-weight:700; letter-spacing:-1.1px; margin-top:11px; }
+.section-heading p { font-size:14px; color:#62748a; line-height:1.6; margin-top:10px; }
+.section-heading > .small-muted { font-size:11px; letter-spacing:0; color:#63748a; }
+.destination-grid { gap:24px; }
+.destination-card { border:0; background:none; box-shadow:none; border-radius:0; overflow:visible; }
+.destination-card:hover { box-shadow:none; transform:none; }
+.destination-art { height:225px; border-radius:10px; filter:none; overflow:hidden; background-size:cover; transition:filter .25s; }
+.destination-card:hover .destination-art { filter:brightness(1.06); }
+.destination-info { padding:17px 0 0; }
+.destination-info h3 { font-size:21px; font-weight:700; color:#172e4b; }
+.destination-info span:not(.round-arrow) { font-size:12px; margin-top:3px; color:#66788e; }
+.destination-tag { color:white; background:#10294380; font-size:9px; letter-spacing:1.5px; backdrop-filter:none; border:1px solid #ffffff70; border-radius:4px; padding:6px 9px; top:16px; left:16px; }
+.round-arrow { border:1px solid #d8e0eb; background:white; width:36px; height:36px; }
+.how-section { margin-block:10px 0; padding-block:45px 60px; gap:80px; }
+.how-intro .eyebrow { font-size:10px; color:#526c8b; }
+.how-intro h2 { font-size:32px; font-weight:700; letter-spacing:-1.2px; margin-top:17px; }
+.how-intro p { font-size:14px; line-height:1.8; color:#62748a; }
+.how-intro .text-link { font-size:13px; }
+.how-steps h3 { font-size:16px; }
+.how-steps p { font-size:13px; line-height:1.7; color:#62748a; }
+.how-steps article { gap:20px; }
+.step-icon { border:0; border-radius:10px; width:44px; height:44px; }
+.footer-links,.footer-note { font-size:11px; color:#64748b; }
+.calendar-top .eyebrow { font-size:10px; }
+.calendar-top p,.calendar-disclaimer { font-size:12px; color:#64748b; }
+.calendar-day { position:relative; }
+.calendar-day::after { content:""; position:absolute; width:16px; height:3px; border-radius:2px; bottom:3px; }
+.calendar-day.low::after { background:var(--fare-low); }
+.calendar-day.medium::after { background:var(--fare-medium); }
+.calendar-day.high::after { background:var(--fare-high); }
+.calendar-day .day-price { font-size:12px; }
+.calendar-legend { font-size:11px; color:#52677f; }
+.flight-card-top strong { font-size:14px; }
+.flight-card-top small,.flight-time span,.timeline,.flight-inclusions,.flight-details,.flight-price small { font-size:11px; }
+.filter-group label,.filter-group legend,.sort-bar,.results-heading p { font-size:12px; }
+.panel p,.summary-panel p { color:#60738a; }
+@media (min-width:1500px) {
+  .hero-inner { padding-block:60px 120px; }
+  .hero-visual { height:100%; }
+}
+@media (max-width:1000px) {
+  .hero h1 { font-size:62px; }
+  .hero-copy > p { font-size:14px; }
+  .hero-visual { width:49%; }
+  .hero-payment-link { font-size:11px; }
+  .search-field { padding-inline:12px; }
+  .search-field input { font-size:13px; }
+  .date-caption { left:12px; font-size:13px; }
+  .date-fare { font-size:10px; }
+  .trust-row { font-size:11px; gap:18px; }
+  .destination-art { height:190px; }
+  .how-section { gap:36px; }
+}
+@media (max-width:760px) {
+  .header-inner { height:68px; min-height:68px; gap:12px; }
+  .brand { font-size:23px; gap:5px; }
+  .brand-symbol { width:28px; }
+  .brand-symbol .icon { width:26px; height:26px; }
+  .demo-bar { font-size:10px; }
+  .sound-toggle { margin-left:auto; order:initial; width:30px; }
+  .mobile-menu { order:3; }
+  .hero-inner { min-height:0; display:block; padding-top:30px; padding-bottom:74px; }
+  .hero-copy .eyebrow { font-size:9px; letter-spacing:1.5px; margin-bottom:15px; }
+  .hero h1 { font-size:52px; letter-spacing:-2.6px; }
+  .hero-copy > p { font-size:13px; margin-top:13px; line-height:1.7; }
+  .hero-payment-link { font-size:10px; margin-top:17px; gap:7px; }
+  .hero-visual { width:52%; opacity:.26; display:block; }
+  .hero-image-shade { background:linear-gradient(90deg,#016bfd 0%,#016bfd33 100%); }
+  .photo-location { display:none; }
+  .search-area { margin-top:-43px; }
+  .search-card { padding:18px; border-radius:12px; }
+  .trip-tabs { gap:16px; }
+  .trip-tabs button { font-size:11px; padding:9px 0 12px; }
+  .search-top { gap:15px; }
+  .traveler-select,.traveler-select select,.traveler-select > span { font-size:12px; }
+  .search-field { min-height:77px; padding:11px 12px; }
+  .search-field label { font-size:10px; }
+  .search-field input { font-size:16px; letter-spacing:-.4px; }
+  .date-caption { font-size:13px; top:32px; bottom:auto; }
+  .date-fare { font-size:10px; }
+  .search-leg > .swap-button { top:25px; width:29px; height:29px; }
+  .search-fares { margin-top:18px; padding-top:16px; }
+  .fare-heading { font-size:11px; }
+  .fare-key { font-size:10px; }
+  .fare-days { display:flex; overflow-x:auto; gap:6px; padding-bottom:5px; scroll-snap-type:x proximity; }
+  .fare-day { flex:0 0 calc((100% - 18px)/4); min-height:70px; scroll-snap-align:center; }
+  .fare-day span { font-size:10px; }
+  .fare-day strong { font-size:15px; }
+  .fare-source { font-size:10px; line-height:1.6; }
+  .search-submit { font-size:14px; min-height:48px; }
+  .search-note { font-size:10px; }
+  .trust-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:10px; padding:20px 2px; line-height:1.5; }
+  .trust-row > div:last-child { display:none; }
+  .trust-row strong { display:block; font-size:11px; }
+  .trust-row .icon { width:18px; height:18px; }
+  .inspiration { padding-block:22px 32px; }
+  .section-heading h2 { font-size:26px; line-height:1.25; letter-spacing:-.9px; }
+  .section-heading p { font-size:12px; }
+  .section-heading > .small-muted { display:none; }
+  .destination-grid { display:flex; overflow-x:auto; gap:16px; padding-bottom:12px; scroll-snap-type:x mandatory; }
+  .destination-card { flex:0 0 73%; scroll-snap-align:start; display:block; }
+  .destination-art { height:190px; }
+  .destination-tag { display:block; }
+  .destination-info { padding:14px 0 0; }
+  .destination-info h3 { font-size:20px; }
+  .destination-info span:not(.round-arrow) { font-size:12px; }
+  .destination-info .round-arrow { display:grid; }
+  .how-section { display:grid; grid-template-columns:1fr; padding-block:30px 40px; gap:30px; }
+  .how-intro h2 { font-size:28px; }
+  .how-intro p,.how-steps p { font-size:13px; }
+  .how-steps h3 { font-size:15px; }
+  .calendar-top p,.calendar-disclaimer { font-size:11px; }
+  .calendar-day .day-price { font-size:11px; }
+  .calendar-legend { gap:15px; font-size:10px; }
+  .results-fares .fare-day { flex-basis:calc((100% - 24px)/4); }
+  .flight-card-top strong { font-size:12px; }
+  .flight-card-top small,.flight-time span,.timeline,.flight-inclusions,.flight-details,.flight-price small { font-size:10px; }
+}
+@media (prefers-reduced-motion:reduce) { .fare-day,.destination-art { transition:none; } }
+@media (min-width:761px) and (max-width:1000px) {
+  .header-inner { gap:16px; }
+  .sound-toggle { order:1; margin-left:auto; }
+  .icon-button.mobile-menu { display:flex; order:2; color:#375a80; }
+  #main-nav { display:none; position:absolute; top:100%; left:0; right:0; margin:0; padding:20px 26px; background:white; border-bottom:1px solid #dce4ef; box-shadow:0 12px 20px #10294315; }
+  #main-nav.open { display:flex; align-items:stretch; flex-direction:column; gap:8px; }
+  #main-nav a { padding:12px; }
+}
+
+/* Signed vouchers carry more data than a ticket reference: keep their modules readable. */
+.voucher-center > .qr-code,.live-voucher > div > .qr-code,.printed-voucher > .qr-code {
+  width:min(100%,var(--qr-size,320px)); max-width:100%; height:auto;
+  padding:0; border:0; border-radius:0; margin:22px auto; background:white;
+}

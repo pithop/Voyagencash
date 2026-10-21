@@ -116,6 +116,10 @@ module.exports = endpoint("POST", async (req, res) => {
       503,
       "Le service de paiement partenaire doit être configuré avant toute retenue.",
     );
+  let adapter;
+  try { adapter = new URL(process.env.PAYENCASH_ADAPTER_URL); } catch {}
+  if (adapter?.protocol !== "https:")
+    throw new HttpError(503, "L’adaptateur partenaire doit utiliser HTTPS.");
   const db = database();
   const fingerprint = crypto
     .createHash("sha256")
@@ -187,6 +191,7 @@ module.exports = endpoint("POST", async (req, res) => {
       );
     if (
       offer.passengers.length !== passengers.length ||
+      new Set(passengers.map((p) => p.id)).size !== passengers.length ||
       !passengers.every((p) => offer.passengers.some((o) => o.id === p.id))
     )
       throw new HttpError(400, "Les passagers ne correspondent pas à l’offre.");
@@ -204,10 +209,10 @@ module.exports = endpoint("POST", async (req, res) => {
   });
   const expiresAt = Math.min(
     Date.now() + 7200000,
-    Date.parse(order.payment_required_by),
-    Date.parse(order.price_guarantee_expires_at),
+    Date.parse(order.payment_status?.payment_required_by),
+    Date.parse(order.payment_status?.price_guarantee_expires_at),
   );
-  if (!Number.isFinite(expiresAt) || expiresAt <= Date.now())
+  if (order.payment_status?.awaiting_payment !== true || !Number.isFinite(expiresAt) || expiresAt <= Date.now())
     throw new HttpError(
       502,
       "Échéance fournisseur invalide. Rapprochement opérateur requis.",

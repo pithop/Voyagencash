@@ -28,17 +28,20 @@ async function rawBody(req) {
   return Buffer.concat(chunks);
 }
 async function body(req) {
-  if (req.body && typeof req.body === "object" && !Buffer.isBuffer(req.body)) {
-    if (Buffer.byteLength(JSON.stringify(req.body)) > 32768)
-      throw new HttpError(413, "Requête trop volumineuse.");
-    return req.body;
-  }
+  let value;
   try {
-    return JSON.parse(req.body || (await rawBody(req)).toString());
-  } catch (e) {
-    if (e.status) throw e;
+    if (req.body && typeof req.body === "object" && !Buffer.isBuffer(req.body)) {
+      if (Buffer.byteLength(JSON.stringify(req.body)) > 32768)
+        throw new HttpError(413, "Requête trop volumineuse.");
+      value = req.body;
+    } else value = JSON.parse(req.body || (await rawBody(req)).toString());
+  } catch (error) {
+    if (error.status) throw error;
     throw new HttpError(400, "JSON invalide.");
   }
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new HttpError(400, "Un objet JSON est requis.");
+  return value;
 }
 function endpoint(method, fn) {
   return async (req, res) => {
@@ -48,7 +51,9 @@ function endpoint(method, fn) {
         throw new HttpError(405, "Méthode non autorisée.");
       }
       if (method === "POST" && req.headers.origin) {
-        const origin = new URL(req.headers.origin);
+        let origin;
+        try { origin = new URL(req.headers.origin); }
+        catch { throw new HttpError(403, "Origine non autorisée."); }
         if (origin.host !== req.headers.host)
           throw new HttpError(403, "Origine non autorisée.");
       }

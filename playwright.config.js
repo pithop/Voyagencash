@@ -5,15 +5,18 @@ module.exports = defineConfig({
   expect: { timeout: 7000 },
   fullyParallel: true,
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: "http://127.0.0.1:4174",
     headless: true,
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
     channel: "chromium",
     viewport: { width: 1440, height: 1000 },
   },
   webServer: {
-    command: "npm start",
-    url: "http://127.0.0.1:4173",
-    reuseExistingServer: true,
+    command: "node scripts/serve.mjs",
+    env: { PORT: "4174", VOYAGENCASH_TEST_MODE: "true", DUFFEL_API_TOKEN: "", LIVE_CHECKOUT_ENABLED: "false", PAYENCASH_API_KEY: "", PAYENCASH_ADAPTER_URL: "", PAYENCASH_WEBHOOK_SECRET: "" },
+    url: "http://127.0.0.1:4174",
+    reuseExistingServer: false,
   },
   reporter: "list",
 });

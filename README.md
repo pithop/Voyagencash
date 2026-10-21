@@ -1,6 +1,6 @@
 # voyagencash
 
-Recherche de vols et réservation PayEnCash en français, avec un calendrier de prix, une interface claire en Manrope et un backend Node/Vercel. Bleu de marque `#016bfd`, ressources graphiques locales, SVG, affichage adapté de 360 px au grand écran.
+Recherche de vols et réservation PayEnCash en français, avec prix sous les dates, comparaison sur sept jours, calendrier mensuel et backend Node/Vercel. Une interface photographique centrée sur la recherche, une typographie locale en Manrope et le bleu de marque `#016bfd` : ressources graphiques locales, SVG, affichage adapté de 360 px au grand écran.
 
 ## Démarrer
 
@@ -35,6 +35,8 @@ Le projet n’a pas été homologué avec des identifiants partenaires de produc
 
 ## Calendrier des prix
 
+Les dates du formulaire affichent leur tarif indicatif et un repère de couleur. Une bande de sept jours permet de comparer les dates voisines, y compris à cheval sur deux mois. Choisir un jour met à jour le formulaire et les disponibilités ; dans les résultats, les vols sont rechargés immédiatement. Les réponses devenues obsolètes sont ignorées.
+
 Cliquer sur départ ou retour ouvre un dialogue natif accessible ; sur mobile, il devient une feuille en bas d’écran. Les jours portent un prix sous leur numéro. Navigation mensuelle, Escape, focus contenu dans le dialogue et navigation directionnelle entre les jours. Les dates passées et antérieures au départ sont désactivées.
 
 Les tiers du mois utilisent les terciles des prix directs disponibles : bas en vert, moyen en ambre, élevé en rouge. Le libellé accessible donne aussi le niveau, sans dépendre de la couleur. Le prix du calendrier correspond au minimum des offres **directes**, par adulte, pour la liaison et le nombre de voyageurs sélectionnés. Les résultats peuvent aussi contenir des correspondances moins chères.
@@ -58,7 +60,7 @@ En mode Duffel, seuls les prix récemment observés sont affichés. Un tiret sig
 
 Le montant d’un bon ne provient jamais d’un total arbitraire envoyé par le navigateur. En démonstration, le serveur recalcule les offres et les options ; en mode réel, il relit l’offre chez Duffel, compare le tarif accepté et crée un ordre `hold` **sans propriété `payments`**. Les offres exigeant un paiement immédiat ou sans deux heures de garantie sont refusées. L’échéance effective est le minimum du délai applicatif, du délai de paiement et de la garantie Duffel. Une réponse tardive ne prolonge pas un bon expiré.
 
-Les fonctions contrôlent méthodes, schémas, dates, origine des requêtes navigateur et taille des corps bruts (32 Kio). Les jetons HMAC distinguent retenue, bon et consultation. La courte référence `VNC-AAAA-XXXXX` est un identifiant visuel, pas un secret ; le QR transporte un jeton signé ou le contenu fourni par le partenaire. Les secrets n’apparaissent ni dans les réponses ni dans `dist/`.
+Les fonctions contrôlent méthodes, schémas, dates, origine des requêtes navigateur et taille des corps bruts (32 Kio). Les jetons HMAC distinguent retenue, bon et consultation. La référence serveur `VNC-AAAA-XXXXXXXXXXXX` est un identifiant visuel, pas un secret ; le QR transporte un jeton signé ou le contenu fourni par le partenaire. Les secrets n’apparaissent ni dans les réponses ni dans `dist/`.
 
 ## Contrat de l’adaptateur partenaire
 
@@ -83,7 +85,7 @@ Notifications entrantes :
 
 En-têtes `X-PayEnCash-Timestamp: <secondes Unix>` et `X-PayEnCash-Signature: sha256=<hex>`. Signature : `HMAC-SHA256(secret, timestamp + "." + corpsBrut)`. Fenêtre de 300 secondes et comparaison à temps constant. Une nouvelle tentative doit être resignée avec l’heure courante et conserver le même identifiant d’événement.
 
-Le webhook verrouille la commande, vérifie référence/devise/montant, inscrit l’événement et une tâche d’émission dans une même transaction. Un événement identique ne crée pas une seconde tâche. Les notifications reçues après expiration vont en `refund_pending`. Le worker débite le solde Duffel une seule fois par tentative revendiquée et n’indique `ticket_issued` qu’après vérification du paiement et de documents `electronic_ticket`. Les erreurs ambiguës nécessitent un rapprochement opérateur ; aucun débit n’est réessayé aveuglément. Les migrations et l’ordonnanceur sont décrits dans [ENV.md](ENV.md).
+Le webhook verrouille la commande, vérifie référence/devise/montant, inscrit l’événement et une tâche d’émission dans une même transaction. Un événement identique ne crée pas une seconde tâche. Les notifications reçues après expiration vont en `refund_pending`. Le worker lit les échéances dans `order.payment_status` et transmet le paiement dans `{order_id,payment:{type,currency,amount}}`, conformément au contrat Duffel v2. Il débite le solde Duffel une seule fois par tentative revendiquée et n’indique `ticket_issued` qu’après vérification du paiement et de documents `electronic_ticket`. Si le paiement est accepté mais les documents ne sont pas encore disponibles, la tâche passe en `awaiting_documents` : les passages suivants relisent la commande sans payer de nouveau. Les erreurs ambiguës nécessitent un rapprochement opérateur ; aucun débit n’est réessayé aveuglément. Le navigateur vérifie automatiquement le statut toutes les cinq secondes, retire le QR dès réception du paiement, puis affiche le billet émis. Ce suivi s’arrête à la sortie du parcours ou à un état final. Les migrations et l’ordonnanceur sont décrits dans [ENV.md](ENV.md).
 
 ## Données, cadre juridique et fiscal
 
@@ -99,7 +101,7 @@ Importer le dépôt, preset **Other**, build `node scripts/build.mjs`, output `d
 
 ## Validation et ressources
 
-`npm test` couvre le parcours existant, le QR décodé, la persistance, le plafond espèces, l’expiration, le GPS, les formats Wallet, les routes serveur, les erreurs Duffel, les signatures, la déduplication et les paiements tardifs sur émulateur PostgreSQL, le calendrier et les largeurs 360/390/430/768/1440 px. Les tests de flux réel utilisent des réponses contrôlées. Ils ne remplacent pas une recette avec PostgreSQL et les prestataires.
+`npm test` couvre le parcours existant, le QR décodé, la persistance, le plafond espèces, l’expiration, le GPS, les formats Wallet, les routes serveur, les erreurs Duffel, les signatures, la déduplication et les paiements tardifs sur émulateur PostgreSQL, le calendrier et les largeurs 360/390/430/768/1440 px. Les tests de flux réel utilisent des réponses contrôlées et vérifient notamment le contrat de paiement, les documents différés, la confirmation automatique et l’absence de second débit. Les tests démarrent leur propre serveur isolé sur le port 4174, sans charger `.env`. Ils ne remplacent pas une recette avec PostgreSQL et les prestataires.
 
 Captures de revue locale : `output/playwright/` (ignoré par Git). Moteur partagé : `assets/js/flight-engine.js`. Contrôleurs séparés : `api-client.js`, `price-calendar.js`, `live-booking.js`. Style de la refonte : `assets/css/refined.css` ; les styles des vues historiques restent dans `style.css`.
 

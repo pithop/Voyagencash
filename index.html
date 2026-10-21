@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#0B0F19" />
+    <meta name="theme-color" content="#016bfd" />
     <meta
       name="description"
-      content="Découvrez voyagencash : recherchez un vol et explorez une réservation complète avec paiement en espèces simulé, carte ou Apple Pay."
+      content="Comparez les vols et les prix par date. Réservez votre voyage avec voyagencash et découvrez le paiement en espèces PayEnCash."
     />
-    <title>voyagencash — Le voyage commence ici.</title>
+    <title>voyagencash — Trouvez votre prochain vol</title>
     <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg" />
     <link rel="preload" href="/assets/fonts/manrope-latin-variable.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/assets/css/style.css" />
@@ -18,6 +18,7 @@
     <script defer src="/assets/js/booking-manager.js"></script>
     <script defer src="/assets/js/api-client.js"></script>
     <script defer src="/assets/js/price-calendar.js"></script>
+    <script defer src="/assets/js/fare-strip.js"></script>
     <script defer src="/assets/js/live-booking.js"></script>
     <script defer src="/assets/js/app.js"></script>
   </head>
@@ -112,7 +113,7 @@
     </div>
     <header class="site-header">
       <div class="container header-inner">
-        <a href="#search" class="brand" aria-label="voyagencash, accueil"><span class="brand-symbol"><svg class="icon"><use href="#i-flight"/></svg></span><span>voyagen<span class="brand-cash">cash</span></span></a>
+        <a href="#search" class="brand" aria-label="voyagencash, accueil"><span class="brand-symbol"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3a2 2 0 0 1 4 0v6l7 4v3l-7-2v5l2 2v1l-4-1-4 1v-1l2-2v-5l-7 2v-3l7-4Z"/></svg></span><span>voyagen<span class="brand-cash">cash</span></span></a>
         <button class="icon-button sound-toggle" id="sound-toggle" aria-label="Activer les sons d’interface" aria-pressed="false" title="Activer les sons"><svg class="icon"><use href="#i-mute"/></svg></button>
         <button
           class="icon-button mobile-menu"
@@ -139,12 +140,12 @@
         <div class="hero">
           <div class="container hero-inner">
             <div class="hero-copy">
-              <div class="eyebrow"><span class="live-dot"></span> PLUS PROCHE DE CE QUI COMPTE</div>
-              <h1 id="home-title">Le bon vol.<br>Le <span>bon moment.</span></h1>
-              <p>Un retour aux sources ou un nouveau départ.<br>Comparez les dates. Trouvez votre vol. Payez à votre façon.</p>
-              <div class="hero-pills"><span><svg class="icon"><use href="#i-wallet"/></svg> Espèces avec PayEnCash</span><span><svg class="icon"><use href="#i-check"/></svg> Des prix clairs, dès le départ</span></div>
+              <div class="eyebrow">FRANCE · MAGHREB · EUROPE</div>
+              <h1 id="home-title">On part <span>où ?</span></h1>
+              <p>Les retrouvailles, les premières fois, les vacances.<br>Commencez par trouver votre vol.</p>
+              <a class="hero-payment-link" href="#stores"><svg class="icon" aria-hidden="true"><use href="#i-wallet"/></svg> Payez aussi en espèces avec PayEnCash <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
             </div>
-            <div class="hero-visual"><img src="/assets/img/marrakech.jpg" alt="Architecture et lumière du Maroc" fetchpriority="high" width="1100" height="734"><div class="hero-image-shade"></div><span class="photo-caption">L’AILLEURS N’EST PAS SI LOIN.</span><div class="photo-location"><span>Les retrouvailles commencent ici.</span><strong>Prochaine escale : le soleil.</strong></div><div class="photo-stamp"><svg class="icon"><use href="#i-flight"/></svg><span>VOTRE ENVIE DE PARTIR<br><b>Notre point de départ.</b></span></div></div>
+            <div class="hero-visual"><img src="/assets/img/marrakech.jpg" alt="La Koutoubia à Marrakech devant les montagnes de l’Atlas" fetchpriority="high" width="1100" height="734"><div class="hero-image-shade"></div><div class="photo-location"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg><span>Marrakech, Maroc <b>31°37′ N · 7°59′ O</b></span></div></div>
           </div>
         </div>
         <div class="container search-area">
@@ -180,6 +181,11 @@
               >
             </div>
             <div id="search-legs"></div>
+            <div class="search-fares">
+              <div class="fare-heading"><span>À quelques jours près</span><span class="fare-key"><i></i> Les petits prix</span></div>
+              <div id="search-fare-strip"></div>
+              <p id="search-availability" role="status" hidden></p>
+            </div>
             <div class="search-bottom">
               <button class="text-button" type="button" id="add-leg" hidden>
                 + Ajouter un trajet</button
@@ -194,18 +200,9 @@
             <p class="form-error" id="search-error" role="alert" hidden></p>
           </form>
           <div class="trust-row">
-            <span>LE VOYAGE, SANS COMPROMIS</span>
-            <div>
-              <svg class="icon"><use href="#i-globe" /></svg> 48 aéroports à
-              explorer
-            </div>
-            <div>
-              <svg class="icon"><use href="#i-wallet" /></svg> 3 façons de payer
-            </div>
-            <div>
-              <svg class="icon"><use href="#i-ticket" /></svg> Vos billets au
-              même endroit
-            </div>
+            <div><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg><span><strong>120 minutes</strong> pour régler votre bon</span></div>
+            <div><svg class="icon" aria-hidden="true"><use href="#i-wallet"/></svg><span><strong>Jusqu’à 1 000 €</strong> en espèces</span></div>
+            <div><svg class="icon" aria-hidden="true"><use href="#i-ticket"/></svg><span><strong>Vos réservations</strong> au même endroit</span></div>
           </div>
         </div>
         <section
@@ -214,21 +211,18 @@
         >
           <div class="section-heading">
             <div>
-              <div class="eyebrow">PROCHES DU CŒUR. À PORTÉE DE VOL.</div>
-              <h2 id="destinations-title">Un peu plus près de chez vous.</h2>
-              <p>Le Maghreb, la Méditerranée et toutes les raisons de partir.</p>
+              <div class="eyebrow">ENVIE DE PARTIR</div>
+              <h2 id="destinations-title">De l’autre côté de la Méditerranée.</h2>
+              <p>Choisissez une destination, nous vous aidons à trouver la bonne date.</p>
             </div>
             <span class="small-muted"
-              >FRANCE / MAGHREB & EUROPE</span
+              >3 destinations à retrouver</span
             >
           </div>
           <div class="destination-grid">
             <button class="destination-card marrakech" data-destination="RAK">
               <div class="destination-art">
-                <span class="sun"></span><span class="architecture tower"></span
-                ><span class="architecture arch"></span
-                ><span class="landscape"></span
-                ><span class="destination-tag">L’appel du soleil</span>
+                <span class="destination-tag">MAROC</span>
               </div>
               <div class="destination-info">
                 <div>
@@ -240,10 +234,7 @@
             </button>
             <button class="destination-card alger" data-destination="ALG">
               <div class="destination-art">
-                <span class="sun"></span><span class="architecture tower"></span
-                ><span class="architecture arch"></span
-                ><span class="landscape"></span
-                ><span class="destination-tag">Le goût des retrouvailles</span>
+                <span class="destination-tag">ALGÉRIE</span>
               </div>
               <div class="destination-info">
                 <div>
@@ -255,10 +246,7 @@
             </button>
             <button class="destination-card lisbonne" data-destination="TUN">
               <div class="destination-art">
-                <span class="sun"></span><span class="architecture tower"></span
-                ><span class="architecture arch"></span
-                ><span class="landscape"></span
-                ><span class="destination-tag">La Méditerranée vous appelle</span>
+                <span class="destination-tag">TUNISIE</span>
               </div>
               <div class="destination-info">
                 <div>
@@ -272,8 +260,8 @@
         </section>
         <section class="container how-section">
           <div class="how-intro">
-            <div class="eyebrow">LA LIBERTÉ, TOUT SIMPLEMENT</div>
-            <h2>Votre prochain départ.<br />Au coin de la rue.</h2>
+            <div class="eyebrow">LE PAIEMENT PAYENCASH</div>
+            <h2>Réservez ici.<br />Payez près de chez vous.</h2>
             <p>
               Avec PayEnCash, votre réservation en ligne se poursuit chez un buraliste ou un commerce de proximité partenaire.
             </p>
@@ -288,7 +276,7 @@
               ></span>
               <div>
                 <small>01 · CHOISISSEZ</small>
-                <h3>Trouvez le vol qui vous ressemble</h3>
+                <h3>Comparez les vols</h3>
                 <p>Comparez les horaires, les compagnies et les tarifs.</p>
               </div>
             </article>
@@ -298,7 +286,7 @@
               ></span>
               <div>
                 <small>02 · RÉSERVEZ</small>
-                <h3>Choisissez votre mode de paiement</h3>
+                <h3>Gardez votre vol pendant 2 heures</h3>
                 <p>Générez votre bon PayEnCash, valable 120 minutes.</p>
               </div>
             </article>
@@ -308,7 +296,7 @@
               ></span>
               <div>
                 <small>03 · RETROUVEZ</small>
-                <h3>Tout votre voyage au même endroit</h3>
+                <h3>Retrouvez votre billet</h3>
                 <p>Téléchargez votre e-billet de démonstration.</p>
               </div>
             </article>
@@ -378,7 +366,7 @@
       >
         <div class="page-heading">
           <div class="eyebrow">PRÈS DE CHEZ VOUS</div>
-          <h1 id="stores-title">Le voyage commence au coin de la rue.</h1>
+          <h1 id="stores-title">Trouvez un point de paiement.</h1>
           <p>Le réseau de buralistes et commerces de proximité PayEnCash.</p>
         </div>
         <div class="notice">

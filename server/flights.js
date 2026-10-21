@@ -1,6 +1,7 @@
 const F = require("../assets/js/flight-engine.js");
 const { HttpError } = require("./http.js");
 const observations = new Map();
+const demoCalendars = new Map();
 function validate(input, calendar = false) {
   const { from, to } = input;
   if (!F.airport(from) || !F.airport(to) || from === to)
@@ -151,8 +152,17 @@ async function search(query) {
   return { source: "duffel", simulation: false, offers };
 }
 async function calendar(query) {
-  if (!process.env.DUFFEL_API_TOKEN)
-    return { source: "demo", simulation: true, days: F.calendar(query) };
+  if (!process.env.DUFFEL_API_TOKEN) {
+    const key = `${query.from}:${query.to}:${query.month}`;
+    let cached = demoCalendars.get(key);
+    // Short-lived because today's departing flights disappear as time advances.
+    if (!cached || Date.now() - cached.at >= 60000) {
+      cached = { at: Date.now(), days: F.calendar(query) };
+      if (demoCalendars.size >= 128) demoCalendars.delete(demoCalendars.keys().next().value);
+      demoCalendars.set(key, cached);
+    }
+    return { source: "demo", simulation: true, days: cached.days };
+  }
   if (process.env.DATABASE_URL) {
     try {
       const { rows } = await require("./database.js")

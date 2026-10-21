@@ -1,4 +1,6 @@
 import http from "node:http";
+import { existsSync } from "node:fs";
+if (process.env.VOYAGENCASH_TEST_MODE !== "true" && existsSync(".env")) process.loadEnvFile(".env");
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const apiRoutes = new Set([

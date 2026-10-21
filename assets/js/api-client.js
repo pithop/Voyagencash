@@ -28,7 +28,7 @@
         ...headers,
       },
       ...(data ? { body: JSON.stringify(data) } : {}),
-      signal: AbortSignal.timeout(28000),
+      signal: AbortSignal.timeout(55000),
     });
     if (!response.headers.get("content-type")?.includes("application/json"))
       throw new Error("Le service de réservation est indisponible.");
@@ -48,9 +48,10 @@
     return request("/api/flights/search", query);
   }
   const cache = new Map();
+  const pendingCalendars = new Map();
   async function calendar(query) {
     await ready;
-    const key = new URLSearchParams(query).toString();
+    const key = new URLSearchParams({ from: query.from, to: query.to, month: query.month, count: query.count || 1 }).toString();
     if (config.mode === "static") {
       if (!cache.has(key))
         cache.set(key, {
@@ -61,9 +62,13 @@
       return cache.get(key);
     }
     if (cache.has(key) && config.mode !== "live") return cache.get(key);
-    const value = await request("/api/flights/calendar?" + key);
-    cache.set(key, value);
-    return value;
+    if (pendingCalendars.has(key)) return pendingCalendars.get(key);
+    const pending = request("/api/flights/calendar?" + key).then(value => {
+      cache.set(key, value);
+      return value;
+    }).finally(() => pendingCalendars.delete(key));
+    pendingCalendars.set(key, pending);
+    return pending;
   }
   window.FlightAPI = {
     ready,

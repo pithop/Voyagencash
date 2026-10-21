@@ -33,19 +33,19 @@ Les prix observés sont partagés entre fonctions via `fare_observations` et ne 
 
 ## Démarrage local avec variables
 
-Le projet n’inclut aucune clé et ne lit pas automatiquement `.env`. Avec Node 22 :
+Le projet n’inclut aucune clé. Copiez `.env.example` vers `.env`, puis renseignez vos accès de test. `npm run dev` charge automatiquement ce fichier avec Node 22 ; les variables déjà définies dans le processus restent prioritaires. Une autre possibilité :
 
 ```sh
 node --env-file=.env scripts/serve.mjs
 ```
 
-`.env` est ignoré par Git. Ne pas y mettre de clés de production pour la recette. `npm test` attend un serveur sans jeton Duffel : ses tests fournisseurs utilisent des réponses contrôlées, sans réservation externe.
+`.env` est ignoré par Git. Ne pas y mettre de clés de production pour la recette. `npm test` lance son propre serveur sur le port 4174, sans charger `.env` et avec les connexions partenaires désactivées. Ses tests fournisseurs utilisent des réponses contrôlées, sans réservation externe.
 
 ## Émission et exploitation
 
-Configurer un ordonnanceur serveur appelant `GET /api/orders/fulfil` avec `Authorization: Bearer <CRON_SECRET>`, à la fréquence adaptée au délai de paiement (par exemple chaque minute). Vérifier que le plan d’hébergement autorise cette fréquence. L’alternative sur un worker Node est `npm run fulfil` ; chaque exécution traite une commande.
+`vercel.json` configure un appel à `GET /api/orders/fulfil` chaque minute. Renseignez `CRON_SECRET` : Vercel fournit automatiquement l’en-tête `Authorization: Bearer <CRON_SECRET>`. Cette fréquence nécessite un plan Vercel qui autorise les crons à la minute ; sur un plan ne les autorisant pas, retirez `crons` et configurez un ordonnanceur externe avec ce même en-tête. L’alternative sur un worker Node est `npm run fulfil` ; chaque exécution traite une commande. Dimensionnez la fréquence et le nombre de workers pour le volume attendu. Réappliquez `server/schema.sql` pour ajouter `next_attempt_at` aux installations existantes (migration idempotente).
 
-**Ce worker peut débiter le solde Duffel** après une notification partenaire authentifiée et persistée. Il n’est jamais exécuté par les tests contre Duffel. Les tentatives ambiguës sont placées en `reconciliation_required`, sans nouvel essai de débit. Réconcilier avec Duffel et le partenaire avant toute reprise. Une notification tardive est classée `refund_pending`, sans émission automatique du billet.
+**Ce worker peut débiter le solde Duffel** après une notification partenaire authentifiée et persistée. Il n’est jamais exécuté par les tests contre Duffel. Une réponse de paiement acceptée est persistée avant la relecture des billets. Les tâches `awaiting_documents` relisent ensuite uniquement la commande, au plus une fois par minute. Les tentatives ambiguës sont placées en `reconciliation_required`, sans nouvel essai de débit. Réconcilier avec Duffel et le partenaire avant toute reprise. Une notification tardive est classée `refund_pending`, sans émission automatique du billet.
 
 Avant l’activation : migrations, TLS PostgreSQL, contrat adaptateur, signature HMAC sur corps brut, annuaire confirmé, supervision de l’outbox et limitation des requêtes publiques au niveau du WAF doivent être opérationnels. Les certificats Apple restent chez le service partenaire Wallet ; ils ne sont jamais envoyés au navigateur.
 

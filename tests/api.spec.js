@@ -109,7 +109,7 @@ test("server computes hold amount, signs vouchers, and rejects tampering and cas
   });
   expect(voucher.status()).toBe(201);
   const value = await voucher.json();
-  expect(value.reference).toMatch(/^VNC-\d{4}-[A-F0-9]{5}$/);
+  expect(value.reference).toMatch(/^VNC-\d{4}-[A-F0-9]{12}$/);
   expect(value.qrPayload).toContain("DEMO|");
   expect(value.amountCents).toBe(hold.amountCents);
   const duplicate = await request.post("/api/payencash/voucher", {
