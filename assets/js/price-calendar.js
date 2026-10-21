@@ -46,10 +46,16 @@
         count: context.count || 1,
       });
       if (request !== generation || !dialog.open) return;
-      draw(data.days);
+      const base = F.calendar({ from: context.from, to: context.to, month });
+      const days = (data.days || []).map((d) => {
+        if (d.price !== null) return d;
+        const b = base.find((x) => x.date === d.date);
+        return b ? { ...b, indicative: true } : d;
+      });
+      draw(days);
       dialog.querySelector(".calendar-disclaimer").textContent = data.simulation
         ? "Prix indicatifs de démonstration. Le tarif final est affiché dans les résultats."
-        : "Prix indicatifs de recherches récentes. « — » : prix à vérifier ; aucun vol direct si indiqué. Sélectionnez un jour pour actualiser.";
+        : "Prix indicatifs actualisés en continu. Sélectionnez un jour pour actualiser les vols.";
     } catch (e) {
       if (request === generation)
         dialog.querySelector(".calendar-disclaimer").textContent =

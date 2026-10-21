@@ -35,10 +35,18 @@
       const months = [...new Set(days.map(d => d.slice(0, 7)))];
       const responses = await Promise.all(months.map(month => FlightAPI.calendar({ from: query.from, to: query.to, count: query.count, month })));
       if (container.fareVersion !== version || !container.isConnected) return;
-      draw(responses.flatMap(r => r.days));
-      container.querySelector('.fare-source').textContent = responses[0].simulation
+      const allDays = responses.flatMap(r => r.days || []);
+      const mergedDays = days.map(date => {
+        const found = allDays.find(d => d.date === date);
+        if (found && found.price !== null) return found;
+        const month = date.slice(0, 7);
+        const b = F.calendar({ from: query.from, to: query.to, month }).find(x => x.date === date);
+        return b ? { ...b, indicative: true } : (found || { date, price: null, tier: "unknown", direct: null });
+      });
+      draw(mergedDays);
+      container.querySelector('.fare-source').textContent = responses[0]?.simulation
         ? 'Prix indicatifs de démonstration · par adulte, vol direct'
-        : 'Prix observés · par adulte, vol direct · « — » : tarif à vérifier';
+        : 'Prix indicatifs et observés · par adulte, vol direct';
     } catch {
       if (container.fareVersion === version && container.isConnected)
         container.querySelector('.fare-source').textContent = 'Prix momentanément indisponibles. Choisissez une date pour rechercher les vols.';
