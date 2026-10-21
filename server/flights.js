@@ -128,11 +128,16 @@ async function search(query) {
     .map((o) => normalize(o, query))
     .filter(Boolean);
   const direct = offers.filter((o) => !o.stops);
+  const minPrice = direct.length
+    ? Math.min(...direct.map((o) => o.price))
+    : offers.length
+      ? Math.min(...offers.map((o) => o.price))
+      : null;
   if (observations.size > 1000)
     observations.delete(observations.keys().next().value);
   observations.set(`${query.from}:${query.to}:${query.count}:${query.date}`, {
     date: query.date,
-    price: direct.length ? Math.min(...direct.map((o) => o.price)) : null,
+    price: minPrice,
     direct: !!direct.length,
     observedAt: Date.now(),
   });
