@@ -61,11 +61,5 @@
   },
   "env": {
     "NODEJS_HELPERS": "0"
-  },
-  "crons": [
-    {
-      "path": "/api/orders/fulfil",
-      "schedule": "* * * * *"
-    }
-  ]
+  }
 }
