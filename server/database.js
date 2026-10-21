@@ -1,7 +1,16 @@
 const { HttpError } = require("./http.js");
 let pool;
+function getConnectionString() {
+  return (
+    process.env.DATABASE_URL ||
+    process.env.STORAGE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.POSTGRES_PRISMA_URL
+  );
+}
 function database() {
-  if (!process.env.DATABASE_URL)
+  const connectionString = getConnectionString();
+  if (!connectionString)
     throw new HttpError(
       503,
       "Le stockage sécurisé des réservations doit être configuré.",
@@ -9,7 +18,7 @@ function database() {
   if (!pool) {
     const { Pool } = require("pg");
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString,
       max: 3,
       connectionTimeoutMillis: 5000,
       idleTimeoutMillis: 10000,
