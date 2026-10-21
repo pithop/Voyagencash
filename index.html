@@ -12,9 +12,13 @@
     <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg" />
     <link rel="preload" href="/assets/fonts/manrope-latin-variable.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/assets/css/style.css" />
+    <link rel="stylesheet" href="/assets/css/refined.css" />
     <script defer src="/assets/js/vendor/qrcode.js"></script>
     <script defer src="/assets/js/flight-engine.js"></script>
     <script defer src="/assets/js/booking-manager.js"></script>
+    <script defer src="/assets/js/api-client.js"></script>
+    <script defer src="/assets/js/price-calendar.js"></script>
+    <script defer src="/assets/js/live-booking.js"></script>
     <script defer src="/assets/js/app.js"></script>
   </head>
   <body>
@@ -135,34 +139,12 @@
         <div class="hero">
           <div class="container hero-inner">
             <div class="hero-copy">
-              <div class="eyebrow">
-                <span class="live-dot"></span> LA LIBERTÉ PREND SON ENVOL
-              </div>
-              <h1 id="home-title">
-                L’ailleurs.<br /><span>À votre façon.</span>
-              </h1>
-              <p>
-                Les retrouvailles n’attendent pas.<br />Réservez votre vol. Payez en espèces avec PayEnCash,<br class="desktop-break" /> par carte ou avec Apple Pay.
-              </p>
-              <div class="hero-pills">
-                <span
-                  ><svg class="icon"><use href="#i-check" /></svg> Votre tarif gelé 120 min</span
-                ><span
-                  ><svg class="icon"><use href="#i-check" /></svg> Espèces, carte, Apple Pay</span
-                >
-              </div>
+              <div class="eyebrow"><span class="live-dot"></span> PLUS PROCHE DE CE QUI COMPTE</div>
+              <h1 id="home-title">Le bon vol.<br>Le <span>bon moment.</span></h1>
+              <p>Un retour aux sources ou un nouveau départ.<br>Comparez les dates. Trouvez votre vol. Payez à votre façon.</p>
+              <div class="hero-pills"><span><svg class="icon"><use href="#i-wallet"/></svg> Espèces avec PayEnCash</span><span><svg class="icon"><use href="#i-check"/></svg> Des prix clairs, dès le départ</span></div>
             </div>
-            <div class="hero-art" aria-hidden="true">
-              <div class="orbital-label">LE MONDE EST À PORTÉE DE MAIN <span>48 DESTINATIONS</span></div>
-              <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
-              <div class="globe"><div class="globe-longitude"></div><div class="globe-latitude"></div><div class="globe-meridian"></div></div>
-              <div class="route-point point-paris"><span></span>PARIS <b>CDG</b></div>
-              <div class="route-point point-marrakech"><span></span>MARRAKECH <b>RAK</b></div>
-              <svg class="hero-plane icon"><use href="#i-flight"/></svg>
-              <div class="mini-ticket"><span class="mini-label">VOTRE PROCHAIN DÉPART</span><div><b>CDG</b><svg class="icon"><use href="#i-plane"/></svg><b>RAK</b></div><footer><span>Paris</span><span>Marrakech</span></footer><div class="mini-ticket-bottom"><span class="live-dot"></span> L’envie de partir. La liberté de payer.</div></div>
-              <div class="floating-tag tag-top"><svg class="icon"><use href="#i-lock"/></svg><div>Un peu de temps pour vous.<b>Tarif gelé pendant 2 heures</b></div></div>
-              <span class="orbit-coordinate">48°51′ N &nbsp; 2°21′ E</span>
-            </div>
+            <div class="hero-visual"><img src="/assets/img/marrakech.jpg" alt="Architecture et lumière du Maroc" fetchpriority="high" width="1100" height="734"><div class="hero-image-shade"></div><span class="photo-caption">L’AILLEURS N’EST PAS SI LOIN.</span><div class="photo-location"><span>Les retrouvailles commencent ici.</span><strong>Prochaine escale : le soleil.</strong></div><div class="photo-stamp"><svg class="icon"><use href="#i-flight"/></svg><span>VOTRE ENVIE DE PARTIR<br><b>Notre point de départ.</b></span></div></div>
           </div>
         </div>
         <div class="container search-area">
@@ -233,8 +215,8 @@
           <div class="section-heading">
             <div>
               <div class="eyebrow">PROCHES DU CŒUR. À PORTÉE DE VOL.</div>
-              <h2 id="destinations-title">La distance s’efface.</h2>
-              <p>Un retour aux sources. Un premier départ. Votre prochaine histoire.</p>
+              <h2 id="destinations-title">Un peu plus près de chez vous.</h2>
+              <p>Le Maghreb, la Méditerranée et toutes les raisons de partir.</p>
             </div>
             <span class="small-muted"
               >FRANCE / MAGHREB & EUROPE</span
@@ -462,7 +444,7 @@
           <summary>Quel cadre pour le bon prépayé PayEnCash ?</summary>
           <p>Le parcours modélise un bon d’achat / bon prépayé partenaire émis par AJEK / PayEnCash, sous le cadre de l’article L.521-3 du Code monétaire et financier. Son application à un réseau limité dépend des accords et conditions réglementaires ; cette démonstration ne constitue pas un agrément.</p>
           <p>Le plafond appliqué est de 1 000 € en espèces par transaction (articles L.112-6 et D.112-3 CMF). Au-delà, choisissez la carte bancaire ou Apple Pay, sans fractionnement du paiement.</p>
-          <p>Le modèle fiscal retenu est le Bon à Usages Multiples (BUM, article 256 ter CGI) : aucune avance de TVA à l’émission du bon ; régularisation à l’émission effective du billet par la compagnie. Cette qualification doit être validée sur les conditions contractuelles du bon.</p>
+          <p>Le modèle fiscal retenu est le Bon à Usages Multiples (BUM, article 256 ter CGI) : les transferts préalables du bon ne sont pas soumis à la TVA ; le traitement de la prestation dépend de sa nature. Cette qualification doit être validée sur les conditions contractuelles du bon.</p>
           <p><a href="https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000035430673" target="_blank" rel="noopener noreferrer">Article L.521-3 CMF</a> · <a href="https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000037951759" target="_blank" rel="noopener noreferrer">Article 256 ter CGI</a></p>
         </details>
         <details open>

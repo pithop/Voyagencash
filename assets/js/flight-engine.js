@@ -460,6 +460,16 @@
     }
     return offers;
   }
+  function calendar({ from, to, month }) {
+    const days = new Date(Number(month.slice(0,4)), Number(month.slice(5)), 0).getDate();
+    const entries = Array.from({ length: days }, (_, i) => {
+      const date = `${month}-${String(i + 1).padStart(2, "0")}`;
+      const direct = generate({ from, to, date }).filter(f => !f.stops);
+      return { date, price: direct.length ? Math.min(...direct.map(f => f.price)) : null, direct: !!direct.length };
+    });
+    const prices = entries.map(d => d.price).filter(p => p !== null).sort((a,b) => a-b);
+    return entries.map(d => ({ ...d, tier: d.price === null ? "unknown" : d.price <= prices[Math.floor(prices.length / 3)] ? "low" : d.price <= prices[Math.floor(prices.length * 2 / 3)] ? "medium" : "high" }));
+  }
   function filter(
     offers,
     {
@@ -494,7 +504,7 @@
           : a.price + a.duration * 0.32 - (b.price + b.duration * 0.32),
     );
   }
-  window.FlightEngine = {
+  const engine = {
     airports,
     airlines,
     airport,
@@ -508,5 +518,8 @@
     dateLabel,
     generate,
     filter,
+    calendar,
   };
+  if (typeof module !== "undefined" && module.exports) module.exports = engine;
+  else window.FlightEngine = engine;
 })();

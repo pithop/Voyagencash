@@ -139,6 +139,7 @@
       throw new Error("Saisissez un numéro de téléphone valide.");
   }
   function create(draft, method) {
+    if(draft.flights.some(f => f.simulation === false)) throw new Error("Une offre réelle doit être réservée par le service sécurisé.");
     if (!["voucher", "card", "apple"].includes(method))
       throw new Error("Mode de paiement invalide.");
     if (
@@ -319,6 +320,7 @@
     HOLD_SECONDS,
     CASH_LIMIT,
     wallet,
+    attachVoucher(id, data) { const records=all(),record=records.find(r=>r.id===id);if(!record || !record.demo)throw new Error("Bon local introuvable.");if(record.status!=="pending")return record;const expiresAt=Math.min(record.expiresAt,data.expiresAt);Object.assign(record,data,{expiresAt});write(KEY,records);return record; },
     all,
     get,
     total,

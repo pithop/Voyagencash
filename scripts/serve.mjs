@@ -1,4 +1,18 @@
 import http from "node:http";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const apiRoutes = new Set([
+  "/api/config",
+  "/api/orders/fulfil",
+  "/api/orders/status",
+  "/api/orders/wallet",
+  "/api/payencash/stores",
+  "/api/flights/search",
+  "/api/flights/calendar",
+  "/api/orders/hold",
+  "/api/payencash/voucher",
+  "/api/payencash/webhook",
+]);
 import { readFile } from "node:fs/promises";
 import { resolve, extname, sep } from "node:path";
 const root = resolve(process.argv.includes("--dist") ? "dist" : ".");
@@ -18,6 +32,7 @@ const types = {
   ".css": "text/css; charset=utf-8",
   ".svg": "image/svg+xml",
   ".png": "image/png",
+  ".jpg": "image/jpeg",
   ".woff2": "font/woff2",
 };
 http
@@ -26,11 +41,19 @@ http
       const path = decodeURIComponent(
         new URL(req.url, "http://localhost").pathname,
       );
+      if (apiRoutes.has(path)) {
+        await require(`..${path}.js`)(req, res);
+        return;
+      }
+      if (!aliases.has(path) && !path.startsWith("/assets/")) {
+        res.writeHead(404).end("Introuvable");
+        return;
+      }
       const file = resolve(
         root,
         "." + (aliases.has(path) ? "/index.html" : path),
       );
-      if (!file.startsWith(root + sep)) {
+      if (!file.startsWith(root + sep) || (!aliases.has(path) && !file.startsWith(resolve(root, "assets") + sep))) {
         res.writeHead(403).end();
         return;
       }

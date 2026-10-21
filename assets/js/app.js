@@ -61,7 +61,8 @@
   }
   const safe = (fn) => {
     try {
-      return fn();
+      const result = fn();
+      return result instanceof Promise ? result.catch(e => { toast(e.message, true); return null; }) : result;
     } catch (e) {
       toast(e.message, true);
       return null;
@@ -113,6 +114,13 @@
           `<div class="search-leg ${search.type === "roundtrip" ? "" : search.type}">${airportField(l, "from", i)}<button type="button" class="icon-button swap-button" data-swap="${i}" aria-label="Inverser le départ et la destination du trajet ${i + 1}">${icon("swap")}</button>${airportField(l, "to", i)}<div class="search-field"><label for="date-${i}">${search.type === "multi" ? `Date du trajet ${i + 1}` : "Date de départ"}</label><input type="date" id="date-${i}" data-date="${i}" value="${esc(l.date)}" min="${i ? search.legs[i - 1].date : localToday()}" max="${addDays(localToday(), 365)}" required></div>${search.type === "roundtrip" ? `<div class="search-field"><label for="return-date">Date de retour</label><input id="return-date" type="date" value="${esc(search.returnDate)}" min="${esc(l.date)}" max="${addDays(localToday(), 365)}" required></div>` : ""}${search.type === "multi" ? `<button class="icon-button remove-leg" type="button" data-remove-leg="${i}" aria-label="Supprimer le trajet ${i + 1}" ${search.legs.length <= 2 ? "disabled" : ""}>${icon("close")}</button>` : ""}</div>`,
       )
       .join("");
+    $$("#search-legs input[type=date]").forEach(input => {
+      input.setAttribute("aria-haspopup", "dialog");
+      input.parentElement.classList.add("date-field");
+      const caption=document.createElement("span");caption.className="date-caption";caption.textContent=F.dateLabel(input.value);caption.setAttribute("aria-hidden","true");input.after(caption);
+      input.addEventListener("click", e => { e.preventDefault(); openSearchCalendar(input); });
+      input.addEventListener("keydown", e => { if (["Enter", " "].includes(e.key)) { e.preventDefault(); openSearchCalendar(input); } });
+    });
     $$("[data-airport]").forEach((input) => {
       input.addEventListener("focus", () => showAutocomplete(input, true));
       input.addEventListener("input", () => {
@@ -143,6 +151,15 @@
         if (e.key === "Tab") closeAutocomplete();
       });
     });
+  }
+  function openSearchCalendar(input) {
+    closeAutocomplete();
+    const returning = input.id === "return-date", i = returning ? 0 : +input.dataset.date;
+    const leg = search.legs[i];
+    PriceCalendar.open({ ...leg, from: returning ? leg.to : leg.from, to: returning ? leg.from : leg.to, date: input.value, min: input.min, count: search.count, title: returning ? "Choisissez votre retour" : "Choisissez votre départ", onSelect(date) {
+      const field = document.getElementById(input.id); field.value = date; field.dispatchEvent(new Event("change", { bubbles: true }));
+      const feedback = $("#search-error"); feedback.hidden = true;
+    }});
   }
   function showAutocomplete(input, all) {
     closeAutocomplete();
@@ -227,7 +244,7 @@
         search.returnDate = search.legs[0].date;
       renderSearch();
     }
-    if (e.target.id === "return-date") search.returnDate = e.target.value;
+    if (e.target.id === "return-date") { search.returnDate = e.target.value; renderSearch(); }
     if (e.target.id === "traveler-count") search.count = +e.target.value;
   });
   $("#add-leg").addEventListener("click", () => {
@@ -304,10 +321,20 @@
     const t = B.total(draft);
     return `<aside class="summary-panel" aria-label="Récapitulatif du voyage"><h2>Votre voyage, en un coup d’œil</h2>${draft.flights.map((f) => `<div class="summary-leg"><strong>${esc(F.airport(f.from).city)} → ${esc(F.airport(f.to).city)}</strong><small>${F.dateLabel(f.date)} · ${F.time(f.departure, f.from)} – ${F.time(f.arrival, f.to)}</small><small>${esc(f.airline.name)} · ${f.stops ? "1 escale" : "Direct"}</small></div>`).join("")}<div class="price-line"><span>Vols · ${draft.search.count} passager${draft.search.count > 1 ? "s" : ""}</span><strong>${F.money(t.flights)}</strong></div><div class="price-line"><span>Bagages en soute</span><strong>${t.baggage ? F.money(t.baggage) : "Non inclus"}</strong></div><div class="price-line"><span>Garantie annulation</span><strong>${t.guarantee ? F.money(t.guarantee) : "Non incluse"}</strong></div><div class="price-total"><span>Total TTC</span><strong>${F.money(t.total)}</strong></div><p>Prix simulé en euros, pour tous les passagers et trajets. Aucun débit réel.</p>${t.total > B.CASH_LIMIT ? `<p class="cash-limit-note">${icon("shield")} Au-delà de 1 000 €, choisissez la carte ou Apple Pay. Le règlement en espèces PayEnCash est indisponible (art. L.112-6 CMF).</p>` : ""}</aside>`;
   }
-  function renderResults() {
+  let resultsGeneration = 0;
+  async function renderResults() {
+    const generation = ++resultsGeneration;
     legIndex = Math.min(draft.flights.length, draft.search.legs.length - 1);
     const leg = draft.search.legs[legIndex];
-    offers = F.generate(leg).filter(
+    $("#results-content").innerHTML = `${progress(0)}<div class="results-loading" role="status"><span class="spinner"></span><h2>Votre prochain départ se précise.</h2><p>Recherche des meilleurs vols disponibles…</p></div>`;
+    let response;
+    try { response = await FlightAPI.search({ ...leg, count: draft.search.count }); }
+    catch (error) {
+      if (generation === resultsGeneration && view === "results") $("#results-content").innerHTML = `<div class="empty-state"><h1 id="results-title">La recherche n’a pas abouti.</h1><p>${esc(error.message)}</p><button class="button primary" data-action="reset-filters">Réessayer</button><a href="#search" class="button">Modifier la recherche</a></div>`;
+      return;
+    }
+    if (generation !== resultsGeneration || view !== "results") return;
+    offers = response.offers.filter(
       (f) =>
         !legIndex ||
         f.departure >= draft.flights[legIndex - 1].arrival + 120 * 60000,
@@ -324,7 +351,7 @@
       ...new Map(offers.map((f) => [f.airline.code, f.airline])).values(),
     ];
     $("#results-content").innerHTML =
-      `${progress(0)}<div class="results-heading"><div><div class="eyebrow">${draft.search.type === "roundtrip" ? (legIndex ? "VOTRE VOL RETOUR" : "VOTRE VOL ALLER") : `TRAJET ${legIndex + 1} SUR ${draft.search.legs.length}`}</div><h1 id="results-title">${esc(F.airport(leg.from).city)} ${icon("arrow")} ${esc(F.airport(leg.to).city)}</h1><p>${F.dateLabel(leg.date, true)} · ${draft.search.count} passager${draft.search.count > 1 ? "s" : ""} · Économique</p></div><div class="booking-actions">${legIndex ? '<button class="button small" data-action="previous-leg">Modifier le vol précédent</button>' : ""}<a href="#search" class="button small">Modifier la recherche</a></div></div>${legIndex ? `<div class="notice">${icon("check")}<span>${legIndex} trajet${legIndex > 1 ? "s" : ""} sélectionné${legIndex > 1 ? "s" : ""} · ${draft.flights.map((f) => `${f.from} → ${f.to} à ${F.time(f.departure, f.from)}`).join(" · ")}</span></div>` : ""}<div class="results-layout"><aside class="filter-panel"><div><h2>Filtres</h2><button class="text-button" data-action="reset-filters">Réinitialiser</button></div><div class="filter-fields"><fieldset class="filter-group"><legend>Budget par passager</legend><input type="range" id="budget-filter" min="0" max="${filters.max}" step="1" value="${filters.max}" aria-label="Budget maximal par passager"><div class="budget-label"><span>0 €</span><output id="budget-output">${F.money(filters.max)}</output></div></fieldset><fieldset class="filter-group"><legend>Escales</legend><label><input type="checkbox" id="direct-filter"> Vols directs uniquement</label></fieldset><fieldset class="filter-group"><legend>Bagage cabine</legend><label><input type="checkbox" id="baggage-filter"> Valise cabine incluse</label></fieldset><fieldset class="filter-group"><legend>Heure de départ</legend>${[
+      `${progress(0)}<div class="results-heading"><div><div class="eyebrow">${draft.search.type === "roundtrip" ? (legIndex ? "VOTRE VOL RETOUR" : "VOTRE VOL ALLER") : `TRAJET ${legIndex + 1} SUR ${draft.search.legs.length}`}</div><h1 id="results-title">${esc(F.airport(leg.from).city)} ${icon("arrow")} ${esc(F.airport(leg.to).city)}</h1><p>${F.dateLabel(leg.date, true)} · ${draft.search.count} passager${draft.search.count > 1 ? "s" : ""} · Économique</p></div><div class="booking-actions">${legIndex ? '<button class="button small" data-action="previous-leg">Modifier le vol précédent</button>' : ""}<a href="#search" class="button small">Modifier la recherche</a></div></div>${legIndex ? `<div class="notice">${icon("check")}<span>${legIndex} trajet${legIndex > 1 ? "s" : ""} sélectionné${legIndex > 1 ? "s" : ""} · ${draft.flights.map((f) => `${f.from} → ${f.to} à ${F.time(f.departure, f.from)}`).join(" · ")}</span></div>` : ""}<div class="date-explorer"><div><span class="eyebrow">UN JOUR PEUT TOUT CHANGER</span><strong>Comparez les prix du mois</strong></div><button class="button" data-action="result-calendar">${F.dateLabel(leg.date)} ${icon("chevron")}</button></div><button class="button mobile-filter-button" data-action="open-filters">Filtres ${icon("menu")}</button><div class="results-layout"><aside class="filter-panel" id="result-filters"><button class="icon-button filter-close" data-action="close-filters" aria-label="Fermer les filtres">${icon("close")}</button><div><h2>Filtres</h2><button class="text-button" data-action="reset-filters">Réinitialiser</button></div><div class="filter-fields"><fieldset class="filter-group"><legend>Budget par passager</legend><input type="range" id="budget-filter" min="0" max="${filters.max}" step="1" value="${filters.max}" aria-label="Budget maximal par passager"><div class="budget-label"><span>0 €</span><output id="budget-output">${F.money(filters.max)}</output></div></fieldset><fieldset class="filter-group"><legend>Escales</legend><label><input type="checkbox" id="direct-filter"> Vols directs uniquement</label></fieldset><fieldset class="filter-group"><legend>Bagage cabine</legend><label><input type="checkbox" id="baggage-filter"> Valise cabine incluse</label></fieldset><fieldset class="filter-group"><legend>Heure de départ</legend>${[
         ["morning", "Matin · 06 h – 12 h"],
         ["afternoon", "Après-midi · 12 h – 18 h"],
         ["evening", "Soir · après 18 h"],
@@ -335,7 +362,7 @@
         )
         .join(
           "",
-        )}</fieldset><fieldset class="filter-group airline-filters"><legend>Compagnies aériennes</legend><div class="airline-checkboxes">${carriers.map((c) => `<label><input type="checkbox" name="carrier-filter" value="${c.code}">${esc(c.name)}</label>`).join("")}</div></fieldset></div></aside><div><div class="sort-bar"><span id="result-count" role="status"></span><label>Trier par <select id="sort-select"><option value="best">Meilleur rapport</option><option value="price">Prix croissant</option><option value="duration">Durée la plus courte</option></select></label></div><div id="flight-list"></div><p class="muted">Offres générées à titre de démonstration. Horaires locaux. Prix TTC par passager, petit sac inclus.</p></div></div>`;
+        )}</fieldset><fieldset class="filter-group airline-filters"><legend>Compagnies aériennes</legend><div class="airline-checkboxes">${carriers.map((c) => `<label><input type="checkbox" name="carrier-filter" value="${c.code}">${esc(c.name)}</label>`).join("")}</div></fieldset></div></aside><div><div class="sort-bar"><span id="result-count" role="status"></span><label>Trier par <select id="sort-select"><option value="best">Meilleur rapport</option><option value="price">Prix croissant</option><option value="duration">Durée la plus courte</option></select></label></div><div id="flight-list"></div><p class="muted">${response.simulation ? "Offres de démonstration. Aucun billet réel." : "Offres Duffel. Prix et disponibilité à reconfirmer avant réservation."} Horaires locaux. Prix TTC par passager.</p></div></div>`;
     $("#results-content").oninput = (e) => {
       if (e.target.matches("input,select")) updateFilters();
     };
@@ -357,7 +384,7 @@
   function renderFlightList() {
     const list = F.filter(offers, filters);
     $("#result-count").textContent =
-      `${list.length} vol${list.length > 1 ? "s" : ""} disponible${list.length > 1 ? "s" : ""} · simulation`;
+      `${list.length} vol${list.length > 1 ? "s" : ""} · ${offers[0]?.simulation !== false ? "démonstration" : "Duffel · tarifs vérifiés"}`;
     $("#flight-list").innerHTML = list.length
       ? list
           .map((f, i) => {
@@ -365,12 +392,13 @@
             const dayDiff = Math.round(
               (Date.parse(arrivalDate) - Date.parse(f.date)) / 86400000,
             );
-            return `<article class="flight-card"><div class="flight-card-top"><span class="airline-badge" style="--carrier:${f.airline.color}">${f.airline.code}</span><div><strong>${esc(f.airline.name)}</strong><small>${f.segments.map((s) => s.number).join(" · ")} · Économique</small></div>${i === 0 ? `<span class="badge">${filters.sort === "price" ? "Le moins cher" : filters.sort === "duration" ? "Le plus rapide" : "Notre sélection"}</span>` : ""}</div><div class="flight-card-body"><div class="flight-time"><strong>${F.time(f.departure, f.from)}</strong><span>${f.from} · ${esc(F.airport(f.from).city)}</span></div><div class="timeline"><span>${F.duration(f.duration)}</span><div class="timeline-line">${icon("plane")}</div><span>${f.stops ? `1 escale · ${f.segments[0].to}` : "Direct"}</span></div><div class="flight-time"><strong>${F.time(f.arrival, f.to)}${dayDiff ? ` <small>${dayDiff > 0 ? "+" : ""}${dayDiff} j</small>` : ""}</strong><span>${f.to} · ${esc(F.airport(f.to).city)}</span></div><div class="flight-price"><strong>${F.money(f.price)}</strong><small>TTC / passager${draft.search.count > 1 ? ` · ${F.money(f.price * draft.search.count)} au total` : ""}</small><button class="button primary" data-select-flight="${f.id}" aria-label="Choisir ${esc(f.airline.name)} à ${F.time(f.departure, f.from)}, ${F.money(f.price)}">Choisir ${icon("arrow")}</button></div></div><details class="flight-details"><summary>Détails du vol & bagages</summary>${f.segments.map((s, n) => `<p><b>${s.number}</b> · ${s.from} ${F.time(s.departure, s.from)} → ${s.to} ${F.time(s.arrival, s.to)} · ${F.duration(s.duration)}${n < f.segments.length - 1 ? `<br>Escale à ${esc(F.airport(s.to).city)} : ${F.duration((f.segments[n + 1].departure - s.arrival) / 60000)}` : ""}</p>`).join("")}<p>${f.cabinBagIncluded ? "Valise cabine et petit sac inclus." : "Petit sac sous le siège inclus."} Soute 23 kg : +35 € par passager et par trajet à l’étape suivante. Numéros de vol et disponibilités fictifs.</p></details></article>`;
+            return `<article class="flight-card"><div class="flight-card-top"><span class="airline-badge" style="--carrier:${f.airline.color}">${["AF","AH","AT","TU","TO","FR","U2","TP","TK","VY"].includes(f.airline.code) ? `<img src="/assets/img/airlines/${f.airline.code}.svg" alt="${esc(f.airline.name)}">` : esc(f.airline.code)}</span><div><strong>${esc(f.airline.name)}</strong><small>${f.segments.map((s) => esc(s.number)).join(" · ")} · Économique</small></div>${i === 0 ? `<span class="badge">${filters.sort === "price" ? "Le moins cher" : filters.sort === "duration" ? "Le plus rapide" : "Notre sélection"}</span>` : ""}</div><div class="flight-card-body"><div class="flight-time"><strong>${F.time(f.departure, f.from)}</strong><span>${f.from} · ${esc(F.airport(f.from).city)}</span></div><div class="timeline"><span>${F.duration(f.duration)}</span><div class="timeline-line">${icon("plane")}</div><span>${f.stops ? `1 escale · ${f.segments[0].to}` : "Direct"}</span></div><div class="flight-time"><strong>${F.time(f.arrival, f.to)}${dayDiff ? ` <small>${dayDiff > 0 ? "+" : ""}${dayDiff} j</small>` : ""}</strong><span>${f.to} · ${esc(F.airport(f.to).city)}</span></div><div class="flight-price"><strong>${F.money(f.price)}</strong><small>TTC / passager${draft.search.count > 1 ? ` · ${F.money(f.price * draft.search.count)} au total` : ""}</small><button class="button primary" data-select-flight="${esc(f.id)}" aria-label="Choisir ${esc(f.airline.name)} à ${F.time(f.departure, f.from)}, ${F.money(f.price)}">Choisir ${icon("arrow")}</button></div></div><div class="flight-inclusions"><span>${icon("bag")} ${f.cabinBagIncluded ? "Valise cabine incluse" : "Cabine selon tarif"}</span>${f.co2Kg ? `<span>${icon("leaf")} ${f.co2Kg} kg CO2e ${f.simulation ? "· estimés" : "· fournisseur"}</span>` : ""}<span>${icon("clock")} ${f.simulation ? `${f.punctuality}% ponctualité · simulation` : "Ponctualité non disponible"}</span></div><details class="flight-details"><summary>Détails du vol & bagages</summary>${f.segments.map((s, n) => `<p><b>${esc(s.number)}</b> · ${s.from} ${F.time(s.departure, s.from)} → ${s.to} ${F.time(s.arrival, s.to)} · ${F.duration(s.duration)}${n < f.segments.length - 1 ? `<br>Escale à ${esc(F.airport(s.to).city)} : ${F.duration((f.segments[n + 1].departure - s.arrival) / 60000)}` : ""}</p>`).join("")}<p>${f.cabinBagIncluded ? "Valise cabine et petit sac inclus." : "Petit sac sous le siège inclus."} ${f.simulation ? "Soute 23 kg : +35 € par passager et trajet. Numéros de vol et disponibilités fictifs." : "Bagages, conditions tarifaires et retenue soumis à la compagnie. Aucun supplément local ne s’applique à une offre réelle."}</p></details></article>`;
           })
           .join("")
       : `<div class="empty-state">${icon("search")}<h2>Aucun vol pour cette sélection.</h2><p>${offers.length ? "Élargissez votre budget ou retirez un filtre." : "Essayez une autre date. Les trajets suivants doivent partir au moins deux heures après votre arrivée."}</p><button class="button" data-action="${offers.length ? "reset-filters" : "change-search"}">${offers.length ? "Réinitialiser les filtres" : "Modifier la recherche"}</button></div>`;
   }
   function renderOptions() {
+    if (draft.flights.some(f => f.simulation === false)) { LiveBooking.mount($("#options-content"), draft).catch(e=>toast(e.message,true)); return; }
     $("#options-content").innerHTML =
       `${progress(1)}<div class="page-heading"><h1 id="options-title">Un voyage à votre mesure.</h1><p>Emportez ce qui compte. Tous les suppléments sont affichés ici.</p></div><div class="checkout-layout"><div><div class="panel"><h2>Vos bagages</h2><p>Ces options s’appliquent à chaque passager et à chaque trajet sélectionné.</p><div class="option-card">${icon("bag")}<span><strong>Un petit sac sous le siège</strong><small>Inclus pour chaque passager dans cette simulation.</small></span><span class="badge green">Inclus</span></div><label class="option-card">${icon("bag")}<span><strong>Bagage en soute · 23 kg</strong><small>35 € / passager / trajet · ${draft.search.count} × ${draft.flights.length} trajet(s)</small></span><b>+${F.money(35 * draft.search.count * draft.flights.length)}</b><input type="checkbox" id="baggage-option" ${draft.options.baggage ? "checked" : ""} aria-label="Ajouter le bagage en soute"></label></div><div class="panel"><h2>Un peu plus de tranquillité</h2><label class="option-card">${icon("shield")}<span><strong>Garantie annulation</strong><small>Option fictive · 19 € / passager pour tout le voyage. Aucun contrat d’assurance réel.</small></span><b>+${F.money(19 * draft.search.count)}</b><input type="checkbox" id="guarantee-option" ${draft.options.guarantee ? "checked" : ""} aria-label="Ajouter la garantie annulation"></label></div><div class="actions"><button class="text-button" data-action="reselect-last">← Modifier les vols</button><button class="button primary" data-action="to-passengers">Continuer vers les passagers ${icon("arrow")}</button></div></div><div id="options-summary">${summary()}</div></div>`;
     ["baggage", "guarantee"].forEach((k) =>
@@ -510,12 +538,12 @@
     $("#payment-content").innerHTML = `${progress(3)}<div class="page-heading dashboard-heading"><div><div class="eyebrow">VOTRE VOYAGE PREND FORME</div><h1 id="payment-title">Prochain arrêt : <span>${esc(F.airport(r.flights[0].to).city)}.</span></h1><p>Votre réservation est conservée. Il ne reste que le paiement.</p></div><span class="badge green">${icon("lock")} Tarif gelé · simulation</span></div>
     <div class="bento-grid"><div class="bento-main">${travelPass(r)}<div class="hold-steps"><span class="done">${icon("check")} Vol sélectionné</span><span class="current">${icon("clock")} Paiement attendu</span><span>${icon("ticket")} Billet à émettre</span></div><div class="hold-note">${icon("shield")} <p>Retrouvez ce voyage à tout moment dans <a href="#bookings">Mes réservations</a>. Votre place est retenue pendant 120 minutes dans cette simulation.</p></div>${r.flights.length > 1 ? `<div class="next-legs">${r.flights.slice(1).map(f => `<p>${icon("plane")} <strong>${f.from} → ${f.to}</strong><span>${F.dateLabel(f.date)} · ${F.time(f.departure,f.from)} · ${esc(f.airline.name)}</span></p>`).join("")}</div>` : ""}${r.method === "voucher" ? nearbyPreview(r) : ""}</div>
     <aside class="panel voucher-center"><div class="payment-panel-heading"><span class="eyebrow">${r.method === "voucher" ? "VOTRE BON PRÉPAYÉ" : "VOTRE PAIEMENT"}</span><span class="badge">Simulation</span></div><h2>${r.method === "voucher" ? "PayEnCash" : r.method === "apple" ? "Apple Pay" : "Carte bancaire"}<span class="pay-brand-dot">.</span></h2><p>${r.method === "voucher" ? "Le dernier pas vers votre prochain départ." : "Autorisez votre paiement pour confirmer le voyage."}</p>
-    ${r.method === "voucher" ? B.qr(`DEMO|BON-VGC-${r.id.slice(4)}|${r.voucher}|${r.voucherToken || r.id}`) + `<div class="voucher-code">${esc(r.voucher)}</div><div class="voucher-actions"><button class="text-button" data-action="copy-voucher">Copier la référence</button><span>QR de démonstration</span></div>` : ""}
+    ${r.method === "voucher" ? B.qr(`DEMO|BON-VGC-${r.id.slice(4)}|${r.voucher}|${r.voucherToken || r.id}`) + `<div class="voucher-code">${esc(r.voucher)}</div><div class="voucher-actions"><button class="text-button" data-action="copy-voucher">Copier la référence</button><button class="text-button" data-action="print-voucher">Imprimer / PDF</button></div>` : ""}
     <div class="countdown"><div class="countdown-ring"><svg viewBox="0 0 80 80" aria-hidden="true"><circle class="ring-track" cx="40" cy="40" r="34"/><circle id="timer-ring" cx="40" cy="40" r="34" pathLength="100"/></svg>${icon("clock")}</div><div><small>VOTRE TEMPS POUR PAYER</small><span id="voucher-timer" role="timer" aria-label="Temps restant"></span><small id="timer-warning">Votre tarif reste identique.</small></div></div>
     <div class="voucher-total"><span>Montant à régler</span><strong>${F.money(r.total)}</strong></div>
     ${r.method === "voucher" ? `<a class="button primary full" href="#stores">${icon("pin")} Trouver un point PayEnCash ${icon("arrow")}</a>` : ""}
     <button class="button full ${r.method === "voucher" ? "" : "primary"}" id="validate-payment" data-action="${r.method === "voucher" ? "validate-voucher" : "resume-payment"}">${r.method === "voucher" ? "Simuler la validation en caisse" : "Reprendre le paiement simulé"} ${icon("check")}</button><p id="pending-status">Bon de démonstration, non encaissable. Aucun débit réel.</p>
-    ${r.method === "voucher" ? `<div class="voucher-legal">Cadre modélisé · <a href="#faq">Conditions du bon</a><br>AJEK / PayEnCash · Bon partenaire · L.521-3 CMF<br>BUM · art. 256 ter CGI · TVA à l’émission du billet<br>Espèces : 1 000 € maximum par transaction</div>` : ""}
+    ${r.method === "voucher" ? `<div class="voucher-legal">Cadre modélisé · <a href="#faq">Conditions du bon</a><br>AJEK / PayEnCash · Bon partenaire · L.521-3 CMF<br>Qualification BUM à valider · art. 256 ter CGI<br>Espèces : 1 000 € maximum par transaction</div>` : ""}
     <button class="text-button cancel-link" id="cancel-booking" data-cancel="${r.id}">Annuler cette réservation</button></aside></div>${insights(r)}`;
     updateTimer(); updateTravelClock();
   }
@@ -645,7 +673,18 @@
   const storeCoordinates = [[48.866,2.365],[43.299,5.379],[45.759,4.863],[43.605,1.443],[50.627,3.05],[44.841,-0.58],[43.702,7.267]];
   stores.forEach((store, i) => { [store.lat, store.lon] = storeCoordinates[i]; store.estimatedKm = [0.7,0.4,0.8,0.3,1.2,0.6,0.5][i]; });
   let geoPosition = null;
-  let activeStore = 1;
+  let activeStore = 1, partnerStores = false;
+  FlightAPI.ready.then(async config => {
+    if(config.mode !== "live") return;
+    stores.length=0;
+    $("#view-stores .notice span").textContent="Chargement de l’annuaire partenaire…";
+    try {
+      const data=await FlightAPI.request('/api/payencash/stores');partnerStores=data.source==='partner';stores.push(...data.stores);
+      $("#view-stores .notice span").textContent=partnerStores?"Points fournis par le partenaire. Vérifiez les horaires avant votre déplacement.":"L’annuaire partenaire n’est pas encore disponible. Aucun point fictif n’est présenté comme partenaire.";
+      $("#view-stores .notice.subtle").textContent="Présentez un bon valide au commerçant et respectez son échéance. Un billet n’est émis qu’après confirmation du paiement.";
+    } catch { $("#view-stores .notice span").textContent="Annuaire momentanément indisponible. Réessayez plus tard."; }
+    if(view==='stores')renderStores();
+  });
   function renderStores() {
     const q = $("#store-search").value.trim().toLowerCase();
     const matched = stores.filter(
@@ -662,10 +701,17 @@
       ? matched
           .map(
             (s) =>
-              `<button class="store-item ${s.id === activeStore ? "active" : ""}" data-store="${s.id}" aria-pressed="${s.id === activeStore}"><strong>${s.id}. ${s.name}</strong><p>${s.area} · ${s.zip} ${s.city}</p><small>${s.hours} · indicatifs</small><span class="store-distance">${icon("pin")} ${geoPosition ? F.distance(geoPosition, s).toFixed(1) : s.estimatedKm} km estimés ${geoPosition ? "à vol d’oiseau" : "du centre"}</span></button>`,
+              `<button class="store-item ${s.id === activeStore ? "active" : ""}" data-store="${s.id}" aria-pressed="${s.id === activeStore}"><strong>${s.id}. ${esc(s.name)}</strong><p>${esc(s.area)} · ${esc(s.zip)} ${esc(s.city)}</p><small>${esc(s.hours)} · indicatifs</small><span class="store-distance">${icon("pin")} ${geoPosition ? F.distance(geoPosition, s).toFixed(1) + " km à vol d’oiseau" : partnerStores ? "Activer le GPS pour la distance" : s.estimatedKm + " km estimés du centre"}</span></button>`,
           )
           .join("")
       : '<div class="empty-state"><h2>Aucun point démo trouvé.</h2><p>Essayez Paris, Marseille, Lyon, Toulouse, Nice, Lille ou Bordeaux.</p></div>';
+    if(FlightAPI.mode === "live") {
+      const map=$(".locator-map"),selected=matched.find(s=>s.id===activeStore);
+      map.setAttribute('aria-label','Localisation du point partenaire');
+      map.innerHTML=selected ? `<iframe title="Carte du point partenaire" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=${selected.lon-.03},${selected.lat-.02},${selected.lon+.03},${selected.lat+.02}&layer=mapnik&marker=${selected.lat},${selected.lon}"></iframe>` : '<p class="empty-state">Sélectionnez un point partenaire disponible.</p>';
+      if(!matched.length)$("#store-list").innerHTML='<div class="empty-state"><h2>Aucun point disponible.</h2><p>Essayez une autre ville ou réessayez plus tard.</p></div>';
+      return;
+    }
     $("#map-pins").innerHTML = matched
       .map(
         (s) =>
@@ -693,7 +739,7 @@
     go("payment");
   }
   document.addEventListener("click", (e) =>
-    safe(() => {
+    safe(async () => {
       const b = e.target.closest("button,a");
       if (!b) return;
       if (b.dataset.destination) {
@@ -752,6 +798,11 @@
         renderStores();
       }
       const action = b.dataset.action;
+      if (action === "open-filters") { const panel=$("#result-filters");panel.classList.add("filters-open");panel.setAttribute("role","dialog");panel.setAttribute("aria-modal","true");panel.querySelector("button").focus(); }
+      if (action === "close-filters") { $("#result-filters").classList.remove("filters-open");$("#result-filters").removeAttribute("role");$("#result-filters").removeAttribute("aria-modal");$(".mobile-filter-button").focus(); }
+      if (action === "result-calendar") { const leg=draft.search.legs[legIndex];PriceCalendar.open({...leg,count:draft.search.count,onSelect(date){leg.date=date;draft.flights=draft.flights.slice(0,legIndex);for(let i=legIndex+1;i<draft.search.legs.length;i++)if(draft.search.legs[i].date<date)draft.search.legs[i].date=date;search.legs[0].date=draft.search.legs[0].date;if(search.type==="roundtrip")search.returnDate=draft.search.legs[1].date;persist();renderResults();}}); }
+      if (action === "print-voucher") { const r=B.get(currentId);$("#print-area").innerHTML=`<div class="printed-voucher"><h1>voyagencash · PayEnCash</h1><p>Bon de démonstration · non encaissable</p>${B.qr(`DEMO|${r.voucher}|${r.voucherToken}`)}<h2>${esc(r.voucher)}</h2><p>${F.money(r.total)} · Échéance : ${new Date(r.expiresAt).toLocaleString("fr-FR")}</p></div>`;window.print(); }
+
       if (action === "freeze-details") openDialog(`<div class="secure-icon">${icon("lock")}</div><h2 id="dialog-title">120 minutes pour décider.</h2><p>Le gel de tarif est inclus dans votre réservation simulée, sans frais et sans débit. Il démarre à la création du bon et expire après deux heures. Le compte à rebours fait foi, même après un rechargement.</p><p>Une fois ce délai écoulé, le bon ne peut plus être validé. Lancez une nouvelle recherche pour connaître les nouveaux tarifs. Les délais réels dépendent de l’offre et de la compagnie.</p><button class="button primary full" data-action="close-dialog">Compris</button>`);
       if (action === "reset-filters") renderResults();
       if (action === "change-search") go("search");
@@ -775,7 +826,18 @@
           return;
         }
         const method = $("[name=payment-method]:checked").value;
-        const r = B.create(draft, method);
+        const checkoutDraft = draft;
+        let r = B.create(draft, method);
+        if (method === "voucher" && FlightAPI.mode === "demo") {
+          const button=$("#pay-button");button.disabled=true;
+          try {
+            const hold=await FlightAPI.request('/api/orders/hold',{count:draft.search.count,legs:draft.flights.map(f=>({from:f.from,to:f.to,date:f.date,offerId:f.id})),options:draft.options});
+            const voucher=await FlightAPI.request('/api/payencash/voucher',{holdToken:hold.token});
+            r=B.attachVoucher(r.id, {voucher:voucher.reference,voucherToken:voucher.token,serverHoldId:hold.id,expiresAt:hold.expiresAt,serverSigned:true});
+          } catch(error) { toast("Bon local de démonstration : " + error.message); }
+          finally { button.disabled=false; }
+        }
+        if (draft !== checkoutDraft || view !== "payment") return;
         currentId = r.id;
         safe(() => persist());
         renderPending(r);
@@ -803,6 +865,11 @@
       }
     }),
   );
+  document.addEventListener("keydown", e => {
+    const panel=$(".filters-open");if(!panel)return;
+    if(e.key==="Escape"){$('[data-action=close-filters]').click();return;}
+    if(e.key==="Tab"){const nodes=[...panel.querySelectorAll('button:not(:disabled),input,select')].filter(n=>n.offsetParent!==null);const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
+  });
   $("#store-search").addEventListener("input", renderStores);
   $(".skip-link").addEventListener("click", (event) => {
     event.preventDefault();
@@ -907,6 +974,7 @@
     };
     try {
       render[view]?.();
+      if(view === "bookings") LiveBooking.appendBookings($("#bookings-content"));
     } catch (e) {
       toast(e.message, true);
       if (view === "bookings")
@@ -1011,7 +1079,7 @@
     navigator.geolocation.getCurrentPosition(position => {
       geoPosition = { lat: position.coords.latitude, lon: position.coords.longitude };
       $("#store-search").value = ""; button.disabled = false;
-      status.textContent = "Points classés par distance à vol d’oiseau depuis votre position. Adresses de démonstration.";
+      status.textContent = partnerStores ? "Points partenaires classés par distance à vol d’oiseau." : "Points classés par distance à vol d’oiseau depuis votre position. Adresses de démonstration.";
       renderStores();
     }, () => { button.disabled = false; status.textContent = "Position indisponible ou refusée. Recherchez votre ville ou code postal."; }, { timeout: 10000, maximumAge: 60000 });
   }

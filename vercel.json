@@ -5,24 +5,61 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/app", "destination": "/index.html" },
-    { "source": "/vols", "destination": "/index.html" },
-    { "source": "/aller-simple", "destination": "/index.html" },
-    { "source": "/mes-billets", "destination": "/index.html" },
-    { "source": "/ou-payer", "destination": "/index.html" },
-    { "source": "/aide", "destination": "/index.html" }
+    {
+      "source": "/app",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/vols",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/aller-simple",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/mes-billets",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/ou-payer",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/aide",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
         {
           "key": "Referrer-Policy",
           "value": "strict-origin-when-cross-origin"
         },
-        { "key": "X-Frame-Options", "value": "DENY" }
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "geolocation=(self), microphone=(), camera=()"
+        }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 60,
+      "includeFiles": "assets/js/flight-engine.js"
+    }
+  },
+  "env": {
+    "NODEJS_HELPERS": "0"
+  }
 }

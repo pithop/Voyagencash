@@ -1,14 +1,15 @@
 {
   "name": "voyagencash",
   "version": "2.0.0",
-  "description": "voyagencash — Démonstration de réservation de billets d’avion",
+  "description": "voyagencash — Recherche de vols, calendrier de prix et réservation PayEnCash",
   "main": "index.html",
   "scripts": {
     "start": "node scripts/serve.mjs",
     "dev": "node scripts/serve.mjs",
     "build": "node scripts/build.mjs",
     "preview": "node scripts/serve.mjs --dist",
-    "test": "playwright test"
+    "test": "playwright test",
+    "fulfil": "node scripts/fulfil.mjs"
   },
   "keywords": [
     "voyagencash",
@@ -21,6 +22,13 @@
   "devDependencies": {
     "@playwright/test": "^1.64.1",
     "jsqr": "^1.4.0",
+    "pg-mem": "^3.0.14",
     "pngjs": "^7.0.0"
+  },
+  "dependencies": {
+    "pg": "^8.23.1"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
