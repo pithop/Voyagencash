@@ -401,7 +401,7 @@
       return;
     }
     if (generation !== resultsGeneration || view !== "results") return;
-    offers = response.offers.filter(
+    offers = response.offers.map(F.enrichOffer).filter(
       (f) =>
         !legIndex ||
         f.departure >= draft.flights[legIndex - 1].arrival + 120 * 60000,
@@ -429,8 +429,8 @@
         )
         .join(
           "",
-        )}</fieldset><fieldset class="filter-group airline-filters"><legend>Compagnies aériennes</legend><div class="airline-checkboxes">${carriers.map((c) => `<label><input type="checkbox" name="carrier-filter" value="${c.code}">${esc(c.name)}</label>`).join("")}</div></fieldset></div></aside><div><div class="sort-bar"><span id="result-count" role="status"></span><label>Trier par <select id="sort-select"><option value="best">Meilleur rapport</option><option value="price">Prix croissant</option><option value="duration">Durée la plus courte</option></select></label></div><div id="flight-list"></div><p class="muted">${response.simulation ? "Offres de démonstration. Aucun billet réel." : "Offres Duffel. Prix et disponibilité à reconfirmer avant réservation."} Horaires locaux. Prix TTC par passager.</p></div></div>`;
-    FareStrip.mount($("#results-fare-strip"), { ...leg, count: draft.search.count, min: legIndex ? draft.search.legs[legIndex - 1].date : localToday() }, selectResultDate);
+        )}</fieldset><fieldset class="filter-group airline-filters"><legend>Compagnies aériennes</legend><div class="airline-checkboxes">${carriers.map((c) => `<label><input type="checkbox" name="carrier-filter" value="${c.code}">${esc(c.name)}</label>`).join("")}</div></fieldset></div></aside><div><div class="sort-bar"><span id="result-count" role="status"></span><label>Trier par <select id="sort-select"><option value="best">Meilleur rapport</option><option value="price">Prix croissant</option><option value="duration">Durée la plus courte</option></select></label></div><div id="flight-list"></div><p class="muted">${response.simulation ? "Offres de démonstration. Aucun billet réel." : "Prix et disponibilités à reconfirmer auprès de la compagnie avant réservation."} Horaires locaux. Prix TTC par passager.</p></div></div>`;
+    renderPriceTrend(leg, generation);
     $("#results-content").oninput = (e) => {
       if (e.target.matches("input,select")) updateFilters();
     };
@@ -438,6 +438,51 @@
       if (e.target.matches("select")) updateFilters();
     };
     renderFlightList();
+  }
+  async function renderPriceTrend(leg, generation) {
+    const container = $("#results-fare-strip");
+    const minimum = legIndex ? draft.search.legs[legIndex - 1].date : localToday();
+    const maximum = addDays(localToday(), 365);
+    const start = [minimum, [addDays(leg.date, -3), addDays(maximum, -6)].sort()[0]].sort().at(-1);
+    const days = Array.from({ length: 7 }, (_, i) => addDays(start, i)).filter(date => date <= maximum);
+    const draw = (values, note) => {
+      const prices = values.filter(d => days.includes(d.date)).map(d => d.price).filter(p => Number.isFinite(p) && p >= 0);
+      const max = Math.max(1, ...prices), min = Math.min(...prices);
+      container.innerHTML = `<section class="price-trend" aria-label="Tendance des prix sur sept jours"><div class="trend-heading"><div><span class="eyebrow">À QUELQUES JOURS PRÈS</span><h2>Un autre jour, un autre prix.</h2></div><span>${days.length} jours · par adulte</span></div><div class="price-trend-chart">${days.map(date => {
+        const price = values.find(d => d.date === date)?.price;
+        const known = Number.isFinite(price) && price >= 0;
+        const active = date === leg.date;
+        return `<button type="button" class="trend-bar fare-day${active ? " trend-bar-active selected" : ""}${known && price === min ? " trend-bar-low" : ""}${known ? "" : " trend-bar-unknown"}" data-trend-date="${date}" data-fare-date="${date}" aria-pressed="${active}" aria-label="${F.dateLabel(date, true)}, ${known ? F.money(price) : "prix à vérifier"}" style="--trend-height:${known ? Math.max(12, Math.round(price / max * 100)) : 12}%"><span class="trend-price">${known ? F.money(price) : "—"}</span><span class="trend-track" aria-hidden="true"><span class="trend-fill"></span></span><span class="trend-label">${F.dateLabel(date)}</span>${known && price === min ? '<span class="trend-best">Prix le plus bas</span>' : '<span class="trend-best">&nbsp;</span>'}</button>`;
+      }).join("")}</div><p class="trend-note" role="status">${note}</p></section>`;
+    };
+    draw([], "Chargement des prix…");
+    container.onclick = e => {
+      const button = e.target.closest("[data-trend-date]");
+      if (button) selectResultDate(button.dataset.trendDate);
+    };
+    try {
+      const months = [...new Set(days.map(d => d.slice(0, 7)))];
+      const responses = await Promise.all(months.map(month => FlightAPI.calendar({ from: leg.from, to: leg.to, count: draft.search.count, month })));
+      if (generation !== resultsGeneration || view !== "results" || !container.isConnected) return;
+      draw(responses.flatMap(r => r.days || []), responses.every(r => r.simulation)
+        ? "Prix de démonstration · minimum des vols directs. Sélectionnez une date pour comparer."
+        : "Prix observés des vols directs, à reconfirmer. Un tiret indique un prix encore inconnu.");
+    } catch {
+      if (generation === resultsGeneration && container.isConnected)
+        draw([], "Prix indisponibles. Sélectionnez une date pour rechercher les vols.");
+    }
+  }
+  function flightJourney(f) {
+    const step = (timestamp, code, symbol, title, content, cls = "") => `<li class="journey-step ${cls}"><span class="journey-dot">${icon(symbol)}</span><time class="journey-time" datetime="${new Date(timestamp).toISOString()}">${F.time(timestamp, code)}<small>${F.dateLabel(F.dateInZone(timestamp, F.airport(code).tz))}</small></time><div class="journey-content"><strong>${title}</strong>${content}</div></li>`;
+    const journey = f.segments.map((s, i) => {
+      const m = s.milestones || F.boardingMilestones(s.departure);
+      return `${i === 0 ? step(m.checkInCloses, s.from, "ticket", "Fermeture de l’enregistrement", `<p>${esc(F.airport(s.from).name)} · ${esc(s.from)}${f.departureTerminal ? ` · Terminal ${esc(f.departureTerminal)}` : ""}</p><small>Repère H−45 min · prévoyez une arrivée bien en amont.</small>`) : ""}${step(m.gateOpens, s.from, "clock", "Porte d’embarquement", `<p>Ouverture indicative à H−40 min.</p><small>Fermeture à ${F.time(m.gateCloses, s.from)} · H−20 min. Porte à consulter sur les écrans.</small>`)}${step(s.departure, s.from, "plane", `${esc(s.from)} → ${esc(s.to)} · ${esc(s.number)}`, `<p>${esc(s.aircraft)}${s.aircraftEstimated ? " · modèle indicatif" : ""}</p><small>${F.duration(s.duration)} · ${esc(f.airline.name)}</small>`, "journey-flight")}${step(s.arrival, s.to, i === f.segments.length - 1 ? "bag" : "clock", i === f.segments.length - 1 ? "Arrivée & récupération des bagages" : "Arrivée en correspondance", `<p>${esc(F.airport(s.to).name)} · ${esc(s.to)}</p><small>${i === f.segments.length - 1 ? "Après le débarquement, suivez les panneaux bagages si vous avez une valise en soute. Tapis annoncé à l’aéroport." : `Escale de ${F.duration((f.segments[i + 1].departure - s.arrival) / 60000)}. Vérifiez la porte du prochain vol.`}</small>`)}`;
+    }).join("");
+    const low = ["FR", "U2", "TO", "HV", "W6", "W4", "VY"].includes(f.airline.code);
+    const bags = low
+      ? `<div class="journey-baggage"><h3>${icon("bag")} Vos bagages à bord</h3><ul><li><strong>Petit sac sous le siège inclus</strong><span>${f.airline.code === "FR" ? "40 × 25 × 20 cm : format compact compatible. Franchise Ryanair publiée : 40 × 30 × 20 cm." : "Dimensions à vérifier selon la compagnie et le tarif."}</span></li><li><strong>Bagage cabine${f.airline.code === "FR" || f.airline.code.startsWith("W") ? " 10 kg" : ""}</strong><span>${f.cabinBagIncluded ? "Inclus dans cette offre." : "En option selon le tarif, à confirmer avant paiement."}</span></li><li><strong>Bagage en soute${f.airline.code === "FR" || f.airline.code.startsWith("W") ? " 20 kg" : ""}</strong><span>En option · poids et prix à confirmer auprès de la compagnie.</span></li></ul></div>`
+      : `<div class="journey-baggage"><h3>${icon("bag")} Vos bagages</h3><p>${f.cabinBagIncluded ? "Valise cabine et petit sac inclus." : "Franchise cabine à vérifier selon le tarif."} ${f.simulation ? "Soute 23 kg : +35 € par passager et trajet dans la simulation." : "Franchise soute et suppléments à confirmer avant paiement."}</p></div>`;
+    return `<div class="journey-heading"><span class="eyebrow">VOTRE PARCOURS À L’AÉROPORT</span><p>Horaires locaux. Les jalons sont indicatifs ; les consignes de la compagnie et la carte d’embarquement font foi.</p></div><ol class="timeline-journey">${journey}</ol>${bags}${f.simulation ? '<p class="journey-disclaimer">Offre de démonstration · disponibilités et numéros de vol fictifs.</p>' : ""}`;
   }
   function updateFilters() {
     filters.max = +$("#budget-filter").value;
@@ -460,12 +505,58 @@
             const dayDiff = Math.round(
               (Date.parse(arrivalDate) - Date.parse(f.date)) / 86400000,
             );
-            return `<article class="flight-card"><div class="flight-card-top"><span class="airline-badge" style="--carrier:${f.airline.color}">${["AF","AH","AT","TU","TO","FR","U2","TP","TK","VY"].includes(f.airline.code) ? `<img src="/assets/img/airlines/${f.airline.code}.svg" alt="${esc(f.airline.name)}">` : esc(f.airline.code)}</span><div><strong>${esc(f.airline.name)}</strong><small>${f.segments.map((s) => esc(s.number)).join(" · ")} · Économique</small></div>${i === 0 ? `<span class="badge">${filters.sort === "price" ? "Le moins cher" : filters.sort === "duration" ? "Le plus rapide" : "Notre sélection"}</span>` : ""}</div><div class="flight-card-body"><div class="flight-time"><strong>${F.time(f.departure, f.from)}</strong><span>${f.from} · ${esc(F.airport(f.from).city)}</span></div><div class="timeline"><span>${F.duration(f.duration)}</span><div class="timeline-line">${icon("plane")}</div><span>${f.stops ? `1 escale · ${f.segments[0].to}` : "Direct"}</span></div><div class="flight-time"><strong>${F.time(f.arrival, f.to)}${dayDiff ? ` <small>${dayDiff > 0 ? "+" : ""}${dayDiff} j</small>` : ""}</strong><span>${f.to} · ${esc(F.airport(f.to).city)}</span></div><div class="flight-price"><strong>${F.money(f.price)}</strong><small>TTC / passager${draft.search.count > 1 ? ` · ${F.money(f.price * draft.search.count)} au total` : ""}</small><button class="button primary" data-select-flight="${esc(f.id)}" aria-label="Choisir ${esc(f.airline.name)} à ${F.time(f.departure, f.from)}, ${F.money(f.price)}">Choisir ${icon("arrow")}</button></div></div><div class="flight-inclusions"><span>${icon("bag")} ${f.cabinBagIncluded ? "Valise cabine incluse" : "Cabine selon tarif"}</span>${f.co2Kg ? `<span>${icon("leaf")} ${f.co2Kg} kg CO2e ${f.simulation ? "· estimés" : "· fournisseur"}</span>` : ""}<span>${icon("clock")} ${f.simulation ? `${f.punctuality}% ponctualité · simulation` : "Ponctualité non disponible"}</span></div><details class="flight-details"><summary>Détails du vol & bagages</summary>${f.segments.map((s, n) => `<p><b>${esc(s.number)}</b> · ${s.from} ${F.time(s.departure, s.from)} → ${s.to} ${F.time(s.arrival, s.to)} · ${F.duration(s.duration)}${n < f.segments.length - 1 ? `<br>Escale à ${esc(F.airport(s.to).city)} : ${F.duration((f.segments[n + 1].departure - s.arrival) / 60000)}` : ""}</p>`).join("")}<p>${f.cabinBagIncluded ? "Valise cabine et petit sac inclus." : "Petit sac sous le siège inclus."} ${f.simulation ? "Soute 23 kg : +35 € par passager et trajet. Numéros de vol et disponibilités fictifs." : "Bagages, conditions tarifaires et retenue soumis à la compagnie. Aucun supplément local ne s’applique à une offre réelle."}</p></details></article>`;
+            return `<article class="flight-card"><div class="flight-card-top"><span class="airline-badge" style="--carrier:${f.airline.color}">${["AF","AH","AT","TU","TO","FR","U2","TP","TK","VY"].includes(f.airline.code) ? `<img src="/assets/img/airlines/${f.airline.code}.svg" alt="${esc(f.airline.name)}">` : esc(f.airline.code)}</span><div><strong>${esc(f.airline.name)}</strong><small>${f.segments.map((s) => esc(s.number)).join(" · ")} · Économique</small></div>${i === 0 ? `<span class="badge">${filters.sort === "price" ? "Le moins cher" : filters.sort === "duration" ? "Le plus rapide" : "Notre sélection"}</span>` : ""}</div><div class="flight-card-body"><div class="flight-time"><strong>${F.time(f.departure, f.from)}</strong><span>${f.from} · ${esc(F.airport(f.from).city)}</span></div><div class="timeline"><span>${F.duration(f.duration)}</span><div class="timeline-line">${icon("plane")}</div><span>${f.stops ? `1 escale · ${f.segments[0].to}` : "Direct"}</span></div><div class="flight-time"><strong>${F.time(f.arrival, f.to)}${dayDiff ? ` <small>${dayDiff > 0 ? "+" : ""}${dayDiff} j</small>` : ""}</strong><span>${f.to} · ${esc(F.airport(f.to).city)}</span></div><div class="flight-price"><strong>${F.money(f.price)}</strong><small>TTC / passager${draft.search.count > 1 ? ` · ${F.money(f.price * draft.search.count)} au total` : ""}</small><button class="button primary" data-select-flight="${esc(f.id)}" aria-label="Choisir ${esc(f.airline.name)} à ${F.time(f.departure, f.from)}, ${F.money(f.price)}">Choisir ${icon("arrow")}</button></div></div><div class="flight-inclusions"><span>${icon("bag")} ${f.cabinBagIncluded ? "Valise cabine incluse" : "Cabine selon tarif"}</span>${f.co2Kg ? `<span>${icon("leaf")} ${f.co2Kg} kg CO2e ${(f.simulation || f.co2Estimated) ? "· estimés" : "· fournisseur"}</span>` : ""}<span>${icon("clock")} ${f.simulation ? `${f.punctuality}% ponctualité · simulation` : "Ponctualité non disponible"}</span></div><details class="flight-details"><summary>Détails du vol & bagages</summary>${flightJourney(f)}</details></article>`;
           })
           .join("")
       : `<div class="empty-state">${icon("search")}<h2>Aucun vol pour cette sélection.</h2><p>${offers.length ? "Élargissez votre budget ou retirez un filtre." : "Essayez une autre date. Les trajets suivants doivent partir au moins deux heures après votre arrivée."}</p><button class="button" data-action="${offers.length ? "reset-filters" : "change-search"}">${offers.length ? "Réinitialiser les filtres" : "Modifier la recherche"}</button></div>`;
   }
+  function renderLowCostOptions() {
+    const f = draft.flights[0], container = $("#options-content");
+    if (draft.flights.length !== 1) {
+      container.innerHTML = '<div class="panel"><h1 id="options-title">Réservez chaque trajet séparément.</h1><p>La réservation low-cost prend en charge un trajet à la fois.</p><a class="button" href="#search">Modifier la recherche</a></div>';
+      return;
+    }
+    container.innerHTML = `${progress(1)}<div class="page-heading"><h1 id="options-title">Votre vol ${esc(f.airline.name)}</h1><p>${esc(f.from)} → ${esc(f.to)} · ${F.dateLabel(f.date)} · ${F.money(f.price)} par adulte, à reconfirmer</p></div><div class="panel"><h2>Les voyageurs</h2><p>${f.provider === "travelfusion" ? "La compagnie doit confirmer la disponibilité et le tarif avant émission." : "Votre demande sera transmise à la conciergerie. Aucun billet ni tarif n’est garanti. Vous pourrez également poursuivre sur le site officiel Ryanair."}</p><form id="low-cost-passengers">${Array.from({ length: draft.search.count }, (_, i) => `<fieldset class="live-passenger"><legend>Adulte ${i + 1}</legend><div class="form-grid"><label>Prénom<input name="given_name-${i}" minlength="2" maxlength="60" required autocomplete="given-name"></label><label>Nom<input name="family_name-${i}" minlength="2" maxlength="60" required autocomplete="family-name"></label><label>Date de naissance<input type="date" name="born_on-${i}" min="1900-01-01" max="${new Date(Date.now() - 18 * 365.25 * 86400000).toISOString().slice(0, 10)}" required></label></div></fieldset>`).join("")}<div class="form-grid"><label>E-mail<input type="email" name="email" required></label><label>Téléphone international<input type="tel" name="phone_number" placeholder="+33612345678" required></label></div><label class="consent"><input type="checkbox" required><span>J’autorise la transmission de ces informations pour traiter ma demande${f.provider === "travelfusion" ? ` et la réservation au montant maximal de ${F.money(f.price * draft.search.count)}` : " en conciergerie"}.</span></label><p id="low-cost-error" class="form-error" role="alert" hidden></p><button class="button primary" type="submit">${f.provider === "travelfusion" ? "Demander la réservation" : "Enregistrer ma demande"}</button></form></div>`;
+    const idempotencyKey = crypto.randomUUID();
+    container.querySelector("form").onsubmit = async e => {
+      e.preventDefault();
+      const button = e.target.querySelector('[type="submit"]');
+      if (button.disabled) return;
+      button.disabled = true;
+      const values = new FormData(e.target);
+      const passengers = Array.from({ length: draft.search.count }, (_, i) => ({
+        given_name: values.get(`given_name-${i}`), family_name: values.get(`family_name-${i}`),
+        born_on: values.get(`born_on-${i}`), email: values.get("email"), phone_number: values.get("phone_number"),
+      }));
+      try {
+        const result = await FlightAPI.request("/api/orders/low-cost", {
+          from: f.from, to: f.to, date: f.date, count: draft.search.count,
+          airline: f.airline.code, flightNumber: f.segments[0].number, passengers,
+          bookingToken: f.bookingToken, expectedAmountCents: Math.round(f.price * draft.search.count * 100),
+        }, { "Idempotency-Key": idempotencyKey });
+        if (!container.isConnected || view !== "options") return;
+        container.innerHTML = `<div class="panel"><h1 id="options-title">Votre demande est enregistrée.</h1><p id="low-cost-state" role="status">${esc(result.message)}</p><p>Référence de suivi : ${esc(result.id)}</p>${result.handoffUrl ? `<p>Le lien préremplit le trajet, la date et le nombre d’adultes. Sélectionnez ensuite le vol ${esc(f.segments[0].number)} ; vos données personnelles ne figurent pas dans le lien.</p><a class="button primary" href="${esc(result.handoffUrl)}" rel="noopener noreferrer" target="_blank">Continuer sur Ryanair ${icon("arrow")}</a>` : ""}<button class="button" id="low-cost-refresh">Actualiser le statut</button><a class="button" href="#search">Rechercher un vol</a></div>`;
+        container.querySelector("#low-cost-refresh").onclick = async event => {
+          event.target.disabled = true;
+          try {
+            const status = await FlightAPI.request("/api/orders/low-cost-status", { token: result.accessToken });
+            container.querySelector("#low-cost-state").textContent = status.message + (status.bookingReference ? ` Référence compagnie : ${status.bookingReference}` : "");
+          } catch (error) { toast(error.message, true); }
+          finally { event.target.disabled = false; }
+        };
+      } catch (error) {
+        const node = container.querySelector("#low-cost-error");
+        if (node) { node.hidden = false; node.textContent = error.message; }
+        button.disabled = false;
+      }
+    };
+  }
   function renderOptions() {
+    if (draft.flights.some(f => f.provider === "travelfusion" || f.conciergeAvailable)) {
+      renderLowCostOptions();
+      return;
+    }
+
     if (FlightAPI.checkout && draft.flights.some((f) => f.simulation === false)) {
       LiveBooking.mount($("#options-content"), draft).catch((e) =>
         toast(e.message, true),

@@ -39,3 +39,19 @@ CREATE INDEX IF NOT EXISTS fare_observations_time ON fare_observations(observed_
 -- Idempotent migration for delayed provider issuance.
 ALTER TABLE payment_outbox ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz NOT NULL DEFAULT now();
 CREATE INDEX IF NOT EXISTS payment_outbox_pending ON payment_outbox(state,next_attempt_at);
+
+-- Passenger/contact data are encrypted with AES-256-GCM before insertion.
+CREATE TABLE IF NOT EXISTS low_cost_bookings (
+  id text PRIMARY KEY,
+  idempotency_key uuid UNIQUE NOT NULL,
+  fingerprint text NOT NULL,
+  provider text NOT NULL,
+  state text NOT NULL,
+  encrypted_payload jsonb NOT NULL,
+  handoff_url text,
+  booking_reference text,
+  expires_at timestamptz NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS low_cost_bookings_queue ON low_cost_bookings(state,created_at);

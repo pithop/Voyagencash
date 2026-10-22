@@ -145,9 +145,12 @@ async function search(query) {
       cabin: "Économique",
       cabinBagIncluded: false,
       co2Kg,
+      co2Estimated: true,
       punctuality: null,
-      simulation: true,
-      payment_requirements: { requires_instant_payment: false },
+      simulation: false,
+      provider: "ryanair-indicative",
+      conciergeAvailable: true,
+      payment_requirements: { requires_instant_payment: true },
       passengerIds: Array.from({ length: count }, (_, i) => `fr_pas_${i + 1}`),
     };
   };
@@ -158,11 +161,8 @@ async function search(query) {
         offers.push(createOffer(f.number, f.departureTime, f.arrivalTime));
       }
     }
-  } else if (fareInfo.departureDate && fareInfo.arrivalDate) {
-    const depTime = fareInfo.departureDate.slice(11, 16);
-    const arrTime = fareInfo.arrivalDate.slice(11, 16);
-    offers.push(createOffer("2640", depTime, arrTime));
   }
+  // A daily fare without a scheduled flight is not a selectable itinerary.
 
   return offers;
 }

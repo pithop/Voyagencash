@@ -12,6 +12,8 @@ const apiRoutes = new Set([
   "/api/flights/search",
   "/api/flights/calendar",
   "/api/orders/hold",
+  "/api/orders/low-cost",
+  "/api/orders/low-cost-status",
   "/api/payencash/voucher",
   "/api/payencash/webhook",
   "/api/stripe/create-intent",

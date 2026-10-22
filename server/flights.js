@@ -1,6 +1,7 @@
 const F = require("../assets/js/flight-engine.js");
 const { HttpError } = require("./http.js");
 const ryanair = require("./ryanair.js");
+const travelfusion = require("./travelfusion.js");
 const observations = new Map();
 const demoCalendars = new Map();
 function validate(input, calendar = false) {
@@ -75,6 +76,8 @@ function normalize(offer, query) {
     arrival: localTimestamp(s.arriving_at, s.destination.iata_code),
     number: `${s.marketing_carrier.iata_code} ${s.marketing_carrier_flight_number}`,
     duration: 0,
+    aircraft: s.aircraft?.name,
+    operatingCarrier: s.operating_carrier?.iata_code,
   }));
   segments.forEach((s) => (s.duration = (s.arrival - s.departure) / 60000));
   const c = offer.owner,
@@ -110,16 +113,19 @@ function normalize(offer, query) {
   };
 }
 async function search(query) {
-  if (!process.env.DUFFEL_API_TOKEN)
+  if (!process.env.DUFFEL_API_TOKEN && !travelfusion.configured())
     return { source: "demo", simulation: true, offers: F.generate(query) };
-  const ryanairPromise = ryanair.search(query).catch(() => []);
-  const data = await duffel("/air/offer_requests?return_offers=true", {
+  const lowCostPromise = travelfusion.configured()
+    ? travelfusion.searchLowCost(query)
+    : ryanair.search(query).catch(() => []);
+  const duffelPromise = process.env.DUFFEL_API_TOKEN ? duffel("/air/offer_requests?return_offers=true", {
     slices: [
       { origin: query.from, destination: query.to, departure_date: query.date },
     ],
     passengers: Array.from({ length: query.count }, () => ({ type: "adult" })),
     cabin_class: "economy",
-  });
+  }) : Promise.resolve({ offers: [] });
+  const [data, ryanairOffers] = await Promise.all([duffelPromise, lowCostPromise]);
   const duffelOffers = (data.offers || [])
     .filter((o) =>
       o.slices[0].segments.every(
@@ -129,8 +135,7 @@ async function search(query) {
     )
     .map((o) => normalize(o, query))
     .filter(Boolean);
-  const ryanairOffers = await ryanairPromise;
-  const offers = [...duffelOffers, ...ryanairOffers].sort(
+  const offers = [...duffelOffers, ...ryanairOffers].map(F.enrichOffer).sort(
     (a, b) => a.price - b.price,
   );
   const direct = offers.filter((o) => !o.stops);
@@ -160,10 +165,10 @@ async function search(query) {
       /* Availability is returned even if the optional fare cache is unavailable. */
     }
   }
-  return { source: duffelOffers.length ? "duffel" : "ryanair", simulation: false, offers };
+  return { source: duffelOffers.length ? "duffel" : travelfusion.configured() ? "travelfusion" : "ryanair", simulation: false, offers };
 }
 async function calendar(query) {
-  if (!process.env.DUFFEL_API_TOKEN) {
+  if (!process.env.DUFFEL_API_TOKEN && !travelfusion.configured()) {
     const key = `${query.from}:${query.to}:${query.month}`;
     let cached = demoCalendars.get(key);
     // Short-lived because today's departing flights disappear as time advances.
@@ -188,7 +193,7 @@ async function calendar(query) {
     }
   }
   try {
-    const rf = await ryanair.calendarFares(query.from, query.to, query.month);
+    const rf = travelfusion.configured() ? null : await ryanair.calendarFares(query.from, query.to, query.month);
     if (rf && rf.size) {
       for (const [dStr, fInfo] of rf) {
         const key = `${query.from}:${query.to}:${query.count}:${dStr}`;

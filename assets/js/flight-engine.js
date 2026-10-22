@@ -358,6 +358,27 @@
       weekday: long ? "long" : "short", day: "numeric",
       month: long ? "long" : "short", year: long ? "numeric" : undefined, timeZone: "UTC",
     }).format(new Date(date + "T12:00:00Z"));
+  function aircraftFor(carrier, from, to) {
+    const code = typeof carrier === "string" ? carrier : carrier?.code;
+    const a = airport(from), b = airport(to);
+    const long = a && b && distance(a, b) > 4600;
+    const shortHaul = { FR: "Boeing 737-800", U2: "Airbus A320neo", TO: "Airbus A320neo", HV: "Boeing 737-800", W6: "Airbus A321neo", W4: "Airbus A321neo", VY: "Airbus A320", AF: "Airbus A220-300", AH: "Boeing 737-800", AT: "Boeing 737-800", TU: "Airbus A320", TP: "Airbus A320neo", TK: "Airbus A321", AC: "Airbus A220-300", EK: "Boeing 777" };
+    const longHaul = { AF: "Airbus A350-900", TK: "Airbus A350-900", AC: "Boeing 787-9", EK: "Boeing 777", AT: "Boeing 787-9", AH: "Airbus A330-200", TP: "Airbus A330-900neo" };
+    return (long ? longHaul[code] : null) || shortHaul[code] || "Appareil à confirmer";
+  }
+  function boardingMilestones(departure) {
+    const timestamp = typeof departure === "number" ? departure : Date.parse(departure);
+    if (!Number.isFinite(timestamp)) throw new TypeError("Heure de départ invalide.");
+    return { checkInCloses: timestamp - 45 * 60000, gateOpens: timestamp - 40 * 60000, gateCloses: timestamp - 20 * 60000 };
+  }
+  function enrichOffer(offer) {
+    return { ...offer, segments: offer.segments.map(s => ({
+      ...s,
+      aircraft: s.aircraft || aircraftFor(s.operatingCarrier || offer.airline, s.from, s.to),
+      aircraftEstimated: s.aircraftEstimated ?? !s.aircraft,
+      milestones: { ...boardingMilestones(s.departure), ...s.milestones },
+    })) };
+  }
   function generate({ from, to, date }) {
     const a = airport(from),
       b = airport(to);
@@ -452,7 +473,7 @@
         simulation: true,
       });
     }
-    return offers;
+    return offers.map(enrichOffer);
   }
   function calendar({ from, to, month }) {
     const days = new Date(Number(month.slice(0,4)), Number(month.slice(5)), 0).getDate();
@@ -499,6 +520,9 @@
     );
   }
   const engine = {
+    aircraftFor,
+    boardingMilestones,
+    enrichOffer,
     airports,
     airlines,
     airport,
