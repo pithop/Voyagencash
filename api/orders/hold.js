@@ -11,6 +11,48 @@ const F = require("../../assets/js/flight-engine.js");
 const { database, transaction } = require("../../server/database.js");
 module.exports = endpoint("POST", async (req, res) => {
   const input = await body(req);
+  if (input.offerId?.startsWith("fr_")) {
+    const passengers = Array.isArray(input.passengers) ? input.passengers : [];
+    const count = passengers.length || Number(input.count ?? 1);
+    const parts = input.offerId.split("_");
+    const priceCents = parseInt(parts.at(-1), 10) || 8199;
+    const amount = Math.round(
+      priceCents * count +
+      (input.options?.baggage === true ? 3500 * count : 0) +
+      (input.options?.guarantee === true ? 1900 * count : 0)
+    );
+    const orderId = `vnc_${input.offerId.slice(3, 15)}_${crypto.randomBytes(4).toString("hex")}`;
+    const expiresAt = Date.now() + 7200000;
+    const hold = {
+      kind: "hold",
+      id: orderId,
+      amountCents: amount,
+      currency: "EUR",
+      expiresAt,
+      simulation: true,
+      airline: "Ryanair",
+    };
+    const response = {
+      ...hold,
+      token: sign(hold),
+      accessToken: sign({
+        kind: "order-access",
+        id: orderId,
+        expiresAt: Date.now() + 90 * 86400000,
+      }),
+      payment_required_by: new Date(expiresAt).toISOString(),
+      bookingReference: "VNC-" + orderId.slice(-6).toUpperCase(),
+    };
+    if (process.env.DATABASE_URL || process.env.STORAGE_URL || process.env.POSTGRES_URL) {
+      try {
+        await database().query(
+          "INSERT INTO flight_orders(id,amount_cents,currency,expires_at) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING",
+          [hold.id, hold.amountCents, hold.currency, new Date(expiresAt)],
+        );
+      } catch {}
+    }
+    return json(res, 201, response);
+  }
   if (!process.env.DUFFEL_API_TOKEN) {
     if (
       !Array.isArray(input.legs) ||
@@ -60,8 +102,8 @@ module.exports = endpoint("POST", async (req, res) => {
     )
   )
     throw new HttpError(400, "Clé d’idempotence UUID v4 requise.");
-  if (!/^off_[A-Za-z0-9]+$/.test(input.offerId || ""))
-    throw new HttpError(400, "Offre Duffel invalide.");
+  if (!/^off_[A-Za-z0-9]+$/.test(input.offerId || "") && !/^fr_[A-Za-z0-9_-]+$/.test(input.offerId || ""))
+    throw new HttpError(400, "Offre de vol invalide.");
   if (
     !Array.isArray(input.passengers) ||
     input.passengers.length < 1 ||
@@ -72,7 +114,7 @@ module.exports = endpoint("POST", async (req, res) => {
     if (
       !/^[\p{L}\p{M} '\-]{2,60}$/u.test(p.given_name || "") ||
       !/^[\p{L}\p{M} '\-]{2,60}$/u.test(p.family_name || "") ||
-      !/^pas_[A-Za-z0-9]+$/.test(p.id || "") ||
+      !/^(pas|fr_pas)_[A-Za-z0-9_]+$/.test(p.id || "") ||
       !["m", "f"].includes(p.gender) ||
       !["mr", "ms", "mrs", "miss", "dr"].includes(p.title) ||
       !/^\+\d{8,15}$/.test(p.phone_number || "") ||
@@ -149,6 +191,49 @@ module.exports = endpoint("POST", async (req, res) => {
       409,
       "Création en cours ou à rapprocher avec Duffel. Ne renvoyez pas une nouvelle clé.",
     );
+  }
+  if (input.offerId.startsWith("fr_")) {
+    const parts = input.offerId.split("_");
+    const priceCents = parseInt(parts.at(-1), 10) || 8199;
+    const count = passengers.length;
+    const amount = Math.round(
+      priceCents * count +
+      (input.options?.baggage === true ? 3500 * count : 0) +
+      (input.options?.guarantee === true ? 1900 * count : 0)
+    );
+    const orderId = `vnc_${input.offerId.slice(3, 15)}_${crypto.randomBytes(4).toString("hex")}`;
+    const expiresAt = Date.now() + 7200000;
+    const hold = {
+      kind: "hold",
+      id: orderId,
+      amountCents: amount,
+      currency: "EUR",
+      expiresAt,
+      simulation: true,
+      airline: "Ryanair",
+    };
+    const response = {
+      ...hold,
+      token: sign(hold),
+      accessToken: sign({
+        kind: "order-access",
+        id: orderId,
+        expiresAt: Date.now() + 90 * 86400000,
+      }),
+      payment_required_by: new Date(expiresAt).toISOString(),
+      bookingReference: "VNC-" + orderId.slice(-6).toUpperCase(),
+    };
+    await transaction(async (databaseClient) => {
+      await databaseClient.query(
+        "INSERT INTO flight_orders(id,amount_cents,currency,expires_at) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING",
+        [hold.id, hold.amountCents, hold.currency, new Date(expiresAt)],
+      );
+      await databaseClient.query(
+        "UPDATE checkout_requests SET state='held',response=$2 WHERE idempotency_key=$1",
+        [key, response],
+      );
+    });
+    return json(res, 201, response);
   }
   let offer;
   try {

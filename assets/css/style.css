@@ -3307,6 +3307,161 @@ dialog p { color: #a6b8d3; }
   .wallet-panel { padding: 24px; }.confirmation-heading h1 { font-size: 30px; }.boarding-pass { mask-image: none; }.ticket-document { padding: 18px; }.ticket-brand { font-size: 22px; }
   .flight-card-body { gap: 12px; }.flight-time strong { font-size: 23px; }.flight-card-top .badge { font-size: 8px; }.filter-panel { background: #121a29; }.map-caption { font-size: 8px; }
 }
+
+/* Micro-interactions & animations artisanales */
+.view:not([hidden]) {
+  animation: viewEntrance 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes viewEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.button, button.button {
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.button:active, button.button:active {
+  transform: scale(0.982);
+}
+
+.flight-card {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.18s ease-out, box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.flight-card:hover {
+  transform: translateY(-2px);
+  border-color: #93c5fd;
+  box-shadow: 0 10px 28px -6px rgba(1, 107, 253, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.05);
+}
+
+/* Dialogue / Modale @starting-style (Modern Web Guidance) */
+dialog {
+  transition: opacity 0.22s ease-out, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), overlay 0.22s allow-discrete, display 0.22s allow-discrete;
+}
+dialog[open] {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+@starting-style {
+  dialog[open] {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+}
+dialog::backdrop {
+  transition: opacity 0.22s ease-out, overlay 0.22s allow-discrete, display 0.22s allow-discrete;
+  opacity: 0;
+}
+dialog[open]::backdrop {
+  opacity: 1;
+}
+@starting-style {
+  dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+/* Cartes squelettes de chargement (Skeleton Shimmer) */
+@keyframes shimmerPulse {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+.skeleton-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmerPulse 1.8s infinite linear;
+  border-radius: 8px;
+}
+.skeleton-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.skeleton-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+.skeleton-title {
+  width: 130px;
+  height: 16px;
+}
+.skeleton-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.skeleton-times {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex: 1;
+}
+.skeleton-time-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.skeleton-time-text {
+  width: 65px;
+  height: 24px;
+}
+.skeleton-subtext {
+  width: 40px;
+  height: 12px;
+}
+.skeleton-line {
+  flex: 1;
+  max-width: 120px;
+  height: 3px;
+  border-radius: 2px;
+}
+.skeleton-price-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.skeleton-price {
+  width: 85px;
+  height: 26px;
+}
+.skeleton-btn {
+  width: 110px;
+  height: 36px;
+  border-radius: 10px;
+}
+.skeleton-status-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 14px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
   .travel-pass::before,.boarding-pass::before { background-position: center !important; }

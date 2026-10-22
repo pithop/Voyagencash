@@ -393,7 +393,7 @@
     const generation = ++resultsGeneration;
     legIndex = Math.min(draft.flights.length, draft.search.legs.length - 1);
     const leg = draft.search.legs[legIndex];
-    $("#results-content").innerHTML = `${progress(0)}<div class="results-loading" role="status"><span class="spinner"></span><h2>Recherche de vos vols</h2><p>Comparaison des horaires et des tarifs disponibles…</p></div>`;
+    $("#results-content").innerHTML = `${progress(0)}<div class="results-loading" role="status"><div class="skeleton-cards">${[1, 2, 3].map(() => `<div class="skeleton-card"><div class="skeleton-header"><div class="skeleton-shimmer skeleton-avatar"></div><div class="skeleton-shimmer skeleton-title"></div></div><div class="skeleton-body"><div class="skeleton-times"><div class="skeleton-time-block"><div class="skeleton-shimmer skeleton-time-text"></div><div class="skeleton-shimmer skeleton-subtext"></div></div><div class="skeleton-shimmer skeleton-line"></div><div class="skeleton-time-block"><div class="skeleton-shimmer skeleton-time-text"></div><div class="skeleton-shimmer skeleton-subtext"></div></div></div><div class="skeleton-price-block"><div class="skeleton-shimmer skeleton-price"></div><div class="skeleton-shimmer skeleton-btn"></div></div></div></div>`).join("")}</div><div class="skeleton-status-msg"><span class="spinner" style="width:16px;height:16px;border-width:2px;"></span><span>Comparaison en direct des offres Duffel & Ryanair aux meilleurs tarifs…</span></div></div>`;
     let response;
     try { response = await FlightAPI.search({ ...leg, count: draft.search.count }); }
     catch (error) {

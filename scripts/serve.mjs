@@ -14,6 +14,8 @@ const apiRoutes = new Set([
   "/api/orders/hold",
   "/api/payencash/voucher",
   "/api/payencash/webhook",
+  "/api/stripe/create-intent",
+  "/api/stripe/webhook",
 ]);
 import { readFile } from "node:fs/promises";
 import { resolve, extname, sep } from "node:path";

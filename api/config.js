@@ -12,5 +12,7 @@ module.exports = endpoint("GET", async (req, res) =>
         process.env.PAYENCASH_API_KEY &&
         process.env.VOUCHER_SIGNING_SECRET
       ),
+    stripe: !!process.env.STRIPE_PUBLIC_KEY,
+    stripePublicKey: process.env.STRIPE_PUBLIC_KEY || null,
   }),
 );

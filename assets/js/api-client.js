@@ -70,16 +70,27 @@
     pendingCalendars.set(key, pending);
     return pending;
   }
+  async function createStripeIntent(data) {
+    await ready;
+    return request("/api/stripe/create-intent", data);
+  }
   window.FlightAPI = {
     ready,
     search,
     calendar,
     request,
+    createStripeIntent,
     get mode() {
       return config?.mode;
     },
     get checkout() {
       return !!config?.checkout;
+    },
+    get stripe() {
+      return !!config?.stripe;
+    },
+    get stripePublicKey() {
+      return config?.stripePublicKey;
     },
   };
 })();
