@@ -2,7 +2,14 @@ const { endpoint, body, json, verify } = require("../../server/http.js");
 const { database } = require("../../server/database.js");
 const { duffel } = require("../../server/flights.js");
 module.exports = endpoint("POST", async (req, res) => {
-  const access = verify((await body(req)).token, "order-access");
+  const input = await body(req);
+  try {
+    const lowCostAccess = verify(input.token, "low-cost-access");
+    if (lowCostAccess) {
+      return json(res, 200, await require("../../server/travelfusion.js").checkBookingStatus(input));
+    }
+  } catch {}
+  const access = verify(input.token, "order-access");
   const {
     rows: [order],
   } = await database().query(

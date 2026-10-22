@@ -48,7 +48,13 @@ http
         new URL(req.url, "http://localhost").pathname,
       );
       if (apiRoutes.has(path)) {
-        await require(`..${path}.js`)(req, res);
+        const targetPath =
+          path === "/api/orders/low-cost"
+            ? "/api/orders/hold"
+            : path === "/api/orders/low-cost-status"
+              ? "/api/orders/status"
+              : path;
+        await require(`..${targetPath}.js`)(req, res);
         return;
       }
       if (!aliases.has(path) && !path.startsWith("/assets/")) {

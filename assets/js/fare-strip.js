@@ -36,12 +36,16 @@
       const responses = await Promise.all(months.map(month => FlightAPI.calendar({ from: query.from, to: query.to, count: query.count, month })));
       if (container.fareVersion !== version || !container.isConnected) return;
       const allDays = responses.flatMap(r => r.days || []);
+      const isSimulation = responses.some(r => r.simulation);
       const mergedDays = days.map(date => {
         const found = allDays.find(d => d.date === date);
         if (found && found.price !== null) return found;
-        const month = date.slice(0, 7);
-        const b = F.calendar({ from: query.from, to: query.to, month }).find(x => x.date === date);
-        return b ? { ...b, indicative: true } : (found || { date, price: null, tier: "unknown", direct: null });
+        if (isSimulation) {
+          const month = date.slice(0, 7);
+          const b = F.calendar({ from: query.from, to: query.to, month }).find(x => x.date === date);
+          if (b) return { ...b, indicative: true };
+        }
+        return found || { date, price: null, tier: "unknown", direct: null };
       });
       draw(mergedDays);
       container.querySelector('.fare-source').textContent = responses[0]?.simulation

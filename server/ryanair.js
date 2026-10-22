@@ -161,8 +161,11 @@ async function search(query) {
         offers.push(createOffer(f.number, f.departureTime, f.arrivalTime));
       }
     }
+  } else if (fareInfo?.departureDate && fareInfo?.arrivalDate) {
+    const depClock = fareInfo.departureDate.slice(11, 16);
+    const arrClock = fareInfo.arrivalDate.slice(11, 16);
+    offers.push(createOffer("FR", depClock, arrClock));
   }
-  // A daily fare without a scheduled flight is not a selectable itinerary.
 
   return offers;
 }

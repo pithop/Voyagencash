@@ -11,6 +11,13 @@ const F = require("../../assets/js/flight-engine.js");
 const { database, transaction } = require("../../server/database.js");
 module.exports = endpoint("POST", async (req, res) => {
   const input = await body(req);
+  if (input.bookingToken || (Array.isArray(input.passengers) && !input.legs && input.from && input.to)) {
+    const result = await require("../../server/travelfusion.js").bookFlight({
+      ...input,
+      idempotencyKey: req.headers["idempotency-key"] || input.idempotencyKey,
+    });
+    return json(res, 201, result);
+  }
   if (input.offerId?.startsWith("fr_") && process.env.VOYAGENCASH_TEST_MODE !== "true") {
     const [, from, to, date, flightNumber] = input.offerId.split("_");
     const result = await require("../../server/travelfusion.js").bookFlight({

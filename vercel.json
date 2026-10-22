@@ -6,6 +6,14 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/api/orders/low-cost",
+      "destination": "/api/orders/hold"
+    },
+    {
+      "source": "/api/orders/low-cost-status",
+      "destination": "/api/orders/status"
+    },
+    {
       "source": "/app",
       "destination": "/index.html"
     },

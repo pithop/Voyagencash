@@ -49,8 +49,11 @@
       const base = F.calendar({ from: context.from, to: context.to, month });
       const days = (data.days || []).map((d) => {
         if (d.price !== null) return d;
-        const b = base.find((x) => x.date === d.date);
-        return b ? { ...b, indicative: true } : d;
+        if (data.simulation) {
+          const b = base.find((x) => x.date === d.date);
+          if (b) return { ...b, indicative: true };
+        }
+        return d;
       });
       draw(days);
       dialog.querySelector(".calendar-disclaimer").textContent = data.simulation

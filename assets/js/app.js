@@ -464,7 +464,15 @@
       const months = [...new Set(days.map(d => d.slice(0, 7)))];
       const responses = await Promise.all(months.map(month => FlightAPI.calendar({ from: leg.from, to: leg.to, count: draft.search.count, month })));
       if (generation !== resultsGeneration || view !== "results" || !container.isConnected) return;
-      draw(responses.flatMap(r => r.days || []), responses.every(r => r.simulation)
+      const allDays = responses.flatMap(r => r.days || []);
+      if (offers && offers.length) {
+        const direct = offers.filter(f => !f.stops);
+        const searchMin = direct.length ? Math.min(...direct.map(f => f.price)) : Math.min(...offers.map(f => f.price));
+        const idx = allDays.findIndex(d => d.date === leg.date);
+        if (idx >= 0) allDays[idx] = { ...allDays[idx], price: searchMin, direct: !!direct.length };
+        else allDays.push({ date: leg.date, price: searchMin, direct: !!direct.length });
+      }
+      draw(allDays, responses.every(r => r.simulation)
         ? "Prix de démonstration · minimum des vols directs. Sélectionnez une date pour comparer."
         : "Prix observés des vols directs, à reconfirmer. Un tiret indique un prix encore inconnu.");
     } catch {
@@ -529,7 +537,7 @@
         born_on: values.get(`born_on-${i}`), email: values.get("email"), phone_number: values.get("phone_number"),
       }));
       try {
-        const result = await FlightAPI.request("/api/orders/low-cost", {
+        const result = await FlightAPI.request("/api/orders/hold", {
           from: f.from, to: f.to, date: f.date, count: draft.search.count,
           airline: f.airline.code, flightNumber: f.segments[0].number, passengers,
           bookingToken: f.bookingToken, expectedAmountCents: Math.round(f.price * draft.search.count * 100),
@@ -539,7 +547,7 @@
         container.querySelector("#low-cost-refresh").onclick = async event => {
           event.target.disabled = true;
           try {
-            const status = await FlightAPI.request("/api/orders/low-cost-status", { token: result.accessToken });
+            const status = await FlightAPI.request("/api/orders/status", { token: result.accessToken });
             container.querySelector("#low-cost-state").textContent = status.message + (status.bookingReference ? ` Référence compagnie : ${status.bookingReference}` : "");
           } catch (error) { toast(error.message, true); }
           finally { event.target.disabled = false; }
