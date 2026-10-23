@@ -48,7 +48,7 @@ module.exports = endpoint("POST", async (req, res) => {
   }
 
   // If live Stripe secret is configured, create a real Stripe PaymentIntent
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const stripeKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
   if (stripeKey && !process.env.VOYAGENCASH_TEST_MODE) {
     try {
       const form = new URLSearchParams({

@@ -10,6 +10,36 @@ module.exports = endpoint("POST", async (req, res) => {
     }
   } catch {}
   const access = verify(input.token, "order-access");
+
+  if (input.confirmPaymentIntentId && (process.env.DATABASE_URL || process.env.STORAGE_URL || process.env.POSTGRES_URL)) {
+    const stripeKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
+    let paymentVerified = false;
+    if (stripeKey && !process.env.VOYAGENCASH_TEST_MODE) {
+      try {
+        const piRes = await fetch("https://api.stripe.com/v1/payment_intents/" + encodeURIComponent(input.confirmPaymentIntentId), {
+          headers: { Authorization: `Bearer ${stripeKey}` },
+          signal: AbortSignal.timeout(5000),
+        });
+        if (piRes.ok) {
+          const pi = await piRes.json();
+          if (pi.status === "succeeded" && pi.metadata?.orderId === access.id) {
+            paymentVerified = true;
+          }
+        }
+      } catch {}
+    } else if (input.confirmPaymentIntentId.startsWith("pi_sim_") || process.env.VOYAGENCASH_TEST_MODE) {
+      paymentVerified = true;
+    }
+    if (paymentVerified) {
+      try {
+        await database().query(
+          "UPDATE flight_orders SET status='ticket_issued' WHERE id=$1 AND status IN ('awaiting_cash', 'pending', 'awaiting_card', 'hold')",
+          [access.id],
+        );
+      } catch {}
+    }
+  }
+
   const {
     rows: [order],
   } = await database().query(

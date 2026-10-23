@@ -42,7 +42,9 @@
       draft.flights[0].payment_requirements?.requires_instant_payment === false;
     container.innerHTML = `<div class="page-heading"><span class="eyebrow">OFFRE DUFFEL</span><h1 id="options-title">Votre prochain départ.</h1><p>${draft.flights.map((f) => `${esc(F.airport(f.from).city)} → ${esc(F.airport(f.to).city)}`).join(" · ")} · ${F.money(total)} pour ${draft.search.count} adulte(s)</p></div><div class="panel" id="live-checkout"></div>`;
     const panel = container.querySelector("#live-checkout");
-    if (!config.checkout || !supported || total > 1000) {
+    const canCash = config.checkout && supported && total <= 1000;
+    let preferredPayment = "voucher";
+    if (!canCash && !config.stripe) {
       panel.innerHTML = `<h2>${total > 1000 ? "Ce voyage dépasse le plafond espèces." : !supported ? "Cette offre ne permet pas ce parcours PayEnCash." : "Le paiement partenaire n’est pas encore activé."}</h2><p>${!supported ? "La réservation réelle avec collecte en espèces requiert une offre éligible à la retenue (sans débit immédiat). Les compagnies low-cost exigent un règlement direct. Vous pouvez néanmoins tester l’intégralité du parcours PayEnCash en simulation." : total > 1000 ? "Le règlement en espèces est plafonné à 1 000 € conformément à l’article L.112-6 du Code Monétaire et Financier." : "Le connecteur partenaire PayEnCash nécessite les clés serveur LIVE_CHECKOUT_ENABLED=true. Vous pouvez tester le parcours en mode démonstration."}</p><div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:1.25rem"><button type="button" class="button primary" id="live-demo-continue">Tester en simulation PayEnCash (bon & billet)</button><a class="button secondary" href="#search">Modifier ma recherche</a></div>`;
       panel.querySelector("#live-demo-continue")?.addEventListener("click", () => {
         draft.flights.forEach((f) => (f.simulation = true));
@@ -55,6 +57,7 @@
       });
       return;
     }
+    if (!canCash && config.stripe) preferredPayment = "card";
     panel.innerHTML = `<h2>Les voyageurs</h2><p>Informations transmises au fournisseur pour la réservation. Elles ne sont pas enregistrées dans le stockage local.</p><form id="live-passengers">${Array.from({ length: draft.search.count }, (_, i) => `<fieldset class="live-passenger"><legend>Adulte ${i + 1}</legend><div class="form-grid"><label>Prénom<input name="given_name-${i}" minlength="2" maxlength="60" autocomplete="given-name" required></label><label>Nom<input name="family_name-${i}" minlength="2" maxlength="60" autocomplete="family-name" required></label><label>Date de naissance<input type="date" name="born_on-${i}" min="1900-01-01" max="${new Date(Date.now() - 18 * 365.25 * 86400000).toISOString().slice(0, 10)}" required></label><label>Civilité<select name="title-${i}"><option value="mr">Monsieur</option><option value="ms">Madame</option><option value="dr">Docteur</option></select></label><label>Sexe sur le document<select name="gender-${i}"><option value="m">M</option><option value="f">F</option></select></label></div></fieldset>`).join("")}<div class="form-grid"><label>E-mail<input type="email" name="email" autocomplete="email" required></label><label>Téléphone international<input type="tel" name="phone_number" placeholder="+33612345678" pattern="\\+[0-9]{8,15}" required></label></div><label class="consent"><input type="checkbox" required><span>Je demande une retenue sans débit immédiat. Le paiement du bon est nécessaire avant l’échéance pour demander l’émission du billet.</span></label><p class="form-error" id="live-error" role="alert" hidden></p><button class="button primary" type="submit">Retenir le vol · ${F.money(total)}</button></form>`;
     const idempotencyKey = crypto.randomUUID();
     panel.querySelector("form").addEventListener("submit", async (e) => {
@@ -93,11 +96,92 @@
         };
         // Persist the capability before requesting the voucher so an adapter retry is safe.
         save(active);
-        await showVoucher(container, active);
+        if (preferredPayment === "card") {
+          await showCardPayment(container, active);
+        } else {
+          await showVoucher(container, active);
+        }
       } catch (error) {
         feedback(error);
         button.disabled = false;
       }
+    });
+  }
+  async function showCardPayment(container, record) {
+    active = record;
+    activeContainer = container;
+    stop();
+    const session = generation;
+    const current = () => generation === session && container.isConnected;
+    container.innerHTML = `<div class="page-heading"><h1 id="options-title">Paiement par carte bancaire</h1><p>Réservation ${esc(record.id)} · ${F.money(record.amountCents / 100)}</p></div><div class="panel live-voucher"><div id="live-card-content"><div class="payment-methods" style="margin:0 0 16px"><div class="payment-choice" style="border-color:var(--primary);background:var(--primary-light)"><svg class="icon"><use href="#i-plane"/></svg><span><strong>Carte bancaire & Apple Pay</strong><small>Paiement sécurisé crypté SSL 256 bits via Stripe</small></span><span class="badge green">Stripe</span></div></div><div id="stripe-card-element" style="margin:16px 0;min-height:48px;padding:14px;background:white;border:1px solid var(--line);border-radius:10px"></div><p id="live-card-error" class="form-error" role="alert" hidden></p><button class="button primary full" id="live-card-submit">Payer ${F.money(record.amountCents / 100)}</button><div style="display:flex;gap:12px;margin-top:14px"><button class="text-button" id="live-card-back-voucher">← Choisir de payer en espèces PayEnCash</button></div></div><p id="live-state" role="status">Prêt pour le règlement sécurisé.</p></div>`;
+    const errorNode = container.querySelector("#live-card-error");
+    const submitBtn = container.querySelector("#live-card-submit");
+    const stateNode = container.querySelector("#live-state");
+    let stripeInstance = null, cardElement = null;
+    if (window.Stripe && FlightAPI.stripePublicKey) {
+      try {
+        stripeInstance = window.Stripe(FlightAPI.stripePublicKey);
+        const elements = stripeInstance.elements();
+        cardElement = elements.create("card", {
+          style: {
+            base: {
+              fontFamily: "Manrope, Arial, sans-serif",
+              fontSize: "15px",
+              color: "#132238",
+              "::placeholder": { color: "#64748b" },
+            },
+            invalid: { color: "#b91c1c" },
+          },
+        });
+        cardElement.mount("#stripe-card-element");
+      } catch (err) {
+        console.warn("Stripe Elements:", err);
+      }
+    }
+    if (!cardElement) {
+      const mountNode = container.querySelector("#stripe-card-element");
+      if (mountNode) {
+        mountNode.innerHTML = '<div class="test-card"><span>CARTE BANCAIRE · STRIPE</span><strong>•••• •••• •••• 4242</strong><span>12 / 30 &nbsp; · &nbsp; CVC ••• &nbsp; · &nbsp; TEST</span></div>';
+      }
+    }
+    submitBtn.onclick = async () => {
+      submitBtn.disabled = true;
+      errorNode.hidden = true;
+      stateNode.textContent = "Traitement du paiement sécurisé…";
+      try {
+        const pi = await FlightAPI.createStripeIntent({
+          holdToken: record.holdToken,
+          orderId: record.id,
+        });
+        let confirmed = false;
+        if (stripeInstance && cardElement && pi.clientSecret && !pi.simulation) {
+          const res = await stripeInstance.confirmCardPayment(pi.clientSecret, {
+            payment_method: { card: cardElement },
+          });
+          if (res.error) throw new Error(res.error.message);
+          if (res.paymentIntent?.status === "succeeded") confirmed = true;
+        } else {
+          confirmed = true;
+        }
+        if (confirmed) {
+          stateNode.textContent = "Paiement validé · Émission du billet…";
+          const status = await FlightAPI.request("/api/orders/status", {
+            token: record.token,
+            confirmPaymentIntentId: pi.id,
+          });
+          record.status = status.status || "ticket_issued";
+          save(record);
+          await showVoucher(container, record);
+        }
+      } catch (err) {
+        errorNode.hidden = false;
+        errorNode.textContent = err.message || "Échec du paiement.";
+        stateNode.textContent = "Le paiement n’a pas abouti. Vérifiez vos coordonnées.";
+        submitBtn.disabled = false;
+      }
+    };
+    container.querySelector("#live-card-back-voucher")?.addEventListener("click", () => {
+      showVoucher(container, record);
     });
   }
   async function showVoucher(container, record) {
@@ -107,7 +191,8 @@
     const session = generation;
     const current = () => generation === session && container.isConnected;
     let checking = false, terminal = false;
-    container.innerHTML = `<div class="page-heading"><h1 id="options-title">Votre réservation PayEnCash</h1><p>Réservation réelle · le billet sera émis après réception du paiement.</p></div><div class="panel live-voucher"><div id="live-voucher-content"></div><p id="live-state" role="status">Vérification de votre réservation…</p><p id="live-error" class="form-error" role="alert" hidden></p><div class="booking-actions"><button class="button" data-live-status>Actualiser le paiement</button><a class="button" href="#stores">Points de paiement</a><button class="button" data-live-print>Imprimer / PDF</button></div></div>`;
+    container.innerHTML = `<div class="page-heading"><h1 id="options-title">Votre réservation PayEnCash</h1><p>Réservation réelle · le billet sera émis après réception du paiement.</p></div><div class="panel live-voucher"><div id="live-voucher-content"></div><p id="live-state" role="status">Vérification de votre réservation…</p><p id="live-error" class="form-error" role="alert" hidden></p><div class="booking-actions"><button class="button primary" data-live-card-pay>Payer par carte bancaire (Stripe)</button><button class="button" data-live-status>Actualiser le paiement</button><a class="button" href="#stores">Points de paiement</a><button class="button" data-live-print>Imprimer / PDF</button></div></div>`;
+    container.querySelector("[data-live-card-pay]").onclick = () => showCardPayment(container, record);
     const content = container.querySelector("#live-voucher-content");
     async function loadVoucher() {
       try {
