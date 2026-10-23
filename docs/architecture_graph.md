@@ -2,6 +2,15 @@
 
 Ce document cartographie l'intégralité du codebase de Voyagencash. Il sert de boussole technique pour les développeurs et pour l'orchestration avec **OpenAI Codex CLI** et **Google Antigravity**.
 
+
+État après révision du commit `b69ab67` : les douze fonctions sont conservées et contrôlées au build. Les modules internes `capabilities.js`, `stores.js` et `recovery.js` complètent le serveur. `orders/status` est une projection sans écriture ; les rafraîchissements low-cost et la gestion des liens de reprise utilisent des actions explicites dans `orders/hold`. Les billets affichés proviennent des documents fournisseur persistés par le worker.
+
+La recherche interroge Duffel, Travelfusion (si configuré) et Ryanair indépendamment, avec résultats partiels et prix `quoted` ou `indicative`. Un tarif public Ryanair ne confirme ni le prix d’un vol particulier ni la disponibilité pour un groupe. Le calendrier et les résultats partagent le composant de dates flexibles.
+
+Les encaissements sont journalisés dans `payment_receipts`, les tentatives carte dans `payment_attempts`. L’outbox utilise un bail, une phase persistée et un jeton de revendication. La carte reste limitée aux offres Duffel avec retenue ; les paiements instantanés et les achats multi-trajets ne sont pas ouverts. Les données opérationnelles de l’annuaire proviennent de plages datées confirmées depuis moins de 120 minutes.
+
+L’ordonnanceur doit être installé séparément : aucun cron n’est présent dans `vercel.json`. Les unités systemd sont dans `ops/`, et les étapes de migration, d’activation et de supervision sont décrites dans [ENV.md](../ENV.md). Les schémas historiques ci-dessous restent une carte des composants ; ces précisions font foi pour les garanties livrées.
+
 ---
 
 ## 1. Graphe de Dépendances Global (Mermaid)

@@ -21,6 +21,8 @@ function database() {
       connectionString,
       max: 3,
       connectionTimeoutMillis: 5000,
+      statement_timeout: 5000,
+      query_timeout: 6000,
       idleTimeoutMillis: 10000,
     });
   }

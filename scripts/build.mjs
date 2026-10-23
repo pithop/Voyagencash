@@ -1,5 +1,6 @@
 import { cp, mkdir, readFile, readdir, rm } from "node:fs/promises";
 import { Script } from "node:vm";
+import { execFileSync } from "node:child_process";
 
 async function sourceFiles(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -8,7 +9,7 @@ async function sourceFiles(dir) {
       entries.map((e) =>
         e.isDirectory()
           ? sourceFiles(`${dir}/${e.name}`)
-          : /\.(js|css)$/.test(e.name)
+          : /\.(js|cjs|mjs|css|sql)$/.test(e.name)
             ? [`${dir}/${e.name}`]
             : [],
       ),
@@ -21,14 +22,20 @@ const sources = [
   ...(await sourceFiles("assets/css")),
   ...(await sourceFiles("api")),
   ...(await sourceFiles("server")),
+  ...(await sourceFiles("tests")),
+  ...(await sourceFiles("scripts")),
 ];
+const handlers = await sourceFiles("api");
+const expectedHandlers = ["config", "flights/calendar", "flights/search", "orders/fulfil", "orders/hold", "orders/status", "orders/wallet", "payencash/stores", "payencash/voucher", "payencash/webhook", "stripe/create-intent", "stripe/webhook"].map(p => `api/${p}.js`).sort();
+if (JSON.stringify(handlers.sort()) !== JSON.stringify(expectedHandlers)) throw new Error("Les 12 fonctions API attendues doivent être conservées.");
 for (const file of sources) {
   const source = await readFile(file, "utf8");
   if (/voyagencash\.com/i.test(source))
     throw new Error(`Nom de marque incorrect dans ${file}`);
   if (/\p{Emoji_Presentation}|\uFE0F/gu.test(source))
     throw new Error(`Émoji interdit dans ${file}`);
-  if (file.endsWith(".js")) new Script(source, { filename: file });
+  if (file.endsWith(".mjs")) execFileSync(process.execPath, ["--check", file]);
+  if (/\.(js|cjs)$/.test(file)) new Script(source, { filename: file });
 }
 const html = await readFile("index.html", "utf8");
 const symbols = new Set(

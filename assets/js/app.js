@@ -393,7 +393,7 @@
     const generation = ++resultsGeneration;
     legIndex = Math.min(draft.flights.length, draft.search.legs.length - 1);
     const leg = draft.search.legs[legIndex];
-    $("#results-content").innerHTML = `${progress(0)}<div class="results-loading" role="status"><div class="skeleton-cards">${[1, 2, 3].map(() => `<div class="skeleton-card"><div class="skeleton-header"><div class="skeleton-shimmer skeleton-avatar"></div><div class="skeleton-shimmer skeleton-title"></div></div><div class="skeleton-body"><div class="skeleton-times"><div class="skeleton-time-block"><div class="skeleton-shimmer skeleton-time-text"></div><div class="skeleton-shimmer skeleton-subtext"></div></div><div class="skeleton-shimmer skeleton-line"></div><div class="skeleton-time-block"><div class="skeleton-shimmer skeleton-time-text"></div><div class="skeleton-shimmer skeleton-subtext"></div></div></div><div class="skeleton-price-block"><div class="skeleton-shimmer skeleton-price"></div><div class="skeleton-shimmer skeleton-btn"></div></div></div></div>`).join("")}</div><div class="skeleton-status-msg"><span class="spinner" style="width:16px;height:16px;border-width:2px;"></span><span>Comparaison en direct des offres Duffel & Ryanair aux meilleurs tarifs…</span></div></div>`;
+    $("#results-content").innerHTML = `${progress(0)}<div class="results-loading" role="status"><div class="skeleton-cards">${[1, 2, 3].map(() => `<div class="skeleton-card"><div class="skeleton-header"><div class="skeleton-shimmer skeleton-avatar"></div><div class="skeleton-shimmer skeleton-title"></div></div><div class="skeleton-body"><div class="skeleton-times"><div class="skeleton-time-block"><div class="skeleton-shimmer skeleton-time-text"></div><div class="skeleton-shimmer skeleton-subtext"></div></div><div class="skeleton-shimmer skeleton-line"></div><div class="skeleton-time-block"><div class="skeleton-shimmer skeleton-time-text"></div><div class="skeleton-shimmer skeleton-subtext"></div></div></div><div class="skeleton-price-block"><div class="skeleton-shimmer skeleton-price"></div><div class="skeleton-shimmer skeleton-btn"></div></div></div></div>`).join("")}</div><div class="skeleton-status-msg"><span class="spinner" style="width:16px;height:16px;border-width:2px;"></span><span>Recherche des offres des compagnies…</span></div></div>`;
     let response;
     try { response = await FlightAPI.search({ ...leg, count: draft.search.count }); }
     catch (error) {
@@ -418,7 +418,7 @@
       ...new Map(offers.map((f) => [f.airline.code, f.airline])).values(),
     ];
     $("#results-content").innerHTML =
-      `${progress(0)}<div class="results-heading"><div><div class="eyebrow">${draft.search.type === "roundtrip" ? (legIndex ? "VOTRE VOL RETOUR" : "VOTRE VOL ALLER") : `TRAJET ${legIndex + 1} SUR ${draft.search.legs.length}`}</div><h1 id="results-title">${esc(F.airport(leg.from).city)} ${icon("arrow")} ${esc(F.airport(leg.to).city)}</h1><p>${F.dateLabel(leg.date, true)} · ${draft.search.count} passager${draft.search.count > 1 ? "s" : ""} · Économique</p></div><div class="booking-actions">${legIndex ? '<button class="button small" data-action="previous-leg">Modifier le vol précédent</button>' : ""}<a href="#search" class="button small">Modifier la recherche</a></div></div>${legIndex ? `<div class="notice">${icon("check")}<span>${legIndex} trajet${legIndex > 1 ? "s" : ""} sélectionné${legIndex > 1 ? "s" : ""} · ${draft.flights.map((f) => `${f.from} → ${f.to} à ${F.time(f.departure, f.from)}`).join(" · ")}</span></div>` : ""}<div class="date-explorer"><div><span class="eyebrow">VOS DATES, VOTRE BUDGET</span><strong>Choisissez le jour qui vous convient</strong></div><button class="button" data-action="result-calendar">${F.dateLabel(leg.date)} ${icon("chevron")}</button></div><div id="results-fare-strip" class="results-fares"></div><button class="button mobile-filter-button" data-action="open-filters">Filtres ${icon("menu")}</button><div class="results-layout"><aside class="filter-panel" id="result-filters"><button class="icon-button filter-close" data-action="close-filters" aria-label="Fermer les filtres">${icon("close")}</button><div><h2>Filtres</h2><button class="text-button" data-action="reset-filters">Réinitialiser</button></div><div class="filter-fields"><fieldset class="filter-group"><legend>Budget par passager</legend><input type="range" id="budget-filter" min="0" max="${filters.max}" step="1" value="${filters.max}" aria-label="Budget maximal par passager"><div class="budget-label"><span>0 €</span><output id="budget-output">${F.money(filters.max)}</output></div></fieldset><fieldset class="filter-group"><legend>Escales</legend><label><input type="checkbox" id="direct-filter"> Vols directs uniquement</label></fieldset><fieldset class="filter-group"><legend>Bagage cabine</legend><label><input type="checkbox" id="baggage-filter"> Valise cabine incluse</label></fieldset><fieldset class="filter-group"><legend>Heure de départ</legend>${[
+      `${response.partial ? '<p class="notice" role="status">Certaines compagnies n’ont pas répondu. Les offres disponibles sont affichées.</p>' : ""}${progress(0)}<div class="results-heading"><div><div class="eyebrow">${draft.search.type === "roundtrip" ? (legIndex ? "VOTRE VOL RETOUR" : "VOTRE VOL ALLER") : `TRAJET ${legIndex + 1} SUR ${draft.search.legs.length}`}</div><h1 id="results-title">${esc(F.airport(leg.from).city)} ${icon("arrow")} ${esc(F.airport(leg.to).city)}</h1><p>${F.dateLabel(leg.date, true)} · ${draft.search.count} passager${draft.search.count > 1 ? "s" : ""} · Économique</p></div><div class="booking-actions">${legIndex ? '<button class="button small" data-action="previous-leg">Modifier le vol précédent</button>' : ""}<a href="#search" class="button small">Modifier la recherche</a></div></div>${legIndex ? `<div class="notice">${icon("check")}<span>${legIndex} trajet${legIndex > 1 ? "s" : ""} sélectionné${legIndex > 1 ? "s" : ""} · ${draft.flights.map((f) => `${f.from} → ${f.to} à ${F.time(f.departure, f.from)}`).join(" · ")}</span></div>` : ""}<div class="date-explorer"><div><span class="eyebrow">VOS DATES, VOTRE BUDGET</span><strong>Choisissez le jour qui vous convient</strong></div><button class="button" data-action="result-calendar">${F.dateLabel(leg.date)} ${icon("chevron")}</button></div><div id="results-fare-strip" class="results-fares"></div><button class="button mobile-filter-button" data-action="open-filters">Filtres ${icon("menu")}</button><div class="results-layout"><aside class="filter-panel" id="result-filters"><button class="icon-button filter-close" data-action="close-filters" aria-label="Fermer les filtres">${icon("close")}</button><div><h2>Filtres</h2><button class="text-button" data-action="reset-filters">Réinitialiser</button></div><div class="filter-fields"><fieldset class="filter-group"><legend>Budget par passager</legend><input type="range" id="budget-filter" min="0" max="${filters.max}" step="1" value="${filters.max}" aria-label="Budget maximal par passager"><div class="budget-label"><span>0 €</span><output id="budget-output">${F.money(filters.max)}</output></div></fieldset><fieldset class="filter-group"><legend>Escales</legend><label><input type="checkbox" id="direct-filter"> Vols directs uniquement</label></fieldset><fieldset class="filter-group"><legend>Bagage cabine</legend><label><input type="checkbox" id="baggage-filter"> Valise cabine incluse</label></fieldset><fieldset class="filter-group"><legend>Heure de départ</legend>${[
         ["morning", "Matin · 06 h – 12 h"],
         ["afternoon", "Après-midi · 12 h – 18 h"],
         ["evening", "Soir · après 18 h"],
@@ -441,44 +441,10 @@
   }
   async function renderPriceTrend(leg, generation) {
     const container = $("#results-fare-strip");
-    const minimum = legIndex ? draft.search.legs[legIndex - 1].date : localToday();
-    const maximum = addDays(localToday(), 365);
-    const start = [minimum, [addDays(leg.date, -3), addDays(maximum, -6)].sort()[0]].sort().at(-1);
-    const days = Array.from({ length: 7 }, (_, i) => addDays(start, i)).filter(date => date <= maximum);
-    const draw = (values, note) => {
-      const prices = values.filter(d => days.includes(d.date)).map(d => d.price).filter(p => Number.isFinite(p) && p >= 0);
-      const max = Math.max(1, ...prices), min = Math.min(...prices);
-      container.innerHTML = `<section class="price-trend" aria-label="Tendance des prix sur sept jours"><div class="trend-heading"><div><span class="eyebrow">À QUELQUES JOURS PRÈS</span><h2>Un autre jour, un autre prix.</h2></div><span>${days.length} jours · par adulte</span></div><div class="price-trend-chart">${days.map(date => {
-        const price = values.find(d => d.date === date)?.price;
-        const known = Number.isFinite(price) && price >= 0;
-        const active = date === leg.date;
-        return `<button type="button" class="trend-bar fare-day${active ? " trend-bar-active selected" : ""}${known && price === min ? " trend-bar-low" : ""}${known ? "" : " trend-bar-unknown"}" data-trend-date="${date}" data-fare-date="${date}" aria-pressed="${active}" aria-label="${F.dateLabel(date, true)}, ${known ? F.money(price) : "prix à vérifier"}" style="--trend-height:${known ? Math.max(12, Math.round(price / max * 100)) : 12}%"><span class="trend-price">${known ? F.money(price) : "—"}</span><span class="trend-track" aria-hidden="true"><span class="trend-fill"></span></span><span class="trend-label">${F.dateLabel(date)}</span>${known && price === min ? '<span class="trend-best">Prix le plus bas</span>' : '<span class="trend-best">&nbsp;</span>'}</button>`;
-      }).join("")}</div><p class="trend-note" role="status">${note}</p></section>`;
-    };
-    draw([], "Chargement des prix…");
-    container.onclick = e => {
-      const button = e.target.closest("[data-trend-date]");
-      if (button) selectResultDate(button.dataset.trendDate);
-    };
-    try {
-      const months = [...new Set(days.map(d => d.slice(0, 7)))];
-      const responses = await Promise.all(months.map(month => FlightAPI.calendar({ from: leg.from, to: leg.to, count: draft.search.count, month })));
-      if (generation !== resultsGeneration || view !== "results" || !container.isConnected) return;
-      const allDays = responses.flatMap(r => r.days || []);
-      if (offers && offers.length) {
-        const direct = offers.filter(f => !f.stops);
-        const searchMin = direct.length ? Math.min(...direct.map(f => f.price)) : Math.min(...offers.map(f => f.price));
-        const idx = allDays.findIndex(d => d.date === leg.date);
-        if (idx >= 0) allDays[idx] = { ...allDays[idx], price: searchMin, direct: !!direct.length };
-        else allDays.push({ date: leg.date, price: searchMin, direct: !!direct.length });
-      }
-      draw(allDays, responses.every(r => r.simulation)
-        ? "Prix de démonstration · minimum des vols directs. Sélectionnez une date pour comparer."
-        : "Prix observés des vols directs, à reconfirmer. Un tiret indique un prix encore inconnu.");
-    } catch {
-      if (generation === resultsGeneration && container.isConnected)
-        draw([], "Prix indisponibles. Sélectionnez une date pour rechercher les vols.");
-    }
+    await FareStrip.mount(container, { ...leg, count: draft.search.count,
+      min: legIndex ? draft.search.legs[legIndex - 1].date : localToday(),
+      selectedOffer: offers.filter(f => !f.stops).sort((a, b) => a.price - b.price)[0],
+    }, date => { if (generation === resultsGeneration && view === "results") selectResultDate(date); });
   }
   function flightJourney(f) {
     const step = (timestamp, code, symbol, title, content, cls = "") => `<li class="journey-step ${cls}"><span class="journey-dot">${icon(symbol)}</span><time class="journey-time" datetime="${new Date(timestamp).toISOString()}">${F.time(timestamp, code)}<small>${F.dateLabel(F.dateInZone(timestamp, F.airport(code).tz))}</small></time><div class="journey-content"><strong>${title}</strong>${content}</div></li>`;
@@ -505,7 +471,7 @@
   function renderFlightList() {
     const list = F.filter(offers, filters);
     $("#result-count").textContent =
-      `${list.length} vol${list.length > 1 ? "s" : ""} · ${offers[0]?.simulation !== false ? "démonstration" : "Duffel · tarifs vérifiés"}`;
+      `${list.length} vol${list.length > 1 ? "s" : ""} · ${offers[0]?.simulation !== false ? "démonstration" : "prix à reconfirmer"}`;
     $("#flight-list").innerHTML = list.length
       ? list
           .map((f, i) => {
@@ -513,7 +479,7 @@
             const dayDiff = Math.round(
               (Date.parse(arrivalDate) - Date.parse(f.date)) / 86400000,
             );
-            return `<article class="flight-card"><div class="flight-card-top"><span class="airline-badge" style="--carrier:${f.airline.color}">${["AF","AH","AT","TU","TO","FR","U2","TP","TK","VY"].includes(f.airline.code) ? `<img src="/assets/img/airlines/${f.airline.code}.svg" alt="${esc(f.airline.name)}">` : esc(f.airline.code)}</span><div><strong>${esc(f.airline.name)}</strong><small>${f.segments.map((s) => esc(s.number)).join(" · ")} · Économique</small></div>${i === 0 ? `<span class="badge">${filters.sort === "price" ? "Le moins cher" : filters.sort === "duration" ? "Le plus rapide" : "Notre sélection"}</span>` : ""}</div><div class="flight-card-body"><div class="flight-time"><strong>${F.time(f.departure, f.from)}</strong><span>${f.from} · ${esc(F.airport(f.from).city)}</span></div><div class="timeline"><span>${F.duration(f.duration)}</span><div class="timeline-line">${icon("plane")}</div><span>${f.stops ? `1 escale · ${f.segments[0].to}` : "Direct"}</span></div><div class="flight-time"><strong>${F.time(f.arrival, f.to)}${dayDiff ? ` <small>${dayDiff > 0 ? "+" : ""}${dayDiff} j</small>` : ""}</strong><span>${f.to} · ${esc(F.airport(f.to).city)}</span></div><div class="flight-price"><strong>${F.money(f.price)}</strong><small>TTC / passager${draft.search.count > 1 ? ` · ${F.money(f.price * draft.search.count)} au total` : ""}</small><button class="button primary" data-select-flight="${esc(f.id)}" aria-label="Choisir ${esc(f.airline.name)} à ${F.time(f.departure, f.from)}, ${F.money(f.price)}">Choisir ${icon("arrow")}</button></div></div><div class="flight-inclusions"><span>${icon("bag")} ${f.cabinBagIncluded ? "Valise cabine incluse" : "Cabine selon tarif"}</span>${f.co2Kg ? `<span>${icon("leaf")} ${f.co2Kg} kg CO2e ${(f.simulation || f.co2Estimated) ? "· estimés" : "· fournisseur"}</span>` : ""}<span>${icon("clock")} ${f.simulation ? `${f.punctuality}% ponctualité · simulation` : "Ponctualité non disponible"}</span></div><details class="flight-details"><summary>Détails du vol & bagages</summary>${flightJourney(f)}</details></article>`;
+            return `<article class="flight-card"><div class="flight-card-top"><span class="airline-badge" style="--carrier:${f.airline.color}">${["AF","AH","AT","TU","TO","FR","U2","TP","TK","VY"].includes(f.airline.code) ? `<img src="/assets/img/airlines/${f.airline.code}.svg" alt="${esc(f.airline.name)}">` : esc(f.airline.code)}</span><div><strong>${esc(f.airline.name)}</strong><small>${f.segments.map((s) => esc(s.number)).join(" · ")} · Économique</small></div>${i === 0 ? `<span class="badge">${filters.sort === "price" ? "Le moins cher" : filters.sort === "duration" ? "Le plus rapide" : "Notre sélection"}</span>` : ""}</div><div class="flight-card-body"><div class="flight-time"><strong>${F.time(f.departure, f.from)}</strong><span>${f.from} · ${esc(F.airport(f.from).city)}</span></div><div class="timeline"><span>${F.duration(f.duration)}</span><div class="timeline-line">${icon("plane")}</div><span>${f.stops ? `1 escale · ${f.segments[0].to}` : "Direct"}</span></div><div class="flight-time"><strong>${F.time(f.arrival, f.to)}${dayDiff ? ` <small>${dayDiff > 0 ? "+" : ""}${dayDiff} j</small>` : ""}</strong><span>${f.to} · ${esc(F.airport(f.to).city)}</span></div><div class="flight-price"><strong>${F.money(f.price)}</strong><small>${f.priceKind === "indicative" ? "Indicatif · à reconfirmer" : "TTC / passager"}${draft.search.count > 1 ? ` · ${F.money(f.price * draft.search.count)} au total` : ""}</small><button class="button primary" data-select-flight="${esc(f.id)}" aria-label="Choisir ${esc(f.airline.name)} à ${F.time(f.departure, f.from)}, ${F.money(f.price)}">Choisir ${icon("arrow")}</button></div></div><div class="flight-inclusions"><span>${icon("bag")} ${f.cabinBagIncluded ? "Valise cabine incluse" : "Cabine selon tarif"}</span>${f.co2Kg ? `<span>${icon("leaf")} ${f.co2Kg} kg CO2e ${(f.simulation || f.co2Estimated) ? "· estimés" : "· fournisseur"}</span>` : ""}<span>${icon("clock")} ${f.simulation ? `${f.punctuality}% ponctualité · simulation` : "Ponctualité non disponible"}</span></div><details class="flight-details"><summary>Détails du vol & bagages</summary>${flightJourney(f)}</details></article>`;
           })
           .join("")
       : `<div class="empty-state">${icon("search")}<h2>Aucun vol pour cette sélection.</h2><p>${offers.length ? "Élargissez votre budget ou retirez un filtre." : "Essayez une autre date. Les trajets suivants doivent partir au moins deux heures après votre arrivée."}</p><button class="button" data-action="${offers.length ? "reset-filters" : "change-search"}">${offers.length ? "Réinitialiser les filtres" : "Modifier la recherche"}</button></div>`;
@@ -542,12 +508,13 @@
           airline: f.airline.code, flightNumber: f.segments[0].number, passengers,
           bookingToken: f.bookingToken, expectedAmountCents: Math.round(f.price * draft.search.count * 100),
         }, { "Idempotency-Key": idempotencyKey });
+        LiveBooking.save({ id: result.id, token: result.accessToken, kind: "low-cost-access", status: result.status });
         if (!container.isConnected || view !== "options") return;
         container.innerHTML = `<div class="panel"><h1 id="options-title">Votre demande est enregistrée.</h1><p id="low-cost-state" role="status">${esc(result.message)}</p><p>Référence de suivi : ${esc(result.id)}</p>${result.handoffUrl ? `<p>Le lien préremplit le trajet, la date et le nombre d’adultes. Sélectionnez ensuite le vol ${esc(f.segments[0].number)} ; vos données personnelles ne figurent pas dans le lien.</p><a class="button primary" href="${esc(result.handoffUrl)}" rel="noopener noreferrer" target="_blank">Continuer sur Ryanair ${icon("arrow")}</a>` : ""}<button class="button" id="low-cost-refresh">Actualiser le statut</button><a class="button" href="#search">Rechercher un vol</a></div>`;
         container.querySelector("#low-cost-refresh").onclick = async event => {
           event.target.disabled = true;
           try {
-            const status = await FlightAPI.request("/api/orders/status", { token: result.accessToken });
+            const status = await FlightAPI.request("/api/orders/hold", { action: "refresh-low-cost", token: result.accessToken });
             container.querySelector("#low-cost-state").textContent = status.message + (status.bookingReference ? ` Référence compagnie : ${status.bookingReference}` : "");
           } catch (error) { toast(error.message, true); }
           finally { event.target.disabled = false; }
@@ -565,15 +532,11 @@
       return;
     }
 
-    if (FlightAPI.checkout && draft.flights.some((f) => f.simulation === false)) {
+    if (draft.flights.some((f) => f.simulation === false)) {
       LiveBooking.mount($("#options-content"), draft).catch((e) =>
         toast(e.message, true),
       );
       return;
-    }
-    if (!FlightAPI.checkout) {
-      draft.flights.forEach((f) => (f.simulation = true));
-      persist();
     }
     $("#options-content").innerHTML =
       `${progress(1)}<div class="page-heading"><h1 id="options-title">Un voyage à votre mesure.</h1><p>Emportez ce qui compte. Tous les suppléments sont affichés ici.</p></div><div class="checkout-layout"><div><div class="panel"><h2>Vos bagages</h2><p>Ces options s’appliquent à chaque passager et à chaque trajet sélectionné.</p><div class="option-card">${icon("bag")}<span><strong>Un petit sac sous le siège</strong><small>Inclus pour chaque passager dans cette simulation.</small></span><span class="badge green">Inclus</span></div><label class="option-card">${icon("bag")}<span><strong>Bagage en soute · 23 kg</strong><small>35 € / passager / trajet · ${draft.search.count} × ${draft.flights.length} trajet(s)</small></span><b>+${F.money(35 * draft.search.count * draft.flights.length)}</b><input type="checkbox" id="baggage-option" ${draft.options.baggage ? "checked" : ""} aria-label="Ajouter le bagage en soute"></label></div><div class="panel"><h2>Un peu plus de tranquillité</h2><label class="option-card">${icon("shield")}<span><strong>Garantie annulation</strong><small>Option fictive · 19 € / passager pour tout le voyage. Aucun contrat d’assurance réel.</small></span><b>+${F.money(19 * draft.search.count)}</b><input type="checkbox" id="guarantee-option" ${draft.options.guarantee ? "checked" : ""} aria-label="Ajouter la garantie annulation"></label></div><div class="actions"><button class="text-button" data-action="reselect-last">← Modifier les vols</button><button class="button primary" data-action="to-passengers">Continuer vers les passagers ${icon("arrow")}</button></div></div><div id="options-summary">${summary()}</div></div>`;
@@ -861,6 +824,13 @@
     } catch { $("#view-stores .notice span").textContent="Annuaire momentanément indisponible. Réessayez plus tard."; }
     if(view==='stores')renderStores();
   });
+  function storeHoursLabel(s) {
+    if (!s.hoursConfirmedAt || Date.now() - Date.parse(s.hoursConfirmedAt) > 120 * 60000) return "horaires à confirmer";
+    if (s.isOpen === false || (s.closesAt && Date.parse(s.closesAt) <= Date.now())) return "fermé actuellement";
+    if (s.isOpen !== true) return "horaires à confirmer";
+    const remaining = s.closesAt ? Math.floor((Date.parse(s.closesAt) - Date.now()) / 60000) : s.closesInMinutes;
+    return s.paymentWindowConfirmed ? `ouverture confirmée jusqu’à ${new Date(s.closesAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} · vérifiez votre temps de trajet` : `fermeture dans ${remaining} min · vérifiez votre temps de trajet`;
+  }
   function renderStores() {
     const q = $("#store-search").value.trim().toLowerCase();
     const matched = stores.filter(
@@ -871,18 +841,18 @@
           s.zip.slice(0, 2) === q.slice(0, 2)),
     );
     if (geoPosition) matched.sort((a, b) => F.distance(geoPosition, a) - F.distance(geoPosition, b));
-    if (!matched.some((s) => s.id === activeStore))
+    if (!matched.some((s) => String(s.id) === String(activeStore)))
       activeStore = matched[0]?.id;
     $("#store-list").innerHTML = matched.length
       ? matched
           .map(
             (s) =>
-              `<button class="store-item ${s.id === activeStore ? "active" : ""}" data-store="${s.id}" aria-pressed="${s.id === activeStore}"><strong>${s.id}. ${esc(s.name)}</strong><p>${esc(s.area)} · ${esc(s.zip)} ${esc(s.city)}</p><small>${esc(s.hours)} · indicatifs</small><span class="store-distance">${icon("pin")} ${geoPosition ? F.distance(geoPosition, s).toFixed(1) + " km à vol d’oiseau" : partnerStores ? "Activer le GPS pour la distance" : s.estimatedKm + " km estimés du centre"}</span></button>`,
+              `<button class="store-item ${String(s.id) === String(activeStore) ? "active" : ""}" data-store="${esc(s.id)}" aria-pressed="${String(s.id) === String(activeStore)}"><strong>${esc(s.name)}</strong><p>${esc(s.area)} · ${esc(s.zip)} ${esc(s.city)}</p><small>${esc(s.hours)} · ${partnerStores ? storeHoursLabel(s) : "indicatifs"}</small><span class="store-distance">${icon("pin")} ${geoPosition ? F.distance(geoPosition, s).toFixed(1) + " km à vol d’oiseau" : partnerStores ? "Activer le GPS pour la distance" : s.estimatedKm + " km estimés du centre"}</span></button>`,
           )
           .join("")
       : '<div class="empty-state"><h2>Aucun point démo trouvé.</h2><p>Essayez Paris, Marseille, Lyon, Toulouse, Nice, Lille ou Bordeaux.</p></div>';
     if(FlightAPI.mode === "live") {
-      const map=$(".locator-map"),selected=matched.find(s=>s.id===activeStore);
+      const map=$(".locator-map"),selected=matched.find(s=>String(s.id)===String(activeStore));
       map.setAttribute('aria-label','Localisation du point partenaire');
       map.innerHTML=selected ? `<iframe title="Carte du point partenaire" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=${selected.lon-.03},${selected.lat-.02},${selected.lon+.03},${selected.lat+.02}&layer=mapnik&marker=${selected.lat},${selected.lon}"></iframe>` : '<p class="empty-state">Sélectionnez un point partenaire disponible.</p>';
       if(!matched.length)$("#store-list").innerHTML='<div class="empty-state"><h2>Aucun point disponible.</h2><p>Essayez une autre ville ou réessayez plus tard.</p></div>';
@@ -891,7 +861,7 @@
     $("#map-pins").innerHTML = matched
       .map(
         (s) =>
-          `<button class="map-pin ${s.id === activeStore ? "active" : ""}" style="left:${s.x}%;top:${s.y}%" data-store="${s.id}" aria-label="${s.name}" aria-pressed="${s.id === activeStore}"><span>${s.id}</span></button>`,
+          `<button class="map-pin ${String(s.id) === String(activeStore) ? "active" : ""}" style="left:${s.x}%;top:${s.y}%" data-store="${esc(s.id)}" aria-label="${s.name}" aria-pressed="${String(s.id) === String(activeStore)}"><span>${s.id}</span></button>`,
       )
       .join("");
   }
@@ -932,7 +902,7 @@
       if (b.dataset.selectFlight) {
         const f = offers.find((f) => f.id === b.dataset.selectFlight);
         if (!f) return;
-        const flightToSave = FlightAPI.checkout ? f : { ...f, simulation: true };
+        const flightToSave = f;
         draft.flights = draft.flights.slice(0, legIndex);
         draft.flights.push(flightToSave);
         persist();
@@ -971,7 +941,7 @@
       }
       if (b.dataset.resume) resume(b.dataset.resume);
       if (b.dataset.store) {
-        activeStore = +b.dataset.store;
+        activeStore = b.dataset.store;
         renderStores();
       }
       const action = b.dataset.action;
@@ -1075,7 +1045,7 @@
   });
   function route() {
     let next =
-      location.hash.slice(1) ||
+      location.hash.slice(1).split("?")[0] ||
       { "/mes-billets": "bookings", "/ou-payer": "stores", "/aide": "faq" }[
         location.pathname
       ] ||
@@ -1157,9 +1127,11 @@
       if(view === "bookings") LiveBooking.appendBookings($("#bookings-content"));
     } catch (e) {
       toast(e.message, true);
-      if (view === "bookings")
+      if (view === "bookings") {
         $("#bookings-content").innerHTML =
           `<div class="empty-state"><h2>Stockage local indisponible</h2><p>${esc(e.message)}</p><a class="button" href="#search">Revenir à la recherche</a></div>`;
+        LiveBooking.appendBookings($("#bookings-content"));
+      }
     }
     document.title = `voyagencash — ${{ search: "Trouvez votre prochain vol", results: "Choisissez votre vol", options: "Vos options", passengers: "Vos passagers", payment: "Votre paiement", confirmation: "Votre e-billet", bookings: "Mes réservations", stores: "Où payer", faq: "Aide & FAQ" }[view]}`;
     window.scrollTo({ top: 0, behavior: "instant" });

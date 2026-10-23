@@ -15,5 +15,5 @@ module.exports = endpoint("GET", async (req, res) => {
     !crypto.timingSafeEqual(provided, expected)
   )
     throw new HttpError(401, "Authentification requise.");
-  json(res, 200, await require("../../server/fulfil.js").fulfilOne());
+  json(res, 200, await require("../../server/fulfil.js").fulfilBatch());
 });

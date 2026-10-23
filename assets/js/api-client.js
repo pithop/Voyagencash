@@ -3,21 +3,22 @@
   let config;
   const ready = fetch("/api/config", { signal: AbortSignal.timeout(2500) })
     .then(async (r) => {
-      if (!r.ok || !r.headers.get("content-type")?.includes("application/json"))
+      if (!r.ok) throw new Error("Configuration indisponible.");
+      if (!r.headers.get("content-type")?.includes("application/json"))
         return { mode: "static", checkout: false };
       const data = await r.json();
       return ["live", "demo"].includes(data.mode)
         ? data
         : { mode: "static", checkout: false };
     })
-    .catch(() => ({ mode: "static", checkout: false }))
+    .catch(() => ({ mode: "unavailable", checkout: false }))
     .then((value) => {
       config = value;
       document.documentElement.dataset.apiMode = value.mode;
       const bar = document.querySelector(".demo-bar");
       if (value.mode === "live")
-        bar.innerHTML =
-          '<span class="live-dot"></span> Offres Duffel <span class="demo-detail">· Disponibilités vérifiées à la recherche · Paiement selon éligibilité</span>';
+        if (bar) bar.innerHTML =
+          '<span class="live-dot"></span> Offres des compagnies <span class="demo-detail">· Disponibilités vérifiées à la recherche · Paiement selon éligibilité</span>';
       return value;
     });
   async function request(path, data, headers = {}) {
@@ -37,21 +38,36 @@
       throw new Error(value.error || "Service momentanément indisponible.");
     return value;
   }
+  const pendingSearches = new Map(), searchCache = new Map();
   async function search(query) {
     await ready;
+    if (config.mode === "unavailable") throw new Error("Configuration indisponible. Rechargez la page pour réessayer.");
     if (config.mode === "static")
       return {
         source: "offline-demo",
         simulation: true,
         offers: FlightEngine.generate(query),
       };
-    return request("/api/flights/search", query);
+    const key = JSON.stringify([query.from, query.to, query.date, query.count || 1]);
+    const cached = searchCache.get(key);
+    if (cached && Date.now() < cached.until) return cached.value;
+    if (pendingSearches.has(key)) return pendingSearches.get(key);
+    const pending = request("/api/flights/search", query).then(value => {
+      const expiry = Math.min(Date.now() + 15000, ...value.offers.map(o => Date.parse(o.expiresAt)).filter(Number.isFinite));
+      if (searchCache.size >= 32) searchCache.delete(searchCache.keys().next().value);
+      searchCache.set(key, { value, until: expiry });
+      cache.clear();
+      return value;
+    }).finally(() => pendingSearches.delete(key));
+    pendingSearches.set(key, pending);
+    return pending;
   }
   const cache = new Map();
   const pendingCalendars = new Map();
   async function calendar(query) {
     await ready;
     const key = new URLSearchParams({ from: query.from, to: query.to, month: query.month, count: query.count || 1 }).toString();
+    if (config.mode === "unavailable") throw new Error("Configuration indisponible. Rechargez la page pour réessayer.");
     if (config.mode === "static") {
       if (!cache.has(key))
         cache.set(key, {

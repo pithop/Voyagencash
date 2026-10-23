@@ -39,7 +39,7 @@ async function adapter(path, payload, key) {
     method: "POST", redirect: "error",
     headers: { Authorization: `Bearer ${process.env.TRAVELFUSION_API_KEY}`, "Content-Type": "application/json",
       ...(key ? { "Idempotency-Key": key } : {}) },
-    body: JSON.stringify(payload), signal: AbortSignal.timeout(25000),
+    body: JSON.stringify(payload), signal: AbortSignal.timeout(path === "search" ? 8000 : 15000),
   });
   if (!response.ok) throw new HttpError(502, "Le fournisseur low-cost n’a pas confirmé la demande.");
   return response.json();
@@ -60,7 +60,7 @@ async function searchLowCost(input) {
   ).map(o => {
     const segments = o.segments.map(s => ({ ...s, duration: (s.arrival - s.departure) / 60000 }));
     const departure = segments[0].departure, arrival = segments.at(-1).arrival;
-    return F.enrichOffer({ ...o, id: `tf_${o.id}`, provider: "travelfusion", simulation: false,
+    return F.enrichOffer({ ...o, id: `tf_${o.id}`, provider: "travelfusion", simulation: false, priceKind: "quoted", observedAt: Date.now(),
       price: o.totalAmount / query.count, segments, departure, arrival,
       stops: segments.length - 1, duration: (arrival - departure) / 60000,
       departureHour: +F.time(departure, query.from).split(":")[0],
@@ -173,18 +173,18 @@ async function bookFlight(input) {
     [id, result.status, result.bookingReference || null]);
   return publicBooking(updated.rows[0] || (await db.query("SELECT * FROM low_cost_bookings WHERE id=$1", [id])).rows[0]);
 }
-async function checkBookingStatus({ token }) {
+async function checkBookingStatus({ token, readOnly = false }) {
   const access = verify(token, "low-cost-access");
   const db = database();
   let row = (await db.query("SELECT * FROM low_cost_bookings WHERE id=$1", [access.id])).rows[0];
   if (!row) throw new HttpError(404, "Demande introuvable.");
-  if (row.provider === "travelfusion" && ["pending", "submitting", "reconciliation_required"].includes(row.state) && configured()) {
+  if (!readOnly && row.provider === "travelfusion" && ["pending", "submitting", "reconciliation_required"].includes(row.state) && configured()) {
     // Status lookup by our durable clientReference also reconciles a lost response.
     const result = providerStatus(await adapter("bookings/status", { clientReference: row.id }));
     row = (await db.query("UPDATE low_cost_bookings SET state=$2,booking_reference=$3,updated_at=now() WHERE id=$1 AND state IN ('pending','submitting','reconciliation_required') RETURNING *",
       [row.id, result.status, result.bookingReference || null])).rows[0] ||
       (await db.query("SELECT * FROM low_cost_bookings WHERE id=$1", [row.id])).rows[0];
   }
-  return publicBooking(row);
+  return { ...publicBooking(row), accessToken: token };
 }
 module.exports = { configured, searchLowCost, bookFlight, checkBookingStatus, createRyanairDirectHandoffUrl };

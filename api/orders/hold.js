@@ -11,6 +11,8 @@ const F = require("../../assets/js/flight-engine.js");
 const { database, transaction } = require("../../server/database.js");
 module.exports = endpoint("POST", async (req, res) => {
   const input = await body(req);
+  if (input.action === "refresh-low-cost") return json(res, 200, await require("../../server/travelfusion.js").checkBookingStatus({ token: input.token }));
+  if (input.action === "recovery") return json(res, 200, await require("../../server/recovery.js").issue(input));
   if (input.bookingToken || (Array.isArray(input.passengers) && !input.legs && input.from && input.to)) {
     const result = await require("../../server/travelfusion.js").bookFlight({
       ...input,
@@ -105,11 +107,11 @@ module.exports = endpoint("POST", async (req, res) => {
       payment_required_by: new Date(hold.expiresAt).toISOString(),
     });
   }
-  if (
-    process.env.LIVE_CHECKOUT_ENABLED !== "true" ||
-    !process.env.PAYENCASH_WEBHOOK_SECRET
-  )
-    throw new HttpError(503, "Le paiement partenaire n’est pas encore activé.");
+  const paymentMethod = input.paymentMethod || "cash";
+  if (!["cash", "card"].includes(paymentMethod)) throw new HttpError(400, "Moyen de paiement invalide.");
+  const capabilities = require("../../server/capabilities.js").capabilities();
+  if (!(paymentMethod === "card" ? capabilities.cardCheckout : capabilities.cashCheckout))
+    throw new HttpError(503, "Le paiement choisi n’est pas encore activé.");
   const key = req.headers["idempotency-key"];
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -163,25 +165,17 @@ module.exports = endpoint("POST", async (req, res) => {
       ].map((k) => [k, p[k]]),
     );
   });
-  // The adapter is an operator-owned contract, not a guessed public PayEnCash API.
-  if (
-    !process.env.PAYENCASH_ADAPTER_URL ||
-    !process.env.PAYENCASH_API_KEY ||
-    !process.env.VOUCHER_SIGNING_SECRET
-  )
-    throw new HttpError(
-      503,
-      "Le service de paiement partenaire doit être configuré avant toute retenue.",
-    );
-  let adapter;
-  try { adapter = new URL(process.env.PAYENCASH_ADAPTER_URL); } catch {}
-  if (adapter?.protocol !== "https:")
-    throw new HttpError(503, "L’adaptateur partenaire doit utiliser HTTPS.");
+  if (paymentMethod === "cash") {
+    let adapter;
+    try { adapter = new URL(process.env.PAYENCASH_ADAPTER_URL); } catch {}
+    if (adapter?.protocol !== "https:") throw new HttpError(503, "L’adaptateur partenaire doit utiliser HTTPS.");
+  }
   const db = database();
   const fingerprint = crypto
     .createHash("sha256")
     .update(
       JSON.stringify({
+        paymentMethod,
         offerId: input.offerId,
         passengers,
         expectedAmountCents: input.expectedAmountCents,
@@ -222,7 +216,7 @@ module.exports = endpoint("POST", async (req, res) => {
       offer.total_currency !== "EUR" ||
       !Number.isFinite(Number(offer.total_amount)) ||
       Number(offer.total_amount) <= 0 ||
-      Number(offer.total_amount) > 1000
+      (paymentMethod === "cash" && Number(offer.total_amount) > 1000)
     )
       throw new HttpError(
         422,
@@ -240,11 +234,11 @@ module.exports = endpoint("POST", async (req, res) => {
     if (
       !Number.isFinite(guarantee) ||
       !Number.isFinite(deadline) ||
-      Math.min(guarantee, deadline) < Date.now() + 7200000
+      Math.min(guarantee, deadline) < Date.now() + (paymentMethod === "cash" ? 7200000 : 300000)
     )
       throw new HttpError(
         409,
-        "Cette offre ne garantit pas deux heures de retenue au tarif affiché.",
+        "La durée de retenue ne permet pas le paiement choisi.",
       );
     if (
       offer.passengers.length !== passengers.length ||
@@ -287,7 +281,7 @@ module.exports = endpoint("POST", async (req, res) => {
     !Number.isInteger(hold.amountCents) ||
     hold.amountCents !== input.expectedAmountCents ||
     hold.amountCents < 1 ||
-    hold.amountCents > 100000
+    (paymentMethod === "cash" && hold.amountCents > 100000)
   )
     throw new HttpError(
       502,
@@ -306,8 +300,8 @@ module.exports = endpoint("POST", async (req, res) => {
   };
   await transaction(async (db) => {
     await db.query(
-      "INSERT INTO flight_orders(id,amount_cents,currency,expires_at) VALUES($1,$2,$3,$4)",
-      [hold.id, hold.amountCents, hold.currency, new Date(expiresAt)],
+      "INSERT INTO flight_orders(id,amount_cents,currency,expires_at,provider,status,payment_method) VALUES($1,$2,$3,$4,'duffel',$5,$6)",
+      [hold.id, hold.amountCents, hold.currency, new Date(expiresAt), paymentMethod === "card" ? "awaiting_card" : "awaiting_cash", paymentMethod],
     );
     await db.query(
       "UPDATE checkout_requests SET state='held',response=$2 WHERE idempotency_key=$1",

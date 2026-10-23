@@ -2,8 +2,11 @@
 (() => {
   const esc = BookingManager.escape,
     F = FlightEngine;
-  let active, timer, pollTimer, activeContainer, generation = 0;
+  let active, timer, pollTimer, activeContainer, mountedCard, generation = 0;
+  let memoryRecords = [];
   function stop() {
+    mountedCard?.destroy();
+    mountedCard = null;
     generation++;
     clearInterval(timer);
     clearTimeout(pollTimer);
@@ -11,16 +14,15 @@
   const key = "voyagencash_live_orders";
   function records() {
     try {
-      return JSON.parse(localStorage.getItem(key) || "[]");
-    } catch {
-      return [];
-    }
+      const parsed = JSON.parse(localStorage.getItem(key) || "[]");
+      if (Array.isArray(parsed)) return [...memoryRecords, ...parsed.filter(r => r && typeof r.id === "string" && typeof r.token === "string" && !memoryRecords.some(m => m.id === r.id))];
+    } catch { /* The current tab remains usable when browser storage is unavailable. */ }
+    return memoryRecords;
   }
   function save(value) {
-    localStorage.setItem(
-      key,
-      JSON.stringify([value, ...records().filter((r) => r.id !== value.id)]),
-    );
+    const { id, token, holdToken, expiresAt, amountCents, voucher, status, kind, paymentMethod } = value;
+    memoryRecords = [{ id, token, holdToken, expiresAt, amountCents, voucher, status, kind, paymentMethod }, ...records().filter(r => r.id !== id)].slice(0, 50);
+    try { localStorage.setItem(key, JSON.stringify(memoryRecords)); } catch { /* Recovery links remain available. */ }
   }
   function feedback(error) {
     const node = activeContainer?.querySelector("#live-error");
@@ -32,7 +34,9 @@
   async function mount(container, draft) {
     activeContainer = container;
     stop();
+    const session = generation;
     const config = await FlightAPI.ready;
+    if (session !== generation) return;
     const total = draft.flights.reduce(
       (s, f) => s + f.price * draft.search.count,
       0,
@@ -43,23 +47,16 @@
     container.innerHTML = `<div class="page-heading"><span class="eyebrow">OFFRE DUFFEL</span><h1 id="options-title">Votre prochain départ.</h1><p>${draft.flights.map((f) => `${esc(F.airport(f.from).city)} → ${esc(F.airport(f.to).city)}`).join(" · ")} · ${F.money(total)} pour ${draft.search.count} adulte(s)</p></div><div class="panel" id="live-checkout"></div>`;
     const panel = container.querySelector("#live-checkout");
     const canCash = config.checkout && supported && total <= 1000;
-    let preferredPayment = "voucher";
-    if (!canCash && !config.stripe) {
-      panel.innerHTML = `<h2>${total > 1000 ? "Ce voyage dépasse le plafond espèces." : !supported ? "Cette offre ne permet pas ce parcours PayEnCash." : "Le paiement partenaire n’est pas encore activé."}</h2><p>${!supported ? "La réservation réelle avec collecte en espèces requiert une offre éligible à la retenue (sans débit immédiat). Les compagnies low-cost exigent un règlement direct. Vous pouvez néanmoins tester l’intégralité du parcours PayEnCash en simulation." : total > 1000 ? "Le règlement en espèces est plafonné à 1 000 € conformément à l’article L.112-6 du Code Monétaire et Financier." : "Le connecteur partenaire PayEnCash nécessite les clés serveur LIVE_CHECKOUT_ENABLED=true. Vous pouvez tester le parcours en mode démonstration."}</p><div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:1.25rem"><button type="button" class="button primary" id="live-demo-continue">Tester en simulation PayEnCash (bon & billet)</button><a class="button secondary" href="#search">Modifier ma recherche</a></div>`;
-      panel.querySelector("#live-demo-continue")?.addEventListener("click", () => {
-        draft.flights.forEach((f) => (f.simulation = true));
-        BookingManager.saveDraft(draft);
-        if (location.hash === "#options") {
-          window.dispatchEvent(new HashChangeEvent("hashchange"));
-        } else {
-          location.hash = "#options";
-        }
-      });
+    if (!supported || (!canCash && !config.stripe)) {
+      panel.innerHTML = `<h2>La réservation de cette offre n’est pas disponible ici.</h2><p>${!supported ? "Ce parcours nécessite un seul trajet avec retenue confirmée par la compagnie." : "Aucun moyen de paiement n’est actuellement disponible pour ce voyage."}</p><a class="button secondary" href="#search">Modifier ma recherche</a>`;
       return;
     }
-    if (!canCash && config.stripe) preferredPayment = "card";
-    panel.innerHTML = `<h2>Les voyageurs</h2><p>Informations transmises au fournisseur pour la réservation. Elles ne sont pas enregistrées dans le stockage local.</p><form id="live-passengers">${Array.from({ length: draft.search.count }, (_, i) => `<fieldset class="live-passenger"><legend>Adulte ${i + 1}</legend><div class="form-grid"><label>Prénom<input name="given_name-${i}" minlength="2" maxlength="60" autocomplete="given-name" required></label><label>Nom<input name="family_name-${i}" minlength="2" maxlength="60" autocomplete="family-name" required></label><label>Date de naissance<input type="date" name="born_on-${i}" min="1900-01-01" max="${new Date(Date.now() - 18 * 365.25 * 86400000).toISOString().slice(0, 10)}" required></label><label>Civilité<select name="title-${i}"><option value="mr">Monsieur</option><option value="ms">Madame</option><option value="dr">Docteur</option></select></label><label>Sexe sur le document<select name="gender-${i}"><option value="m">M</option><option value="f">F</option></select></label></div></fieldset>`).join("")}<div class="form-grid"><label>E-mail<input type="email" name="email" autocomplete="email" required></label><label>Téléphone international<input type="tel" name="phone_number" placeholder="+33612345678" pattern="\\+[0-9]{8,15}" required></label></div><label class="consent"><input type="checkbox" required><span>Je demande une retenue sans débit immédiat. Le paiement du bon est nécessaire avant l’échéance pour demander l’émission du billet.</span></label><p class="form-error" id="live-error" role="alert" hidden></p><button class="button primary" type="submit">Retenir le vol · ${F.money(total)}</button></form>`;
-    const idempotencyKey = crypto.randomUUID();
+    panel.innerHTML = `<h2>Les voyageurs</h2><p>Informations transmises au fournisseur pour la réservation. Elles ne sont pas enregistrées dans le stockage local.</p><form id="live-passengers">${Array.from({ length: draft.search.count }, (_, i) => `<fieldset class="live-passenger"><legend>Adulte ${i + 1}</legend><div class="form-grid"><label>Prénom<input name="given_name-${i}" minlength="2" maxlength="60" autocomplete="given-name" required></label><label>Nom<input name="family_name-${i}" minlength="2" maxlength="60" autocomplete="family-name" required></label><label>Date de naissance<input type="date" name="born_on-${i}" min="1900-01-01" max="${new Date(Date.now() - 18 * 365.25 * 86400000).toISOString().slice(0, 10)}" required></label><label>Civilité<select name="title-${i}"><option value="mr">Monsieur</option><option value="ms">Madame</option><option value="dr">Docteur</option></select></label><label>Sexe sur le document<select name="gender-${i}"><option value="m">M</option><option value="f">F</option></select></label></div></fieldset>`).join("")}<div class="form-grid"><label>E-mail<input type="email" name="email" autocomplete="email" required></label><label>Téléphone international<input type="tel" name="phone_number" placeholder="+33612345678" pattern="\\+[0-9]{8,15}" required></label></div><fieldset class="payment-selection"><legend>Votre règlement</legend>${canCash ? '<label><input type="radio" name="paymentMethod" value="cash" checked> En espèces dans un point partenaire</label>' : ''}${config.stripe ? `<label><input type="radio" name="paymentMethod" value="card" ${!canCash ? 'checked' : ''}> Par carte bancaire</label>` : ''}</fieldset><label class="consent"><input type="checkbox" required><span>Je demande une retenue sans débit immédiat. Le règlement est nécessaire avant l’échéance pour demander l’émission du billet.</span></label><p class="form-error" id="live-error" role="alert" hidden></p><button class="button primary" type="submit">Retenir le vol · ${F.money(total)}</button></form>`;
+    const draftKey = "vnc-hold:" + draft.flights[0].id;
+    let idempotencyKey;
+    try { idempotencyKey = sessionStorage.getItem(draftKey); } catch {}
+    idempotencyKey ||= crypto.randomUUID();
+    try { sessionStorage.setItem(draftKey, idempotencyKey); } catch {}
     panel.querySelector("form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const button = e.target.querySelector("[type=submit]");
@@ -84,10 +81,12 @@
             offerId: offer.id,
             passengers,
             expectedAmountCents: Math.round(total * 100),
+            paymentMethod: form.get("paymentMethod"),
           },
           { "Idempotency-Key": idempotencyKey },
         );
         active = {
+          paymentMethod: form.get("paymentMethod"),
           id: hold.id,
           token: hold.accessToken,
           holdToken: hold.token,
@@ -96,7 +95,8 @@
         };
         // Persist the capability before requesting the voucher so an adapter retry is safe.
         save(active);
-        if (preferredPayment === "card") {
+        if (session !== generation) return;
+        if (active.paymentMethod === "card") {
           await showCardPayment(container, active);
         } else {
           await showVoucher(container, active);
@@ -113,76 +113,41 @@
     stop();
     const session = generation;
     const current = () => generation === session && container.isConnected;
-    container.innerHTML = `<div class="page-heading"><h1 id="options-title">Paiement par carte bancaire</h1><p>Réservation ${esc(record.id)} · ${F.money(record.amountCents / 100)}</p></div><div class="panel live-voucher"><div id="live-card-content"><div class="payment-methods" style="margin:0 0 16px"><div class="payment-choice" style="border-color:var(--primary);background:var(--primary-light)"><svg class="icon"><use href="#i-plane"/></svg><span><strong>Carte bancaire & Apple Pay</strong><small>Paiement sécurisé crypté SSL 256 bits via Stripe</small></span><span class="badge green">Stripe</span></div></div><div id="stripe-card-element" style="margin:16px 0;min-height:48px;padding:14px;background:white;border:1px solid var(--line);border-radius:10px"></div><p id="live-card-error" class="form-error" role="alert" hidden></p><button class="button primary full" id="live-card-submit">Payer ${F.money(record.amountCents / 100)}</button><div style="display:flex;gap:12px;margin-top:14px"><button class="text-button" id="live-card-back-voucher">← Choisir de payer en espèces PayEnCash</button></div></div><p id="live-state" role="status">Prêt pour le règlement sécurisé.</p></div>`;
-    const errorNode = container.querySelector("#live-card-error");
-    const submitBtn = container.querySelector("#live-card-submit");
-    const stateNode = container.querySelector("#live-state");
-    let stripeInstance = null, cardElement = null;
-    if (window.Stripe && FlightAPI.stripePublicKey) {
-      try {
-        stripeInstance = window.Stripe(FlightAPI.stripePublicKey);
-        const elements = stripeInstance.elements();
-        cardElement = elements.create("card", {
-          style: {
-            base: {
-              fontFamily: "Manrope, Arial, sans-serif",
-              fontSize: "15px",
-              color: "#132238",
-              "::placeholder": { color: "#64748b" },
-            },
-            invalid: { color: "#b91c1c" },
-          },
-        });
-        cardElement.mount("#stripe-card-element");
-      } catch (err) {
-        console.warn("Stripe Elements:", err);
-      }
-    }
-    if (!cardElement) {
-      const mountNode = container.querySelector("#stripe-card-element");
-      if (mountNode) {
-        mountNode.innerHTML = '<div class="test-card"><span>CARTE BANCAIRE · STRIPE</span><strong>•••• •••• •••• 4242</strong><span>12 / 30 &nbsp; · &nbsp; CVC ••• &nbsp; · &nbsp; TEST</span></div>';
-      }
-    }
-    submitBtn.onclick = async () => {
-      submitBtn.disabled = true;
-      errorNode.hidden = true;
-      stateNode.textContent = "Traitement du paiement sécurisé…";
-      try {
-        const pi = await FlightAPI.createStripeIntent({
-          holdToken: record.holdToken,
-          orderId: record.id,
-        });
-        let confirmed = false;
-        if (stripeInstance && cardElement && pi.clientSecret && !pi.simulation) {
-          const res = await stripeInstance.confirmCardPayment(pi.clientSecret, {
-            payment_method: { card: cardElement },
-          });
-          if (res.error) throw new Error(res.error.message);
-          if (res.paymentIntent?.status === "succeeded") confirmed = true;
-        } else {
-          confirmed = true;
-        }
-        if (confirmed) {
-          stateNode.textContent = "Paiement validé · Émission du billet…";
-          const status = await FlightAPI.request("/api/orders/status", {
-            token: record.token,
-            confirmPaymentIntentId: pi.id,
-          });
-          record.status = status.status || "ticket_issued";
-          save(record);
+    container.innerHTML = `<div class="page-heading"><h1 id="options-title">Paiement par carte bancaire</h1><p>Réservation ${esc(record.id)} · ${F.money(record.amountCents / 100)}</p></div><div class="panel"><div id="stripe-card-element"></div><p id="live-card-error" class="form-error" role="alert" hidden></p><button class="button primary" id="live-card-submit" disabled>Payer ${F.money(record.amountCents / 100)}</button><p id="live-state" role="status">Chargement du paiement sécurisé…</p><a class="button" href="#bookings">Retrouver mes réservations</a></div>`;
+    const errorNode = container.querySelector("#live-card-error"), submit = container.querySelector("#live-card-submit");
+    try {
+      const status = await FlightAPI.request("/api/orders/status", { token: record.token });
+      if (!current()) return;
+      if (!["awaiting_cash", "awaiting_card"].includes(status.status)) return showVoucher(container, record);
+      if (!window.Stripe || !FlightAPI.stripePublicKey) throw new Error("Le formulaire sécurisé n’a pas chargé. Rechargez la page pour réessayer.");
+      const pi = await FlightAPI.createStripeIntent({ holdToken: record.holdToken, orderId: record.id });
+      if (!current()) return;
+      if (pi.simulation) throw new Error("Ce paiement appartient à la démonstration.");
+      const stripe = window.Stripe(FlightAPI.stripePublicKey);
+      const elements = stripe.elements();
+      mountedCard = elements.create("card");
+      mountedCard.mount("#stripe-card-element");
+      record.paymentMethod = "card";
+      save(record);
+      submit.disabled = false;
+      container.querySelector("#live-state").textContent = "Saisissez vos coordonnées bancaires dans le formulaire Stripe.";
+      submit.onclick = async () => {
+        submit.disabled = true;
+        errorNode.hidden = true;
+        try {
+          const result = await stripe.confirmCardPayment(pi.clientSecret, { payment_method: { card: mountedCard } });
+          if (!current()) return;
+          if (result.error) throw new Error(result.error.message);
           await showVoucher(container, record);
+        } catch (error) {
+          if (!current()) return;
+          errorNode.hidden = false; errorNode.textContent = error.message;
+          submit.disabled = false;
         }
-      } catch (err) {
-        errorNode.hidden = false;
-        errorNode.textContent = err.message || "Échec du paiement.";
-        stateNode.textContent = "Le paiement n’a pas abouti. Vérifiez vos coordonnées.";
-        submitBtn.disabled = false;
-      }
-    };
-    container.querySelector("#live-card-back-voucher")?.addEventListener("click", () => {
-      showVoucher(container, record);
-    });
+      };
+    } catch (error) {
+      if (current()) { errorNode.hidden = false; errorNode.textContent = error.message; }
+    }
   }
   async function showVoucher(container, record) {
     active = record;
@@ -191,8 +156,11 @@
     const session = generation;
     const current = () => generation === session && container.isConnected;
     let checking = false, terminal = false;
-    container.innerHTML = `<div class="page-heading"><h1 id="options-title">Votre réservation PayEnCash</h1><p>Réservation réelle · le billet sera émis après réception du paiement.</p></div><div class="panel live-voucher"><div id="live-voucher-content"></div><p id="live-state" role="status">Vérification de votre réservation…</p><p id="live-error" class="form-error" role="alert" hidden></p><div class="booking-actions"><button class="button primary" data-live-card-pay>Payer par carte bancaire (Stripe)</button><button class="button" data-live-status>Actualiser le paiement</button><a class="button" href="#stores">Points de paiement</a><button class="button" data-live-print>Imprimer / PDF</button></div></div>`;
-    container.querySelector("[data-live-card-pay]").onclick = () => showCardPayment(container, record);
+    container.innerHTML = `<div class="page-heading"><h1 id="options-title">Votre réservation</h1><p>Réservation réelle · le billet sera émis après réception du paiement.</p></div><div class="panel live-voucher"><div id="live-voucher-content"></div><p id="live-state" role="status">Vérification de votre réservation…</p><p id="live-error" class="form-error" role="alert" hidden></p><div class="booking-actions"><button class="button primary" data-live-card-pay>Payer par carte bancaire (Stripe)</button><button class="button" data-live-status>Actualiser le paiement</button><a class="button" href="#stores">Points de paiement</a><button class="button" data-live-print>Imprimer / PDF</button></div></div>`;
+    const cardButton = container.querySelector("[data-live-card-pay]");
+    cardButton.hidden = true;
+    cardButton.onclick = () => showCardPayment(container, record);
+    attachRecovery(container.querySelector(".booking-actions"), record);
     const content = container.querySelector("#live-voucher-content");
     async function loadVoucher() {
       try {
@@ -247,6 +215,7 @@
         container.querySelector("#live-state").textContent =
           {
             awaiting_cash: "Paiement en attente",
+            awaiting_card: "Paiement par carte en attente",
             payment_received: "Paiement reçu · émission du billet en cours",
             ticket_issued: "Billet émis par la compagnie",
             expired: "Réservation expirée",
@@ -254,8 +223,15 @@
             reconciliation_required: "Votre paiement nécessite une vérification par le service de réservation",
           }[status.status] || "Vérification opérateur en cours";
         record.status = status.status;
+        record.paymentMethod = status.paymentMethod || record.paymentMethod;
+        record.voucher = status.voucher || record.voucher;
+        record.amountCents = status.amountCents || record.amountCents;
+        record.expiresAt = status.expiresAt || record.expiresAt;
+        cardButton.hidden = !((status.status === "awaiting_card" || (status.status === "awaiting_cash" && record.paymentMethod === "card")) && record.holdToken && FlightAPI.stripe);
         save(record);
-        terminal = ["ticket_issued", "expired", "refund_pending", "reconciliation_required"].includes(status.status);
+        terminal = ["expired", "refund_pending", "reconciliation_required"].includes(status.status) || (status.status === "ticket_issued" && !!status.ticket);
+        if (status.status === "awaiting_cash" && record.paymentMethod !== "card" && !content.querySelector("#live-deadline") && (record.voucher || record.holdToken)) await loadVoucher();
+        if (!current()) return;
         if (status.status !== "awaiting_cash") {
           clearInterval(timer);
           content.innerHTML = `<h2>${status.status === "payment_received" ? "Votre paiement est reçu" : status.status === "expired" ? "Le délai de paiement est terminé" : "Suivi de votre réservation"}</h2><p class="voucher-code">${esc(record.voucher?.reference || record.id)}</p><p>${status.status === "payment_received" ? "La compagnie prépare votre billet. Cette page se met à jour automatiquement." : "Ne réglez plus ce bon. Consultez l’état de votre réservation ci-dessous."}</p>`;
@@ -300,25 +276,90 @@
         .forEach((b) => b.remove());
       window.print();
     };
-    await loadVoucher();
     if (current()) await checkStatus();
+  }
+  function attachRecovery(container, record) {
+    const button = document.createElement("button"), revoke = document.createElement("button"), output = document.createElement("p");
+    button.className = revoke.className = "button";
+    button.textContent = "Reprendre sur un autre appareil";
+    revoke.textContent = "Révoquer le lien de reprise";
+    output.className = "recovery-output";
+    output.setAttribute("role", "status");
+    container.append(button, revoke, output);
+    button.onclick = async () => {
+      button.disabled = true;
+      try {
+        const result = await FlightAPI.request("/api/orders/hold", { action: "recovery", token: record.token });
+        const link = new URL(location.pathname, location.origin);
+        link.hash = "bookings?recovery=" + encodeURIComponent(result.recoveryToken);
+        output.textContent = "Lien privé valable 24 heures maximum. Toute personne qui le possède peut consulter ce dossier. ";
+        const anchor = document.createElement("a"); anchor.href = link.href; anchor.textContent = link.href; output.append(anchor);
+        try { await navigator.clipboard.writeText(link.href); output.prepend("Lien copié. "); } catch {}
+      } catch (error) { output.textContent = error.message; }
+      finally { button.disabled = false; }
+    };
+    revoke.onclick = async () => {
+      revoke.disabled = true;
+      try { await FlightAPI.request("/api/orders/hold", { action: "recovery", token: record.token, revoke: true }); output.textContent = "Lien de reprise révoqué."; }
+      catch (error) { output.textContent = error.message; }
+      finally { revoke.disabled = false; }
+    };
+  }
+  async function resumeRecord(container, record) {
+    if (record.kind !== "low-cost-access") return showVoucher(container, record);
+    stop(); activeContainer = container;
+    const session = generation;
+    container.innerHTML = `<div class="panel"><h1>Votre dossier compagnie</h1><p>${esc(record.id)}</p><p role="status" id="live-state">Chargement du dossier…</p><p id="live-error" role="alert" hidden></p><div class="booking-actions"></div></div>`;
+    attachRecovery(container.querySelector(".booking-actions"), record);
+    const refresh = document.createElement("button");
+    refresh.className = "button"; refresh.textContent = "Actualiser auprès de la compagnie";
+    container.querySelector(".booking-actions").prepend(refresh);
+    refresh.onclick = async () => {
+      refresh.disabled = true;
+      try {
+        await FlightAPI.request("/api/orders/hold", { action: "refresh-low-cost", token: record.token });
+        if (session === generation) await resumeRecord(container, record);
+      } catch (error) { if (session === generation) feedback(error); }
+      finally { refresh.disabled = false; }
+    };
+    try {
+      const result = await FlightAPI.request("/api/orders/status", { token: record.token });
+      if (session !== generation) return;
+      container.querySelector("#live-state").textContent = result.message + (result.bookingReference ? ` Référence compagnie : ${result.bookingReference}` : "");
+      save({ ...record, status: result.status });
+    } catch (error) { if (session === generation) feedback(error); }
   }
   function appendBookings(container) {
     const saved = records();
-    if (!saved.length) return;
     const section = document.createElement("section");
     section.className = "panel";
-    section.innerHTML = `<h2>Réservations partenaire</h2>${saved.map((r, i) => `<button class="button" data-live-resume="${i}">Retrouver ${esc(r.voucher?.reference || r.id)}</button>`).join("")}`;
-    section.addEventListener("click", (e) => {
+    section.innerHTML = `<h2>Réservations partenaire</h2>${saved.map((r, i) => `<button class="button" data-live-resume="${i}">Retrouver ${esc(r.voucher?.reference || r.id)}</button>`).join("")}<form id="recover-booking"><label>Lien de reprise privé<input name="recovery" autocomplete="off" required placeholder="Collez votre lien de reprise"></label><button class="button" type="submit">Retrouver mon dossier</button><p role="alert" class="form-error" hidden></p></form>`;
+    section.addEventListener("click", e => {
       const button = e.target.closest("[data-live-resume]");
-      if (button)
-        showVoucher(container, saved[+button.dataset.liveResume]).catch(
-          feedback,
-        );
+      if (button) resumeRecord(container, saved[+button.dataset.liveResume]).catch(feedback);
     });
+    const form = section.querySelector("form");
+    form.onsubmit = async e => {
+      e.preventDefault();
+      const session = generation;
+      const raw = form.elements.recovery.value.trim();
+      let token = raw;
+      try { token = new URLSearchParams(new URL(raw).hash.split("?")[1]).get("recovery") || raw; } catch {}
+      const button = form.querySelector("button"); button.disabled = true;
+      try {
+        const record = await FlightAPI.request("/api/orders/status", { recoveryToken: token });
+        save(record);
+        if (session !== generation || !form.isConnected) return;
+        history.replaceState(null, "", location.pathname + "#bookings");
+        await resumeRecord(container, record);
+      } catch (error) { const node = form.querySelector("[role=alert]"); node.hidden = false; node.textContent = error.message; }
+      finally { button.disabled = false; }
+    };
     container.prepend(section);
+    const recovery = new URLSearchParams(location.hash.split("?")[1]).get("recovery");
+    if (recovery) { form.elements.recovery.value = recovery; form.requestSubmit(); }
   }
   window.addEventListener("hashchange", stop);
   window.addEventListener("pagehide", stop);
-  window.LiveBooking = { mount, appendBookings };
+  window.LiveBooking = { mount, appendBookings, save, resumeRecord };
 })();

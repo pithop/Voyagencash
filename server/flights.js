@@ -33,11 +33,11 @@ function validate(input, calendar = false) {
     throw new HttpError(400, "Date invalide ou hors des 12 prochains mois.");
   return { from, to, date, count };
 }
-async function duffel(path, data, method = data ? "POST" : "GET") {
+async function duffel(path, data, method = data ? "POST" : "GET", timeoutMs = 12000) {
   let response;
   try {
     response = await fetch("https://api.duffel.com" + path, {
-      method,
+      method, redirect: "error",
       headers: {
         Authorization: `Bearer ${process.env.DUFFEL_API_TOKEN}`,
         "Duffel-Version": "v2",
@@ -45,7 +45,7 @@ async function duffel(path, data, method = data ? "POST" : "GET") {
         Accept: "application/json",
       },
       ...(data ? { body: JSON.stringify({ data }) } : {}),
-      signal: AbortSignal.timeout(25000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch {
     throw new HttpError(
@@ -117,62 +117,41 @@ function normalize(offer, query) {
 async function search(query) {
   if (!process.env.DUFFEL_API_TOKEN && !travelfusion.configured())
     return { source: "demo", simulation: true, offers: F.generate(query) };
-  const lowCostPromise = (
-    travelfusion.configured()
-      ? travelfusion.searchLowCost(query)
-      : ryanair.search(query)
-  ).catch(() => []);
-  const duffelPromise = process.env.DUFFEL_API_TOKEN ? duffel("/air/offer_requests?return_offers=true", {
-    slices: [
-      { origin: query.from, destination: query.to, departure_date: query.date },
-    ],
-    passengers: Array.from({ length: query.count }, () => ({ type: "adult" })),
-    cabin_class: "economy",
-  }) : Promise.resolve({ offers: [] });
-
-  const [duffelResult, lowCostResult] = await Promise.allSettled([duffelPromise, lowCostPromise]);
-
-  const duffelData = duffelResult.status === "fulfilled" ? duffelResult.value : null;
-  const duffelError = duffelResult.status === "rejected" ? duffelResult.reason : null;
-
-  const ryanairOffers = lowCostResult.status === "fulfilled" && Array.isArray(lowCostResult.value)
-    ? lowCostResult.value.map(o => ({ ...o, priceKind: o.priceKind || "indicative" }))
-    : [];
-
-  // Si Duffel a echoue et qu'aucun autre fournisseur ne retourne d'offre, lever l'erreur fournisseur
-  if (duffelError && ryanairOffers.length === 0) {
-    throw duffelError;
-  }
-
-  const duffelOffers = ((duffelData && duffelData.offers) || [])
-    .filter((o) =>
-      o.slices[0].segments.every(
-        (s) =>
-          F.airport(s.origin.iata_code) && F.airport(s.destination.iata_code),
-      ),
-    )
-    .map((o) => normalize(o, query))
-    .filter(Boolean);
-
-  const offers = [...duffelOffers, ...ryanairOffers].map(F.enrichOffer).sort(
+  const providers = [];
+  if (process.env.DUFFEL_API_TOKEN) providers.push({ name: "duffel", run: async () => {
+    const data = await duffel("/air/offer_requests?return_offers=true", {
+      slices: [{ origin: query.from, destination: query.to, departure_date: query.date }],
+      passengers: Array.from({ length: query.count }, () => ({ type: "adult" })), cabin_class: "economy",
+    }, "POST", 8000);
+    if (!Array.isArray(data?.offers)) throw new HttpError(502, "Réponse fournisseur invalide.");
+    return data.offers.flatMap(o => {
+      try {
+        if (!o.slices?.[0]?.segments?.length || !o.slices[0].segments.every(s =>
+          F.airport(s.origin?.iata_code) && F.airport(s.destination?.iata_code))) return [];
+        const offer = normalize(o, query);
+        return offer && Number.isFinite(offer.price) && offer.price > 0 && Date.parse(offer.expiresAt) > Date.now()
+          ? [{ ...offer, observedAt: Date.now() }] : [];
+      } catch { return []; }
+    });
+  } });
+  if (travelfusion.configured()) providers.push({ name: "travelfusion", run: () => travelfusion.searchLowCost(query) });
+  providers.push({ name: "ryanair", run: () => ryanair.search(query) });
+  const results = await Promise.allSettled(providers.map(p => p.run()));
+  const available = results.flatMap(r => r.status === "fulfilled" ? r.value : []);
+  if (!available.length && results.some(r => r.status === "rejected"))
+    throw new HttpError(502, "Un fournisseur est indisponible. Réessayez la recherche.");
+  const unique = [...new Map(available.map(o => [`${o.provider}:${o.id}`, o])).values()];
+  const offers = unique.map(F.enrichOffer).sort(
     (a, b) => a.price - b.price,
   );
-  const direct = offers.filter((o) => !o.stops);
-  const minPrice = direct.length
-    ? Math.min(...direct.map((o) => o.price))
-    : offers.length
-      ? Math.min(...offers.map((o) => o.price))
-      : null;
-  if (observations.size > 1000)
-    observations.delete(observations.keys().next().value);
-
-  const obsKind = duffelOffers.length ? "quoted" : ryanairOffers.length ? "indicative" : "unknown";
+  const direct = offers.filter(o => !o.stops);
+  // The displayed direct minimum inherits the winning offer's provenance, never a different source's.
+  const cheapest = direct.reduce((best, o) => !best || o.price < best.price ? o : best, null);
+  if (observations.size >= 1000) observations.delete(observations.keys().next().value);
   observations.set(`${query.from}:${query.to}:${query.count}:${query.date}`, {
-    date: query.date,
-    price: minPrice,
-    direct: !!direct.length,
-    observedAt: Date.now(),
-    priceKind: obsKind,
+    date: query.date, price: cheapest?.price ?? null, direct: !!direct.length,
+    observedAt: Date.now(), expiresAt: cheapest?.expiresAt || new Date(Date.now() + 900000).toISOString(),
+    priceKind: cheapest?.priceKind || "unknown", provider: cheapest?.provider || null,
   });
   if (process.env.DATABASE_URL || process.env.STORAGE_URL || process.env.POSTGRES_URL) {
     const key = `${query.from}:${query.to}:${query.count}:${query.date}`;
@@ -187,17 +166,14 @@ async function search(query) {
       /* Availability is returned even if the optional fare cache is unavailable. */
     }
   }
-  const isPartial = (duffelOffers.length > 0 && ryanairOffers.length === 0) || (duffelOffers.length === 0 && ryanairOffers.length > 0);
-  return {
-    source: duffelOffers.length ? "duffel" : travelfusion.configured() ? "travelfusion" : "ryanair",
-    simulation: false,
-    offers,
-    partial: isPartial,
-  };
+  return { source: offers.some(o => o.provider === "duffel") ? "duffel" : offers[0]?.provider || "live",
+    simulation: false, offers, partial: results.some(r => r.status === "rejected"),
+    providers: providers.map((p, i) => ({ name: p.name, status: results[i].status === "rejected" ? "unavailable" : "available" })) };
 }
+
 async function calendar(query) {
   if (!process.env.DUFFEL_API_TOKEN && !travelfusion.configured()) {
-    const key = `${query.from}:${query.to}:${query.month}`;
+    const key = `${query.from}:${query.to}:${query.month}:${query.count}`;
     let cached = demoCalendars.get(key);
     // Short-lived because today's departing flights disappear as time advances.
     if (!cached || Date.now() - cached.at >= 60000) {
@@ -215,28 +191,30 @@ async function calendar(query) {
           "SELECT route_key,value FROM fare_observations WHERE route_key LIKE $1 AND observed_at > now()-interval '15 minutes'",
           [`${query.from}:${query.to}:${query.count}:${query.month}%`],
         );
-      for (const r of rows) observations.set(r.route_key, r.value);
+      for (const r of rows) {
+        if (!observations.has(r.route_key) || observations.get(r.route_key).observedAt < r.value.observedAt)
+          observations.set(r.route_key, r.value);
+      }
     } catch {
       /* Unknown prices remain unknown. */
     }
   }
   try {
-    const rf = travelfusion.configured() ? null : await ryanair.calendarFares(query.from, query.to, query.month);
+    const rf = await ryanair.calendarFares(query.from, query.to, query.month);
     if (rf && rf.size) {
       for (const [dStr, fInfo] of rf) {
         const key = `${query.from}:${query.to}:${query.count}:${dStr}`;
         const existing = observations.get(key);
         // Ne jamais ecraser un prix quoted ferme par un tarif indicatif
-        const canUpdate =
-          !existing ||
-          existing.price === null ||
-          (existing.priceKind !== "quoted" && fInfo.price < existing.price);
+        const fresh = existing && Date.now() - existing.observedAt < 900000 &&
+          (!existing.expiresAt || Date.parse(existing.expiresAt) > Date.now());
+        const canUpdate = !fresh || existing.price === null;
         if (canUpdate) {
           observations.set(key, {
             date: dStr,
             price: fInfo.price,
             direct: true,
-            observedAt: Date.now(),
+            observedAt: fInfo.observedAt || Date.now(),
             priceKind: "indicative",
             provider: "ryanair",
           });
@@ -246,6 +224,7 @@ async function calendar(query) {
   } catch {
     /* Best effort */
   }
+  while (observations.size > 1000) observations.delete(observations.keys().next().value);
   const length = new Date(
     +query.month.slice(0, 4),
     +query.month.slice(5),
@@ -256,7 +235,7 @@ async function calendar(query) {
     const value = observations.get(
       `${query.from}:${query.to}:${query.count}:${date}`,
     );
-    return value && Date.now() - value.observedAt < 900000
+    return value && Date.now() - value.observedAt < 900000 && (!value.expiresAt || Date.parse(value.expiresAt) > Date.now())
       ? { ...value }
       : { date, price: null, direct: null };
   });
@@ -282,4 +261,10 @@ async function calendar(query) {
     })),
   };
 }
-module.exports = { validate, duffel, search, calendar };
+const inflightSearches = new Map(), inflightCalendars = new Map();
+function shared(map, query, run) {
+  const key = JSON.stringify([query.from, query.to, query.count || 1, query.date || query.month]);
+  if (!map.has(key)) map.set(key, Promise.resolve().then(() => run(query)).finally(() => map.delete(key)));
+  return map.get(key);
+}
+module.exports = { validate, duffel, search: q => shared(inflightSearches, q, search), calendar: q => shared(inflightCalendars, q, calendar) };

@@ -1,0 +1,16 @@
+[Unit]
+Description=Voyagencash durable ticket issuance
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=voyagencash
+WorkingDirectory=/opt/voyagencash
+EnvironmentFile=/etc/voyagencash/worker.env
+ExecStart=/usr/bin/node /opt/voyagencash/scripts/fulfil.mjs
+TimeoutStartSec=55
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true

@@ -5,7 +5,7 @@ const scheduleCache = new Map();
 const FARE_TTL = 15 * 60 * 1000; // 15 mins
 const SCHED_TTL = 60 * 60 * 1000; // 1 hour
 
-async function fetchFares(from, to, month) {
+async function loadFares(from, to, month) {
   const cacheKey = `${from}:${to}:${month}`;
   const hit = fareCache.get(cacheKey);
   if (hit && Date.now() - hit.at < FARE_TTL) {
@@ -21,16 +21,17 @@ async function fetchFares(from, to, month) {
       },
       signal: AbortSignal.timeout(3500),
     });
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error("ryanair_unavailable");
     const data = await res.json();
     const fares = new Map();
     const rawFares = data?.outbound?.fares || [];
     for (const item of rawFares) {
       if (item.day && item.price && !item.unavailable && !item.soldOut) {
         const val = typeof item.price.value === "number" ? item.price.value : null;
-        if (val !== null) {
+        if (Number.isFinite(val) && val > 0) {
           fares.set(item.day, {
             price: Math.round(val * 100) / 100,
+            observedAt: Date.now(),
             departureDate: item.departureDate,
             arrivalDate: item.arrivalDate,
           });
@@ -41,11 +42,11 @@ async function fetchFares(from, to, month) {
     fareCache.set(cacheKey, { at: Date.now(), fares });
     return fares;
   } catch {
-    return null;
+    throw new Error("Le fournisseur Ryanair est indisponible.");
   }
 }
 
-async function fetchSchedules(from, to, year, monthNumber) {
+async function loadSchedules(from, to, year, monthNumber) {
   const cacheKey = `${from}:${to}:${year}:${monthNumber}`;
   const hit = scheduleCache.get(cacheKey);
   if (hit && Date.now() - hit.at < SCHED_TTL) {
@@ -61,7 +62,7 @@ async function fetchSchedules(from, to, year, monthNumber) {
       },
       signal: AbortSignal.timeout(3500),
     });
-    if (!res.ok) return null;
+    if (!res.ok) throw new Error("ryanair_unavailable");
     const data = await res.json();
     const days = new Map();
     for (const d of data?.days || []) {
@@ -73,9 +74,18 @@ async function fetchSchedules(from, to, year, monthNumber) {
     scheduleCache.set(cacheKey, { at: Date.now(), days });
     return days;
   } catch {
-    return null;
+    throw new Error("Le fournisseur Ryanair est indisponible.");
   }
 }
+
+const pendingFares = new Map(), pendingSchedules = new Map();
+function coalesce(map, args, run) {
+  const key = args.join(":");
+  if (!map.has(key)) map.set(key, run(...args).finally(() => map.delete(key)));
+  return map.get(key);
+}
+const fetchFares = (...args) => coalesce(pendingFares, args, loadFares);
+const fetchSchedules = (...args) => coalesce(pendingSchedules, args, loadSchedules);
 
 async function search(query) {
   if (process.env.VOYAGENCASH_TEST_MODE === "true") return [];
@@ -89,7 +99,7 @@ async function search(query) {
 
   const [faresMap, schedulesMap] = await Promise.all([
     fetchFares(from, to, `${year}-${month}`),
-    fetchSchedules(from, to, year, monthNum),
+    fetchSchedules(from, to, year, monthNum).catch(() => null),
   ]);
 
   if (!faresMap || !faresMap.has(date)) return [];
@@ -150,6 +160,7 @@ async function search(query) {
       simulation: false,
       provider: "ryanair-indicative",
       priceKind: "indicative",
+      observedAt: fareInfo.observedAt,
       conciergeAvailable: true,
       payment_requirements: { requires_instant_payment: true },
       passengerIds: Array.from({ length: count }, (_, i) => `fr_pas_${i + 1}`),

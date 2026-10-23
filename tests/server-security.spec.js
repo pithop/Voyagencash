@@ -212,3 +212,48 @@ test.describe("provider and security contracts", () => {
     expect(called).toBe(false);
   });
 });
+
+test("provider failures are isolated, concurrent searches share work and calendar keeps price provenance", async () => {
+  const env = { ...process.env }, oldFetch = global.fetch;
+  const R = require("../server/ryanair.js"), oldSearch = R.search, oldCalendar = R.calendarFares;
+  const path = require.resolve("../server/flights.js");
+  delete require.cache[path];
+  try {
+    process.env.DUFFEL_API_TOKEN = "test-key";
+    delete process.env.TRAVELFUSION_API_KEY;
+    delete process.env.DATABASE_URL;
+    let calls = 0;
+    const date = new Date(Date.now() + 25 * 86400000).toISOString().slice(0, 10);
+    const query = { from: "CDG", to: "RAK", date, count: 2 };
+    const f = require("../assets/js/flight-engine.js").generate(query)[0];
+    R.search = async () => [{ ...f, id: "fr_test", price: 42, priceKind: "indicative", provider: "ryanair-indicative", simulation: false }];
+    R.calendarFares = async () => new Map([[date, { price: 20 }]]);
+    global.fetch = async () => { calls++; return { ok: false, status: 503 }; };
+    const flights = require(path);
+    const results = await Promise.all(Array.from({ length: 8 }, () => flights.search(query)));
+    expect(calls).toBe(1);
+    expect(results.every(r => r.partial && r.offers[0].priceKind === "indicative")).toBe(true);
+    const day = (await flights.calendar({ ...query, month: date.slice(0, 7) })).days.find(d => d.date === date);
+    expect(day.priceKind).toBe("indicative");
+    expect(day.price).toBe(42);
+    R.search = async () => { throw new Error("unavailable"); };
+    await expect(flights.search(query)).rejects.toThrow("fournisseur");
+  } finally {
+    R.search = oldSearch; R.calendarFares = oldCalendar; global.fetch = oldFetch;
+    for (const k of Object.keys(process.env)) if (!(k in env)) delete process.env[k];
+    Object.assign(process.env, env); delete require.cache[path];
+  }
+});
+
+test("store availability requires fresh dated evidence, supports midnight and never guesses from labels", () => {
+  const { availability } = require("../server/stores.js");
+  const now = Date.parse("2026-10-24T23:30:00+02:00");
+  expect(availability({ hours: "8 h - 23 h" }, now).isOpen).toBeNull();
+  const store = { hoursConfirmedAt: new Date(now - 60000).toISOString(),
+    scheduleValidUntil: new Date(now + 3 * 3600000).toISOString(),
+    openingWindows: [{ opensAt: "2026-10-24T20:00:00+02:00", closesAt: "2026-10-25T02:00:00+02:00" }] };
+  expect(availability(store, now).paymentWindowConfirmed).toBe(true);
+  expect(availability({ ...store, hoursConfirmedAt: new Date(now - 121 * 60000).toISOString() }, now).isOpen).toBeNull();
+  expect(availability({ ...store, openingWindows: [] }, now).isOpen).toBe(false);
+  expect(availability({ ...store, openingWindows: [{ opensAt: "2026-10-24T20:00:00+02:00", closesAt: "2026-10-25T00:00:00+02:00" }] }, now).paymentWindowConfirmed).toBe(false);
+});

@@ -63,7 +63,7 @@ test("selecting a result date refreshes the offers and keeps search state consis
   await page.goto("/#search");
   await expect(page.locator("#date-0")).toHaveValue(date);
 });
-for (const width of [360, 390, 430, 768, 1440])
+for (const width of [320, 360, 390, 430, 768, 1440])
   test(`responsive search, calendar and results at ${width}px`, async ({
     page,
   }) => {
@@ -174,8 +174,9 @@ test("live offer stays outside the demo checkout and uses hold, voucher and stat
       },
     }),
   );
+  let paymentReceived = false;
   await page.route("**/api/orders/status", (r) =>
-    r.fulfill({ json: { status: "payment_received" } }),
+    r.fulfill({ json: { status: paymentReceived ? "payment_received" : "awaiting_cash" } }),
   );
   await page.goto("/");
   await page.locator("[data-trip=oneway]").click();
@@ -190,6 +191,8 @@ test("live offer stays outside the demo checkout and uses hold, voucher and stat
   await page.locator("#live-passengers [type=checkbox]").check();
   await page.locator("#live-passengers [type=submit]").click();
   await expect(page.locator(".voucher-code")).toHaveText("VNC-2026-ABCDE");
+  paymentReceived = true;
+  await page.locator("[data-live-status]").click();
   await expect(page.locator("#live-state")).toContainText("Paiement reçu");
   expect(holdBody.offerId).toBe("off_live");
   expect(holdBody.expectedAmountCents).toBe(14200);

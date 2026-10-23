@@ -46,44 +46,25 @@ const handler = endpoint("POST", async (req, res) => {
     } = await db.query("SELECT * FROM flight_orders WHERE id=$1 FOR UPDATE", [
       event.orderId,
     ]);
-    if (
-      !order ||
-      order.voucher_reference !== event.reference ||
-      order.amount_cents !== event.amountCents ||
-      order.currency !== event.currency
-    )
-      throw new HttpError(409, "Montant ou référence non concordants.");
-    const { rows: seen } = await db.query(
-      "SELECT id,order_id FROM payment_events WHERE id=$1",
-      [event.id],
-    );
-    if (seen.length) {
-      if (seen[0].order_id !== event.orderId)
-        throw new HttpError(
-          409,
-          "Identifiant d’événement déjà attribué à une autre commande.",
-        );
-      return { received: true, duplicate: true };
+    const eventKey = `payencash:${event.id}`;
+    const { rows: seen } = await db.query("SELECT event_key FROM payment_receipts WHERE event_key=$1", [eventKey]);
+    if (seen.length) return { received: true, duplicate: true };
+    const paymentId = typeof event.paymentId === "string" ? event.paymentId : event.reference;
+    if (typeof paymentId !== "string" || paymentId.length > 200) throw new HttpError(400, "Référence de paiement invalide.");
+    const { rows: paid } = await db.query("SELECT event_key FROM payment_receipts WHERE provider='payencash' AND payment_id=$1 AND result IN ('accepted','refund_pending')", [paymentId]);
+    const matched = order && order.voucher_reference === event.reference && order.amount_cents === event.amountCents && order.currency === event.currency;
+    const expired = order && new Date(order.expires_at).getTime() <= Date.now();
+    const outcome = matched && paid.length ? "duplicate" : matched && order.status === "awaiting_cash" && order.payment_method !== "card"
+      ? expired ? "refund_pending" : "accepted" : "reconciliation_required";
+    const inserted = await db.query("INSERT INTO payment_receipts(event_key,provider,payment_id,order_id,amount_cents,currency,result) VALUES($1,'payencash',$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING RETURNING event_key",
+      [eventKey, paymentId, event.orderId, event.amountCents, event.currency, outcome]);
+    if (!inserted.rowCount) return { received: true, duplicate: true };
+    if (["accepted", "refund_pending"].includes(outcome)) {
+      await db.query("INSERT INTO payment_events(id,order_id) VALUES($1,$2)", [eventKey, event.orderId]);
+      await db.query("UPDATE flight_orders SET status=$2 WHERE id=$1", [event.orderId, expired ? "refund_pending" : "payment_received"]);
+      await db.query("INSERT INTO payment_outbox(order_id,event_id,state) VALUES($1,$2,$3) ON CONFLICT DO NOTHING", [event.orderId, eventKey, expired ? "refund_pending" : "pending"]);
     }
-    if (order.status !== "awaiting_cash")
-      throw new HttpError(409, "Cette réservation a déjà été traitée.");
-    const expired = new Date(order.expires_at).getTime() <= Date.now();
-    await db.query("INSERT INTO payment_events(id,order_id) VALUES($1,$2)", [
-      event.id,
-      event.orderId,
-    ]);
-    await db.query("UPDATE flight_orders SET status=$2 WHERE id=$1", [
-      event.orderId,
-      expired ? "refund_pending" : "payment_received",
-    ]);
-    await db.query(
-      "INSERT INTO payment_outbox(order_id,event_id,state) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",
-      [event.orderId, event.id, expired ? "refund_pending" : "pending"],
-    );
-    return {
-      received: true,
-      state: expired ? "refund_pending" : "payment_received",
-    };
+    return { received: true, state: outcome === "accepted" ? "payment_received" : outcome, duplicate: outcome === "duplicate" };
   });
   // No false "ticket issued": a durable outbox must be processed by the operator's fulfilment worker.
   json(res, 200, result);

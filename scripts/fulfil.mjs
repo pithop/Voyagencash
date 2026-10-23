@@ -6,7 +6,7 @@ if (
 )
   throw new Error("DUFFEL_API_TOKEN requis.");
 try {
-  console.log(JSON.stringify(await fulfil.fulfilOne()));
+  console.log(JSON.stringify(await fulfil.fulfilBatch()));
 } finally {
   await db.database().end();
 }

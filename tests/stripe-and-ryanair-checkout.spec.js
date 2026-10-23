@@ -32,6 +32,7 @@ test.describe("Stripe and Ryanair Checkout Contracts", () => {
     const holdToken = sign({
       kind: "hold",
       id: "ord_stripe_test",
+      simulation: true,
       amountCents: 8199,
       currency: "EUR",
       expiresAt: Date.now() + 7200000,
@@ -74,13 +75,13 @@ test.describe("Stripe and Ryanair Checkout Contracts", () => {
     const handler = require("../api/stripe/webhook.js");
     const payload = JSON.stringify({ type: "payment_intent.succeeded" });
     const res = await call(handler, { raw: payload });
-    expect(res.statusCode).toBe(500);
+    expect(res.statusCode).toBe(503);
 
     process.env.NODE_ENV = oldEnv;
     if (oldTestMode) process.env.VOYAGENCASH_TEST_MODE = oldTestMode;
   });
 
-  test("Ryanair offers are accepted by hold.js and generate 120min reservations", async () => {
+  test("Ryanair demonstration holds are explicitly simulated in test mode", async () => {
     const handler = require("../api/orders/hold.js");
     const res = await call(handler, {
       headers: { "idempotency-key": crypto.randomUUID() },

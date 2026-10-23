@@ -46,7 +46,7 @@
         count: context.count || 1,
       });
       if (request !== generation || !dialog.open) return;
-      const base = F.calendar({ from: context.from, to: context.to, month });
+      const base = data.simulation ? F.calendar({ from: context.from, to: context.to, month }) : [];
       const days = (data.days || []).map((d) => {
         if (d.price !== null) return d;
         if (data.simulation) {
@@ -58,7 +58,7 @@
       draw(days);
       dialog.querySelector(".calendar-disclaimer").textContent = data.simulation
         ? "Prix indicatifs de démonstration. Le tarif final est affiché dans les résultats."
-        : "Prix indicatifs actualisés en continu. Sélectionnez un jour pour actualiser les vols.";
+        : "Prix observés ou indicatifs, à revalider. Sélectionnez un jour pour rechercher les vols.";
     } catch (e) {
       if (request === generation)
         dialog.querySelector(".calendar-disclaimer").textContent =
@@ -93,7 +93,7 @@
               : d.direct === false
                 ? "aucun vol direct"
                 : "prix à vérifier";
-          return `<button type="button" class="calendar-day ${d.tier}${context.date === d.date ? " selected" : ""}" data-calendar-date="${d.date}" aria-label="${F.dateLabel(d.date, true)}, ${label}" aria-pressed="${context.date === d.date}" ${disabled ? "disabled" : ""}><span>${Number(d.date.slice(-2))}</span><small class="day-price">${price}</small></button>`;
+          return `<button type="button" class="calendar-day ${d.tier}${context.date === d.date ? " selected" : ""}" data-calendar-date="${d.date}" aria-label="${F.dateLabel(d.date, true)}, ${label}, ${d.priceKind === "quoted" ? "prix observé" : "prix indicatif"}" aria-pressed="${context.date === d.date}" ${disabled ? "disabled" : ""}><span>${Number(d.date.slice(-2))}</span><small class="day-price">${price}</small></button>`;
         })
         .join("");
     if (focused) dialog.querySelector(`[data-calendar-date="${focused}"]`)?.focus({ preventScroll: true });

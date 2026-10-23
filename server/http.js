@@ -68,7 +68,7 @@ function endpoint(method, fn) {
 const ephemeralSecret = crypto.randomBytes(32).toString("hex");
 function secret() {
   if (
-    (process.env.DUFFEL_API_TOKEN || process.env.TRAVELFUSION_API_KEY || process.env.VERCEL || process.env.NODE_ENV === "production") &&
+    (process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY || process.env.DUFFEL_API_TOKEN || process.env.TRAVELFUSION_API_KEY || process.env.VERCEL || process.env.NODE_ENV === "production") &&
     !process.env.VOUCHER_SIGNING_SECRET
   )
     throw new HttpError(503, "La signature serveur doit être configurée.");
