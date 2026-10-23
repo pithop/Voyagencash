@@ -4,7 +4,7 @@ module.exports = endpoint("POST", async (req, res) => {
   const access = verify((await body(req)).token, "order-access");
   const {
     rows: [saved],
-  } = await database().query("SELECT status FROM flight_orders WHERE id=$1", [
+  } = await database().query("SELECT status,provider_order_id FROM flight_orders WHERE id=$1", [
     access.id,
   ]);
   if (saved?.status !== "ticket_issued")
@@ -29,7 +29,7 @@ module.exports = endpoint("POST", async (req, res) => {
         Authorization: `Bearer ${process.env.PAYENCASH_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ orderId: access.id }),
+      body: JSON.stringify({ orderId: saved.provider_order_id || access.id }),
       signal: AbortSignal.timeout(15000),
     },
   );

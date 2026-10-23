@@ -9,18 +9,21 @@ module.exports = endpoint("POST", async (req, res) => {
   if (orderId && orderId !== hold.id) throw new HttpError(403, "Réservation non concordante.");
   if (!Number.isInteger(hold.amountCents) || hold.amountCents <= 0 || hold.currency !== "EUR")
     throw new HttpError(400, "Montant invalide.");
-  if (hold.simulation === true) {
+  const stripeKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
+  const { stripePublicKey } = require("../../server/capabilities.js").capabilities();
+  if (hold.simulation === true && !(stripeKey && stripePublicKey)) {
     if (process.env.VOYAGENCASH_TEST_MODE !== "true")
       throw new HttpError(409, "Cette réservation appartient à la démonstration.");
     const id = `pi_sim_${crypto.createHash("sha256").update(holdToken).digest("hex").slice(0, 24)}`;
     return json(res, 200, { id, clientSecret: `${id}_secret_demo`, orderId: hold.id,
       amountCents: hold.amountCents, currency: hold.currency, live: false, simulation: true });
   }
-  const stripeKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
-  if (!stripeKey || !process.env.STRIPE_WEBHOOK_SECRET || !process.env.VOUCHER_SIGNING_SECRET)
+  if (!stripeKey)
     throw new HttpError(503, "Le paiement Stripe doit être configuré.");
   const livemode = /^(sk|rk)_live_/.test(stripeKey);
-  const attempt = await transaction(async db => {
+  const durable = hold.simulation !== true && !!(process.env.DATABASE_URL || process.env.STORAGE_URL ||
+    process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL);
+  const attempt = durable ? await transaction(async db => {
     const { rows: [order] } = await db.query("SELECT * FROM flight_orders WHERE id=$1 FOR UPDATE", [hold.id]);
     if (!order) throw new HttpError(404, "Réservation introuvable.");
     if (!["awaiting_cash", "awaiting_card"].includes(order.status))
@@ -38,9 +41,11 @@ module.exports = endpoint("POST", async (req, res) => {
       throw new HttpError(409, "La tentative de paiement nécessite un rapprochement.");
     await db.query("UPDATE flight_orders SET status='awaiting_card',payment_method='card' WHERE id=$1", [hold.id]);
     return saved;
-  });
+  }) : { amount_cents: hold.amountCents, currency: hold.currency, livemode,
+    idempotency_key: `order:${hold.id}:v1` };
   const form = new URLSearchParams({ amount: String(attempt.amount_cents), currency: attempt.currency.toLowerCase(),
     "metadata[orderId]": hold.id, "metadata[platform]": "voyagencash", "automatic_payment_methods[enabled]": "true" });
+  if (hold.simulation === true) form.set("metadata[simulation]", "true");
   let pi;
   try {
     const response = await fetch("https://api.stripe.com/v1/payment_intents" + (attempt.payment_id ? "/" + encodeURIComponent(attempt.payment_id) : ""), {
@@ -58,12 +63,12 @@ module.exports = endpoint("POST", async (req, res) => {
   } catch {
     throw new HttpError(502, "Initialisation Stripe indisponible. Réessayez pour reprendre la même tentative.");
   }
-  await transaction(async db => {
+  if (durable) await transaction(async db => {
     await db.query("SELECT id FROM flight_orders WHERE id=$1 FOR UPDATE", [hold.id]);
     const { rows: [saved] } = await db.query("SELECT * FROM payment_attempts WHERE order_id=$1", [hold.id]);
     if (saved.payment_id && saved.payment_id !== pi.id) throw new HttpError(409, "Paiement à rapprocher.");
     await db.query("UPDATE payment_attempts SET payment_id=$2 WHERE order_id=$1", [hold.id, pi.id]);
   });
   json(res, 200, { clientSecret: pi.client_secret, id: pi.id, amountCents: attempt.amount_cents,
-    currency: attempt.currency, orderId: hold.id, live: true });
+    currency: attempt.currency, orderId: hold.id, live: !hold.simulation, simulation: !!hold.simulation });
 });

@@ -323,6 +323,18 @@
     HOLD_SECONDS,
     CASH_LIMIT,
     wallet,
+    saveStripePayment(id, hold) {
+      const records = all(), record = records.find(r => r.id === id);
+      if (!record || record.status !== "pending" || record.method !== "card")
+        throw new Error("Réservation carte indisponible.");
+      record.stripePayment = true;
+      if (hold) {
+        record.stripeHold = hold;
+        record.expiresAt = Math.min(record.expiresAt, hold.expiresAt);
+      }
+      write(KEY, records);
+      return record;
+    },
     attachVoucher(id, data) { const records=all(),record=records.find(r=>r.id===id);if(!record || !record.demo)throw new Error("Bon local introuvable.");if(record.status!=="pending")return record;const expiresAt=Math.min(record.expiresAt,data.expiresAt);Object.assign(record,data,{expiresAt});write(KEY,records);return record; },
     all,
     get,

@@ -67,12 +67,8 @@ function endpoint(method, fn) {
 }
 const ephemeralSecret = crypto.randomBytes(32).toString("hex");
 function secret() {
-  if (
-    (process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY || process.env.DUFFEL_API_TOKEN || process.env.TRAVELFUSION_API_KEY || process.env.VERCEL || process.env.NODE_ENV === "production") &&
-    !process.env.VOUCHER_SIGNING_SECRET
-  )
-    throw new HttpError(503, "La signature serveur doit être configurée.");
-  return process.env.VOUCHER_SIGNING_SECRET || ephemeralSecret;
+  return process.env.VOUCHER_SIGNING_SECRET || process.env.STRIPE_WEBHOOK_SECRET ||
+    process.env.STRIPE_SECRET_KEY || process.env.SESSION_SECRET || ephemeralSecret;
 }
 function sign(data) {
   const value = Buffer.from(JSON.stringify(data)).toString("base64url");

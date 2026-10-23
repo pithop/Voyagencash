@@ -28,6 +28,7 @@ test.describe("durable payment lifecycle with a PostgreSQL emulator", () => {
     "../api/payencash/voucher.js",
     "../api/payencash/webhook.js",
     "../server/fulfil.js",
+    "../server/instant-checkout.js",
     "../api/orders/status.js",
     "../api/stripe/create-intent.js",
     "../api/stripe/webhook.js",
@@ -491,6 +492,82 @@ test.describe("durable payment lifecycle with a PostgreSQL emulator", () => {
     expect(saved.status).toBe("awaiting_card"); expect(saved.payment_method).toBe("card");
     expect(saved.amount_cents).toBe(150000);
   });
+  for (const outcome of ["success", "ambiguous", "repriced"]) {
+    test(`instant Duffel checkout waits for Stripe and handles ${outcome} without duplicate purchases`, async () => {
+      process.env.STRIPE_SECRET_KEY = "sk_test_fixture";
+      process.env.STRIPE_PUBLIC_KEY = "pk_test_fixture";
+      process.env.STRIPE_WEBHOOK_SECRET = "whsec_fixture";
+      process.env.LIVE_CHECKOUT_ENABLED = "false";
+      delete process.env.VOUCHER_SIGNING_SECRET;
+      delete process.env.PAYENCASH_ADAPTER_URL;
+      delete process.env.PAYENCASH_API_KEY;
+      let purchases = 0, paid = false, orderId, documentsReady = false;
+      const expiresAt = new Date(Date.now() + 20 * 60000).toISOString();
+      global.fetch = async (url, options) => {
+        let data;
+        if (String(url).includes("api.stripe.com")) return { ok: true, json: async () => ({
+          id: "pi_test", client_secret: "pi_test_secret_fixture", amount: 14200, currency: "eur", livemode: false, metadata: { orderId },
+        }) };
+        if (String(url).includes("/air/offers/")) data = {
+          id: "off_instant", total_currency: "EUR", total_amount: paid && outcome === "repriced" ? "145.00" : "142.00",
+          expires_at: expiresAt, passengers: [{ id: "pas_test" }], payment_requirements: { requires_instant_payment: true },
+        };
+        else if (String(url).endsWith("/air/orders")) {
+          expect(paid).toBe(true);
+          purchases++;
+          const sent = JSON.parse(options.body).data;
+          expect(sent).toMatchObject({ type: "instant", selected_offers: ["off_instant"],
+            payments: [{ type: "balance", currency: "EUR", amount: "142.00" }],
+            passengers: [{ given_name: "Lea", family_name: "Martin" }] });
+          if (outcome === "ambiguous") throw new Error("Supplier accepted purchase before timeout");
+          data = { id: "ord_purchased", ...providerOrder({ payment_status: { awaiting_payment: false } }) };
+        } else if (String(url).endsWith("/air/orders/ord_purchased")) data = {
+          id: "ord_purchased", ...providerOrder({ payment_status: { awaiting_payment: false },
+            documents: documentsReady ? [{ type: "electronic_ticket", unique_identifier: "123456" }] : [] }),
+        };
+        else throw new Error("Unexpected provider call");
+        return { ok: true, json: async () => ({ data }) };
+      };
+      const input = { offerId: "off_instant", expectedAmountCents: 14200, paymentMethod: "card", passengers: [{
+        id: "pas_test", given_name: "Lea", family_name: "Martin", born_on: "1990-01-01", gender: "f", title: "ms",
+        email: "lea@example.test", phone_number: "+33612345678",
+      }] };
+      const headers = { "idempotency-key": crypto.randomUUID() };
+      const hold = await invoke(require("../api/orders/hold.js"), input, headers);
+      expect(hold.statusCode).toBe(201);
+      expect(hold.body).toMatchObject({ instant: true, simulation: false, amountCents: 14200 });
+      orderId = hold.body.id;
+      expect(purchases).toBe(0);
+      const repeat = await invoke(require("../api/orders/hold.js"), input, headers);
+      expect(repeat.body.token).toBe(hold.body.token);
+      const stored = (await pool.query("SELECT * FROM flight_orders WHERE id=$1", [orderId])).rows[0];
+      expect(stored.status).toBe("awaiting_card");
+      expect(JSON.stringify(stored)).not.toContain("lea@example.test");
+      expect((await invoke(require("../api/stripe/create-intent.js"), { holdToken: hold.body.token })).statusCode).toBe(200);
+      expect((await require("../server/fulfil.js").fulfilOne()).processed).toBe(false);
+      const event = stripeEvent({ metadata: { orderId } });
+      expect((await invoke(require("../api/stripe/webhook.js"), event, stripeSignature(event))).body.state).toBe("accepted");
+      paid = true;
+      const worker = require("../server/fulfil.js").fulfilOne;
+      expect((await worker()).state).toBe({ success: "awaiting_documents", ambiguous: "reconciliation_required", repriced: "refund_pending" }[outcome]);
+      if (outcome === "success") {
+        documentsReady = true;
+        await pool.query("UPDATE payment_outbox SET next_attempt_at=now()");
+        expect((await worker()).state).toBe("ticket_issued");
+        const saved = (await pool.query("SELECT * FROM flight_orders WHERE id=$1", [orderId])).rows[0];
+        expect(saved.provider_request).toBeNull();
+        expect(saved.provider_order_id).toBe("ord_purchased");
+      }
+      if (outcome === "ambiguous") {
+        await pool.query("UPDATE flight_orders SET status='payment_received'");
+        await pool.query("UPDATE payment_outbox SET state='processing',phase='payment_in_flight',claim_token='old',lease_until=$1", [new Date(Date.now() - 1)]);
+        expect((await worker()).state).toBe("reconciliation_required");
+      }
+      expect((await worker()).processed).toBe(false);
+      expect(purchases).toBe(outcome === "repriced" ? 0 : 1);
+    });
+  }
+
   test("low-cost status is a projection and only an explicit refresh can reconcile the provider", async () => {
     process.env.TRAVELFUSION_ADAPTER_URL = "https://adapter.example.test/";
     process.env.TRAVELFUSION_API_KEY = "test-key";

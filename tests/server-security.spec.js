@@ -98,9 +98,12 @@ test.describe("provider and security contracts", () => {
       count: 2,
     });
     expect(matrix.days.find((d) => d.date === date).price).toBe(124);
-    expect(matrix.days.some((d) => d.price === null && d.direct === null)).toBe(
-      true,
-    );
+    const benchmark = require("../assets/js/flight-engine.js").calendar({ from: "CDG", to: "ALG", month: date.slice(0, 7) });
+    for (const b of benchmark.filter(d => d.date !== date && d.price !== null)) {
+      expect(matrix.days.find(d => d.date === b.date)).toMatchObject({
+        price: b.price, tier: b.tier, indicative: true, priceKind: "indicative", provider: "indicative",
+      });
+    }
     global.fetch = async () => ({ ok: false, status: 503 });
     await expect(
       search({ from: "CDG", to: "ALG", date, count: 1 }),

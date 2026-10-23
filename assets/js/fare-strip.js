@@ -1,4 +1,4 @@
-/* A date rail shared by the search form and results. Unknown live fares stay unknown. */
+/* A date rail shared by the search form and results. Missing observations use explicitly indicative reference fares. */
 (() => {
   const F = FlightEngine;
   const labels = { low: "prix bas", medium: "prix moyen", high: "prix élevé", unknown: "prix à vérifier" };
@@ -35,15 +35,16 @@
         return `<button type="button" class="fare-day ${tier}${date === query.date ? ' selected' : ''}${isBest ? ' best-fare' : ''}" title="${BookingManager.escape(evidence)}" data-fare-date="${date}" aria-pressed="${date === query.date}" aria-label="${F.dateLabel(date, true)}, ${price}, ${label}, ${provenance}${isBest ? ', meilleur tarif' : ''}"><span>${format.format(new Date(date + 'T12:00:00Z'))}</span><strong>${price}</strong><small>${day?.price == null ? "À vérifier" : provenance}</small>${isBest ? '<em class="fare-best-tag">Meilleur prix</em>' : '<i aria-hidden="true"></i>'}</button>`;
       }).join('');
     }
-    draw([]);
+    const months = [...new Set(days.map(d => d.slice(0, 7)))];
+    const base = months.flatMap(month => F.calendar({ from: query.from, to: query.to, month }))
+      .map(d => ({ ...d, indicative: true, priceKind: "indicative", provider: "indicative" }));
+    draw(base);
     rail.onclick = e => { const b = e.target.closest('[data-fare-date]'); if (b) onSelect(b.dataset.fareDate); };
     try {
-      const months = [...new Set(days.map(d => d.slice(0, 7)))];
       const responses = (await Promise.allSettled(months.map(month => FlightAPI.calendar({ from: query.from, to: query.to, count: query.count, month })))).filter(r => r.status === "fulfilled").map(r => r.value);
       if (container.fareVersion !== version || !container.isConnected) return;
       if (!responses.length) throw new Error("calendar_unavailable");
       const allDays = responses.flatMap(r => r.days || []);
-      const isSimulation = responses.some(r => r.simulation);
       const mergedDays = days.map(date => {
         if (date === query.date && query.selectedOffer) {
           const o = query.selectedOffer;
@@ -51,13 +52,8 @@
             observedAt: o.observedAt, direct: true, tier: "medium" };
         }
         const found = allDays.find(d => d.date === date);
-        if (found && found.price !== null) return found;
-        if (isSimulation) {
-          const month = date.slice(0, 7);
-          const b = F.calendar({ from: query.from, to: query.to, month }).find(x => x.date === date);
-          if (b) return { ...b, indicative: true };
-        }
-        return found || { date, price: null, tier: "unknown", direct: null };
+        if (found && found.price != null) return found;
+        return base.find(d => d.date === date) || found || { date, price: null, tier: "unknown", direct: null };
       });
       draw(mergedDays);
       container.querySelector('.fare-source').textContent = responses[0]?.simulation
@@ -65,7 +61,7 @@
         : '±3 jours · prix par adulte, vol direct · à revalider à la recherche';
     } catch {
       if (container.fareVersion === version && container.isConnected)
-        container.querySelector('.fare-source').textContent = 'Prix momentanément indisponibles. Choisissez une date pour rechercher les vols.';
+        container.querySelector('.fare-source').textContent = 'Prix de référence indicatifs · à revalider à la recherche.';
     }
   }
   window.FareStrip = { mount };

@@ -28,16 +28,9 @@
   async function render() {
     const request = ++generation;
     dialog.innerHTML = `<div class="calendar-top"><div><span class="eyebrow">CALENDRIER DES PRIX</span><h2 id="calendar-title">${context.title || "Choisissez votre départ"}</h2><p>${esc(F.airport(context.from)?.city || context.from)} <span aria-hidden="true">→</span> ${esc(F.airport(context.to)?.city || context.to)} · prix par adulte, vol direct</p></div><button class="icon-button" data-calendar-close aria-label="Fermer le calendrier"><svg class="icon"><use href="#i-close"/></svg></button></div><div class="calendar-navigation"><button class="icon-button" data-month="-1" aria-label="Mois précédent" ${month <= today().slice(0, 7) ? "disabled" : ""}><svg class="icon flip"><use href="#i-chevron"/></svg></button><h3>${monthName(month)}</h3><button class="icon-button" data-month="1" aria-label="Mois suivant" ${month >= maxDate().slice(0, 7) ? "disabled" : ""}><svg class="icon"><use href="#i-chevron"/></svg></button></div><div class="calendar-week" aria-hidden="true">${["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((d) => `<span>${d}</span>`).join("")}</div><div class="calendar-grid" aria-label="Jours du mois" aria-busy="true"></div><div class="calendar-legend"><span><i class="low"></i>Prix bas</span><span><i class="medium"></i>Prix moyen</span><span><i class="high"></i>Prix élevé</span></div><p class="calendar-disclaimer" role="status">Chargement des prix…</p>`;
-    // Date buttons are available immediately, even when price retrieval is slow.
-    const count = new Date(+month.slice(0, 4), +month.slice(5), 0).getDate();
-    draw(
-      Array.from({ length: count }, (_, i) => ({
-        date: `${month}-${String(i + 1).padStart(2, "0")}`,
-        price: null,
-        tier: "unknown",
-        direct: null,
-      })),
-    );
+    const base = F.calendar({ from: context.from, to: context.to, month })
+      .map(d => ({ ...d, indicative: true, priceKind: "indicative", provider: "indicative" }));
+    draw(base);
     try {
       const data = await FlightAPI.calendar({
         from: context.from,
@@ -46,14 +39,9 @@
         count: context.count || 1,
       });
       if (request !== generation || !dialog.open) return;
-      const base = data.simulation ? F.calendar({ from: context.from, to: context.to, month }) : [];
-      const days = (data.days || []).map((d) => {
-        if (d.price !== null) return d;
-        if (data.simulation) {
-          const b = base.find((x) => x.date === d.date);
-          if (b) return { ...b, indicative: true };
-        }
-        return d;
+      const days = base.map(b => {
+        const d = (data.days || []).find(d => d.date === b.date);
+        return d && d.price != null ? d : b;
       });
       draw(days);
       dialog.querySelector(".calendar-disclaimer").textContent = data.simulation

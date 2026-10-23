@@ -16,9 +16,10 @@
       config = value;
       document.documentElement.dataset.apiMode = value.mode;
       const bar = document.querySelector(".demo-bar");
-      if (value.mode === "live")
-        if (bar) bar.innerHTML =
-          '<span class="live-dot"></span> Offres des compagnies <span class="demo-detail">· Disponibilités vérifiées à la recherche · Paiement selon éligibilité</span>';
+      if (bar && value.mode === "live")
+        bar.innerHTML = '<span class="live-dot"></span> Offres des compagnies <span class="demo-detail">· Disponibilités vérifiées à la recherche · Paiement selon éligibilité</span>';
+      else if (bar && value.stripe)
+        bar.innerHTML = '<span class="live-dot"></span> Offres de démonstration <span class="demo-detail">· Carte bancaire via Stripe · Aucun billet réel</span>';
       return value;
     });
   async function request(path, data, headers = {}) {

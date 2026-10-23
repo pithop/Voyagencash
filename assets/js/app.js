@@ -592,13 +592,19 @@
       }
     });
   }
+  let stripe, mountedCard, cardPaymentPending = false;
+  const stripeConfigured = () => FlightAPI.stripe && FlightAPI.stripePublicKey;
+  function destroyCard() {
+    mountedCard?.destroy();
+    mountedCard = null;
+  }
   function renderPayment() {
     const existing = currentId ? B.get(currentId) : null;
     if (existing?.status === "confirmed") {
       go("confirmation");
       return;
     }
-    if (existing) {
+    if (existing && !(existing.method === "card" && (existing.stripePayment || stripeConfigured()))) {
       renderPending(existing);
       return;
     }
@@ -614,7 +620,7 @@
           "card",
           "card",
           "Carte bancaire",
-          "Carte de test · authentification 3D Secure simulée",
+          stripeConfigured() ? "Paiement sécurisé par Stripe" : "Carte de test · authentification 3D Secure simulée",
         ],
         ["apple", "apple", "Apple Pay", "Simulation du paiement express"],
       ]
@@ -628,25 +634,103 @@
     $$("[name=payment-method]").forEach((el) =>
       el.addEventListener("change", renderPaymentDetail),
     );
+    if (existing?.method === "card") $("#card-pay").checked = true;
     renderPaymentDetail();
   }
   function renderPaymentDetail() {
+    destroyCard();
     const method = $("[name=payment-method]:checked").value;
+    const useStripe = method === "card" && (stripeConfigured() || (currentId && B.get(currentId)?.stripePayment));
+    $("#payment-consent").nextElementSibling.textContent = useStripe
+      ? "J’autorise le paiement par carte du montant indiqué. Cette réservation de démonstration ne donne pas lieu à un billet réel."
+      : "J’accepte de créer une réservation fictive. Aucun billet réel ne sera émis et aucun montant ne sera débité.";
+    $("#payment-content .actions .muted").textContent = useStripe ? "Paiement sécurisé par Stripe" : "Démonstration sans débit";
     $("#payment-detail").innerHTML =
       method === "voucher"
         ? `<div class="payment-detail"><strong>Un bon. Deux heures. Votre liberté.</strong><p>Bon prépayé partenaire AJEK / PayEnCash · 120 minutes pour rejoindre un point de vente. Plafond : 1 000 € en espèces. Le QR code de cette démonstration ne peut pas être encaissé.</p></div>`
+        : useStripe
+          ? '<div class="payment-detail"><div id="stripe-card-element"></div><p id="stripe-card-error" class="form-error" role="alert" hidden></p><p class="muted">Paiement sécurisé chiffré par Stripe.</p></div>'
         : method === "card"
           ? '<div class="payment-detail"><strong>Votre carte de test est prête.</strong><div class="test-card"><span>CARTE DE DÉMONSTRATION</span><strong>4242 4242 4242 4242</strong><span>12 / 30 &nbsp; · &nbsp; CVC 123 &nbsp; · &nbsp; TEST</span></div><p>Aucune coordonnée bancaire réelle n’est nécessaire. L’étape suivante simule la validation 3D Secure.</p></div>'
           : '<div class="payment-detail"><strong>Apple Pay · mode démonstration</strong><p>Une fenêtre de confirmation simulera l’autorisation du paiement. Aucun portefeuille ni compte Apple n’est utilisé.</p></div>';
     const overLimit = B.total(draft).total > B.CASH_LIMIT;
-    $("#pay-voucher-trigger").disabled = overLimit;
+    const startedCard = currentId && B.get(currentId)?.method === "card";
+    $$("[name=payment-method]").forEach(el => { el.disabled = startedCard && el.value !== "card"; });
+    $("#pay-voucher-trigger").disabled = overLimit || !!startedCard;
     $("#pay-button").disabled = method === "voucher" && overLimit;
     $("#pay-button").innerHTML =
       (method === "voucher"
         ? "Générer mon bon PayEnCash"
+        : useStripe ? `Payer ${F.money(B.total(draft).total)} par carte`
         : `Simuler le paiement de ${F.money(B.total(draft).total)}`) +
       " " +
       icon("arrow");
+    if (useStripe) {
+      try {
+        if (!stripeConfigured() || !window.Stripe) throw new Error("Le formulaire sécurisé n’a pas chargé. Rechargez la page pour réessayer.");
+        stripe = window.Stripe(FlightAPI.stripePublicKey);
+        mountedCard = stripe.elements().create("card");
+        mountedCard.mount("#payment-detail #stripe-card-element");
+        mountedCard.on("change", event => {
+          const errorNode = $("#stripe-card-error");
+          if (errorNode) { errorNode.textContent = event.error?.message || ""; errorNode.hidden = !event.error; }
+        });
+      } catch (error) {
+        $("#stripe-card-error").textContent = error.message;
+        $("#stripe-card-error").hidden = false;
+        $("#pay-button").disabled = true;
+      }
+    }
+  }
+  async function payWithStripe(r, checkoutDraft) {
+    if (cardPaymentPending) return;
+    const button = $("#pay-button"), errorNode = $("#stripe-card-error");
+    const card = mountedCard;
+    cardPaymentPending = true;
+    button.disabled = true;
+    errorNode.hidden = true;
+    $$("[name=payment-method]").forEach(el => { el.disabled = true; });
+    try {
+      if (r.status !== "pending") throw new Error("Cette réservation ne peut plus être réglée.");
+      if (!card) throw new Error("Le formulaire sécurisé n’a pas chargé. Rechargez la page pour réessayer.");
+      let hold = r.stripeHold;
+      if (!hold) {
+        hold = await FlightAPI.request("/api/orders/hold", {
+          count: checkoutDraft.search.count,
+          legs: checkoutDraft.flights.map(f => ({ from: f.from, to: f.to, date: f.date, offerId: f.id })),
+          options: checkoutDraft.options,
+          paymentMethod: "card",
+        });
+        r = B.saveStripePayment(r.id, hold);
+      }
+      if (hold.amountCents !== Math.round(r.total * 100) || hold.currency !== "EUR")
+        throw new Error("Le tarif a changé. Relancez la recherche avant de payer.");
+      const pi = await FlightAPI.createStripeIntent({ holdToken: hold.token, orderId: hold.id });
+      if (draft !== checkoutDraft || view !== "payment" || mountedCard !== card) return;
+      if (pi.id?.startsWith("pi_sim_") || !pi.clientSecret)
+        throw new Error("Le paiement Stripe n’est pas disponible. Réessayez plus tard.");
+      const result = await stripe.confirmCardPayment(pi.clientSecret, { payment_method: { card } });
+      if (result.error) throw new Error(result.error.message);
+      if (result.paymentIntent?.status !== "succeeded")
+        throw new Error("Le paiement n’est pas encore confirmé. Réessayez pour vérifier son état.");
+      B.confirm(r.id);
+      if (draft !== checkoutDraft || view !== "payment") return;
+      currentId = r.id;
+      persist();
+      go("confirmation");
+    } catch (error) {
+      if (errorNode.isConnected) {
+        errorNode.textContent = error.message;
+        errorNode.hidden = false;
+      }
+    } finally {
+      cardPaymentPending = false;
+      if (button.isConnected) {
+        button.disabled = false;
+        // A started Stripe attempt stays bound to its payment method.
+        $$("[name=payment-method]").forEach(el => { el.disabled = el.value !== "card"; });
+      }
+    }
   }
   function travelPass(r) {
     const f = r.flights[0];
@@ -814,6 +898,7 @@
   let geoPosition = null;
   let activeStore = 1, partnerStores = false;
   FlightAPI.ready.then(async config => {
+    if (view === "payment" && $("#payment-detail")) renderPaymentDetail();
     if(config.mode !== "live") return;
     stores.length=0;
     $("#view-stores .notice span").textContent="Chargement de l’annuaire partenaire…";
@@ -967,9 +1052,10 @@
         go("passengers");
       }
       if (action === "pay") {
+        if (cardPaymentPending) return;
         if (!$("#payment-consent").checked) {
           toast(
-            "Confirmez que vous avez compris le caractère fictif de cette réservation.",
+            "Veuillez accepter les conditions du paiement sélectionné.",
             true,
           );
           $("#payment-consent").focus();
@@ -977,7 +1063,14 @@
         }
         const method = $("[name=payment-method]:checked").value;
         const checkoutDraft = draft;
-        let r = B.create(draft, method);
+        let r = currentId ? B.get(currentId) : B.create(draft, method);
+        if (method === "card" && (stripeConfigured() || r.stripePayment)) {
+          r = B.saveStripePayment(r.id);
+          currentId = r.id;
+          persist();
+          await payWithStripe(r, checkoutDraft);
+          return;
+        }
         if (method === "voucher" && FlightAPI.mode === "demo") {
           const button=$("#pay-button");button.disabled=true;
           try {
@@ -1103,6 +1196,7 @@
         persist();
       });
     if (next !== view && $("#app-dialog").open) $("#app-dialog").close();
+    if (next !== view) destroyCard();
     view = next;
     closeAutocomplete();
     $$(".view").forEach((el) => (el.hidden = el.id !== `view-${view}`));

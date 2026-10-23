@@ -196,7 +196,7 @@ async function calendar(query) {
           observations.set(r.route_key, r.value);
       }
     } catch {
-      /* Unknown prices remain unknown. */
+      /* Reference fares remain available when the observation cache is unavailable. */
     }
   }
   try {
@@ -243,22 +243,30 @@ async function calendar(query) {
     .filter((d) => d.price !== null)
     .map((d) => d.price)
     .sort((a, b) => a - b);
+  const benchmark = F.calendar(query);
   return {
     source: "duffel-cache",
     simulation: false,
-    days: days.map((d) => ({
-      ...d,
-      tier:
-        d.price === null
-          ? "unknown"
-          : prices.length < 3
-            ? "medium"
-            : d.price <= prices[Math.floor(prices.length / 3)]
-              ? "low"
-              : d.price <= prices[Math.floor((prices.length * 2) / 3)]
-                ? "medium"
-                : "high",
-    })),
+    days: days.map((d) => {
+      if (d.price === null) {
+        const b = benchmark.find(b => b.date === d.date);
+        if (b) return { date: d.date, price: b.price, tier: b.tier, direct: b.direct,
+          priceKind: "indicative", indicative: true, provider: "indicative" };
+      }
+      return {
+        ...d,
+        tier:
+          d.price === null
+            ? "unknown"
+            : prices.length < 3
+              ? "medium"
+              : d.price <= prices[Math.floor(prices.length / 3)]
+                ? "low"
+                : d.price <= prices[Math.floor((prices.length * 2) / 3)]
+                  ? "medium"
+                  : "high",
+      };
+    }),
   };
 }
 const inflightSearches = new Map(), inflightCalendars = new Map();

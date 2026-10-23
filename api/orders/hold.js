@@ -222,20 +222,19 @@ module.exports = endpoint("POST", async (req, res) => {
         422,
         "Le paiement en espèces est limité à 1 000 € en EUR.",
       );
-    if (offer.payment_requirements?.requires_instant_payment !== false)
+    const instant = offer.payment_requirements?.requires_instant_payment !== false;
+    if (instant && paymentMethod !== "card")
       throw new HttpError(
         409,
         "Cette offre exige un paiement immédiat et ne peut pas être retenue.",
       );
-    const guarantee = Date.parse(
-        offer.payment_requirements.price_guarantee_expires_at,
-      ),
-      deadline = Date.parse(offer.payment_requirements.payment_required_by);
-    if (
+    const guarantee = Date.parse(offer.payment_requirements?.price_guarantee_expires_at),
+      deadline = Date.parse(offer.payment_requirements?.payment_required_by);
+    if (!instant && (
       !Number.isFinite(guarantee) ||
       !Number.isFinite(deadline) ||
       Math.min(guarantee, deadline) < Date.now() + (paymentMethod === "cash" ? 7200000 : 300000)
-    )
+    ))
       throw new HttpError(
         409,
         "La durée de retenue ne permet pas le paiement choisi.",
@@ -246,6 +245,10 @@ module.exports = endpoint("POST", async (req, res) => {
       !passengers.every((p) => offer.passengers.some((o) => o.id === p.id))
     )
       throw new HttpError(400, "Les passagers ne correspondent pas à l’offre.");
+    if (instant) {
+      const response = await require("../../server/instant-checkout.js").prepare({ key, offerId: input.offerId, offer, passengers });
+      return json(res, 201, response);
+    }
   } catch (error) {
     await db.query("DELETE FROM checkout_requests WHERE idempotency_key=$1", [
       key,

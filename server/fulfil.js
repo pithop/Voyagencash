@@ -33,13 +33,44 @@ async function fulfilOne({ budgetMs = 45000 } = {}) {
     return duffel(path, data, data ? "POST" : "GET", Math.min(12000, remaining));
   };
   if (job.status !== "payment_received") return finish("reconciliation_required");
-  if (job.provider !== "duffel") return finish("reconciliation_required", "reconciliation_required");
+  if (!["duffel", "duffel-instant"].includes(job.provider)) return finish("reconciliation_required", "reconciliation_required");
   // An expired claim around a write is ambiguous even if the provider still says unpaid.
   let paymentAttempted = job.phase === "payment_in_flight" || (job.job_state === "processing" && !job.claim_token);
   let paymentAccepted = job.phase === "awaiting_documents" || job.job_state === "awaiting_documents";
   // A claim token proves the new phase protocol was used; legacy claims stay ambiguous.
   try {
-    let order = await request("/air/orders/" + encodeURIComponent(job.id));
+    let order;
+    if (job.provider === "duffel-instant") {
+      if (job.provider_order_id) {
+        paymentAccepted = true;
+        order = await request("/air/orders/" + encodeURIComponent(job.provider_order_id));
+      } else {
+        // Never repeat a purchase after an ambiguous supplier response.
+        if (paymentAttempted || paymentAccepted) return finish("reconciliation_required", "reconciliation_required");
+        if (new Date(job.expires_at).getTime() <= Date.now()) return finish("refund_pending", "refund_pending");
+        const payload = require("./instant-checkout.js").decrypt(job.provider_request, job.id);
+        const offer = await request("/air/offers/" + encodeURIComponent(payload.offerId));
+        if (offer.total_currency !== job.currency || Math.round(Number(offer.total_amount) * 100) !== job.amount_cents ||
+            !Number.isFinite(Date.parse(offer.expires_at)) || Date.parse(offer.expires_at) <= Date.now())
+          return finish("refund_pending", "refund_pending");
+        await phase("payment_in_flight");
+        paymentAttempted = true;
+        order = await request("/air/orders", { type: "instant", selected_offers: [payload.offerId],
+          passengers: payload.passengers, metadata: { checkout_key: payload.checkoutKey },
+          payments: [{ type: "balance", currency: job.currency, amount: (job.amount_cents / 100).toFixed(2) }] });
+        if (!/^ord_[A-Za-z0-9]+$/.test(order.id || ""))
+          return finish("reconciliation_required", "reconciliation_required");
+        await transaction(async db => {
+          const { rows: [claimRow] } = await db.query("SELECT claim_token FROM payment_outbox WHERE order_id=$1 FOR UPDATE", [job.id]);
+          if (claimRow?.claim_token !== claim) throw new Error("claim_lost");
+          await db.query("UPDATE flight_orders SET provider_order_id=$2,provider_request=NULL WHERE id=$1", [job.id, order.id]);
+        });
+        paymentAccepted = true;
+        await phase("awaiting_documents");
+      }
+      if (order.total_currency !== job.currency || Math.round(Number(order.total_amount) * 100) !== job.amount_cents)
+        return finish("reconciliation_required", "reconciliation_required");
+    } else order = await request("/air/orders/" + encodeURIComponent(job.id));
     if (order.payment_status?.awaiting_payment === true && !paymentAccepted && !paymentAttempted) {
       const deadline = Math.min(new Date(job.expires_at).getTime(),
         Date.parse(order.payment_status.payment_required_by), Date.parse(order.payment_status.price_guarantee_expires_at));

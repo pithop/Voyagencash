@@ -106,3 +106,7 @@ WHERE provider='unknown' AND id IN (
   SELECT response->>'id' FROM checkout_requests
   WHERE state='held' AND response->>'simulation'='false'
 );
+
+-- Immediate offers are purchased only after the authenticated Stripe receipt.
+ALTER TABLE flight_orders ADD COLUMN IF NOT EXISTS provider_request jsonb;
+ALTER TABLE flight_orders ADD COLUMN IF NOT EXISTS provider_order_id text;
