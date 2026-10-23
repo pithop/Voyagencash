@@ -64,6 +64,22 @@ test.describe("Stripe and Ryanair Checkout Contracts", () => {
     delete process.env.STRIPE_WEBHOOK_SECRET;
   });
 
+  test("Stripe webhook fails closed in production when secret is missing", async () => {
+    delete process.env.STRIPE_WEBHOOK_SECRET;
+    const oldEnv = process.env.NODE_ENV;
+    const oldTestMode = process.env.VOYAGENCASH_TEST_MODE;
+    process.env.NODE_ENV = "production";
+    delete process.env.VOYAGENCASH_TEST_MODE;
+
+    const handler = require("../api/stripe/webhook.js");
+    const payload = JSON.stringify({ type: "payment_intent.succeeded" });
+    const res = await call(handler, { raw: payload });
+    expect(res.statusCode).toBe(500);
+
+    process.env.NODE_ENV = oldEnv;
+    if (oldTestMode) process.env.VOYAGENCASH_TEST_MODE = oldTestMode;
+  });
+
   test("Ryanair offers are accepted by hold.js and generate 120min reservations", async () => {
     const handler = require("../api/orders/hold.js");
     const res = await call(handler, {

@@ -29,7 +29,10 @@ async function fulfilOne() {
   let paymentAttempted = false;
   let paymentAccepted = job.job_state === "awaiting_documents";
   if (!job.id.startsWith("off_") && !job.id.startsWith("ord_")) {
-    return finish("complete", "ticket_issued");
+    if (process.env.VOYAGENCASH_TEST_MODE === "true") {
+      return finish("complete", "ticket_issued");
+    }
+    return finish("reconciliation_required", "reconciliation_required");
   }
   try {
     let order = await duffel("/air/orders/" + job.id);

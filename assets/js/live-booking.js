@@ -262,7 +262,7 @@
         }
         if (status.ticket) {
           clearInterval(timer);
-          content.innerHTML = `<h2>Votre billet électronique</h2><p>Référence compagnie : <strong>${esc(status.ticket.bookingReference)}</strong></p>${status.ticket.slices.map((s) => `<p>${esc(s.origin)} → ${esc(s.destination)} · ${esc(s.departingAt.replace("T", " "))}</p>`).join("")}${(status.ticket.documents || []).map((d) => `<p>${esc(d.type)} · ${esc(d.unique_identifier)}</p>`).join("")}<p>Effectuez l’enregistrement auprès de la compagnie pour votre carte d’embarquement.</p><button class="button" data-live-wallet>Ajouter la réservation à Apple Wallet</button>`;
+          content.innerHTML = `<h2>Votre billet électronique</h2><p>Référence compagnie : <strong>${esc(status.ticket.bookingReference)}</strong></p>${(status.ticket.slices || []).map((s) => `<p>${esc(s.origin)} → ${esc(s.destination)} · ${esc((s.departingAt || "").replace("T", " "))}</p>`).join("")}${(status.ticket.documents || []).map((d) => `<p>${esc(d.type || "Document")} · ${esc(d.unique_identifier || d.url || "")}</p>`).join("")}<p>Effectuez l’enregistrement auprès de la compagnie pour votre carte d’embarquement.</p><button class="button" data-live-wallet>Ajouter la réservation à Apple Wallet</button>`;
           content.querySelector("[data-live-wallet]").onclick = async () => {
             try {
               const response = await fetch("/api/orders/wallet", {

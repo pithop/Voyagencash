@@ -107,6 +107,8 @@ function normalize(offer, query) {
     co2Kg: offer.total_emissions_kg ? Number(offer.total_emissions_kg) : null,
     punctuality: null,
     simulation: false,
+    priceKind: "quoted",
+    provider: "duffel",
     expiresAt: offer.expires_at,
     payment_requirements: offer.payment_requirements,
     passengerIds: offer.passengers.map((p) => p.id),
@@ -115,9 +117,11 @@ function normalize(offer, query) {
 async function search(query) {
   if (!process.env.DUFFEL_API_TOKEN && !travelfusion.configured())
     return { source: "demo", simulation: true, offers: F.generate(query) };
-  const lowCostPromise = travelfusion.configured()
-    ? travelfusion.searchLowCost(query)
-    : ryanair.search(query).catch(() => []);
+  const lowCostPromise = (
+    travelfusion.configured()
+      ? travelfusion.searchLowCost(query)
+      : ryanair.search(query)
+  ).catch(() => []);
   const duffelPromise = process.env.DUFFEL_API_TOKEN ? duffel("/air/offer_requests?return_offers=true", {
     slices: [
       { origin: query.from, destination: query.to, departure_date: query.date },
@@ -125,8 +129,22 @@ async function search(query) {
     passengers: Array.from({ length: query.count }, () => ({ type: "adult" })),
     cabin_class: "economy",
   }) : Promise.resolve({ offers: [] });
-  const [data, ryanairOffers] = await Promise.all([duffelPromise, lowCostPromise]);
-  const duffelOffers = (data.offers || [])
+
+  const [duffelResult, lowCostResult] = await Promise.allSettled([duffelPromise, lowCostPromise]);
+
+  const duffelData = duffelResult.status === "fulfilled" ? duffelResult.value : null;
+  const duffelError = duffelResult.status === "rejected" ? duffelResult.reason : null;
+
+  const ryanairOffers = lowCostResult.status === "fulfilled" && Array.isArray(lowCostResult.value)
+    ? lowCostResult.value.map(o => ({ ...o, priceKind: o.priceKind || "indicative" }))
+    : [];
+
+  // Si Duffel a echoue et qu'aucun autre fournisseur ne retourne d'offre, lever l'erreur fournisseur
+  if (duffelError && ryanairOffers.length === 0) {
+    throw duffelError;
+  }
+
+  const duffelOffers = ((duffelData && duffelData.offers) || [])
     .filter((o) =>
       o.slices[0].segments.every(
         (s) =>
@@ -135,6 +153,7 @@ async function search(query) {
     )
     .map((o) => normalize(o, query))
     .filter(Boolean);
+
   const offers = [...duffelOffers, ...ryanairOffers].map(F.enrichOffer).sort(
     (a, b) => a.price - b.price,
   );
@@ -146,11 +165,14 @@ async function search(query) {
       : null;
   if (observations.size > 1000)
     observations.delete(observations.keys().next().value);
+
+  const obsKind = duffelOffers.length ? "quoted" : ryanairOffers.length ? "indicative" : "unknown";
   observations.set(`${query.from}:${query.to}:${query.count}:${query.date}`, {
     date: query.date,
     price: minPrice,
     direct: !!direct.length,
     observedAt: Date.now(),
+    priceKind: obsKind,
   });
   if (process.env.DATABASE_URL || process.env.STORAGE_URL || process.env.POSTGRES_URL) {
     const key = `${query.from}:${query.to}:${query.count}:${query.date}`;
@@ -165,7 +187,13 @@ async function search(query) {
       /* Availability is returned even if the optional fare cache is unavailable. */
     }
   }
-  return { source: duffelOffers.length ? "duffel" : travelfusion.configured() ? "travelfusion" : "ryanair", simulation: false, offers };
+  const isPartial = (duffelOffers.length > 0 && ryanairOffers.length === 0) || (duffelOffers.length === 0 && ryanairOffers.length > 0);
+  return {
+    source: duffelOffers.length ? "duffel" : travelfusion.configured() ? "travelfusion" : "ryanair",
+    simulation: false,
+    offers,
+    partial: isPartial,
+  };
 }
 async function calendar(query) {
   if (!process.env.DUFFEL_API_TOKEN && !travelfusion.configured()) {
@@ -198,12 +226,19 @@ async function calendar(query) {
       for (const [dStr, fInfo] of rf) {
         const key = `${query.from}:${query.to}:${query.count}:${dStr}`;
         const existing = observations.get(key);
-        if (!existing || existing.price === null || fInfo.price < existing.price) {
+        // Ne jamais ecraser un prix quoted ferme par un tarif indicatif
+        const canUpdate =
+          !existing ||
+          existing.price === null ||
+          (existing.priceKind !== "quoted" && fInfo.price < existing.price);
+        if (canUpdate) {
           observations.set(key, {
             date: dStr,
             price: fInfo.price,
             direct: true,
             observedAt: Date.now(),
+            priceKind: "indicative",
+            provider: "ryanair",
           });
         }
       }

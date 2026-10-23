@@ -22,11 +22,14 @@
     container.innerHTML = '<div class="fare-days" aria-label="Comparer les dates de départ"></div><p class="fare-source" role="status">Chargement des prix indicatifs…</p>';
     const rail = container.querySelector('.fare-days');
     function draw(values) {
+      const known = values.filter(d => d.price != null);
+      const minPrice = known.length ? Math.min(...known.map(d => d.price)) : null;
       rail.innerHTML = days.map(date => {
         const day = values.find(d => d.date === date), tier = day?.tier || "unknown";
         const price = day?.price == null ? "—" : money.format(day.price);
         const label = day?.direct === false ? "aucun vol direct" : labels[tier];
-        return `<button type="button" class="fare-day ${tier}${date === query.date ? ' selected' : ''}" data-fare-date="${date}" aria-pressed="${date === query.date}" aria-label="${F.dateLabel(date, true)}, ${price}, ${label}"><span>${format.format(new Date(date + 'T12:00:00Z'))}</span><strong>${price}</strong><i aria-hidden="true"></i></button>`;
+        const isBest = minPrice !== null && day?.price === minPrice && known.length > 1;
+        return `<button type="button" class="fare-day ${tier}${date === query.date ? ' selected' : ''}${isBest ? ' best-fare' : ''}" data-fare-date="${date}" aria-pressed="${date === query.date}" aria-label="${F.dateLabel(date, true)}, ${price}, ${label}${isBest ? ', meilleur tarif' : ''}"><span>${format.format(new Date(date + 'T12:00:00Z'))}</span><strong>${price}</strong>${isBest ? '<em class="fare-best-tag">Meilleur prix</em>' : '<i aria-hidden="true"></i>'}</button>`;
       }).join('');
     }
     draw([]);

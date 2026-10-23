@@ -11,33 +11,14 @@ module.exports = endpoint("POST", async (req, res) => {
   } catch {}
   const access = verify(input.token, "order-access");
 
-  if (input.confirmPaymentIntentId && (process.env.DATABASE_URL || process.env.STORAGE_URL || process.env.POSTGRES_URL)) {
-    const stripeKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
-    let paymentVerified = false;
-    if (stripeKey && !process.env.VOYAGENCASH_TEST_MODE) {
-      try {
-        const piRes = await fetch("https://api.stripe.com/v1/payment_intents/" + encodeURIComponent(input.confirmPaymentIntentId), {
-          headers: { Authorization: `Bearer ${stripeKey}` },
-          signal: AbortSignal.timeout(5000),
-        });
-        if (piRes.ok) {
-          const pi = await piRes.json();
-          if (pi.status === "succeeded" && pi.metadata?.orderId === access.id) {
-            paymentVerified = true;
-          }
-        }
-      } catch {}
-    } else if (input.confirmPaymentIntentId.startsWith("pi_sim_") || process.env.VOYAGENCASH_TEST_MODE) {
-      paymentVerified = true;
-    }
-    if (paymentVerified) {
-      try {
-        await database().query(
-          "UPDATE flight_orders SET status='ticket_issued' WHERE id=$1 AND status IN ('awaiting_cash', 'pending', 'awaiting_card', 'hold')",
-          [access.id],
-        );
-      } catch {}
-    }
+  // En environnement de test uniquement (VOYAGENCASH_TEST_MODE="true"), simulation controlee
+  if (input.confirmPaymentIntentId && process.env.VOYAGENCASH_TEST_MODE === "true" && (process.env.DATABASE_URL || process.env.STORAGE_URL || process.env.POSTGRES_URL)) {
+    try {
+      await database().query(
+        "UPDATE flight_orders SET status='ticket_issued' WHERE id=$1 AND status IN ('awaiting_cash', 'pending', 'awaiting_card', 'hold')",
+        [access.id],
+      );
+    } catch {}
   }
 
   const {
@@ -59,12 +40,12 @@ module.exports = endpoint("POST", async (req, res) => {
         const issued = await duffel("/air/orders/" + encodeURIComponent(access.id));
         ticket = {
           bookingReference: issued.booking_reference,
-          documents: issued.documents,
-          passengers: issued.passengers.map((p) => ({
+          documents: issued.documents || [],
+          passengers: (issued.passengers || []).map((p) => ({
             given_name: p.given_name,
             family_name: p.family_name,
           })),
-          slices: issued.slices.map((s) => ({
+          slices: (issued.slices || []).map((s) => ({
             origin: s.origin.iata_code,
             destination: s.destination.iata_code,
             departingAt: s.segments[0].departing_at,
@@ -73,14 +54,17 @@ module.exports = endpoint("POST", async (req, res) => {
         };
       } catch {
         ticket = {
-          bookingReference: "VNC-" + access.id.slice(-6).toUpperCase(),
-          documents: [{ type: "electronic_ticket", url: "#" }],
+          bookingReference: order.voucher_reference || ("VNC-" + access.id.slice(-6).toUpperCase()),
+          documents: [],
+          slices: [],
+          pendingDocuments: true,
         };
       }
     } else {
       ticket = {
-        bookingReference: "VNC-" + access.id.slice(-6).toUpperCase(),
-        documents: [{ type: "electronic_ticket", url: "#" }],
+        bookingReference: order.voucher_reference || ("VNC-" + access.id.slice(-6).toUpperCase()),
+        documents: [],
+        slices: [],
       };
     }
   }

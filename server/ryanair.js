@@ -149,6 +149,7 @@ async function search(query) {
       punctuality: null,
       simulation: false,
       provider: "ryanair-indicative",
+      priceKind: "indicative",
       conciergeAvailable: true,
       payment_requirements: { requires_instant_payment: true },
       passengerIds: Array.from({ length: count }, (_, i) => `fr_pas_${i + 1}`),

@@ -7,6 +7,11 @@ const handler = endpoint("POST", async (req, res) => {
   const raw = await rawBody(req);
   const signatureHeader = req.headers["stripe-signature"];
 
+  // En production, le secret webhook doit obligatoirement etre configure (fail closed)
+  if (!secret && process.env.NODE_ENV === "production" && process.env.VOYAGENCASH_TEST_MODE !== "true") {
+    throw new HttpError(500, "Configuration webhook Stripe manquante en production.");
+  }
+
   // If secret is set, verify cryptographic HMAC signature
   if (secret) {
     if (!signatureHeader) {
@@ -55,8 +60,9 @@ const handler = endpoint("POST", async (req, res) => {
     const pi = event.data?.object;
     const orderId = pi?.metadata?.orderId;
     const amountReceived = pi?.amount_received ?? pi?.amount;
+    const currency = (pi?.currency || "eur").toUpperCase();
 
-    if (!orderId || !amountReceived) {
+    if (!orderId || amountReceived == null) {
       return json(res, 200, { received: true, ignored: true });
     }
 
@@ -81,12 +87,30 @@ const handler = endpoint("POST", async (req, res) => {
           return { received: true, duplicate: true };
         }
 
-        const expired = new Date(order.expires_at).getTime() <= Date.now();
         await db.query("INSERT INTO payment_events(id, order_id) VALUES($1, $2)", [
           event.id,
           orderId,
         ]);
 
+        // Verifier que l'ordre n'est pas deja finalise pour ne pas regresser l'etat
+        if (["ticket_issued", "complete"].includes(order.status)) {
+          return { received: true, already_issued: true };
+        }
+
+        // Verifier montant exact et devise conformes a l'ordre en base
+        const orderCurrency = (order.currency || "EUR").toUpperCase();
+        if (order.amount_cents !== amountReceived || orderCurrency !== currency) {
+          await db.query("UPDATE flight_orders SET status='reconciliation_required' WHERE id=$1", [
+            orderId,
+          ]);
+          await db.query(
+            "INSERT INTO payment_outbox(order_id, event_id, state) VALUES($1, $2, 'reconciliation_required') ON CONFLICT DO NOTHING",
+            [orderId, event.id],
+          );
+          return { received: true, reconciliation_required: true, reason: "amount_or_currency_mismatch" };
+        }
+
+        const expired = new Date(order.expires_at).getTime() <= Date.now();
         const nextStatus = expired ? "refund_pending" : "payment_received";
         await db.query("UPDATE flight_orders SET status=$2 WHERE id=$1", [
           orderId,

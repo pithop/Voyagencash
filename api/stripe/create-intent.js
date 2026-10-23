@@ -32,6 +32,9 @@ module.exports = endpoint("POST", async (req, res) => {
       );
       if (rows.length > 0) {
         const order = rows[0];
+        if (["ticket_issued", "complete", "payment_received"].includes(order.status)) {
+          throw new HttpError(409, "Cette commande a déjà été réglée.");
+        }
         if (new Date(order.expires_at).getTime() < Date.now()) {
           throw new HttpError(410, "Le délai de réservation de 120 minutes est expiré.");
         }
@@ -47,9 +50,15 @@ module.exports = endpoint("POST", async (req, res) => {
     throw new HttpError(400, "Montant invalide.");
   }
 
-  // If live Stripe secret is configured, create a real Stripe PaymentIntent
+  const isTestMode = process.env.VOYAGENCASH_TEST_MODE === "true";
   const stripeKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
-  if (stripeKey && !process.env.VOYAGENCASH_TEST_MODE) {
+
+  if (process.env.NODE_ENV === "production" && !stripeKey && !isTestMode) {
+    throw new HttpError(500, "Configuration Stripe manquante en production.");
+  }
+
+  // If live Stripe secret is configured, create a real Stripe PaymentIntent
+  if (stripeKey && !isTestMode) {
     try {
       const form = new URLSearchParams({
         amount: String(amountCents),
@@ -64,6 +73,7 @@ module.exports = endpoint("POST", async (req, res) => {
         headers: {
           Authorization: `Bearer ${stripeKey}`,
           "Content-Type": "application/x-www-form-urlencoded",
+          "Idempotency-Key": `order:${effectiveOrderId}:v1`,
         },
         body: form.toString(),
         signal: AbortSignal.timeout(10000),

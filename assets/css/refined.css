@@ -1712,6 +1712,8 @@ body { background:#f7f8fa; }
 .fare-day.low { background:#f2fbf7; }
 .fare-day.selected { border-color:#016bfd; background:#edf4ff; box-shadow:inset 0 0 0 1px #016bfd; }
 .fare-day.selected strong { color:#016bfd; }
+.fare-day.best-fare { border-color:#0d8a57; }
+.fare-day .fare-best-tag { display:block; font-size:9px; font-weight:700; text-transform:uppercase; color:#0d8a57; margin-top:2px; font-style:normal; letter-spacing:.2px; }
 .fare-day:hover { border-color:#016bfd; background:#eef5ff; }
 .fare-source { font-size:10px; margin:8px 0 0; color:#687c94; }
 #search-availability { color:#295071; font-size:12px; margin-top:10px; }
